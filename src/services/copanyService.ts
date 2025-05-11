@@ -14,10 +14,10 @@ export class CopanyService {
       .prepare(
         `
       INSERT INTO Copany (
-        github_url, name, description, created_by, 
+        github_url, name, description, created_by, organization_avatar_url,
         project_type, project_stage, main_language, 
         license, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
       )
       .bind(
@@ -25,6 +25,7 @@ export class CopanyService {
         data.name,
         data.description,
         data.created_by,
+        data.organization_avatar_url,
         data.project_type,
         data.project_stage,
         data.main_language,
@@ -51,6 +52,7 @@ export class CopanyService {
       github_url,
       name,
       description,
+      organization_avatar_url,
       project_type,
       project_stage,
       main_language,
@@ -63,6 +65,7 @@ export class CopanyService {
         github_url = ?, 
         name = ?, 
         description = ?, 
+        organization_avatar_url = ?,
         project_type = ?, 
         project_stage = ?, 
         main_language = ?, 
@@ -74,6 +77,7 @@ export class CopanyService {
         github_url,
         name,
         description,
+        organization_avatar_url,
         project_type,
         project_stage,
         main_language,

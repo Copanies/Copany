@@ -4,6 +4,7 @@ export interface Copany {
   name: string;
   description: string;
   created_by: string;
+  organization_avatar_url: string | null;
   project_type: string;
   project_stage: string;
   main_language: string;

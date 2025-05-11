@@ -1,12 +1,13 @@
--- Migration number: 0001 	 2025-05-10T02:08:53.993Z
--- npx wrangler d1 migrations create DB change_copany_created_by_type
--- 创建新表，修改 created_by 为 TEXT 类型
+-- Migration number: 0002 	 2025-05-11T12:33:38.836Z
+-- npx wrangler d1 migrations create DB copany_add_organization_avatar_url
+-- Create new table, add organization_avatar_url field
 CREATE TABLE Copany_new (
   id INTEGER PRIMARY KEY,
   github_url TEXT,
   name TEXT,
   description TEXT,
-  created_by TEXT, -- ← 类型变成 TEXT
+  created_by TEXT,
+  organization_avatar_url TEXT,
   project_type TEXT,
   project_stage TEXT,
   main_language TEXT,
@@ -15,22 +16,22 @@ CREATE TABLE Copany_new (
   updated_at TEXT
 );
 
--- 拷贝旧表数据，CAST created_by 为 TEXT
+-- Copy old table data
 INSERT INTO Copany_new (
   id, github_url, name, description, created_by,
   project_type, project_stage, main_language,
   license, created_at, updated_at
 )
 SELECT
-  id, github_url, name, description, CAST(created_by AS TEXT),
+  id, github_url, name, description, created_by,
   project_type, project_stage, main_language,
   license, created_at, updated_at
 FROM Copany;
 
--- 删除旧表
+-- Drop old table
 DROP TABLE Copany;
 
--- 重命名新表
+-- Rename new table
 ALTER TABLE Copany_new RENAME TO Copany;
 
 -- npx wrangler d1 migrations apply DB

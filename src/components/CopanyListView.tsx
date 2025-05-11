@@ -7,7 +7,7 @@ import {
   deleteCopany,
   getCopanies,
 } from "@/services/copanyFuncs";
-import { useSession, signIn } from "next-auth/react";
+import Image from "next/image";
 
 export default function CopanyListView() {
   const [copanies, setCopanies] = useState<Copany[]>([]);
@@ -15,7 +15,6 @@ export default function CopanyListView() {
     "loading"
   );
   const [error, setError] = useState<string | null>(null);
-  const { data: session, status: authStatus } = useSession();
 
   useEffect(() => {
     getCopanies()
@@ -27,6 +26,9 @@ export default function CopanyListView() {
             name: String(copany.name),
             description: String(copany.description),
             created_by: String(copany.created_by),
+            organization_avatar_url: copany.organization_avatar_url
+              ? String(copany.organization_avatar_url)
+              : null,
             project_type: String(copany.project_type),
             project_stage: String(copany.project_stage),
             main_language: String(copany.main_language),
@@ -46,23 +48,12 @@ export default function CopanyListView() {
   }, []);
 
   async function handleCreateCopany(formData: FormData) {
-    console.log("handleCreateCopany");
-    console.log(formData);
-    if (!session?.user?.id) {
-      console.log("Signing in");
-      await signIn();
-      return;
-    }
-    await createCopany({
-      name: "Test Copany",
-      description: "Test Description",
-      github_url: "https://github.com/test.com",
-      created_by: session.user.id,
-      project_type: "Test Project Type",
-      project_stage: "Test Project Stage",
-      main_language: "Test Main Language",
-      license: "Test License",
-    });
+    console.log(
+      "handleCreateCopany",
+      formData.values(),
+      formData.get("github_url")
+    );
+    await createCopany(formData.get("github_url") as string);
     const copanies = await getCopanies();
     const typedCopanies: Copany[] = copanies.map((copany) => {
       const item: Copany = {
@@ -71,6 +62,9 @@ export default function CopanyListView() {
         name: String(copany.name),
         description: String(copany.description),
         created_by: String(copany.created_by),
+        organization_avatar_url: copany.organization_avatar_url
+          ? String(copany.organization_avatar_url)
+          : null,
         project_type: String(copany.project_type),
         project_stage: String(copany.project_stage),
         main_language: String(copany.main_language),
@@ -104,6 +98,7 @@ export default function CopanyListView() {
       >
         <input
           type="text"
+          name="github_url"
           placeholder="Enter github url"
           className="rounded-md border-1 border-gray-300 px-2 h-fit"
         />
@@ -117,6 +112,15 @@ export default function CopanyListView() {
       <ul className="space-y-6">
         {copanies.map((copany) => (
           <li key={copany.id} className="space-y-2">
+            {copany.organization_avatar_url && (
+              <Image
+                src={copany.organization_avatar_url}
+                alt={"Organization Avatar"}
+                className="w-32 h-32"
+                width={100}
+                height={100}
+              />
+            )}
             <div className="font-medium text-lg">{copany.name}</div>
             <div className="">{copany.description}</div>
             <div className="text-sm">ID: {copany.id}</div>
