@@ -30,13 +30,21 @@ export async function createCopany(url: string) {
     await signIn();
     return;
   }
-  const githubRepoInfoResponse = await getGithubRepoInfo(url);
+  const apiService = new CopanyService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  const accessToken = await apiService.getAccessToken(session.user.id);
+  console.log("accessToken", accessToken);
+  const githubRepoInfoResponse = await getGithubRepoInfo(
+    accessToken as string,
+    url
+  );
   console.log(
     "githubRepoInfoResponse",
     githubRepoInfoResponse.full_name,
     githubRepoInfoResponse.language,
     githubRepoInfoResponse.organization?.avatar_url,
-    githubRepoInfoResponse
+    githubRepoInfoResponse.license?.key
   );
   const copany: Omit<Copany, "id" | "created_at" | "updated_at"> = {
     name: githubRepoInfoResponse.full_name,
@@ -50,9 +58,6 @@ export async function createCopany(url: string) {
     main_language: githubRepoInfoResponse.language || "Test Main Language",
     license: githubRepoInfoResponse.license?.key || "Test License",
   };
-  const apiService = new CopanyService(
-    (await getCloudflareContext({ async: true })).env.DB
-  );
   return await apiService.create(copany);
 }
 
@@ -68,10 +73,13 @@ export async function deleteCopany(id: number) {
 // example: https://github.com/jinhongw/Copany.git
 // GET https://api.github.com/repos/{owner}/{repo}
 export async function getGithubRepoInfo(
+  accessToken: string,
   url: string
 ): Promise<RestEndpointMethodTypes["repos"]["get"]["response"]["data"]> {
   const { owner, repo } = parseGithubUrl(url) || { owner: "", repo: "" };
-  const octokit = new Octokit();
+  const octokit = new Octokit({
+    auth: accessToken,
+  });
   const response = await octokit.request(`GET /repos/${owner}/${repo}`);
   return response.data;
 }

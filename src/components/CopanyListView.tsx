@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { Copany } from "@/types/types";
+import { Copany, CopanyWithUser } from "@/types/types";
 import { useState } from "react";
 import {
   createCopany,
@@ -10,7 +10,7 @@ import {
 import Image from "next/image";
 
 export default function CopanyListView() {
-  const [copanies, setCopanies] = useState<Copany[]>([]);
+  const [copanies, setCopanies] = useState<CopanyWithUser[]>([]);
   const [status, setStatus] = useState<"loading" | "failed" | "success">(
     "loading"
   );
@@ -19,13 +19,14 @@ export default function CopanyListView() {
   useEffect(() => {
     getCopanies()
       .then((copanies) => {
-        const typedCopanies: Copany[] = copanies.map((copany) => {
-          const item: Copany = {
+        const typedCopanies: CopanyWithUser[] = copanies.map((copany) => {
+          const item: CopanyWithUser = {
             id: Number(copany.id),
             github_url: String(copany.github_url),
             name: String(copany.name),
             description: String(copany.description),
             created_by: String(copany.created_by),
+            created_by_name: String(copany.created_by_name),
             organization_avatar_url: copany.organization_avatar_url
               ? String(copany.organization_avatar_url)
               : null,
@@ -55,13 +56,14 @@ export default function CopanyListView() {
     );
     await createCopany(formData.get("github_url") as string);
     const copanies = await getCopanies();
-    const typedCopanies: Copany[] = copanies.map((copany) => {
-      const item: Copany = {
+    const typedCopanies: CopanyWithUser[] = copanies.map((copany) => {
+      const item: CopanyWithUser = {
         id: Number(copany.id),
         github_url: String(copany.github_url),
         name: String(copany.name),
         description: String(copany.description),
         created_by: String(copany.created_by),
+        created_by_name: String(copany.created_by_name),
         organization_avatar_url: copany.organization_avatar_url
           ? String(copany.organization_avatar_url)
           : null,
@@ -116,7 +118,7 @@ export default function CopanyListView() {
               <Image
                 src={copany.organization_avatar_url}
                 alt={"Organization Avatar"}
-                className="w-32 h-32"
+                className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
                 width={100}
                 height={100}
               />
@@ -141,6 +143,9 @@ export default function CopanyListView() {
             <div className="text-sm">created_at: {copany.created_at}</div>
             <div className="text-sm">updated_at: {copany.updated_at}</div>
             <div className="text-sm">created_by: {copany.created_by}</div>
+            <div className="text-sm">
+              created_by_name: {copany.created_by_name}
+            </div>
             {/* <button
               onClick={async () => {
                 await handleEdit(copany.id);
@@ -154,7 +159,7 @@ export default function CopanyListView() {
                 await deleteCopany(copany.id);
                 setCopanies(copanies.filter((c) => c.id !== copany.id));
               }}
-              className="text-sm cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2"
+              className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2"
             >
               delete
             </button>

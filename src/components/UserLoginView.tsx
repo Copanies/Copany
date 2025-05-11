@@ -36,8 +36,8 @@ export default async function UserLoginView() {
               {session.user?.image ? (
                 <Image
                   src={session.user.image}
-                  alt={session.user.name || ""}
-                  className="w-32 h-32"
+                  alt={session.user.name || "User Avatar"}
+                  className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
                   width={100}
                   height={100}
                 />

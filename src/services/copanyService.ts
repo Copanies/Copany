@@ -2,9 +2,22 @@ import { Copany } from "@/types/types";
 
 export class CopanyService {
   constructor(private db: D1Database) {}
-
   async getAll() {
-    const { results } = await this.db.prepare("SELECT * FROM Copany").all();
+    const { results } = await this.db
+      .prepare(
+        `
+        SELECT 
+          Copany.*,
+          users.name AS created_by_name
+        FROM 
+          Copany
+        LEFT JOIN 
+          users
+        ON 
+          Copany.created_by = users.id
+      `
+      )
+      .all();
     return results;
   }
 
@@ -86,5 +99,15 @@ export class CopanyService {
         id
       )
       .run();
+  }
+
+  async getAccessToken(userId: string) {
+    const { results } = await this.db
+      .prepare(
+        "SELECT access_token FROM accounts WHERE userId = ? AND provider = 'github'"
+      )
+      .bind(userId)
+      .all();
+    return results[0].access_token;
   }
 }
