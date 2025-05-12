@@ -2,7 +2,7 @@ import { Copany } from "@/types/types";
 
 export class DatabaseService {
   constructor(private db: D1Database) {}
-  async getAll() {
+  async getAllCopaniesWithUser() {
     const { results } = await this.db
       .prepare(
         `
@@ -21,6 +21,14 @@ export class DatabaseService {
       )
       .all();
     return results;
+  }
+
+  async getById(id: number) {
+    const { results } = await this.db
+      .prepare("SELECT * FROM Copany WHERE id = ?")
+      .bind(id)
+      .all();
+    return results[0];
   }
 
   async create(data: Omit<Copany, "id" | "created_at" | "updated_at">) {

@@ -1,7 +1,7 @@
 "use server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { DatabaseService } from "@/services/DatabaseService";
-import { Copany } from "@/types/types";
+import { Copany, CopanyWithUser } from "@/types/types";
 import { Octokit } from "@octokit/rest";
 import type { RestEndpointMethodTypes } from "@octokit/rest";
 import { auth, signIn } from "@/app/auth";
@@ -10,11 +10,31 @@ import { auth, signIn } from "@/app/auth";
  * Get all company information
  * @returns List of companies
  */
-export async function getCopanies() {
+export async function getCopanies(): Promise<CopanyWithUser[]> {
   const apiService = new DatabaseService(
     (await getCloudflareContext({ async: true })).env.DB
   );
-  return await apiService.getAll();
+  const copanies = await apiService.getAllCopaniesWithUser();
+  const typedCopanies: CopanyWithUser[] = copanies
+    .filter((copany) => copany?.id !== undefined)
+    .map((copany) => ({
+      id: Number(copany.id),
+      github_url: String(copany.github_url),
+      name: String(copany.name),
+      description: String(copany.description),
+      created_by: String(copany.created_by),
+      created_by_name: String(copany.created_by_name),
+      organization_avatar_url: copany.organization_avatar_url
+        ? String(copany.organization_avatar_url)
+        : null,
+      project_type: String(copany.project_type),
+      project_stage: String(copany.project_stage),
+      main_language: String(copany.main_language),
+      license: String(copany.license),
+      created_at: String(copany.created_at),
+      updated_at: copany.updated_at ? String(copany.updated_at) : null,
+    }));
+  return typedCopanies;
 }
 
 /**
@@ -89,6 +109,37 @@ export async function deleteCopany(id: number) {
   return await apiService.delete(id);
 }
 
+/**
+ * Get a company by ID
+ * @param id Company ID
+ * @returns Company information
+ */
+export async function getCopany(id: number): Promise<Copany> {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  const copany = await apiService.getById(id);
+  if (!copany) {
+    throw new Error("Copany not found");
+  }
+  const typedCopany: Copany = {
+    id: Number(copany.id),
+    github_url: String(copany.github_url),
+    name: String(copany.name),
+    description: String(copany.description),
+    created_by: String(copany.created_by),
+    organization_avatar_url: copany.organization_avatar_url
+      ? String(copany.organization_avatar_url)
+      : null,
+    project_type: String(copany.project_type),
+    project_stage: String(copany.project_stage),
+    main_language: String(copany.main_language),
+    license: String(copany.license),
+    created_at: String(copany.created_at),
+    updated_at: copany.updated_at ? String(copany.updated_at) : null,
+  };
+  return typedCopany;
+}
 /**
  * Get GitHub access token
  * @returns GitHub access token
@@ -192,5 +243,28 @@ export async function getOrgPublicRepos(
   });
   const response = await octokit.request(`GET /orgs/${org}/repos`);
   console.log("getOrgPublicRepos response", response.data);
+  return response.data;
+}
+
+/**
+ * Get pull requests for a specific repository
+ * @param repo Repository name in the format "owner/repo"
+ * @returns List of pull requests
+ *
+ * API: GET https://api.github.com/repos/{owner}/{repo}/pulls
+ */
+export async function getRepoPRs(
+  repo: string
+): Promise<RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]> {
+  const accessToken = await getGithubAccessToken();
+  console.log("accessToken", accessToken);
+  if (!accessToken) {
+    return [];
+  }
+  const octokit = new Octokit({
+    auth: accessToken as string,
+  });
+  const response = await octokit.request(`GET /repos/${repo}/pulls`);
+  console.log("getRepoPRs response", response.data);
   return response.data;
 }

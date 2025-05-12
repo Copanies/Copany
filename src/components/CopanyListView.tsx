@@ -2,106 +2,38 @@
 import { useEffect } from "react";
 import { CopanyWithUser } from "@/types/types";
 import { useState } from "react";
-import {
-  createCopany,
-  deleteCopany,
-  getCopanies,
-  getOrgPublicRepos,
-  getUserOrg,
-} from "@/services/CopanyFuncs";
+import { deleteCopany, getCopanies } from "@/services/CopanyFuncs";
 import Image from "next/image";
-import { RestEndpointMethodTypes } from "@octokit/rest";
-import ChevronDownIcon from "@/app/chevron.down.png";
+import CreateCopanyView from "./CreateCopanyView";
+import { useRouter } from "next/navigation";
+
 export default function CopanyListView() {
   const [copanies, setCopanies] = useState<CopanyWithUser[]>([]);
-  const [orgWithRepos, setOrgWithRepos] = useState<
-    {
-      org: RestEndpointMethodTypes["orgs"]["listForAuthenticatedUser"]["response"]["data"][0];
-      repos: RestEndpointMethodTypes["repos"]["listForOrg"]["response"]["data"];
-    }[]
-  >([]);
-
   const [status, setStatus] = useState<"loading" | "failed" | "success">(
     "loading"
   );
   const [error, setError] = useState<string | null>(null);
-  const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    getCopanies()
-      .then((copanies) => {
-        const typedCopanies: CopanyWithUser[] = copanies.map((copany) => {
-          const item: CopanyWithUser = {
-            id: Number(copany.id),
-            github_url: String(copany.github_url),
-            name: String(copany.name),
-            description: String(copany.description),
-            created_by: String(copany.created_by),
-            created_by_name: String(copany.created_by_name),
-            organization_avatar_url: copany.organization_avatar_url
-              ? String(copany.organization_avatar_url)
-              : null,
-            project_type: String(copany.project_type),
-            project_stage: String(copany.project_stage),
-            main_language: String(copany.main_language),
-            license: String(copany.license),
-            created_at: String(copany.created_at),
-            updated_at: copany.updated_at ? String(copany.updated_at) : null,
-          };
-          return item;
-        });
-        setCopanies(typedCopanies);
+    const fetchCopanies = async () => {
+      try {
+        const copanies = await getCopanies();
+        setCopanies(copanies);
         setStatus("success");
-      })
-      .catch((error) => {
-        setError(error.message);
+      } catch (error: unknown) {
+        console.error("Error fetching copanies", error);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Unknown error");
+        }
         setStatus("failed");
-      });
+      }
+    };
 
-    getUserOrg()
-      .then((orgs) => {
-        orgs.forEach((org) => {
-          getOrgPublicRepos(org.login)
-            .then((repos) => {
-              setOrgWithRepos((prev) => [...prev, { org, repos }]);
-            })
-            .catch(() => {});
-        });
-      })
-      .catch(() => {});
+    fetchCopanies();
   }, []);
-
-  async function handleCreateCopany() {
-    await createCopany(
-      orgWithRepos
-        .find(({ repos }) => repos.find((repo) => repo.id === selectedRepoId))
-        ?.repos.find((repo) => repo.id === selectedRepoId)?.html_url || ""
-    );
-    const copanies = await getCopanies();
-    const typedCopanies: CopanyWithUser[] = copanies.map((copany) => {
-      const item: CopanyWithUser = {
-        id: Number(copany.id),
-        github_url: String(copany.github_url),
-        name: String(copany.name),
-        description: String(copany.description),
-        created_by: String(copany.created_by),
-        created_by_name: String(copany.created_by_name),
-        organization_avatar_url: copany.organization_avatar_url
-          ? String(copany.organization_avatar_url)
-          : null,
-        project_type: String(copany.project_type),
-        project_stage: String(copany.project_stage),
-        main_language: String(copany.main_language),
-        license: String(copany.license),
-        created_at: String(copany.created_at),
-        updated_at: copany.updated_at ? String(copany.updated_at) : null,
-      };
-      return item;
-    });
-    setCopanies(typedCopanies);
-    console.log(typedCopanies);
-  }
 
   // --- View ---
 
@@ -115,120 +47,27 @@ export default function CopanyListView() {
 
   return (
     <div className="flex flex-col gap-2">
-      <form
-        action={async () => {
-          await handleCreateCopany();
-        }}
-        className="flex gap-2"
-      >
-        {/* <input
-          type="text"
-          name="github_url"
-          placeholder="Enter github url"
-          className="rounded-md border-1 border-gray-300 px-2 h-fit"
-        /> */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 rounded-md border-1 border-gray-300 px-2 h-fit min-w-[200px] justify-between hover:bg-gray-100 cursor-pointer"
-          >
-            {selectedRepoId ? (
-              <div className="flex items-center gap-2">
-                <Image
-                  src={
-                    orgWithRepos.find(({ repos }) =>
-                      repos.find((repo) => repo.id === selectedRepoId)
-                    )?.org.avatar_url || ""
-                  }
-                  alt="Selected Organization Avatar"
-                  width={20}
-                  height={20}
-                  className="rounded-full"
-                />
-                <span>
-                  {
-                    orgWithRepos
-                      .flatMap(({ repos }) => repos)
-                      .find((repo) => repo.id === selectedRepoId)?.name
-                  }
-                </span>
-              </div>
-            ) : (
-              <span>Select Organization</span>
-            )}
-            <Image
-              src={ChevronDownIcon}
-              alt="Chevron Down"
-              width={12}
-              height={12}
-              className={`text-gray-500 ${isDropdownOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-          {isDropdownOpen && (
-            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
-              {orgWithRepos.map((org) => {
-                return (
-                  <div key={org.org.id}>
-                    <div
-                      key={org.org.id}
-                      className="flex items-center gap-1 px-2 py-1 border-b border-gray-200 dark:border-gray-700"
-                    >
-                      <Image
-                        src={org.org.avatar_url}
-                        alt="Organization Avatar"
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                      />
-                      <span>{org.org.login}</span>
-                    </div>
-                    <div>
-                      {org.repos
-                        .filter((repo) => repo.owner.login === org.org.login)
-                        .map((repo) => (
-                          <div
-                            key={repo.id}
-                            className="flex flex-col items-start gap-2 pl-8 px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                            onClick={() => {
-                              setSelectedRepoId(repo.id);
-                              setIsDropdownOpen(false);
-                            }}
-                          >
-                            <span>{repo.name}</span>
-                            <span className="text-sm text-gray-500">
-                              {repo.description}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <button
-          className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2 mb-2"
-          type="submit"
-        >
-          Create Copany
-        </button>
-      </form>
+      <CreateCopanyView />
       <ul className="space-y-6">
         {copanies.map((copany) => (
           <li key={copany.id} className="space-y-2">
-            {copany.organization_avatar_url && (
-              <Image
-                src={copany.organization_avatar_url}
-                alt={"Organization Avatar"}
-                className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
-                width={100}
-                height={100}
-              />
-            )}
-            <div className="font-medium text-lg">{copany.name}</div>
+            <div
+              onClick={() => {
+                router.push(`/copany/${copany.id}`);
+              }}
+              className="cursor-pointer"
+            >
+              {copany.organization_avatar_url && (
+                <Image
+                  src={copany.organization_avatar_url}
+                  alt={"Organization Avatar"}
+                  className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
+                  width={100}
+                  height={100}
+                />
+              )}
+              <div className="font-medium text-lg">{copany.name}</div>
+            </div>
             <div className="">{copany.description}</div>
             <div className="text-sm">ID: {copany.id}</div>
             <div className="text-sm">
