@@ -1,6 +1,6 @@
 import { Copany } from "@/types/types";
 
-export class CopanyService {
+export class DatabaseService {
   constructor(private db: D1Database) {}
   async getAll() {
     const { results } = await this.db
@@ -15,6 +15,8 @@ export class CopanyService {
           users
         ON 
           Copany.created_by = users.id
+        ORDER BY 
+          Copany.created_at DESC
       `
       )
       .all();
@@ -104,10 +106,11 @@ export class CopanyService {
   async getAccessToken(userId: string) {
     const { results } = await this.db
       .prepare(
-        "SELECT access_token FROM accounts WHERE userId = ? AND provider = 'github'"
+        "SELECT access_token FROM accounts WHERE userId = ? AND provider = 'github' AND scope LIKE '%read:user%' AND scope LIKE '%read:org%'"
       )
       .bind(userId)
       .all();
+    console.log("results", results);
     return results[0].access_token;
   }
 }
