@@ -18,9 +18,3 @@ export interface Copany {
 export interface CopanyWithUser extends Copany {
   created_by_name: string | null;
 }
-
-// If more related data is needed, can continue to extend
-export interface CopanyWithDetails extends CopanyWithUser {
-  // Other related data
-  // For example: contributors, stars, forks etc.
-}

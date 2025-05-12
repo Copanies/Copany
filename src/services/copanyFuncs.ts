@@ -155,7 +155,7 @@ export async function getGithubAccessToken() {
   return await apiService.getAccessToken(session.user.id);
 }
 
-// --- GitHub API ---
+// MARK: --- GitHub API ---
 
 /**
  * Get repository information from GitHub URL
@@ -173,7 +173,7 @@ export async function getGithubRepoInfo(
   accessToken: string,
   url: string
 ): Promise<RestEndpointMethodTypes["repos"]["get"]["response"]["data"]> {
-  const { owner, repo } = parseGithubUrl(url) || { owner: "", repo: "" };
+  const { owner, repo } = parseGithubUrl(url);
   const octokit = new Octokit({
     auth: accessToken,
   });
@@ -186,7 +186,7 @@ export async function getGithubRepoInfo(
  * @param url GitHub repository URL
  * @returns Object containing owner and repo, returns null if parsing fails
  */
-function parseGithubUrl(url: string): { owner: string; repo: string } | null {
+function parseGithubUrl(url: string): { owner: string; repo: string } {
   try {
     const parsed = new URL(url);
     const segments = parsed.pathname.split("/").filter(Boolean); // Remove empty segments
@@ -195,9 +195,11 @@ function parseGithubUrl(url: string): { owner: string; repo: string } | null {
       const repo = repoWithExtension.replace(/\.git$/, "");
       return { owner, repo };
     }
-    return null;
+    console.error("Error parsing GitHub URL", url);
+    throw new Error("Error parsing GitHub URL");
   } catch (e) {
-    return null;
+    console.error("Error parsing GitHub URL", e);
+    throw new Error("Error parsing GitHub URL");
   }
 }
 
@@ -253,18 +255,43 @@ export async function getOrgPublicRepos(
  *
  * API: GET https://api.github.com/repos/{owner}/{repo}/pulls
  */
-export async function getRepoPRs(
+// export async function getRepoPRs(
+//   repo: string
+// ): Promise<RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]> {
+//   const accessToken = await getGithubAccessToken();
+//   console.log("accessToken", accessToken);
+//   if (!accessToken) {
+//     return [];
+//   }
+//   const octokit = new Octokit({
+//     auth: accessToken as string,
+//   });
+//   const response = await octokit.request(`GET /repos/${repo}/pulls`);
+//   console.log("getRepoPRs response", response.data);
+//   return response.data;
+// }
+
+/**
+ * Get repository README from GitHub
+ * @param repo Repository name in the format "owner/repo"
+ * @returns Repository README content
+ *
+ * API: GET https://api.github.com/repos/{owner}/{repo}/readme
+ */
+export async function getRepoReadme(
   repo: string
-): Promise<RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]> {
+): Promise<
+  RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
+> {
   const accessToken = await getGithubAccessToken();
   console.log("accessToken", accessToken);
   if (!accessToken) {
-    return [];
+    return null;
   }
   const octokit = new Octokit({
     auth: accessToken as string,
   });
-  const response = await octokit.request(`GET /repos/${repo}/pulls`);
-  console.log("getRepoPRs response", response.data);
+  const response = await octokit.request(`GET /repos/${repo}/readme`);
+  console.log("getRepoReadme response", response.data);
   return response.data;
 }
