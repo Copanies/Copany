@@ -1,0 +1,20 @@
+-- Migration number: 0003 	 2025-05-13T08:22:19.770Z
+-- npx wrangler d1 migrations create DB create_contribution_table
+-- Create new table, add organization_avatar_url field
+-- CREATE TABLE Contribution (
+--   id INTEGER PRIMARY KEY,
+--   copany_id INTEGER,
+--   pr_title TEXT,
+--   pr_diff TEXT,
+--   pr_url TEXT,
+--   pr_score INTEGER,
+--   pr_assess_status TEXT,
+--   pr_created_by_id INTEGER,
+--   pr_created_by_name TEXT,
+--   pr_created_by_avatar_url TEXT,
+--   pr_created_by_html_url TEXT,
+--   pr_created_at TEXT,
+--   pr_updated_at TEXT,
+--   created_at TEXT,
+--   updated_at TEXT
+-- );

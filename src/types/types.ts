@@ -18,3 +18,25 @@ export interface Copany {
 export interface CopanyWithUser extends Copany {
   created_by_name: string | null;
 }
+
+// export interface CopanyPR {
+//   id: number;
+//   title: string;
+//   created_at: string;
+//   updated_at: string;
+//   user: GithubUser;
+//   url: string;
+//   html_url: string;
+//   diff_url: string;
+//   issue_url: string;
+//   state: string;
+//   diff: string;
+// }
+
+// export interface GithubUser {
+//   id: string;
+//   login: string;
+//   avatar_url: string;
+//   name: string;
+//   html_url: string;
+// }

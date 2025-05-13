@@ -121,4 +121,31 @@ export class DatabaseService {
     console.log("results", results);
     return results[0].access_token;
   }
+
+  // async getGithubUser(githubId: string) {
+  //   const { results: accounts } = await this.db
+  //     .prepare(
+  //       "SELECT * FROM accounts WHERE provider = 'github' AND providerAccountId = ?"
+  //     )
+  //     .bind(githubId)
+  //     .all();
+  //   if (accounts.length === 0) {
+  //     return null;
+  //   }
+
+  //   const account = accounts[0];
+  //   const { results: users } = await this.db
+  //     .prepare("SELECT * FROM users WHERE id = ?")
+  //     .bind(account.userId)
+  //     .all();
+  //   if (users.length === 0) {
+  //     return null;
+  //   }
+
+  //   return {
+  //     id: String(account.userId),
+  //     avatar_url: String(users[0].avatar_url),
+  //     name: String(users[0].name),
+  //   };
+  // }
 }
