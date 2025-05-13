@@ -1,10 +1,19 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["local-origin.dev", "*.local-origin.dev"],
   /* config options here */
   images: {
     domains: ["www.w3schools.com", "avatars.githubusercontent.com"],
+  },
+  webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "@": path.resolve(__dirname, "src"),
+    };
+    return config;
   },
 };
 
