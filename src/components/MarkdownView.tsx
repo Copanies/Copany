@@ -6,7 +6,7 @@ declare global {
   interface Window {
     marked: {
       parse: (input: string) => string;
-      setOptions?: (options: any) => void;
+      setOptions?: (options: { headerIds: boolean; gfm: boolean }) => void;
     };
   }
 }
