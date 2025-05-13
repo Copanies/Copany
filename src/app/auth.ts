@@ -12,9 +12,33 @@ const authResult = async (): Promise<NextAuthResult> => {
           .GITHUB_CLIENT_ID,
         clientSecret: (await getCloudflareContext({ async: true })).env
           .GITHUB_CLIENT_SECRET,
+        authorization: { params: { scope: "read:user read:org" } },
       }),
     ],
     adapter: D1Adapter((await getCloudflareContext({ async: true })).env.DB),
+    callbacks: {
+      async signIn({ account }) {
+        if (account?.provider === "github" && account?.access_token) {
+          // Manually update the scope and access_token fields in D1
+          const db = (await getCloudflareContext({ async: true })).env.DB;
+          await db
+            .prepare(
+              `
+            UPDATE accounts
+            SET scope = ?, access_token = ?
+            WHERE provider = 'github' AND providerAccountId = ?
+          `
+            )
+            .bind(
+              account.scope,
+              account.access_token,
+              account.providerAccountId
+            )
+            .run();
+        }
+        return true;
+      },
+    },
   });
 };
 
