@@ -1,8 +1,8 @@
 "use client";
 import { useEffect } from "react";
-import { CopanyWithUser } from "../types/types";
+import { CopanyWithUser } from "@/types/types";
 import { useState } from "react";
-import { deleteCopany, getCopanies } from "../services/copanyFuncs";
+import { deleteCopany, getCopanies } from "@/services/copanyFuncs";
 import Image from "next/image";
 import CreateCopanyView from "./CreateCopanyView";
 import { useRouter } from "next/navigation";

@@ -1,4 +1,4 @@
-import { auth, signOut, signIn } from "../app/auth";
+import { auth, signOut, signIn } from "@/app/auth";
 import { updateRecord } from "@auth/d1-adapter";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import Image from "next/image";
