@@ -15,17 +15,11 @@
 		"@auth/d1-adapter": "^1.9.0",
 		"@octokit/rest": "^21.1.1",
 		"@opennextjs/cloudflare": "~1.0.0-beta.0 || ^1.0.0",
-		"github-markdown-css": "^5.8.1",
 		"next": "15.3.1",
 		"next-auth": "^5.0.0-beta.27",
 		"octokit": "^4.1.3",
-		"prism-themes": "^1.9.0",
 		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
-		"react-markdown": "^10.1.0",
-		"rehype-prism-plus": "^2.0.1",
-		"rehype-raw": "^7.0.0",
-		"remark-gfm": "^4.0.1"
+		"react-dom": "^19.1.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250506.0",

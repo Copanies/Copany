@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClientSessionProvider } from "./providers";
 import { auth } from "@/app/auth";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"
+          strategy="beforeInteractive"
+          id="marked-script"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased ${inter.className}`}
       >
