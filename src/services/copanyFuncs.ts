@@ -1,6 +1,6 @@
 "use server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { DatabaseService } from "@/services/DatabaseService";
+import { DatabaseService } from "@/services/databaseService";
 import { Copany, CopanyWithUser } from "@/types/types";
 import { Octokit } from "@octokit/rest";
 import type { RestEndpointMethodTypes } from "@octokit/rest";

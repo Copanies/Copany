@@ -1,6 +1,6 @@
 import MarkdownView from "@/components/MarkdownView";
-import { getRepoReadme } from "@/services/CopanyFuncs";
-import { getCopany } from "@/services/CopanyFuncs";
+import { getRepoReadme } from "@/services/copanyFuncs";
+import { getCopany } from "@/services/copanyFuncs";
 import Image from "next/image";
 
 const decodeGitHubContent = (base64String: string): string => {

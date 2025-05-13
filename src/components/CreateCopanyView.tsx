@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import ChevronDownIcon from "@/app/chevron.down.png";
-import { createCopany } from "@/services/CopanyFuncs";
-import { getUserOrg } from "@/services/CopanyFuncs";
-import { getOrgPublicRepos } from "@/services/CopanyFuncs";
+import { createCopany } from "@/services/copanyFuncs";
+import { getUserOrg } from "@/services/copanyFuncs";
+import { getOrgPublicRepos } from "@/services/copanyFuncs";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 export default function CreateCopanyView() {
