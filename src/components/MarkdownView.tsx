@@ -128,6 +128,18 @@ export default function MarkdownView({ content }: { content: string }) {
         .markdown-content img {
           max-width: 100%;
           box-sizing: border-box;
+          margin-right: 0px;
+          margin-bottom: 0px;
+        }
+
+        .markdown-content img[src*="badge.svg"],
+        .markdown-content img[src*="badges.io"],
+        .markdown-content img[src*="img.shields.io"],
+        .markdown-content img[src*="shields.io"] {
+          padding: 0px;
+          margin: 0 0px 0px 0;
+          display: inline-block;
+          vertical-align: middle;
         }
 
         .markdown-content ul,
@@ -266,6 +278,36 @@ export default function MarkdownView({ content }: { content: string }) {
           .markdown-content h2 {
             border-bottom-color: #30363d;
           }
+        }
+
+        /* Badge container style optimization */
+        .markdown-content p:has(img[src*="badge.svg"]),
+        .markdown-content p:has(img[src*="badges.io"]),
+        .markdown-content p:has(img[src*="img.shields.io"]),
+        .markdown-content p:has(img[src*="shields.io"]) {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 20px;
+        }
+
+        /* Compatible badge arrangement */
+        .markdown-content p img[src*="badge.svg"],
+        .markdown-content p img[src*="badges.io"],
+        .markdown-content p img[src*="img.shields.io"],
+        .markdown-content p img[src*="shields.io"] {
+          display: inline-block;
+          margin: 0px;
+          vertical-align: middle;
+        }
+
+        /* Adjacent badge style */
+        .markdown-content p a + a img[src*="badge.svg"],
+        .markdown-content p a + a img[src*="badges.io"],
+        .markdown-content p a + a img[src*="img.shields.io"],
+        .markdown-content p a + a img[src*="shields.io"] {
+          margin-left: 2px;
         }
       `}</style>
     </div>
