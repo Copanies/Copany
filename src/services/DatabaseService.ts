@@ -1,4 +1,4 @@
-import { Copany } from "@/types/types";
+import { Copany } from "../types/types";
 
 export class DatabaseService {
   constructor(private db: D1Database) {}

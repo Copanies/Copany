@@ -1,10 +1,10 @@
 "use server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { DatabaseService } from "@/services/databaseService";
-import { Copany, CopanyWithUser } from "@/types/types";
+import { DatabaseService } from "./databaseService";
+import { Copany, CopanyWithUser } from "../types/types";
 import { Octokit } from "@octokit/rest";
 import type { RestEndpointMethodTypes } from "@octokit/rest";
-import { auth, signIn } from "@/app/auth";
+import { auth, signIn } from "../app/auth";
 
 /**
  * Get all company information
