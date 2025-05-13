@@ -14,7 +14,7 @@ export default function MarkdownView({ content }: { content: string }) {
   const [html, setHtml] = useState("");
   const [isMarkedLoaded, setIsMarkedLoaded] = useState(false);
 
-  // 检查 marked 是否已加载
+  // Check if marked is loaded
   useEffect(() => {
     const checkMarkedLoaded = () => {
       if (typeof window !== "undefined" && window.marked) {
@@ -25,23 +25,23 @@ export default function MarkdownView({ content }: { content: string }) {
       return false;
     };
 
-    // 立即检查一次
+    // Check immediately
     if (!checkMarkedLoaded()) {
-      // 如果没有加载，设置一个轮询来检查
+      // If not loaded, set up polling
       const interval = setInterval(() => {
         if (checkMarkedLoaded()) {
           clearInterval(interval);
         }
       }, 100);
 
-      // 最多轮询 3 秒
+      // Poll for max 3 seconds
       setTimeout(() => clearInterval(interval), 3000);
 
       return () => clearInterval(interval);
     }
   }, []);
 
-  // 当 marked 加载完成或内容变化时，重新渲染 Markdown
+  // Re-render Markdown when marked is loaded or content changes
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
