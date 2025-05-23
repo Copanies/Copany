@@ -1,5 +1,6 @@
-import MarkdownView from "@/components/MarkdownView";
-import { getRepoReadme } from "@/services/copanyFuncs";
+import MarkdownView from "@/components/commons/MarkdownView";
+import TabView from "@/components/commons/TabView";
+import { getRepoPRs, getRepoReadme } from "@/services/copanyFuncs";
 import { getCopany } from "@/services/copanyFuncs";
 import Image from "next/image";
 
@@ -22,9 +23,11 @@ export default async function CopanyDetailView({
   try {
     const copany = await getCopany(Number(id));
     console.log("copany", copany.name);
-    // const prs = await getRepoPRs(copany.name);
+    const prs = await getRepoPRs(copany.name);
+    // const prsDetails = await Promise.all(prs.map((pr) => getPRDetails(pr)));
     const readme = await getRepoReadme(copany.name);
     console.log(decodeGitHubContent(readme?.content || ""));
+
     return (
       <div className="p-8 max-w-screen-lg mx-auto gap-8 flex flex-col">
         <div className="flex flex-col gap-1">
@@ -39,8 +42,22 @@ export default async function CopanyDetailView({
           <p className="">{copany.description}</p>
           <p className="">{copany.github_url}</p>
         </div>
-        <MarkdownView content={decodeGitHubContent(readme?.content || "")} />
-        {/* <pre>{JSON.stringify(prs, null, 2)}</pre> */}
+        <TabView
+          tabs={[
+            {
+              label: "README",
+              content: (
+                <MarkdownView
+                  content={decodeGitHubContent(readme?.content || "")}
+                />
+              ),
+            },
+            {
+              label: "Pull Requests",
+              content: <pre>{JSON.stringify(prs, null, 2)}</pre>,
+            },
+          ]}
+        />
       </div>
     );
   } catch (error) {

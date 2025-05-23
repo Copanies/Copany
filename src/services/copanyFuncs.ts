@@ -154,7 +154,6 @@ export async function getGithubAccessToken() {
   );
   return await apiService.getAccessToken(session.user.id);
 }
-
 // MARK: --- GitHub API ---
 
 /**
@@ -255,20 +254,64 @@ export async function getOrgPublicRepos(
  *
  * API: GET https://api.github.com/repos/{owner}/{repo}/pulls
  */
-// export async function getRepoPRs(
-//   repo: string
-// ): Promise<RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]> {
+export async function getRepoPRs(
+  repo: string
+): Promise<RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]> {
+  const accessToken = await getGithubAccessToken();
+  console.log("accessToken", accessToken);
+  if (!accessToken) {
+    return [];
+  }
+  const octokit = new Octokit({
+    auth: accessToken as string,
+  });
+  const response = await octokit.request(`GET /repos/${repo}/pulls`);
+  console.log("getRepoPRs response", response.data);
+  return response.data;
+}
+
+// export async function getPRDetails(
+//   pr: RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
+// ): Promise<CopanyPR | null> {
 //   const accessToken = await getGithubAccessToken();
 //   console.log("accessToken", accessToken);
 //   if (!accessToken) {
-//     return [];
+//     return null;
 //   }
+//   const apiService = new DatabaseService(
+//     (await getCloudflareContext({ async: true })).env.DB
+//   );
+//   const user = await apiService.getGithubUser(String(pr.user?.id));
+//   if (!user) {
+//     return null;
+//   }
+//   console.log("user", user);
 //   const octokit = new Octokit({
 //     auth: accessToken as string,
 //   });
-//   const response = await octokit.request(`GET /repos/${repo}/pulls`);
-//   console.log("getRepoPRs response", response.data);
-//   return response.data;
+//   const diffResponse = await octokit.request(
+//     `GET /repos/${pr.base.repo.full_name}/pulls/${pr.number}/files`
+//   );
+//   const diffText = diffResponse.data
+//     .map(
+//       (
+//         file: RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]["files"][0]
+//       ) => file.patch
+//     )
+//     .join("\n");
+//   console.log("diffText", diffText);
+//   const copanyPR: CopanyPR = {
+//     ...pr,
+//     diff: diffText,
+//     user: {
+//       id: user.id,
+//       login: String(pr.user?.login),
+//       avatar_url: user.avatar_url,
+//       name: user.name,
+//       html_url: String(pr.user?.html_url),
+//     },
+//   };
+//   return copanyPR;
 // }
 
 /**
