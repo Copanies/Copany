@@ -365,6 +365,25 @@ export async function getAllIssues(copanyId: number): Promise<Issue[]> {
   }));
 }
 
+export async function getIssue(id: number): Promise<Issue> {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  const issue = await apiService.getIssueById(id);
+  return {
+    id: Number(issue.id),
+    copany_id: Number(issue.copany_id),
+    title: String(issue.title),
+    description: String(issue.description),
+    url: String(issue.url),
+    state: String(issue.state),
+    created_by_id: String(issue.created_by_id),
+    created_at: String(issue.created_at),
+    updated_at: String(issue.updated_at),
+    closed_at: String(issue.closed_at),
+  };
+}
+
 /**
  * Create an issue for a specific company
  * @param issue Issue information
@@ -377,4 +396,18 @@ export async function createIssue(
     (await getCloudflareContext({ async: true })).env.DB
   );
   return await apiService.createIssue(issue);
+}
+
+export async function updateIssue(issue: Partial<Issue>) {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  return await apiService.updateIssue(issue);
+}
+
+export async function deleteIssue(id: number) {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  return await apiService.deleteIssue(id);
 }

@@ -3,15 +3,22 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import "@milkdown/theme-nord/style.css";
-import { createIssue, getAllIssues } from "@/services/copanyFuncs";
+import { createIssue, getAllIssues, deleteIssue } from "@/services/copanyFuncs";
 import Modal from "@/components/commons/Modal";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
 
 export default function IssuesView({ copanyId }: { copanyId: number }) {
   const [issues, setIssues] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [contextMenu, setContextMenu] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    issueId: number;
+  }>({ show: false, x: 0, y: 0, issueId: 0 });
+  const router = useRouter();
   // 加载 issues 的函数
   const loadIssues = useCallback(async () => {
     try {
@@ -36,13 +43,52 @@ export default function IssuesView({ copanyId }: { copanyId: number }) {
     loadIssues();
   }, [loadIssues]);
 
+  // 处理删除 issue
+  const handleDeleteIssue = useCallback(
+    async (issueId: number) => {
+      try {
+        await deleteIssue(issueId);
+        loadIssues(); // 重新加载列表
+        setContextMenu({ show: false, x: 0, y: 0, issueId: 0 }); // 关闭菜单
+      } catch (error) {
+        console.error("Error deleting issue:", error);
+      }
+    },
+    [loadIssues]
+  );
+
+  // 处理右键菜单
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, issueId: number) => {
+      e.preventDefault();
+      setContextMenu({
+        show: true,
+        x: e.clientX,
+        y: e.clientY,
+        issueId,
+      });
+    },
+    []
+  );
+
+  // 关闭右键菜单
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu({ show: false, x: 0, y: 0, issueId: 0 });
+  }, []);
+
+  // 创建菜单项
+  const contextMenuItems: ContextMenuItem[] = [
+    {
+      label: "Delete Issue",
+      onClick: () => handleDeleteIssue(contextMenu.issueId),
+      className: "text-gray-700 dark:text-gray-300",
+    },
+  ];
+
   return (
     <div>
       {/* 顶部操作栏 */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Issues
-        </h1>
         <button
           onClick={() => setIsModalOpen(true)}
           className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2"
@@ -57,14 +103,29 @@ export default function IssuesView({ copanyId }: { copanyId: number }) {
           <div className="text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
       ) : (
-        <div className="">
+        <div className="relative">
           {issues.map((issue) => (
             <div key={issue.id} className="">
-              <div className="text-md text-gray-900 dark:text-gray-100 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+              <div
+                className="text-md text-gray-900 dark:text-gray-100 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                onClick={() =>
+                  router.push(`/copany/${copanyId}/issue/${issue.id}`)
+                }
+              >
                 {issue.title}
               </div>
             </div>
           ))}
+
+          {/* 右键菜单 */}
+          <ContextMenu
+            show={contextMenu.show}
+            x={contextMenu.x}
+            y={contextMenu.y}
+            items={contextMenuItems}
+            onClose={handleCloseContextMenu}
+          />
         </div>
       )}
 

@@ -131,6 +131,13 @@ export class DatabaseService {
     return results;
   }
 
+  async getIssueById(id: number) {
+    const { results } = await this.db
+      .prepare("SELECT * FROM issues WHERE id = ?")
+      .bind(id)
+      .all();
+    return results[0];
+  }
   async createIssue(data: Omit<Issue, "id" | "created_at" | "updated_at">) {
     const now = new Date().toISOString();
     return await this.db
@@ -147,6 +154,23 @@ export class DatabaseService {
         now,
         now
       )
+      .run();
+  }
+
+  async updateIssue(data: Partial<Issue>) {
+    const now = new Date().toISOString();
+    return await this.db
+      .prepare(
+        "UPDATE issues SET title = ?, description = ?, updated_at = ? WHERE id = ?"
+      )
+      .bind(data.title, data.description, now, data.id)
+      .run();
+  }
+
+  async deleteIssue(id: number) {
+    return await this.db
+      .prepare("DELETE FROM issues WHERE id = ?")
+      .bind(id)
       .run();
   }
 }
