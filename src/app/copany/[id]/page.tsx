@@ -1,6 +1,6 @@
 import MarkdownView from "@/components/commons/MarkdownView";
 import TabView from "@/components/commons/TabView";
-import { getRepoPRs, getRepoReadme } from "@/services/copanyFuncs";
+import { getRepoReadme } from "@/services/copanyFuncs";
 import { getCopany } from "@/services/copanyFuncs";
 import Image from "next/image";
 import IssuesView from "./IssuesView";
@@ -24,7 +24,7 @@ export default async function CopanyDetailView({
   try {
     const copany = await getCopany(Number(id));
     console.log("copany", copany.name);
-    const prs = await getRepoPRs(copany.name);
+    // const prs = await getRepoPRs(copany.name);
     // const prsDetails = await Promise.all(prs.map((pr) => getPRDetails(pr)));
     const readme = await getRepoReadme(copany.name);
     console.log(decodeGitHubContent(readme?.content || ""));
@@ -57,10 +57,10 @@ export default async function CopanyDetailView({
               label: "Cooperate",
               content: <IssuesView copanyId={Number(id)} />,
             },
-            {
-              label: "Pull Requests",
-              content: <pre>{JSON.stringify(prs, null, 2)}</pre>,
-            },
+            // {
+            //   label: "Pull Requests",
+            //   content: <pre>{JSON.stringify(prs, null, 2)}</pre>,
+            // },
           ]}
         />
       </div>
