@@ -2,7 +2,11 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["local-origin.dev", "*.local-origin.dev"],
+  allowedDevOrigins: [
+    "local-origin.dev",
+    "*.local-origin.dev",
+    "https://fonts.gstatic.com",
+  ],
   /* config options here */
   images: {
     domains: ["www.w3schools.com", "avatars.githubusercontent.com"],

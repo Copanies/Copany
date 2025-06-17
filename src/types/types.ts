@@ -19,6 +19,19 @@ export interface CopanyWithUser extends Copany {
   created_by_name: string | null;
 }
 
+export interface Issue {
+  id: number;
+  copany_id: number;
+  title: string;
+  description: string;
+  url: string;
+  state: string;
+  created_by_id: string;
+  created_at: string;
+  updated_at: string;
+  closed_at: string;
+}
+
 // export interface CopanyPR {
 //   id: number;
 //   title: string;

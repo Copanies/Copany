@@ -1,5 +1,5 @@
-import CopanyListView from "@/components/CopanyListView";
-import UserLoginView from "@/components/UserLoginView";
+import CopanyListView from "@/app/CopanyListView";
+import UserLoginView from "@/app/UserLoginView";
 
 export default async function Home() {
   return (

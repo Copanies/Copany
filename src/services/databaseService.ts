@@ -1,8 +1,8 @@
-import { Copany } from "@/types/types";
+import { Copany, Issue } from "@/types/types";
 
 export class DatabaseService {
   constructor(private db: D1Database) {}
-  async getAllCopaniesWithUser() {
+  async getAllCopanies() {
     const { results } = await this.db
       .prepare(
         `
@@ -23,7 +23,7 @@ export class DatabaseService {
     return results;
   }
 
-  async getById(id: number) {
+  async getCopanyById(id: number) {
     const { results } = await this.db
       .prepare("SELECT * FROM Copany WHERE id = ?")
       .bind(id)
@@ -31,7 +31,7 @@ export class DatabaseService {
     return results[0];
   }
 
-  async create(data: Omit<Copany, "id" | "created_at" | "updated_at">) {
+  async createCopany(data: Omit<Copany, "id" | "created_at" | "updated_at">) {
     const now = new Date().toISOString();
     return await this.db
       .prepare(
@@ -59,14 +59,14 @@ export class DatabaseService {
       .run();
   }
 
-  async delete(id: number) {
+  async deleteCopany(id: number) {
     return await this.db
       .prepare("DELETE FROM Copany WHERE id = ?")
       .bind(id)
       .run();
   }
 
-  async update(
+  async updateCopany(
     id: number,
     data: Partial<Omit<Copany, "id" | "created_at" | "updated_at">>
   ) {
@@ -122,30 +122,31 @@ export class DatabaseService {
     return results[0].access_token;
   }
 
-  // async getGithubUser(githubId: string) {
-  //   const { results: accounts } = await this.db
-  //     .prepare(
-  //       "SELECT * FROM accounts WHERE provider = 'github' AND providerAccountId = ?"
-  //     )
-  //     .bind(githubId)
-  //     .all();
-  //   if (accounts.length === 0) {
-  //     return null;
-  //   }
+  // Issues
+  async getAllIssues(copanyId: number) {
+    const { results } = await this.db
+      .prepare("SELECT * FROM issues WHERE copany_id = ?")
+      .bind(copanyId)
+      .all();
+    return results;
+  }
 
-  //   const account = accounts[0];
-  //   const { results: users } = await this.db
-  //     .prepare("SELECT * FROM users WHERE id = ?")
-  //     .bind(account.userId)
-  //     .all();
-  //   if (users.length === 0) {
-  //     return null;
-  //   }
-
-  //   return {
-  //     id: String(account.userId),
-  //     avatar_url: String(users[0].avatar_url),
-  //     name: String(users[0].name),
-  //   };
-  // }
+  async createIssue(data: Omit<Issue, "id" | "created_at" | "updated_at">) {
+    const now = new Date().toISOString();
+    return await this.db
+      .prepare(
+        "INSERT INTO issues (copany_id, title, description, url, state, created_by_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      )
+      .bind(
+        data.copany_id,
+        data.title,
+        data.description,
+        data.url,
+        data.state,
+        data.created_by_id,
+        now,
+        now
+      )
+      .run();
+  }
 }

@@ -3,6 +3,7 @@ import TabView from "@/components/commons/TabView";
 import { getRepoPRs, getRepoReadme } from "@/services/copanyFuncs";
 import { getCopany } from "@/services/copanyFuncs";
 import Image from "next/image";
+import IssuesView from "./IssuesView";
 
 const decodeGitHubContent = (base64String: string): string => {
   try {
@@ -51,6 +52,10 @@ export default async function CopanyDetailView({
                   content={decodeGitHubContent(readme?.content || "")}
                 />
               ),
+            },
+            {
+              label: "Cooperate",
+              content: <IssuesView copanyId={Number(id)} />,
             },
             {
               label: "Pull Requests",

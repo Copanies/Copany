@@ -1,6 +1,6 @@
 "use server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { Copany, CopanyWithUser } from "@/types/types";
+import { Copany, CopanyWithUser, Issue } from "@/types/types";
 import { Octokit } from "@octokit/rest";
 import type { RestEndpointMethodTypes } from "@octokit/rest";
 import { auth, signIn } from "@/app/auth";
@@ -14,7 +14,7 @@ export async function getCopanies(): Promise<CopanyWithUser[]> {
   const apiService = new DatabaseService(
     (await getCloudflareContext({ async: true })).env.DB
   );
-  const copanies = await apiService.getAllCopaniesWithUser();
+  const copanies = await apiService.getAllCopanies();
   const typedCopanies: CopanyWithUser[] = copanies
     .filter((copany) => copany?.id !== undefined)
     .map((copany) => ({
@@ -50,7 +50,7 @@ export async function updateCopany(
   const apiService = new DatabaseService(
     (await getCloudflareContext({ async: true })).env.DB
   );
-  return await apiService.update(id, copany);
+  return await apiService.updateCopany(id, copany);
 }
 
 /**
@@ -94,7 +94,7 @@ export async function createCopany(url: string) {
     main_language: githubRepoInfoResponse.language || "Test Main Language",
     license: githubRepoInfoResponse.license?.key || "Test License",
   };
-  return await apiService.create(copany);
+  return await apiService.createCopany(copany);
 }
 
 /**
@@ -106,7 +106,7 @@ export async function deleteCopany(id: number) {
   const apiService = new DatabaseService(
     (await getCloudflareContext({ async: true })).env.DB
   );
-  return await apiService.delete(id);
+  return await apiService.deleteCopany(id);
 }
 
 /**
@@ -118,7 +118,7 @@ export async function getCopany(id: number): Promise<Copany> {
   const apiService = new DatabaseService(
     (await getCloudflareContext({ async: true })).env.DB
   );
-  const copany = await apiService.getById(id);
+  const copany = await apiService.getCopanyById(id);
   if (!copany) {
     throw new Error("Copany not found");
   }
@@ -337,4 +337,44 @@ export async function getRepoReadme(
   const response = await octokit.request(`GET /repos/${repo}/readme`);
   console.log("getRepoReadme response", response.data);
   return response.data;
+}
+
+// MARK: --- Issues ---
+
+/**
+ * Get issues for a specific company
+ * @param copanyId Company ID
+ * @returns List of issues
+ */
+export async function getAllIssues(copanyId: number): Promise<Issue[]> {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  const issues = await apiService.getAllIssues(copanyId);
+  return issues.map((issue) => ({
+    id: Number(issue.id),
+    copany_id: Number(issue.copany_id),
+    title: String(issue.title),
+    description: String(issue.description),
+    url: String(issue.url),
+    state: String(issue.state),
+    created_by_id: String(issue.created_by_id),
+    created_at: String(issue.created_at),
+    updated_at: String(issue.updated_at),
+    closed_at: String(issue.closed_at),
+  }));
+}
+
+/**
+ * Create an issue for a specific company
+ * @param issue Issue information
+ * @returns Created issue information
+ */
+export async function createIssue(
+  issue: Omit<Issue, "id" | "created_at" | "updated_at">
+) {
+  const apiService = new DatabaseService(
+    (await getCloudflareContext({ async: true })).env.DB
+  );
+  return await apiService.createIssue(issue);
 }
