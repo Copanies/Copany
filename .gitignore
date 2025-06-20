@@ -15,6 +15,8 @@
 
 # production
 /build
+.env.build.yaml
+.env.run.yaml
 
 # misc
 .DS_Store
@@ -34,10 +36,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# OpenNext
-/.open-next
-
-# wrangler files
-.wrangler
-.dev.vars*
