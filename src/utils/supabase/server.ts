@@ -39,7 +39,7 @@ export async function createClient() {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
-            console.warn("⚠️ 服务器组件调用 setAll, 可忽略");
+            console.warn("⚠️ 服务器组件调用 setAll, 可忽略", error);
           }
         },
       },
