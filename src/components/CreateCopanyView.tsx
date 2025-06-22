@@ -70,7 +70,7 @@ export default function CreateCopanyView() {
   async function handleCreateCopany(e: React.FormEvent) {
     e.preventDefault();
 
-    let repo = orgWithRepos
+    const repo = orgWithRepos
       .find(({ repos }) => repos.find((repo) => repo.id === selectedRepoId))
       ?.repos.find((repo) => repo.id === selectedRepoId);
     if (!repo) {
