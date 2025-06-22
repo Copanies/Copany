@@ -32,6 +32,7 @@ export async function signInWithGitHub() {
     provider: "github",
     options: {
       redirectTo: `${siteUrl!}/auth/callback`,
+      scopes: "read:user read:org",
     },
   });
 
@@ -104,5 +105,46 @@ export async function getCurrentUser(): Promise<User | null> {
     // 捕获任何意外的错误，避免崩溃
     console.error("❌ 获取用户信息异常:", error);
     return null;
+  }
+}
+
+/**
+ * 创建新公司 - Server Action
+ */
+export async function createCopanyAction(
+  name: string,
+  description: string,
+  githubUrl: string
+) {
+  console.log("🏢 开始创建公司:", name);
+
+  try {
+    // 获取当前用户
+    const user = await getCurrentUser();
+    if (!user) {
+      console.error("❌ 用户未登录");
+      throw new Error("用户未登录");
+    }
+
+    // 动态导入 CopanyService 避免循环依赖
+    const { CopanyService } = await import("@/services/copany.service");
+
+    // 创建公司
+    const copany = await CopanyService.createCopany({
+      name,
+      description: description || "",
+      github_url: githubUrl,
+      created_by: user.id,
+    });
+
+    console.log("✅ 公司创建成功:", copany.id);
+    return { success: true, copany };
+  } catch (error) {
+    console.error("❌ 创建公司失败:", error);
+    if (error instanceof Error) {
+      throw new Error(`创建公司失败: ${error.message}`);
+    } else {
+      throw new Error("创建公司失败: 未知错误");
+    }
   }
 }

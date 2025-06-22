@@ -1,6 +1,7 @@
 import CopanyListView from "@/components/CopanyListView";
 import { CopanyService } from "@/services/copany.service";
 import UserLoginView from "@/components/UserLoginView";
+import CreateCopanyView from "@/components/CreateCopanyView";
 
 /**
  * 主页 - 负责数据获取和页面布局
@@ -15,8 +16,9 @@ export default async function Home() {
         <div>
           <h1 className="text-2xl font-bold mb-4">Welcome to Copany</h1>
         </div>
-        <div className="flex flex-col gap-8 pt-2">
+        <div className="flex flex-col gap-4 pt-2">
           <UserLoginView />
+          <CreateCopanyView />
           <CopanyListView copanies={copanies} />
         </div>
       </div>
