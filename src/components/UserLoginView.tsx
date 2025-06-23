@@ -12,26 +12,45 @@ export default function UserLoginView() {
   useEffect(() => {
     const supabase = createClient();
 
-    // 获取初始会话
-    const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+    // 获取初始用户信息（安全验证）
+    const getInitialUser = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error) {
+          console.error("❌ UserLoginView: 获取用户信息时出错:", error);
+        }
+
+        setUser(user);
+      } catch (err) {
+        console.error("❌ UserLoginView: 异常错误:", err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    getInitialSession();
+    getInitialUser();
 
     // 监听认证状态变化
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        setLoading(false);
+      } else if (event === "SIGNED_IN") {
+        // 重新触发用户信息获取
+        getInitialUser();
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
+import { clearGithubTokenCookie } from "@/services/github.service";
 
 /**
  * 认证相关的 Server Actions
@@ -64,6 +65,9 @@ export async function signOut() {
     console.error("❌ 登出失败:", error.message);
     throw new Error(`登出失败: ${error.message}`);
   }
+
+  // 清除 GitHub access token Cookie
+  await clearGithubTokenCookie();
 
   console.log("✅ 用户登出成功");
   redirect("/"); // 这里会抛出 NEXT_REDIRECT，这是正常的

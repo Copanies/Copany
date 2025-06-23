@@ -27,7 +27,6 @@ export default function CreateCopanyView() {
   const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // 监听主题变化，避免 SSR 水化不匹配
   useEffect(() => {
     setIsDarkMode(resolvedTheme === "dark");
   }, [resolvedTheme]);
@@ -107,7 +106,7 @@ export default function CreateCopanyView() {
                 alt="Selected Organization Avatar"
                 width={20}
                 height={20}
-                className="rounded-sm"
+                className="rounded-sm w-4 h-4"
               />
               <span>
                 {
@@ -118,13 +117,14 @@ export default function CreateCopanyView() {
               </span>
             </div>
           ) : (
-            <span>Select Organization</span>
+            <span>Select Project</span>
           )}
           <Image
             src={isDarkMode ? ChevronDownIconDark : ChevronDownIcon}
             alt="Chevron Down"
             width={12}
             height={12}
+            style={{ width: "auto", height: "auto" }}
             className={`text-gray-500 ${isDropdownOpen ? "rotate-180" : ""}`}
           />
         </button>
@@ -148,7 +148,7 @@ export default function CreateCopanyView() {
                           alt="Organization Avatar"
                           width={20}
                           height={20}
-                          className="rounded-sm"
+                          className="rounded-sm w-4 h-4"
                         />
                         <span>{org.org.login}</span>
                       </div>

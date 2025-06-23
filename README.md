@@ -85,3 +85,63 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## GitHub 认证与 Token 持久化
+
+### 概述
+
+本应用使用 Supabase OAuth 进行 GitHub 登录，并将 GitHub access token 持久化到 Cookie 中，以支持服务端渲染 (SSR) 场景下的 API 调用。
+
+### 实现机制
+
+#### 1. 登录流程
+
+- 用户通过 `signInWithGitHub()` 函数发起 GitHub OAuth 登录
+- OAuth 回调处理 (`/auth/callback`) 将 `provider_token` 保存到 HttpOnly Cookie
+- Cookie 设置：
+  - 名称：`github_access_token`
+  - HttpOnly：true（防止 XSS 攻击）
+  - Secure：生产环境为 true
+  - SameSite：lax
+  - 有效期：7 天
+
+#### 2. Token 获取策略
+
+`getGithubAccessToken()` 函数采用以下优先级策略：
+
+1. 首先尝试从 Supabase session 获取 `provider_token`
+2. 如果 session 中没有 token，则从 Cookie 中读取
+3. 当从 session 获取到 token 时，自动更新 Cookie
+
+#### 3. 登出流程
+
+- `signOut()` 函数会同时清除 Supabase session 和 Cookie
+- 确保完全清理用户认证状态
+
+#### 4. SSR 支持
+
+- 在 SSR 场景下，即使 Supabase session 不可用，也能从 Cookie 读取 token
+- 支持在 `getRepoReadme()` 等服务端函数中访问 GitHub API
+
+### 使用示例
+
+```typescript
+// 在 SSR 组件中使用
+export default async function MyComponent() {
+  const readme = await getRepoReadme("owner/repo");
+  // 函数会自动处理 token 获取，无论是从 session 还是 Cookie
+  return <div>{readme && atob(readme.content)}</div>;
+}
+```
+
+### 安全考虑
+
+- 使用 HttpOnly Cookie 防止客户端 JavaScript 访问 token
+- Cookie 在生产环境中仅通过 HTTPS 传输
+- Token 有效期限制为 7 天，需要重新登录刷新
+
+### 注意事项
+
+- Cookie 只能在 Server Action 或 Route Handler 中修改，页面组件中无法修改
+- GitHub API 调用需要完整的 "owner/repo" 格式路径
+- 系统会自动从 `github_url` 字段解析出正确的仓库路径格式
