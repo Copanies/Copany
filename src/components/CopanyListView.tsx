@@ -1,4 +1,7 @@
+"use client";
 import { Copany } from "@/app/database.types";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -8,11 +11,26 @@ interface CopanyListViewProps {
  * Copany 列表视图组件 - 纯渲染组件
  */
 export default function CopanyListView({ copanies }: CopanyListViewProps) {
+  const router = useRouter();
   return (
     <ul className="space-y-6">
       {copanies.map((copany) => (
         <li key={copany.id} className="space-y-2">
-          <div className="cursor-pointer">
+          <div
+            onClick={() => {
+              router.push(`/copany/${copany.id}`);
+            }}
+            className="cursor-pointer flex flex-col gap-2"
+          >
+            {copany.organization_avatar_url && (
+              <Image
+                src={copany.organization_avatar_url}
+                alt={"Organization Avatar"}
+                className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
+                width={100}
+                height={100}
+              />
+            )}
             <div className="font-medium text-lg">{copany.name}</div>
           </div>
           <div className="">{copany.description}</div>

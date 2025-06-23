@@ -3,6 +3,7 @@ export interface Copany {
   name: string;
   description: string;
   github_url: string;
+  organization_avatar_url: string;
   created_at: string;
   updated_at: string;
   created_by: string;
