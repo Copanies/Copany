@@ -25,7 +25,6 @@ export default function MilkdownEditor({
   const crepeRef = useRef<Crepe | null>(null);
   const onContentChangeRef = useRef(onContentChange);
   const isInitializingRef = useRef(false);
-  const lastInitialContentRef = useRef<string>("");
 
   // 保持 onContentChange 的最新引用
   useEffect(() => {
@@ -46,6 +45,7 @@ export default function MilkdownEditor({
 
       console.log("Creating Crepe editor with content:", initialContent);
 
+      // 创建编辑器
       const crepe = new Crepe({
         root: divRef.current,
         defaultValue: initialContent,
@@ -60,24 +60,42 @@ export default function MilkdownEditor({
         },
       });
 
-      // 监听内容变化
-      crepe.on((listener) => {
-        listener.markdownUpdated((_, markdown: string) => {
-          onContentChangeRef.current(markdown);
-        });
-      });
-
+      // 等待编辑器完全创建
       await crepe.create();
 
-      if (divRef.current) {
-        crepeRef.current = crepe;
-        lastInitialContentRef.current = initialContent;
-        console.log("Crepe editor created successfully");
-      } else {
+      // 验证编辑器是否成功创建
+      if (!divRef.current) {
         await crepe.destroy();
+        return;
       }
+
+      // 设置编辑器引用
+      crepeRef.current = crepe;
+
+      // 延迟设置监听器，确保编辑器完全就绪
+      setTimeout(() => {
+        if (crepeRef.current && divRef.current) {
+          try {
+            crepeRef.current.on((listener) => {
+              listener.markdownUpdated((_, markdown: string) => {
+                if (onContentChangeRef.current) {
+                  onContentChangeRef.current(markdown);
+                }
+              });
+            });
+            console.log("Crepe editor listener set up successfully");
+          } catch (error) {
+            console.error("Error setting up listener:", error);
+          }
+        }
+      }, 100); // 100ms 延迟确保编辑器完全就绪
+
+      console.log("Crepe editor created successfully");
     } catch (error) {
       console.error("Failed to create Crepe editor:", error);
+      if (divRef.current) {
+        divRef.current.innerHTML = "";
+      }
     } finally {
       isInitializingRef.current = false;
     }
@@ -100,62 +118,20 @@ export default function MilkdownEditor({
     }
   }, []);
 
-  // 只在首次挂载或内容真正变化时创建编辑器
+  // 只在挂载时创建编辑器
   useEffect(() => {
-    if (!divRef.current) return;
-
-    // 如果编辑器不存在，创建它
-    if (!crepeRef.current && !isInitializingRef.current) {
+    if (divRef.current && !crepeRef.current && !isInitializingRef.current) {
       createEditor();
     }
-    // 只有在初始内容真的不同时才重新创建编辑器
-    // 避免因为自动保存导致的微小差异而重新创建
-    else if (
-      crepeRef.current &&
-      initialContent !== lastInitialContentRef.current &&
-      Math.abs(initialContent.length - lastInitialContentRef.current.length) >
-        10 // 内容长度差异显著时才重新创建
-    ) {
-      console.log("Significant content change detected, recreating editor");
-      destroyEditor().then(() => {
-        if (divRef.current) {
-          createEditor();
-        }
-      });
-    }
-  }, [initialContent, createEditor, destroyEditor]);
 
-  // 组件卸载时的清理
-  useEffect(() => {
+    // 组件卸载时的清理
     return () => {
       if (crepeRef.current) {
         crepeRef.current.destroy().catch(console.error);
         crepeRef.current = null;
       }
     };
-  }, []);
-
-  // 获取编辑器内容的方法
-  const getContent = useCallback(() => {
-    if (crepeRef.current) {
-      try {
-        return crepeRef.current.getMarkdown();
-      } catch (error) {
-        console.error("Error getting content:", error);
-        return "";
-      }
-    }
-    return "";
-  }, []);
-
-  // 暴露 getContent 方法给父组件使用
-  useEffect(() => {
-    if (divRef.current) {
-      (
-        divRef.current as HTMLDivElement & { getContent?: () => string }
-      ).getContent = getContent;
-    }
-  }, [getContent]);
+  }, []); // 空依赖数组，只在挂载时执行一次
 
   return (
     <>

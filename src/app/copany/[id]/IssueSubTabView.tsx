@@ -90,19 +90,6 @@ export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="h-full flex flex-col gap-3">
-      {/* 顶部操作栏 */}
-      <div className="flex flex-col justify-between items-center mx-4 py-3 px-16 rounded-md border border-[#E7E7E7] dark:border-[#333333]">
-        <div className="font-bold">👋 Want to contribute to Copany?</div>
-        <div className="">
-          If you have a bug or an idea, read the contributing guidelines before
-          opening an issue.
-        </div>
-        <div className="">
-          If you're interested in any of the issues below, reach out to the
-          issue owner to discuss collaboration.
-        </div>
-      </div>
-
       <button
         onClick={() => setIsModalOpen(true)}
         className="cursor-pointer w-[100px] mx-4 px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300"

@@ -2,7 +2,9 @@ import TabView from "@/components/TabView";
 import ReadmeTabView from "./ReadmeTabView";
 import { CopanyService } from "@/services/copany.service";
 import Image from "next/image";
-import CooperateTabView from "./CooperateTabView";
+import ProjectSubTabView from "./ProjectSubTabView";
+import VerticalTabView from "@/components/VerticalTabView";
+import IssueSubTabView from "./IssueSubTabView";
 
 export default async function CopanyDetailView({
   params,
@@ -37,7 +39,20 @@ export default async function CopanyDetailView({
             },
             {
               label: "Cooperate",
-              content: <CooperateTabView copanyId={id} />,
+              content: (
+                <VerticalTabView
+                  tabs={[
+                    {
+                      label: "Issue",
+                      content: <IssueSubTabView copanyId={id} />,
+                    },
+                    {
+                      label: "Project",
+                      content: <ProjectSubTabView copanyId={id} />,
+                    },
+                  ]}
+                />
+              ),
             },
           ]}
         />

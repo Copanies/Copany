@@ -17,6 +17,7 @@ export default function CopanyIssueView({
   const [isSaving, setIsSaving] = useState(false);
   const editorDivRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLoadedRef = useRef(false);
 
   // 获取参数
   const [resolvedParams, setResolvedParams] = useState<{
@@ -37,8 +38,14 @@ export default function CopanyIssueView({
         setIsLoading(true);
         const issueData = await getIssueAction(resolvedParams.issueId);
         setIssue(issueData);
-        setTitle(issueData.title || "");
-        setDescription(issueData.description || "");
+
+        // 只在初次加载时设置内容
+        if (!hasLoadedRef.current) {
+          setTitle(issueData.title || "");
+          setDescription(issueData.description || "");
+          hasLoadedRef.current = true;
+        }
+
         console.log("issue", issueData);
       } catch (error) {
         console.error("Error loading issue:", error);
@@ -64,6 +71,14 @@ export default function CopanyIssueView({
       setDescription(content);
     }, 300); // 300ms 防抖
   }, []);
+
+  // 处理标题变化
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTitle(e.target.value);
+    },
+    []
+  );
 
   // 使用 ref 来获取最新的 title 和 description 值
   const titleRef = useRef(title);
@@ -113,17 +128,6 @@ export default function CopanyIssueView({
           description: currentDescription,
           state: currentIssue.state ?? 0,
         });
-
-        // 更新 issue 状态以反映已保存的内容
-        setIssue((prev) =>
-          prev
-            ? {
-                ...prev,
-                title: currentTitle,
-                description: currentDescription,
-              }
-            : null
-        );
 
         console.log("Auto-save completed successfully");
       } catch (error) {
@@ -209,7 +213,7 @@ export default function CopanyIssueView({
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={handleTitleChange}
             className="w-full bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
             placeholder="Issue title"
             disabled={isSaving}
@@ -223,6 +227,7 @@ export default function CopanyIssueView({
               onContentChange={handleContentChange}
               initialContent={issue?.description || ""}
               isFullScreen={true}
+              key={issue?.id || "loading"}
             />
           </div>
         </div>
