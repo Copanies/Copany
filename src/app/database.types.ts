@@ -12,3 +12,16 @@ export interface Copany {
 export interface CopanyWithUser extends Copany {
   created_by_name: string;
 }
+
+export interface Issue {
+  id: string;
+  created_at: string;
+  copany_id: string | null;
+  title: string | null;
+  description: string | null;
+  state: number | null;
+  created_by: string | null;
+  updated_at: string | null;
+  closed_at: string | null;
+  assignee: string | null;
+}
