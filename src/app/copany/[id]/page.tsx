@@ -29,7 +29,14 @@ export default async function CopanyDetailView({
           />
           <h1 className="text-2xl font-bold">{copany?.name}</h1>
           <p className="">{copany?.description}</p>
-          <p className="">{copany?.github_url}</p>
+          <a
+            href={copany?.github_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            {copany?.github_url}
+          </a>
         </div>
         <TabView
           tabs={[

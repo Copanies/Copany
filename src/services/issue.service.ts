@@ -7,6 +7,7 @@ export class IssueService {
     const { data, error } = await supabase
       .from("issue")
       .select("*")
+      .order("created_at", { ascending: true })
       .eq("copany_id", copanyId);
     if (error) {
       console.error("Error fetching issues:", error);

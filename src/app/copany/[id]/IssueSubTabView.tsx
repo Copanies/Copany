@@ -232,7 +232,7 @@ function IssueForm({
           <button
             type="submit"
             disabled={isSubmitting || title.length === 0}
-            className={`px-4 py-2 text-sm font-medium text-white dark:text-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
               isSubmitting
                 ? "bg-[#383633] dark:bg-[#383633] cursor-not-allowed"
                 : "bg-[#383633] dark:bg-[#383633] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a]"

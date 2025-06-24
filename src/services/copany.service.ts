@@ -10,7 +10,10 @@ export class CopanyService {
    */
   static async getCopanies(): Promise<Copany[]> {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("copany").select("*");
+    const { data, error } = await supabase
+      .from("copany")
+      .select("*")
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Error fetching copanies:", error);
