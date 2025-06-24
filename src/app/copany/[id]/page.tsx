@@ -18,7 +18,7 @@ export default async function CopanyDetailView({
     console.log("copany", copany?.name);
 
     return (
-      <div className="p-8 max-w-screen-xl mx-auto gap-4 flex flex-col">
+      <div className="p-8 max-w-screen-lg mx-auto gap-4 flex flex-col">
         <div className="flex flex-col gap-1">
           <Image
             src={copany?.organization_avatar_url || ""}

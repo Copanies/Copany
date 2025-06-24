@@ -204,7 +204,7 @@ function IssueForm({
             name="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 focus:ring-blue-500 text-xl font-semibold"
+            className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 focus:ring-blue-500 text-xl font-semibold"
             required
             disabled={isSubmitting}
             placeholder="Issue title"
