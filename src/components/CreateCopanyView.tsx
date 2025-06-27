@@ -9,6 +9,8 @@ import {
   getOrgAndReposAction,
 } from "@/actions/copany.actions";
 import { RestEndpointMethodTypes } from "@octokit/rest";
+import Button from "./Button";
+import LoadingView from "./LoadingView";
 
 export default function CreateCopanyView() {
   const { resolvedTheme } = useTheme();
@@ -93,7 +95,7 @@ export default function CreateCopanyView() {
         <button
           type="button"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex items-center gap-2 rounded-md border-1 border-gray-300 px-2 h-fit min-w-[200px] justify-between hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+          className="flex items-center gap-2 rounded-md border-1 border-gray-300 dark:border-gray-700 px-2 py-1 h-fit min-w-[200px] justify-between hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
         >
           {selectedRepoId ? (
             <div className="flex items-center gap-2">
@@ -124,14 +126,16 @@ export default function CreateCopanyView() {
             alt="Chevron Down"
             width={12}
             height={12}
-            style={{ width: "auto", height: "auto" }}
+            style={{ width: "12px", height: "auto" }}
             className={`text-gray-500 ${isDropdownOpen ? "rotate-180" : ""}`}
           />
         </button>
         {isDropdownOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
             {status === "loading" && (
-              <div className="px-2 py-1">Loading...</div>
+              <div className="p-2">
+                <LoadingView type="label" />
+              </div>
             )}
             {status === "failed" && <div className="px-2 py-1">{error}</div>}
             {status === "success" && (
@@ -141,14 +145,14 @@ export default function CreateCopanyView() {
                     <div key={org.org.id}>
                       <div
                         key={org.org.id}
-                        className="flex items-center gap-1 px-2 py-1 border-b border-gray-200 dark:border-gray-700"
+                        className="flex items-center gap-1 px-2 py-2 border-b border-gray-200 dark:border-gray-700"
                       >
                         <Image
                           src={org.org.avatar_url}
                           alt="Organization Avatar"
                           width={20}
                           height={20}
-                          className="rounded-sm w-4 h-4"
+                          className="rounded-sm w-5 h-5"
                         />
                         <span>{org.org.login}</span>
                       </div>
@@ -158,7 +162,7 @@ export default function CreateCopanyView() {
                           .map((repo) => (
                             <div
                               key={repo.id}
-                              className="flex flex-col items-start gap-2 pl-8 px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                              className="flex flex-col items-start gap-2 pl-8 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                               onClick={() => {
                                 setSelectedRepoId(repo.id);
                                 setIsDropdownOpen(false);
@@ -177,12 +181,9 @@ export default function CreateCopanyView() {
         )}
       </div>
 
-      <button
-        className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2 mb-2"
-        type="submit"
-      >
+      <Button className="mb-2" type="submit" variant="primary" size="sm">
         Create Copany
-      </button>
+      </Button>
     </form>
   );
 }

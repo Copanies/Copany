@@ -9,8 +9,10 @@ import {
   deleteIssueAction,
   getIssuesAction,
 } from "@/actions/issue.actions";
-import { Issue } from "@/types/database.types";
+import { Issue, IssueState } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
+import Button from "@/components/Button";
+import LoadingView from "@/components/LoadingView";
 
 export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -90,24 +92,23 @@ export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
   ];
 
   return (
-    <div className="h-full flex flex-col gap-3">
-      <button
+    <div className="min-h-screen flex flex-col gap-3">
+      <Button
         onClick={() => setIsModalOpen(true)}
-        className="cursor-pointer w-[100px] mx-4 px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300"
+        className="w-[100px] mx-4"
+        size="sm"
       >
         New Issue
-      </button>
+      </Button>
 
       {/* Issues 列表 */}
       {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-500 dark:text-gray-400">Loading...</div>
-        </div>
+        <LoadingView type="label" />
       ) : (
         <div className="relative">
           {issues.map((issue) => (
             <div
-              className="flex flex-row items-center gap-1 py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+              className="flex flex-row items-center gap-1 py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
               key={issue.id}
             >
               <IssueStateSelector
@@ -184,7 +185,7 @@ function IssueForm({
         copany_id: copanyId,
         title: title,
         description: description,
-        state: 0,
+        state: IssueState.Backlog,
       });
 
       // 重置表单
@@ -230,25 +231,13 @@ function IssueForm({
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            Cancell
-          </button>
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting || title.length === 0}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-              isSubmitting
-                ? "bg-[#383633] dark:bg-[#383633] cursor-not-allowed"
-                : "bg-[#383633] dark:bg-[#383633] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a]"
-            }`}
+            variant="primary"
           >
             {isSubmitting ? "Creating..." : "Create Issue"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

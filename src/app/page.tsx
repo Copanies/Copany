@@ -2,6 +2,7 @@ import CopanyListView from "@/components/CopanyListView";
 import { CopanyService } from "@/services/copany.service";
 import UserLoginView from "@/components/UserLoginView";
 import CreateCopanyView from "@/components/CreateCopanyView";
+import MainNavigation from "@/components/MainNavigation";
 
 /**
  * 主页 - 负责数据获取和页面布局
@@ -12,7 +13,8 @@ export default async function Home() {
 
   return (
     <main>
-      <div className="p-8">
+      <MainNavigation />
+      <div className="p-8 max-w-screen-lg mx-auto flex flex-col">
         <div>
           <h1 className="text-2xl font-bold mb-4">Welcome to Copany</h1>
         </div>

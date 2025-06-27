@@ -153,7 +153,6 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
             onChange={handleTitleChange}
             className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
             placeholder="Issue title"
-            disabled={isSaving}
           />
         </div>
 
@@ -167,15 +166,6 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
               key={issueData?.id || "loading"}
             />
           </div>
-        </div>
-
-        {/* 保存状态提示 */}
-        <div className="flex justify-end">
-          {isSaving && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              正在保存...
-            </div>
-          )}
         </div>
       </div>
     </div>

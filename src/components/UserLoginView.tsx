@@ -4,6 +4,8 @@ import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Image from "next/image";
+import Button from "./Button";
+import LoadingView from "./LoadingView";
 
 export default function UserLoginView() {
   const [user, setUser] = useState<User | null>(null);
@@ -54,7 +56,11 @@ export default function UserLoginView() {
   }, []);
 
   if (loading) {
-    return <div className="p-4">加载中...</div>;
+    return (
+      <div className="p-2 w-32">
+        <LoadingView type="label" />
+      </div>
+    );
   }
 
   return (
@@ -89,24 +95,18 @@ export default function UserLoginView() {
         </div>
       ) : (
         <form action={signInWithGitHub}>
-          <button
-            type="submit"
-            className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 px-2"
-          >
+          <Button type="submit" variant="primary" size="sm">
             Sign in with Github
-          </button>
+          </Button>
         </form>
       )}
 
       {user && (
         <div>
           <form action={signOut}>
-            <button
-              type="submit"
-              className="cursor-pointer rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 border-1 border-gray-300 mt-2 px-2"
-            >
+            <Button type="submit" variant="primary" size="sm" className="mt-2">
               Sign out
-            </button>
+            </Button>
           </form>
         </div>
       )}
