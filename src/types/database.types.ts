@@ -25,3 +25,13 @@ export interface Issue {
   closed_at: string | null;
   assignee: string | null;
 }
+
+// Issue 状态枚举
+export enum IssueState {
+  Backlog = 1,
+  Todo = 2,
+  InProgress = 3,
+  Done = 4,
+  Canceled = 5,
+  Duplicate = 6,
+}

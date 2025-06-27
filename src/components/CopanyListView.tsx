@@ -1,5 +1,5 @@
 "use client";
-import { Copany } from "@/app/database.types";
+import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 

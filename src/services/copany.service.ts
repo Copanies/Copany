@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { Copany } from "@/app/database.types";
+import { Copany } from "@/types/database.types";
 
 /**
  * Copany 数据服务 - 处理所有与 Copany 相关的数据操作
@@ -13,7 +13,7 @@ export class CopanyService {
     const { data, error } = await supabase
       .from("copany")
       .select("*")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching copanies:", error);

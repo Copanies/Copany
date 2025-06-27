@@ -9,7 +9,8 @@ import {
   deleteIssueAction,
   getIssuesAction,
 } from "@/actions/issue.actions";
-import { Issue } from "@/app/database.types";
+import { Issue } from "@/types/database.types";
+import IssueStateSelector from "@/components/IssueStateSelector";
 
 export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -105,9 +106,17 @@ export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
       ) : (
         <div className="relative">
           {issues.map((issue) => (
-            <div key={issue.id} className="">
+            <div
+              className="flex flex-row items-center gap-1 py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+              key={issue.id}
+            >
+              <IssueStateSelector
+                issueId={issue.id}
+                initialState={issue.state}
+                showText={false}
+              />
               <div
-                className="text-md text-gray-900 dark:text-gray-100 py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                className="text-base text-gray-900 dark:text-gray-100 text-center"
                 onContextMenu={(e) => handleContextMenu(e, issue.id)}
                 onClick={() =>
                   router.push(`/copany/${copanyId}/issue/${issue.id}`)

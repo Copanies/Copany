@@ -1,5 +1,5 @@
 import LoadingView from "@/components/LoadingView";
 
-export default function HomeLoading() {
+export default function CopanyIssueLoading() {
   return <LoadingView />;
 }

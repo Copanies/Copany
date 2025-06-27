@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { Issue } from "@/app/database.types";
+import { Issue, IssueState } from "@/types/database.types";
 
 export class IssueService {
   static async getIssues(copanyId: string): Promise<Issue[]> {
@@ -80,6 +80,21 @@ export class IssueService {
     if (error) {
       console.error("Error deleting issue:", error);
       throw new Error(`Failed to delete issue: ${error.message}`);
+    }
+  }
+
+  static async updateIssueState(
+    issueId: string,
+    state: IssueState
+  ): Promise<void> {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("issue")
+      .update({ state })
+      .eq("id", issueId);
+    if (error) {
+      console.error("Error updating issue state:", error);
+      throw new Error(`Failed to update issue state: ${error.message}`);
     }
   }
 }
