@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@milkdown/crepe": "^7.14.0",
     "@octokit/rest": "^22.0.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",

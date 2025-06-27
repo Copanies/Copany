@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 
-export default function TabView({
+export default function VerticalTabView({
   tabs,
 }: {
   tabs: { label: string; content: React.ReactNode }[];
@@ -22,8 +22,8 @@ export default function TabView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex gap-2 w-full flex-col">
-      <div className="flex gap-2 flex-row">
+    <div className="flex w-full flex-row h-full">
+      <div className="flex gap-2 flex-col w-30 pr-4 border-r border-[#E7E7E7] dark:border-[#333333]">
         {tabs.map((tab) => (
           <button
             key={tab.label}
@@ -38,7 +38,7 @@ export default function TabView({
           </button>
         ))}
       </div>
-      {tabContents}
+      <div className="flex-1">{tabContents}</div>
     </div>
   );
 }
