@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
 import { getCurrentUser } from "@/actions/auth.actions";
 import { getRepoReadmeAction } from "@/actions/github.action";
-import LoadingView from "@/components/LoadingView";
+import LoadingView from "@/components/commons/LoadingView";
 
 interface ReadmeViewProps {
   githubUrl?: string;
@@ -19,7 +19,7 @@ const decodeGitHubContent = (base64String: string): string => {
   }
 };
 
-export default function ReadmeTabView({ githubUrl }: ReadmeViewProps) {
+export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   const [readmeContent, setReadmeContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

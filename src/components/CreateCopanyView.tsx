@@ -9,8 +9,8 @@ import {
   getOrgAndReposAction,
 } from "@/actions/copany.actions";
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import Button from "./Button";
-import LoadingView from "./LoadingView";
+import Button from "./commons/Button";
+import LoadingView from "./commons/LoadingView";
 
 export default function CreateCopanyView() {
   const { resolvedTheme } = useTheme();

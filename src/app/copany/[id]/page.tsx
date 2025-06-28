@@ -1,10 +1,10 @@
-import TabView from "@/components/TabView";
-import ReadmeTabView from "./ReadmeTabView";
+import TabView from "@/components/commons/TabView";
+import ReadmeView from "./subviews/ReadmeView";
 import { CopanyService } from "@/services/copany.service";
 import Image from "next/image";
-import ProjectSubTabView from "./ProjectSubTabView";
-import VerticalTabView from "@/components/VerticalTabView";
-import IssueSubTabView from "./IssueSubTabView";
+import ProjectsView from "./subviews/ProjectsView";
+import VerticalTabView from "@/components/commons/VerticalTabView";
+import IssuesView from "./subviews/IssuesView";
 import MainNavigation from "@/components/MainNavigation";
 
 export default async function CopanyDetailView({
@@ -45,7 +45,7 @@ export default async function CopanyDetailView({
             tabs={[
               {
                 label: "README",
-                content: <ReadmeTabView githubUrl={copany?.github_url} />,
+                content: <ReadmeView githubUrl={copany?.github_url} />,
               },
               {
                 label: "Cooperate",
@@ -54,11 +54,11 @@ export default async function CopanyDetailView({
                     tabs={[
                       {
                         label: "Issue",
-                        content: <IssueSubTabView copanyId={id} />,
+                        content: <IssuesView copanyId={id} />,
                       },
                       {
                         label: "Project",
-                        content: <ProjectSubTabView copanyId={id} />,
+                        content: <ProjectsView copanyId={id} />,
                       },
                     ]}
                   />

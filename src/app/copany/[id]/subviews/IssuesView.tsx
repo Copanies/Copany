@@ -1,9 +1,9 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Modal from "@/components/Modal";
+import Modal from "@/components/commons/Modal";
 import MilkdownEditor from "@/components/MilkdownEditor";
-import ContextMenu, { ContextMenuItem } from "@/components/ContextMenu";
+import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
 import {
   createIssueAction,
   deleteIssueAction,
@@ -11,10 +11,46 @@ import {
 } from "@/actions/issue.actions";
 import { Issue, IssueState } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
-import Button from "@/components/Button";
-import LoadingView from "@/components/LoadingView";
+import Button from "@/components/commons/Button";
+import LoadingView from "@/components/commons/LoadingView";
+import { renderStateLabel } from "@/components/IssueStateSelector";
 
-export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
+// 按状态分组的函数
+function groupIssuesByState(issues: Issue[]) {
+  const grouped = issues.reduce((acc, issue) => {
+    let state = issue.state || IssueState.Backlog;
+
+    // 将 Duplicate 状态合并到 Canceled 分组
+    if (state === IssueState.Duplicate) {
+      state = IssueState.Canceled;
+    }
+
+    if (!acc[state]) {
+      acc[state] = [];
+    }
+    acc[state].push(issue);
+    return acc;
+  }, {} as Record<number, Issue[]>);
+
+  // 按状态顺序排序
+  const stateOrder = [
+    IssueState.InProgress,
+    IssueState.Todo,
+    IssueState.Backlog,
+    IssueState.Done,
+    IssueState.Canceled,
+  ];
+
+  return stateOrder
+    .filter((state) => grouped[state] && grouped[state].length > 0)
+    .map((state) => ({
+      state,
+      label: renderStateLabel(state, true, true),
+      issues: grouped[state],
+    }));
+}
+
+export default function IssuesView({ copanyId }: { copanyId: string }) {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,19 +81,38 @@ export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
   }, [loadIssues]);
 
   // 处理 issue 创建完成后的回调
-  const handleIssueCreated = useCallback(() => {
-    loadIssues();
-  }, [loadIssues]);
+  const handleIssueCreated = useCallback((newIssue: Issue) => {
+    setIssues((prevIssues) => [...prevIssues, newIssue]);
+  }, []);
+
+  // 处理 issue 状态更新后的回调
+  const handleIssueStateUpdated = useCallback(
+    (issueId: string, newState: number) => {
+      setIssues((prevIssues) =>
+        prevIssues.map((issue) =>
+          issue.id === issueId ? { ...issue, state: newState } : issue
+        )
+      );
+    },
+    []
+  );
 
   // 处理删除 issue
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
       try {
-        await deleteIssueAction(issueId);
-        loadIssues(); // 重新加载列表
+        // 先从前端移除
+        setIssues((prevIssues) =>
+          prevIssues.filter((issue) => issue.id !== issueId)
+        );
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // 关闭菜单
+
+        // 然后调用删除接口
+        await deleteIssueAction(issueId);
       } catch (error) {
         console.error("Error deleting issue:", error);
+        // 如果删除失败，重新加载数据恢复状态
+        loadIssues();
       }
     },
     [loadIssues]
@@ -106,25 +161,41 @@ export default function IssueSubTabView({ copanyId }: { copanyId: string }) {
         <LoadingView type="label" />
       ) : (
         <div className="relative">
-          {issues.map((issue) => (
-            <div
-              className="flex flex-row items-center gap-1 py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-              key={issue.id}
-            >
-              <IssueStateSelector
-                issueId={issue.id}
-                initialState={issue.state}
-                showText={false}
-              />
-              <div
-                className="text-base text-gray-900 dark:text-gray-100 text-center"
-                onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                onClick={() =>
-                  router.push(`/copany/${copanyId}/issue/${issue.id}`)
-                }
-              >
-                {issue.title}
+          {groupIssuesByState(issues).map((group) => (
+            <div key={group.state} className="">
+              {/* 分组标题 */}
+              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-900 border-y border-gray-200 dark:border-gray-700">
+                <div className="flex flex-row items-center gap-2">
+                  {group.label}
+                  <span className="text-base text-gray-600 dark:text-gray-400">
+                    {group.issues.length}
+                  </span>
+                </div>
               </div>
+
+              {/* 该状态下的 issues */}
+              {group.issues.map((issue) => (
+                <div
+                  className="flex flex-row items-center gap-1 py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                  key={issue.id}
+                >
+                  <IssueStateSelector
+                    issueId={issue.id}
+                    initialState={issue.state}
+                    showText={false}
+                    onStateChange={handleIssueStateUpdated}
+                  />
+                  <div
+                    className="text-base text-gray-900 dark:text-gray-100 text-center"
+                    onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                    onClick={() =>
+                      router.push(`/copany/${copanyId}/issue/${issue.id}`)
+                    }
+                  >
+                    {issue.title}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
 
@@ -158,7 +229,7 @@ function IssueForm({
   onClose,
 }: {
   copanyId: string;
-  onIssueCreated: () => void;
+  onIssueCreated: (newIssue: Issue) => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState("");
@@ -181,7 +252,7 @@ function IssueForm({
     setIsSubmitting(true);
 
     try {
-      await createIssueAction({
+      const newIssue = await createIssueAction({
         copany_id: copanyId,
         title: title,
         description: description,
@@ -196,7 +267,7 @@ function IssueForm({
       }
 
       // 通知父组件刷新数据并关闭弹窗
-      onIssueCreated();
+      onIssueCreated(newIssue);
       onClose();
     } catch (error) {
       console.error("Error creating issue:", error);

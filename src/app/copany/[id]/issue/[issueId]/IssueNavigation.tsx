@@ -5,7 +5,7 @@ import ChevronDownIcon from "@/app/chevron.down.png";
 import ChevronDownIconDark from "@/app/chevron.down.dark.png";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import Button from "@/components/Button";
+import Button from "@/components/commons/Button";
 
 export default function IssueNavigation() {
   const router = useRouter();

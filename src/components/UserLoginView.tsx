@@ -4,8 +4,8 @@ import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Image from "next/image";
-import Button from "./Button";
-import LoadingView from "./LoadingView";
+import Button from "./commons/Button";
+import LoadingView from "./commons/LoadingView";
 
 export default function UserLoginView() {
   const [user, setUser] = useState<User | null>(null);

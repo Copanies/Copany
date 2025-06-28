@@ -8,12 +8,14 @@ interface IssueStateSelectorProps {
   issueId: string;
   initialState: number | null;
   showText: boolean;
+  onStateChange?: (issueId: string, newState: number) => void;
 }
 
 export default function IssueStateSelector({
   issueId,
   initialState,
   showText,
+  onStateChange,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
   const [isOpen, setIsOpen] = useState(false);
@@ -149,7 +151,12 @@ export default function IssueStateSelector({
       setIsOpen(false);
       setShouldShowDropdown(false);
 
-      // 调用更新状态接口
+      // 立即调用回调更新前端状态，提供即时反馈
+      if (onStateChange) {
+        onStateChange(issueId, newState);
+      }
+
+      // 然后调用更新状态接口
       await updateIssueStateAction(issueId, newState);
 
       console.log("State updated successfully:", newState);
@@ -157,6 +164,10 @@ export default function IssueStateSelector({
       console.error("Error updating state:", error);
       // 出错时回滚状态
       setCurrentState(initialState);
+      // 如果有回调，也需要回滚前端状态
+      if (onStateChange && initialState !== null) {
+        onStateChange(issueId, initialState);
+      }
     }
   };
 
@@ -179,7 +190,7 @@ export default function IssueStateSelector({
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${"hover:opacity-80 cursor-pointer"}`}
+        className={`inline-flex items-center -mx-2 px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${"hover:opacity-80 cursor-pointer"}`}
       >
         {renderStateLabel(currentState, showText)}
       </button>
@@ -266,28 +277,44 @@ export default function IssueStateSelector({
   );
 }
 
-function renderStateLabel(state: number | null, showText: boolean) {
+export function renderStateLabel(
+  state: number | null,
+  showText: boolean,
+  colorful: boolean = true
+) {
   switch (state) {
     case IssueState.Backlog:
-      return <BacklogLabel showText={showText} />;
+      return <BacklogLabel showText={showText} colorful={colorful} />;
     case IssueState.Todo:
-      return <TodoLabel showText={showText} />;
+      return <TodoLabel showText={showText} colorful={colorful} />;
     case IssueState.InProgress:
-      return <InProgressLabel showText={showText} />;
+      return <InProgressLabel showText={showText} colorful={colorful} />;
     case IssueState.Done:
-      return <DoneLabel showText={showText} />;
+      return <DoneLabel showText={showText} colorful={colorful} />;
     case IssueState.Canceled:
-      return <CanceledLabel showText={showText} />;
+      return <CanceledLabel showText={showText} colorful={colorful} />;
     case IssueState.Duplicate:
-      return <DuplicateLabel showText={showText} />;
+      return <DuplicateLabel showText={showText} colorful={colorful} />;
     default:
-      return <BacklogLabel showText={showText} />;
+      return <BacklogLabel showText={showText} colorful={colorful} />;
   }
 }
 
-function BacklogLabel({ showText }: { showText: boolean }) {
+function BacklogLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-gray-500 dark:text-gray-500 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg
         className="w-5 h-5"
         fill="none"
@@ -312,9 +339,21 @@ function BacklogLabel({ showText }: { showText: boolean }) {
   );
 }
 
-function TodoLabel({ showText }: { showText: boolean }) {
+function TodoLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-gray-500 dark:text-gray-500 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg
         className="w-5 h-5"
         fill="none"
@@ -330,9 +369,19 @@ function TodoLabel({ showText }: { showText: boolean }) {
   );
 }
 
-function InProgressLabel({ showText }: { showText: boolean }) {
+function InProgressLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-yellow-600 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful ? "text-yellow-600" : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg
         className="w-5 h-5"
         fill="none"
@@ -351,9 +400,19 @@ function InProgressLabel({ showText }: { showText: boolean }) {
   );
 }
 
-function DoneLabel({ showText }: { showText: boolean }) {
+function DoneLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-green-600 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful ? "text-green-600" : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg
         className="w-5 h-5"
         fill="none"
@@ -376,9 +435,21 @@ function DoneLabel({ showText }: { showText: boolean }) {
   );
 }
 
-function CanceledLabel({ showText }: { showText: boolean }) {
+function CanceledLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-gray-500 dark:text-gray-500 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" strokeWidth={2} fill="currentColor" />
         <path
@@ -398,9 +469,21 @@ function CanceledLabel({ showText }: { showText: boolean }) {
   );
 }
 
-function DuplicateLabel({ showText }: { showText: boolean }) {
+function DuplicateLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
   return (
-    <div className="text-gray-500 dark:text-gray-500 flex flex-row items-center gap-2">
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful
+          ? "text-gray-500 dark:text-gray-500"
+          : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" strokeWidth={2} fill="currentColor" />
         <path
