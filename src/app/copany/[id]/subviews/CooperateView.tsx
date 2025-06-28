@@ -1,5 +1,5 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import VerticalTabView from "@/components/commons/VerticalTabView";
 import IssuesView from "./IssuesView";
 import ProjectsView from "./ProjectsView";
@@ -10,16 +10,19 @@ export default function CooperateView({ copanyId }: { copanyId: string }) {
   const searchParams = useSearchParams();
   const urlParamName = "subtab";
 
-  const tabs = [
-    {
-      label: "Issue",
-      content: <IssuesView copanyId={copanyId} />,
-    },
-    {
-      label: "Project",
-      content: <ProjectsView />,
-    },
-  ];
+  const tabs = useMemo(
+    () => [
+      {
+        label: "Issue",
+        content: <IssuesView copanyId={copanyId} />,
+      },
+      {
+        label: "Project",
+        content: <ProjectsView />,
+      },
+    ],
+    [copanyId]
+  );
 
   // 从 URL 获取初始 tab，如果没有则使用第一个 tab
   const getInitialTab = () => {
@@ -36,7 +39,7 @@ export default function CooperateView({ copanyId }: { copanyId: string }) {
     if (urlTab && tabs.find((tab) => tab.label === urlTab)) {
       setActiveTab(urlTab);
     }
-  }, [searchParams, urlParamName]);
+  }, [searchParams, urlParamName, tabs]);
 
   // 更新 URL 参数
   const updateUrlParam = (tabLabel: string) => {
