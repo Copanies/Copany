@@ -76,9 +76,24 @@ export default function IssuePageClient({
   }
 
   return (
-    <div className="flex flex-row max-w-screen-lg mx-auto gap-4">
-      <IssueEditorView issueData={issueData} />
-      <div className="w-1/3">
+    <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto gap-2">
+      {/* 小屏幕下在顶部显示状态选择器 */}
+      <div className="md:hidden px-5">
+        <IssueStateSelector
+          issueId={issueData.id}
+          initialState={issueData.state}
+          showText={true}
+          showBackground={true}
+          onStateChange={handleStateChange}
+        />
+      </div>
+
+      <div className="flex-1">
+        <IssueEditorView issueData={issueData} />
+      </div>
+
+      {/* 中等屏幕及以上在右侧显示状态选择器 */}
+      <div className="hidden md:block md:w-1/3">
         <div className="flex flex-col gap-2">
           <div className="text-sm text-gray-500">State</div>
           <IssueStateSelector

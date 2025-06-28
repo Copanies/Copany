@@ -238,7 +238,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between px-4">
+      <div className="flex items-center justify-between md:px-4 px-0">
         <Button
           onClick={() => setIsModalOpen(true)}
           className="w-[100px]"
@@ -294,7 +294,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                     onStateChange={handleIssueStateUpdated}
                   />
                   <div
-                    className="text-base text-gray-900 dark:text-gray-100 text-center"
+                    className="text-base text-gray-900 dark:text-gray-100 text-left"
                     onContextMenu={(e) => handleContextMenu(e, issue.id)}
                   >
                     {issue.title}

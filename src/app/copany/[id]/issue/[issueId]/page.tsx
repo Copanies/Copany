@@ -10,13 +10,15 @@ export default async function CopanyIssueView({
   const resolvedParams = await params;
 
   return (
-    <main>
+    <main className="">
       <MainNavigation />
-      <IssueNavigation />
-      <IssuePageClient
-        copanyId={resolvedParams.id}
-        issueId={resolvedParams.issueId}
-      />
+      <div className="px-2">
+        <IssueNavigation />
+        <IssuePageClient
+          copanyId={resolvedParams.id}
+          issueId={resolvedParams.issueId}
+        />
+      </div>
     </main>
   );
 }

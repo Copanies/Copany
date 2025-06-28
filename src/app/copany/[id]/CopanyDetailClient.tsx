@@ -7,10 +7,8 @@ import { copanyCache } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
-import ProjectsView from "./subviews/ProjectsView";
-import VerticalTabView from "@/components/commons/VerticalTabView";
-import IssuesView from "./subviews/IssuesView";
 import LoadingView from "@/components/commons/LoadingView";
+import CooperateView from "./subviews/CooperateView";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -154,20 +152,7 @@ export default function CopanyDetailClient({
           },
           {
             label: "Cooperate",
-            content: (
-              <VerticalTabView
-                tabs={[
-                  {
-                    label: "Issue",
-                    content: <IssuesView copanyId={copanyId} />,
-                  },
-                  {
-                    label: "Project",
-                    content: <ProjectsView copanyId={copanyId} />,
-                  },
-                ]}
-              />
-            ),
+            content: <CooperateView copanyId={copanyId} />,
           },
         ]}
       />

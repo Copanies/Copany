@@ -8,6 +8,7 @@ interface IssueStateSelectorProps {
   issueId: string;
   initialState: number | null;
   showText: boolean;
+  showBackground?: boolean;
   onStateChange?: (issueId: string, newState: number) => void;
 }
 
@@ -15,6 +16,7 @@ export default function IssueStateSelector({
   issueId,
   initialState,
   showText,
+  showBackground = false,
   onStateChange,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
@@ -191,7 +193,11 @@ export default function IssueStateSelector({
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className={`inline-flex items-center -mx-2 px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${"hover:opacity-80 cursor-pointer"}`}
+        className={`inline-flex items-center -mx-2 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${"hover:opacity-80 cursor-pointer"} ${
+          showBackground
+            ? "bg-gray-100 dark:bg-gray-800"
+            : "bg-transparent dark:bg-transparent"
+        }`}
       >
         {renderStateLabel(currentState, showText)}
       </button>
