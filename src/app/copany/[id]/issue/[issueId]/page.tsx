@@ -1,6 +1,8 @@
 import IssueEditorView from "@/components/IssueEditorView";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import { getIssueAction } from "@/actions/issue.actions";
+import MainNavigation from "@/components/MainNavigation";
+import IssueNavigation from "./IssueNavigation";
 
 export default async function CopanyIssueView({
   params,
@@ -13,18 +15,22 @@ export default async function CopanyIssueView({
   const issueData = await getIssueAction(resolvedParams.issueId);
 
   return (
-    <div className="flex flex-row max-w-screen-lg mx-auto gap-4 p-6">
-      <IssueEditorView issueData={issueData} />
-      <div className="w-1/3">
-        <div className="flex flex-col gap-2">
-          <div className="text-sm text-gray-500">State</div>
-          <IssueStateSelector
-            issueId={issueData.id}
-            initialState={issueData.state}
-            showText={true}
-          />
+    <main>
+      <MainNavigation />
+      <IssueNavigation />
+      <div className="flex flex-row max-w-screen-lg mx-auto gap-4">
+        <IssueEditorView issueData={issueData} />
+        <div className="w-1/3">
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-gray-500">State</div>
+            <IssueStateSelector
+              issueId={issueData.id}
+              initialState={issueData.state}
+              showText={true}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

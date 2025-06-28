@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
 import { getCurrentUser } from "@/actions/auth.actions";
 import { getRepoReadmeAction } from "@/actions/github.action";
+import LoadingView from "@/components/LoadingView";
 
 interface ReadmeViewProps {
   githubUrl?: string;
@@ -66,11 +67,7 @@ export default function ReadmeTabView({ githubUrl }: ReadmeViewProps) {
   }, [githubUrl]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
-      </div>
-    );
+    return <LoadingView type="label" />;
   }
 
   if (error) {
