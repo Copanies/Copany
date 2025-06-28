@@ -171,7 +171,8 @@ export default function IssueStateSelector({
     }
   };
 
-  const toggleDropdown = () => {
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
     setIsOpen(!isOpen);
   };
 
@@ -247,7 +248,10 @@ export default function IssueStateSelector({
                 {allStates.map((value) => (
                   <button
                     key={value}
-                    onClick={() => handleStateChange(value)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // 阻止事件冒泡
+                      handleStateChange(value);
+                    }}
                     className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer`}
                   >
                     {renderStateLabel(value, true)}

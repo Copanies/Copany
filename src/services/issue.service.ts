@@ -86,15 +86,26 @@ export class IssueService {
   static async updateIssueState(
     issueId: string,
     state: IssueState
-  ): Promise<void> {
+  ): Promise<Issue> {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("issue")
-      .update({ state })
-      .eq("id", issueId);
+      .update({
+        state,
+        closed_at:
+          state === IssueState.Done ||
+          state === IssueState.Canceled ||
+          state === IssueState.Duplicate
+            ? new Date().toISOString()
+            : null,
+      })
+      .eq("id", issueId)
+      .select()
+      .single();
     if (error) {
       console.error("Error updating issue state:", error);
       throw new Error(`Failed to update issue state: ${error.message}`);
     }
+    return data as Issue;
   }
 }

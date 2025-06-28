@@ -64,7 +64,6 @@ export default function CreateCopanyView() {
 
     return () => {
       cancelled = true;
-      console.log("Cleanup called");
     };
   }, []);
 

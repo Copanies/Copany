@@ -58,6 +58,6 @@ export async function updateIssueAction(
 export async function updateIssueStateAction(
   issueId: string,
   state: IssueState
-) {
+): Promise<Issue> {
   return await IssueService.updateIssueState(issueId, state);
 }

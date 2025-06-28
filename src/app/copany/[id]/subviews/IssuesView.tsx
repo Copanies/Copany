@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
@@ -14,6 +14,7 @@ import IssueStateSelector from "@/components/IssueStateSelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
+import { issuesCache, unifiedIssueCache } from "@/utils/cache";
 
 // 按状态分组的函数
 function groupIssuesByState(issues: Issue[]) {
@@ -61,13 +62,61 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     issueId: string;
   }>({ show: false, x: 0, y: 0, issueId: "" });
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasInitialLoadRef = useRef(false);
+  const hasMountedRef = useRef(false);
+
+  // 静默刷新函数
+  const silentRefreshIssues = useCallback(async () => {
+    try {
+      const issuesData = await getIssuesAction(copanyId);
+      setIssues(issuesData);
+      // 更新缓存
+      issuesCache.set(copanyId, issuesData);
+    } catch (error) {
+      console.error("Error refreshing issues:", error);
+    }
+  }, [copanyId]);
+
+  // 客户端挂载后检查缓存
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      console.log(`[IssuesView] 📱 Client mounted, checking cache...`);
+
+      // 尝试从缓存读取数据
+      const cachedData = issuesCache.get(copanyId);
+      if (cachedData) {
+        console.log(
+          `[IssuesView] 💾 Using cached data: ${cachedData.length} issues`
+        );
+        setIssues(cachedData);
+        setIsLoading(false);
+        // 有缓存数据时，延迟执行静默刷新
+        setTimeout(() => {
+          silentRefreshIssues();
+        }, 500);
+      } else {
+        console.log(`[IssuesView] 🚫 No cache available`);
+      }
+    }
+  }, [copanyId, silentRefreshIssues]);
+
   // 加载 issues 的函数
   const loadIssues = useCallback(async () => {
     try {
       setIsLoading(true);
       const issuesData = await getIssuesAction(copanyId);
       setIssues(issuesData);
-      console.log("issues", issuesData);
+      // 更新缓存
+      issuesCache.set(copanyId, issuesData);
+      console.log(
+        `[IssuesView] 💾 Cached ${issuesData.length} issues for copany: ${copanyId}`
+      );
+      console.log(
+        `[IssuesView] 📋 Issue IDs:`,
+        issuesData.map((issue) => issue.id)
+      );
     } catch (error) {
       console.error("Error loading issues:", error);
     } finally {
@@ -77,24 +126,58 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // 组件挂载时加载数据
   useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
+    if (!hasInitialLoadRef.current && hasMountedRef.current) {
+      hasInitialLoadRef.current = true;
+
+      // 如果没有缓存数据，立即加载
+      const cachedData = issuesCache.get(copanyId);
+      if (!cachedData) {
+        loadIssues();
+      }
+
+      // 设置定时静默刷新
+      const interval = setInterval(() => {
+        silentRefreshIssues();
+      }, 30000); // 每30秒静默刷新一次
+
+      return () => clearInterval(interval);
+    }
+  }, [loadIssues, silentRefreshIssues, copanyId]);
 
   // 处理 issue 创建完成后的回调
-  const handleIssueCreated = useCallback((newIssue: Issue) => {
-    setIssues((prevIssues) => [...prevIssues, newIssue]);
-  }, []);
+  const handleIssueCreated = useCallback(
+    (newIssue: Issue) => {
+      setIssues((prevIssues) => {
+        const updatedIssues = [...prevIssues, newIssue];
+        // 更新 issues 列表缓存
+        issuesCache.set(copanyId, updatedIssues);
+        return updatedIssues;
+      });
+      // 同时缓存新创建的 issue
+      unifiedIssueCache.setIssue(copanyId, newIssue);
+    },
+    [copanyId]
+  );
 
   // 处理 issue 状态更新后的回调
   const handleIssueStateUpdated = useCallback(
     (issueId: string, newState: number) => {
-      setIssues((prevIssues) =>
-        prevIssues.map((issue) =>
-          issue.id === issueId ? { ...issue, state: newState } : issue
-        )
-      );
+      setIssues((prevIssues) => {
+        const updatedIssues = prevIssues.map((issue) => {
+          if (issue.id === issueId) {
+            const updatedIssue = { ...issue, state: newState };
+            // 同时更新单个 issue 缓存
+            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            return updatedIssue;
+          }
+          return issue;
+        });
+        // 更新 issues 列表缓存
+        issuesCache.set(copanyId, updatedIssues);
+        return updatedIssues;
+      });
     },
-    []
+    [copanyId]
   );
 
   // 处理删除 issue
@@ -102,9 +185,16 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     async (issueId: string) => {
       try {
         // 先从前端移除
-        setIssues((prevIssues) =>
-          prevIssues.filter((issue) => issue.id !== issueId)
-        );
+        setIssues((prevIssues) => {
+          const updatedIssues = prevIssues.filter(
+            (issue) => issue.id !== issueId
+          );
+          // 更新 issues 列表缓存
+          issuesCache.set(copanyId, updatedIssues);
+          return updatedIssues;
+        });
+        // 清除单个 issue 缓存
+        unifiedIssueCache.removeIssue(copanyId, issueId);
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // 关闭菜单
 
         // 然后调用删除接口
@@ -115,7 +205,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         loadIssues();
       }
     },
-    [loadIssues]
+    [copanyId, loadIssues]
   );
 
   // 处理右键菜单
@@ -148,13 +238,15 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <Button
-        onClick={() => setIsModalOpen(true)}
-        className="w-[100px] mx-4"
-        size="sm"
-      >
-        New Issue
-      </Button>
+      <div className="flex items-center justify-between px-4">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="w-[100px]"
+          size="sm"
+        >
+          New Issue
+        </Button>
+      </div>
 
       {/* Issues 列表 */}
       {isLoading ? (
@@ -176,8 +268,24 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               {/* 该状态下的 issues */}
               {group.issues.map((issue) => (
                 <div
-                  className="flex flex-row items-center gap-1 py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-950 cursor-pointer"
                   key={issue.id}
+                  onClick={() => {
+                    console.log(
+                      `[IssuesView] 🖱️ Clicking issue: ${issue.id} (${issue.title})`
+                    );
+
+                    // 智能缓存策略：比较数据新旧程度
+                    unifiedIssueCache.smartSetIssue(copanyId, issue);
+
+                    // 保留当前的 URL 参数
+                    const params = new URLSearchParams(searchParams.toString());
+                    router.push(
+                      `/copany/${copanyId}/issue/${
+                        issue.id
+                      }?${params.toString()}`
+                    );
+                  }}
                 >
                   <IssueStateSelector
                     issueId={issue.id}
@@ -188,9 +296,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   <div
                     className="text-base text-gray-900 dark:text-gray-100 text-center"
                     onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                    onClick={() =>
-                      router.push(`/copany/${copanyId}/issue/${issue.id}`)
-                    }
                   >
                     {issue.title}
                   </div>
