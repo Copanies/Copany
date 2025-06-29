@@ -20,6 +20,7 @@ export interface Issue {
   title: string | null;
   description: string | null;
   state: number | null;
+  priority: number | null;
   created_by: string | null;
   updated_at: string | null;
   closed_at: string | null;
@@ -34,4 +35,13 @@ export enum IssueState {
   Done = 4,
   Canceled = 5,
   Duplicate = 6,
+}
+
+// Issue 优先级枚举
+export enum IssuePriority {
+  None = 0,
+  Urgent = 1,
+  High = 2,
+  Medium = 3,
+  Low = 4,
 }

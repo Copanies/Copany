@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { Issue, IssueState } from "@/types/database.types";
+import { Issue, IssuePriority, IssueState } from "@/types/database.types";
 
 export class IssueService {
   static async getIssues(copanyId: string): Promise<Issue[]> {
@@ -86,15 +86,44 @@ export class IssueService {
   static async updateIssueState(
     issueId: string,
     state: IssueState
-  ): Promise<void> {
+  ): Promise<Issue> {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("issue")
-      .update({ state })
-      .eq("id", issueId);
+      .update({
+        state,
+        closed_at:
+          state === IssueState.Done ||
+          state === IssueState.Canceled ||
+          state === IssueState.Duplicate
+            ? new Date().toISOString()
+            : null,
+      })
+      .eq("id", issueId)
+      .select()
+      .single();
     if (error) {
       console.error("Error updating issue state:", error);
       throw new Error(`Failed to update issue state: ${error.message}`);
     }
+    return data as Issue;
+  }
+
+  static async updateIssuePriority(
+    issueId: string,
+    priority: IssuePriority
+  ): Promise<Issue> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("issue")
+      .update({ priority })
+      .eq("id", issueId)
+      .select()
+      .single();
+    if (error) {
+      console.error("Error updating issue priority:", error);
+      throw new Error(`Failed to update issue priority: ${error.message}`);
+    }
+    return data as Issue;
   }
 }

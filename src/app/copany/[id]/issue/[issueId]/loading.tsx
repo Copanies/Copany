@@ -1,4 +1,4 @@
-import LoadingView from "@/components/LoadingView";
+import LoadingView from "@/components/commons/LoadingView";
 
 export default function CopanyIssueLoading() {
   return <LoadingView />;

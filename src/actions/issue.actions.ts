@@ -1,7 +1,7 @@
 "use server";
 import { getCurrentUser } from "@/actions/auth.actions";
 import { IssueService } from "@/services/issue.service";
-import { Issue, IssueState } from "@/types/database.types";
+import { Issue, IssuePriority, IssueState } from "@/types/database.types";
 
 export async function getIssuesAction(copanyId: string) {
   return await IssueService.getIssues(copanyId);
@@ -58,6 +58,13 @@ export async function updateIssueAction(
 export async function updateIssueStateAction(
   issueId: string,
   state: IssueState
-) {
+): Promise<Issue> {
   return await IssueService.updateIssueState(issueId, state);
+}
+
+export async function updateIssuePriorityAction(
+  issueId: string,
+  priority: IssuePriority
+): Promise<Issue> {
+  return await IssueService.updateIssuePriority(issueId, priority);
 }

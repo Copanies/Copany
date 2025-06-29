@@ -84,3 +84,20 @@ export async function getOrgAndReposAction(): Promise<{
     return { success: false, error: errorMessage };
   }
 }
+
+/**
+ * 获取公司详情 - Server Action
+ */
+export async function getCopanyByIdAction(copanyId: string) {
+  try {
+    const copany = await CopanyService.getCopanyById(copanyId);
+    return copany;
+  } catch (error) {
+    console.error("❌ 获取公司详情失败:", error);
+    if (error instanceof Error) {
+      throw new Error(`获取公司详情失败: ${error.message}`);
+    } else {
+      throw new Error("获取公司详情失败: 未知错误");
+    }
+  }
+}
