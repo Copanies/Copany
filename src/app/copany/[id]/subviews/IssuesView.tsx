@@ -9,8 +9,9 @@ import {
   deleteIssueAction,
   getIssuesAction,
 } from "@/actions/issue.actions";
-import { Issue, IssueState } from "@/types/database.types";
+import { Issue, IssuePriority, IssueState } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
+import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
@@ -33,6 +34,22 @@ function groupIssuesByState(issues: Issue[]) {
     return acc;
   }, {} as Record<number, Issue[]>);
 
+  // 优先级排序函数：Urgent > High > Medium > Low > None
+  const sortByPriority = (a: Issue, b: Issue) => {
+    const priorityOrder: Record<number, number> = {
+      [IssuePriority.Urgent]: 0,
+      [IssuePriority.High]: 1,
+      [IssuePriority.Medium]: 2,
+      [IssuePriority.Low]: 3,
+      [IssuePriority.None]: 4,
+    };
+
+    const aPriority = a.priority ?? IssuePriority.None;
+    const bPriority = b.priority ?? IssuePriority.None;
+
+    return priorityOrder[aPriority] - priorityOrder[bPriority];
+  };
+
   // 按状态顺序排序
   const stateOrder = [
     IssueState.InProgress,
@@ -47,7 +64,7 @@ function groupIssuesByState(issues: Issue[]) {
     .map((state) => ({
       state,
       label: renderStateLabel(state, true, true),
-      issues: grouped[state],
+      issues: grouped[state].sort(sortByPriority), // 在每个状态组内按优先级排序
     }));
 }
 
@@ -180,6 +197,27 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     [copanyId]
   );
 
+  // 处理 issue 优先级更新后的回调
+  const handleIssuePriorityUpdated = useCallback(
+    (issueId: string, newPriority: number) => {
+      setIssues((prevIssues) => {
+        const updatedIssues = prevIssues.map((issue) => {
+          if (issue.id === issueId) {
+            const updatedIssue = { ...issue, priority: newPriority };
+            // 同时更新单个 issue 缓存
+            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            return updatedIssue;
+          }
+          return issue;
+        });
+        // 更新 issues 列表缓存
+        issuesCache.set(copanyId, updatedIssues);
+        return updatedIssues;
+      });
+    },
+    [copanyId]
+  );
+
   // 处理删除 issue
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
@@ -256,7 +294,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           {groupIssuesByState(issues).map((group) => (
             <div key={group.state} className="">
               {/* 分组标题 */}
-              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-900 border-y border-gray-200 dark:border-gray-700">
+              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
                 <div className="flex flex-row items-center gap-2">
                   {group.label}
                   <span className="text-base text-gray-600 dark:text-gray-400">
@@ -268,7 +306,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               {/* 该状态下的 issues */}
               {group.issues.map((issue) => (
                 <div
-                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-950 cursor-pointer"
+                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                   key={issue.id}
                   onClick={() => {
                     console.log(
@@ -293,8 +331,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                     showText={false}
                     onStateChange={handleIssueStateUpdated}
                   />
+                  <IssuePrioritySelector
+                    issueId={issue.id}
+                    initialPriority={issue.priority}
+                    showText={false}
+                    onPriorityChange={handleIssuePriorityUpdated}
+                  />
                   <div
-                    className="text-base text-gray-900 dark:text-gray-100 text-left"
+                    className="text-base text-gray-900 dark:text-gray-100 text-left flex-1"
                     onContextMenu={(e) => handleContextMenu(e, issue.id)}
                   >
                     {issue.title}
@@ -362,6 +406,7 @@ function IssueForm({
         title: title,
         description: description,
         state: IssueState.Backlog,
+        priority: IssuePriority.None,
       });
 
       // 重置表单

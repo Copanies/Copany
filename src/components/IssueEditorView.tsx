@@ -111,6 +111,7 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
           title: currentTitle,
           description: currentDescription,
           state: issueData.state ?? 0,
+          priority: issueData.priority ?? null,
         });
 
         // 用服务器返回的数据更新缓存（确保数据一致性）
@@ -179,6 +180,7 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
           title: currentTitle,
           description: currentDescription,
           state: issueData.state ?? 0,
+          priority: issueData.priority ?? null,
         });
 
         // 尝试使用 sendBeacon 进行后台保存
