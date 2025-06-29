@@ -93,7 +93,8 @@ export default function IssuePageClient({
   return (
     <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto gap-2">
       {/* 小屏幕下在顶部显示状态和优先级选择器 */}
-      <div className="md:hidden px-5 flex gap-2">
+
+      <div className="md:hidden px-5 flex flex-row gap-6 pb-3 border-b border-gray-200 dark:border-gray-800 pb-2">
         <IssueStateSelector
           issueId={issueData.id}
           initialState={issueData.state}
@@ -101,6 +102,7 @@ export default function IssuePageClient({
           showBackground={true}
           onStateChange={handleStateChange}
         />
+
         <IssuePrioritySelector
           issueId={issueData.id}
           initialPriority={issueData.priority}
