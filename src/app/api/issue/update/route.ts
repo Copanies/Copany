@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.text();
     const data = JSON.parse(body);
 
-    const { id, title, description, state, priority } = data;
+    const { id, title, description, state, priority, level } = data;
 
     if (!id || title === undefined || description === undefined) {
       return NextResponse.json(
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       description,
       state: state ?? 0,
       priority: priority ?? null,
+      level: level ?? null,
     });
 
     return NextResponse.json({ success: true, issue: updatedIssue });
