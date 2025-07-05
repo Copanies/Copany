@@ -225,7 +225,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   );
 
   // 处理 issue 等级更新后的回调
-
   const handleIssueLevelUpdated = useCallback(
     (issueId: string, newLevel: number) => {
       setIssues((prevIssues) => {
@@ -376,7 +375,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       <IssueLevelSelector
                         issueId={issue.id}
                         initialLevel={issue.level}
-                        showText={false}
                         onLevelChange={handleIssueLevelUpdated}
                       />
                     )}
