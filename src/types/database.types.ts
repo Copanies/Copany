@@ -21,6 +21,7 @@ export interface Issue {
   description: string | null;
   state: number | null;
   priority: number | null;
+  level: number | null;
   created_by: string | null;
   updated_at: string | null;
   closed_at: string | null;
@@ -44,4 +45,13 @@ export enum IssuePriority {
   High = 2,
   Medium = 3,
   Low = 4,
+}
+
+// Issue 等级枚举
+export enum IssueLevel {
+  level_None = 0,
+  level_C = 1,
+  level_B = 2,
+  level_A = 3,
+  level_S = 4,
 }

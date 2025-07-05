@@ -7,6 +7,7 @@ import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import { getIssueAction } from "@/actions/issue.actions";
 import { Issue } from "@/types/database.types";
 import { unifiedIssueCache } from "@/utils/cache";
+import IssueLevelSelector from "@/components/IssueLevelSelector";
 import LoadingView from "@/components/commons/LoadingView";
 
 interface IssuePageClientProps {
@@ -86,6 +87,20 @@ export default function IssuePageClient({
     [copanyId]
   );
 
+  // 处理等级更新
+  const handleLevelChange = useCallback(
+    (issueId: string, newLevel: number) => {
+      setIssueData((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, level: newLevel };
+        // 更新缓存
+        unifiedIssueCache.setIssue(copanyId, updated);
+        return updated;
+      });
+    },
+    [copanyId]
+  );
+
   if (isLoading || !issueData) {
     return <LoadingView type="label" />;
   }
@@ -109,6 +124,13 @@ export default function IssuePageClient({
           showText={true}
           showBackground={true}
           onPriorityChange={handlePriorityChange}
+        />
+
+        <IssueLevelSelector
+          issueId={issueData.id}
+          initialLevel={issueData.level}
+          showBackground={true}
+          onLevelChange={handleLevelChange}
         />
       </div>
 
@@ -135,6 +157,14 @@ export default function IssuePageClient({
               initialPriority={issueData.priority}
               showText={true}
               onPriorityChange={handlePriorityChange}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-gray-500">Level</div>
+            <IssueLevelSelector
+              issueId={issueData.id}
+              initialLevel={issueData.level}
+              onLevelChange={handleLevelChange}
             />
           </div>
         </div>

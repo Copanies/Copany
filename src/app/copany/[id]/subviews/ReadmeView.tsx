@@ -70,8 +70,6 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         } else {
           const notFoundMessage = "未找到 README 文件";
           setReadmeContent(notFoundMessage);
-          // 也缓存"未找到"的结果，避免重复请求
-          readmeCache.set(githubUrl, notFoundMessage);
         }
       } catch (err) {
         console.error("获取 README 失败:", err);
