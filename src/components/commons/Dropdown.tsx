@@ -114,15 +114,23 @@ export default function Dropdown({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
+        // 阻止事件传播，防止触发被点击元素的点击事件
+        event.stopPropagation();
+        event.preventDefault();
         setIsOpen(false);
+        setShouldShowDropdown(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    // 只在下拉菜单打开时监听点击外部事件
+    if (isOpen) {
+      // 使用 capture 阶段来确保我们能够先处理事件
+      document.addEventListener("click", handleClickOutside, true);
+      return () => {
+        document.removeEventListener("click", handleClickOutside, true);
+      };
+    }
+  }, [isOpen]);
 
   // 当下拉菜单打开时计算位置
   useEffect(() => {
@@ -227,6 +235,7 @@ export default function Dropdown({
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="py-1">
                 {options.map((option) => (

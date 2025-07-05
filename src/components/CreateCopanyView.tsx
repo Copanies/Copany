@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import ChevronDownIcon from "@/app/chevron.down.png";
@@ -16,6 +16,7 @@ export default function CreateCopanyView() {
   const { resolvedTheme } = useTheme();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [orgWithRepos, setOrgWithRepos] = useState<
     {
       org: RestEndpointMethodTypes["orgs"]["listForAuthenticatedUser"]["response"]["data"][0];
@@ -32,6 +33,29 @@ export default function CreateCopanyView() {
   useEffect(() => {
     setIsDarkMode(resolvedTheme === "dark");
   }, [resolvedTheme]);
+
+  // 点击外部关闭下拉菜单
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        // 阻止事件传播，防止触发被点击元素的点击事件
+        event.stopPropagation();
+        event.preventDefault();
+        setIsDropdownOpen(false);
+      }
+    }
+
+    if (isDropdownOpen) {
+      // 使用 capture 阶段来确保我们能够先处理事件
+      document.addEventListener("click", handleClickOutside, true);
+      return () => {
+        document.removeEventListener("click", handleClickOutside, true);
+      };
+    }
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,10 +114,13 @@ export default function CreateCopanyView() {
 
   return (
     <form onSubmit={handleCreateCopany} className="flex gap-2">
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           type="button"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDropdownOpen(!isDropdownOpen);
+          }}
           className="flex items-center gap-2 rounded-md border-1 border-gray-300 dark:border-gray-700 px-2 py-1 h-fit min-w-[200px] justify-between hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
         >
           {selectedRepoId ? (
@@ -130,7 +157,10 @@ export default function CreateCopanyView() {
           />
         </button>
         {isDropdownOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
+          <div
+            className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
             {status === "loading" && (
               <div className="p-2">
                 <LoadingView type="label" />
@@ -162,7 +192,8 @@ export default function CreateCopanyView() {
                             <div
                               key={repo.id}
                               className="flex flex-col items-start gap-2 pl-8 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedRepoId(repo.id);
                                 setIsDropdownOpen(false);
                               }}
