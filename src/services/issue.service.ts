@@ -1,5 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
-import { Issue, IssuePriority, IssueState } from "@/types/database.types";
+import {
+  Issue,
+  IssuePriority,
+  IssueState,
+  IssueLevel,
+} from "@/types/database.types";
 
 export class IssueService {
   static async getIssues(copanyId: string): Promise<Issue[]> {
@@ -123,6 +128,24 @@ export class IssueService {
     if (error) {
       console.error("Error updating issue priority:", error);
       throw new Error(`Failed to update issue priority: ${error.message}`);
+    }
+    return data as Issue;
+  }
+
+  static async updateIssueLevel(
+    issueId: string,
+    level: IssueLevel
+  ): Promise<Issue> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("issue")
+      .update({ level })
+      .eq("id", issueId)
+      .select()
+      .single();
+    if (error) {
+      console.error("Error updating issue level:", error);
+      throw new Error(`Failed to update issue level: ${error.message}`);
     }
     return data as Issue;
   }

@@ -9,13 +9,19 @@ import {
   deleteIssueAction,
   getIssuesAction,
 } from "@/actions/issue.actions";
-import { Issue, IssuePriority, IssueState } from "@/types/database.types";
+import {
+  Issue,
+  IssueLevel,
+  IssuePriority,
+  IssueState,
+} from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
 import { issuesCache, unifiedIssueCache } from "@/utils/cache";
+import IssueLevelSelector from "@/components/IssueLevelSelector";
 
 // 按状态分组的函数
 function groupIssuesByState(issues: Issue[]) {
@@ -218,6 +224,28 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     [copanyId]
   );
 
+  // 处理 issue 等级更新后的回调
+
+  const handleIssueLevelUpdated = useCallback(
+    (issueId: string, newLevel: number) => {
+      setIssues((prevIssues) => {
+        const updatedIssues = prevIssues.map((issue) => {
+          if (issue.id === issueId) {
+            const updatedIssue = { ...issue, level: newLevel };
+            // 同时更新单个 issue 缓存
+            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            return updatedIssue;
+          }
+          return issue;
+        });
+        // 更新 issues 列表缓存
+        issuesCache.set(copanyId, updatedIssues);
+        return updatedIssues;
+      });
+    },
+    [copanyId]
+  );
+
   // 处理删除 issue
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
@@ -338,11 +366,20 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                     onPriorityChange={handleIssuePriorityUpdated}
                   />
                   <div
-                    className="text-base text-gray-900 dark:text-gray-100 text-left flex-1"
+                    className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full"
                     onContextMenu={(e) => handleContextMenu(e, issue.id)}
                   >
                     {issue.title}
                   </div>
+                  {issue.level != IssueLevel.level_None &&
+                    issue.level != null && (
+                      <IssueLevelSelector
+                        issueId={issue.id}
+                        initialLevel={issue.level}
+                        showText={false}
+                        onLevelChange={handleIssueLevelUpdated}
+                      />
+                    )}
                 </div>
               ))}
             </div>
@@ -407,6 +444,7 @@ function IssueForm({
         description: description,
         state: IssueState.Backlog,
         priority: IssuePriority.None,
+        level: IssueLevel.level_None,
       });
 
       // 重置表单
