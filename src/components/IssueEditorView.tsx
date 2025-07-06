@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueAction } from "@/actions/issue.actions";
-import { Issue } from "@/types/database.types";
+import { IssueWithAssignee } from "@/types/database.types";
 import { unifiedIssueCache } from "@/utils/cache";
 
 interface IssueEditorViewProps {
-  issueData: Issue;
+  issueData: IssueWithAssignee;
 }
 
 export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
@@ -21,7 +21,7 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
   const immediateUpdateCache = useCallback(
     (newTitle: string, newDescription: string) => {
       if (issueData.copany_id) {
-        const updatedIssue: Issue = {
+        const updatedIssue: IssueWithAssignee = {
           ...issueData,
           title: newTitle,
           description: newDescription,

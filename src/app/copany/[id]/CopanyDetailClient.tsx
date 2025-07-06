@@ -71,22 +71,18 @@ export default function CopanyDetailClient({
 
       // 尝试从缓存读取数据
       const cachedData = copanyCache.get(copanyId);
-      if (cachedData && !copany) {
+      if (cachedData) {
         console.log(
           `[CopanyDetailClient] 💾 Using cached data:`,
           cachedData.name
         );
         setCopany(cachedData);
         setIsInitialLoad(false);
-      } else if (cachedData && copany) {
-        console.log(
-          `[CopanyDetailClient] 📊 Already have data, skipping cache`
-        );
       } else {
         console.log(`[CopanyDetailClient] 🚫 No cache available`);
       }
     }
-  }, [copanyId, copany]);
+  }, [copanyId]);
 
   useEffect(() => {
     // 如果有缓存或初始数据，静默刷新

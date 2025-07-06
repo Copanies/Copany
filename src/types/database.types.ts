@@ -28,6 +28,10 @@ export interface Issue {
   assignee: string | null;
 }
 
+export interface IssueWithAssignee extends Issue {
+  assignee_user: AssigneeUser | null;
+}
+
 // Issue 状态枚举
 export enum IssueState {
   Backlog = 1,
@@ -54,4 +58,23 @@ export enum IssueLevel {
   level_B = 2,
   level_A = 3,
   level_S = 4,
+}
+
+export interface CopanyContributor {
+  id: string;
+  copany_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  email: string;
+  avatar_url: string;
+  contribution: number;
+}
+
+export interface AssigneeUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string;
 }

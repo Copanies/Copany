@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+import { currentUserManager } from "@/utils/cache";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Image from "next/image";
 import Button from "./commons/Button";
@@ -14,18 +15,11 @@ export default function UserLoginView() {
   useEffect(() => {
     const supabase = createClient();
 
-    // 获取初始用户信息（安全验证）
+    // 获取初始用户信息（优先从缓存）
     const getInitialUser = async () => {
       try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-
-        if (error) {
-          console.error("❌ UserLoginView: 获取用户信息时出错:", error);
-        }
-
+        // 使用缓存管理器获取用户
+        const user = await currentUserManager.getCurrentUser();
         setUser(user);
       } catch (err) {
         console.error("❌ UserLoginView: 异常错误:", err);
@@ -40,13 +34,17 @@ export default function UserLoginView() {
     // 监听认证状态变化
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
+        // 清除用户缓存
+        currentUserManager.clearUser();
         setUser(null);
         setLoading(false);
-      } else if (event === "SIGNED_IN") {
-        // 重新触发用户信息获取
-        getInitialUser();
+      } else if (event === "SIGNED_IN" && session?.user) {
+        // 设置用户到缓存
+        currentUserManager.setUser(session.user);
+        setUser(session.user);
+        setLoading(false);
       }
     });
 

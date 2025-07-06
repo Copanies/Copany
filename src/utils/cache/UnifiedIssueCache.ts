@@ -1,4 +1,4 @@
-import { Issue } from "@/types/database.types";
+import { IssueWithAssignee } from "@/types/database.types";
 import { issuesCache } from "./instances";
 
 /**
@@ -9,7 +9,7 @@ export class UnifiedIssueCache {
   /**
    * 根据 copanyId 和 issueId 获取单个 issue
    */
-  getIssue(copanyId: string, issueId: string): Issue | null {
+  getIssue(copanyId: string, issueId: string): IssueWithAssignee | null {
     const issues = issuesCache.get(copanyId);
     if (!issues) {
       console.log(
@@ -35,7 +35,7 @@ export class UnifiedIssueCache {
   /**
    * 更新单个 issue，同时更新 issues 列表缓存
    */
-  setIssue(copanyId: string, updatedIssue: Issue): void {
+  setIssue(copanyId: string, updatedIssue: IssueWithAssignee): void {
     const issues = issuesCache.get(copanyId) || [];
 
     // 查找并更新对应的 issue
@@ -90,7 +90,7 @@ export class UnifiedIssueCache {
   /**
    * 智能缓存策略：只有当新数据更新时才更新缓存
    */
-  smartSetIssue(copanyId: string, issue: Issue): void {
+  smartSetIssue(copanyId: string, issue: IssueWithAssignee): void {
     const cachedIssue = this.getIssue(copanyId, issue.id);
 
     if (!cachedIssue) {

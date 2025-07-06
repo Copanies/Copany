@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 import { Copany } from "@/types/database.types";
 
 /**
@@ -9,7 +9,7 @@ export class CopanyService {
    * 获取所有公司列表
    */
   static async getCopanies(): Promise<Copany[]> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("copany")
       .select("*")
@@ -27,7 +27,7 @@ export class CopanyService {
    * 根据 ID 获取单个公司
    */
   static async getCopanyById(id: string): Promise<Copany | null> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("copany")
       .select("*")
@@ -48,7 +48,7 @@ export class CopanyService {
   static async createCopany(
     copany: Omit<Copany, "id" | "created_at" | "updated_at">
   ): Promise<Copany> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("copany")
       .insert(copany)

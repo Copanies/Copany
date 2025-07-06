@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { clearGithubTokenCookie } from "@/services/github.service";
+import { currentUserManager } from "@/utils/cache";
 
 /**
  * 认证相关的 Server Actions
@@ -15,7 +16,7 @@ import { clearGithubTokenCookie } from "@/services/github.service";
 export async function signInWithGitHub() {
   console.log("🚀 开始 GitHub OAuth 登录");
 
-  const supabase = await createClient();
+  const supabase = await createSupabaseClient();
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -57,7 +58,7 @@ export async function signInWithGitHub() {
 export async function signOut() {
   console.log("🔓 开始用户登出");
 
-  const supabase = await createClient();
+  const supabase = await createSupabaseClient();
 
   const { error } = await supabase.auth.signOut();
 
@@ -68,6 +69,10 @@ export async function signOut() {
 
   // 清除 GitHub access token Cookie
   await clearGithubTokenCookie();
+
+  // 清除 CurrentUserManager 缓存
+  currentUserManager.clearUser();
+  console.log("🗑️ 已清除用户缓存");
 
   console.log("✅ 用户登出成功");
   redirect("/"); // 这里会抛出 NEXT_REDIRECT，这是正常的
@@ -81,7 +86,7 @@ export async function getCurrentUser(): Promise<User | null> {
   console.log("👤 获取当前用户信息");
 
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
 
     const {
       data: { user },

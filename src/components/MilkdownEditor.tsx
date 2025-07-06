@@ -385,6 +385,28 @@ const nordThemeStyles = `
     background: var(--crepe-color-surface);
   }
 
+  /* ===== CodeMirror 活动行号样式 ===== */
+  .milkdown-editor.milkdown .milkdown-code-block .ͼo .cm-activeLineGutter {
+    background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 85%) !important;
+    color: color-mix(in srgb, var(--crepe-color-on-surface), transparent 30%) !important;
+  }
+
+  /* 亮色模式下的活动行号 */
+  @media (prefers-color-scheme: light) {
+    .milkdown-editor.milkdown:not(.force-dark) .milkdown-code-block .ͼo .cm-activeLineGutter {
+      background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 90%) !important;
+      color: color-mix(in srgb, var(--crepe-color-on-surface), transparent 40%) !important;
+    }
+  }
+
+  /* 暗色模式下的活动行号 */
+  @media (prefers-color-scheme: dark) {
+    .milkdown-editor.milkdown:not(.force-light) .milkdown-code-block .ͼo .cm-activeLineGutter {
+      background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 80%) !important;
+      color: color-mix(in srgb, var(--crepe-color-on-surface), transparent 25%) !important;
+    }
+  }
+
   /* ===== 确保平滑过渡 ===== */
   .milkdown-editor,
   .milkdown-editor *,
