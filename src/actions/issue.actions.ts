@@ -1,5 +1,6 @@
 "use server";
 import { getCurrentUser } from "@/actions/auth.actions";
+import { CopanyContributorService } from "@/services/copany_contributor.service";
 import { IssueService } from "@/services/issue.service";
 import {
   Issue,
@@ -64,7 +65,14 @@ export async function updateIssueStateAction(
   issueId: string,
   state: IssueState
 ): Promise<Issue> {
-  return await IssueService.updateIssueState(issueId, state);
+  const issue = await IssueService.updateIssueState(issueId, state);
+  if (state === IssueState.Done && issue.copany_id && issue.assignee) {
+    await CopanyContributorService.createCopanyContributor(
+      issue.copany_id,
+      issue.assignee
+    );
+  }
+  return issue;
 }
 
 export async function updateIssuePriorityAction(

@@ -1,5 +1,5 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
 /**
@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 export async function getGithubAccessToken(): Promise<string | null> {
   try {
     console.log("🔍 开始获取 GitHub 访问令牌...");
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
 
     // 获取当前用户并验证身份
     const {

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { clearGithubTokenCookie } from "@/services/github.service";
 
@@ -15,7 +15,7 @@ import { clearGithubTokenCookie } from "@/services/github.service";
 export async function signInWithGitHub() {
   console.log("🚀 开始 GitHub OAuth 登录");
 
-  const supabase = await createClient();
+  const supabase = await createSupabaseClient();
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -57,7 +57,7 @@ export async function signInWithGitHub() {
 export async function signOut() {
   console.log("🔓 开始用户登出");
 
-  const supabase = await createClient();
+  const supabase = await createSupabaseClient();
 
   const { error } = await supabase.auth.signOut();
 
@@ -81,7 +81,7 @@ export async function getCurrentUser(): Promise<User | null> {
   console.log("👤 获取当前用户信息");
 
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
 
     const {
       data: { user },

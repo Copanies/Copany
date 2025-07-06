@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
   if (code) {
     try {
-      const supabase = await createClient();
+      const supabase = await createSupabaseClient();
       console.log("🔑 正在交换授权码...");
 
       const { error } = await supabase.auth.exchangeCodeForSession(code);

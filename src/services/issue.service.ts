@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createSupabaseClient } from "@/utils/supabase/server";
 import {
   Issue,
   IssuePriority,
@@ -8,7 +8,7 @@ import {
 
 export class IssueService {
   static async getIssues(copanyId: string): Promise<Issue[]> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .select("*")
@@ -22,7 +22,7 @@ export class IssueService {
   }
 
   static async getIssue(issueId: string): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .select("*")
@@ -41,7 +41,7 @@ export class IssueService {
       "id" | "created_at" | "updated_at" | "assignee" | "closed_at"
     >
   ): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .insert(issue)
@@ -65,7 +65,7 @@ export class IssueService {
       | "copany_id"
     >
   ): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .update(issue)
@@ -80,7 +80,7 @@ export class IssueService {
   }
 
   static async deleteIssue(issueId: string): Promise<void> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { error } = await supabase.from("issue").delete().eq("id", issueId);
     if (error) {
       console.error("Error deleting issue:", error);
@@ -92,7 +92,7 @@ export class IssueService {
     issueId: string,
     state: IssueState
   ): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .update({
@@ -118,7 +118,7 @@ export class IssueService {
     issueId: string,
     priority: IssuePriority
   ): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .update({ priority })
@@ -136,7 +136,7 @@ export class IssueService {
     issueId: string,
     level: IssueLevel
   ): Promise<Issue> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
       .update({ level })

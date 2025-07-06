@@ -142,7 +142,7 @@ export default function IssuePageClient({
       <div className="hidden md:block md:w-1/3">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-500">State</div>
+            <div className="text-sm font-medium text-gray-500">State</div>
             <IssueStateSelector
               issueId={issueData.id}
               initialState={issueData.state}
@@ -151,7 +151,7 @@ export default function IssuePageClient({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-500">Priority</div>
+            <div className="text-sm font-medium text-gray-500">Priority</div>
             <IssuePrioritySelector
               issueId={issueData.id}
               initialPriority={issueData.priority}
@@ -160,7 +160,7 @@ export default function IssuePageClient({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-500">Level</div>
+            <div className="text-sm font-medium text-gray-500">Level</div>
             <IssueLevelSelector
               issueId={issueData.id}
               initialLevel={issueData.level}

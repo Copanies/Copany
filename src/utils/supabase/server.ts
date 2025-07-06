@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-export async function createClient() {
+export async function createSupabaseClient() {
   const cookieStore = await cookies();
 
   // 调试日志：检查环境变量
@@ -51,4 +52,32 @@ export async function createClient() {
     console.error("❌ Supabase 服务器端客户端创建失败:", error);
     throw error;
   }
+}
+
+export async function createAdminSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
+    console.error("❌ NEXT_PUBLIC_SUPABASE_URL 未设置");
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL 环境变量未设置。请检查你的 .env.local 文件。"
+    );
+  }
+
+  if (!supabaseServiceRoleKey) {
+    console.error("❌ SUPABASE_SERVICE_ROLE_KEY 未设置");
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY 环境变量未设置。请检查你的 .env.local 文件。"
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return supabase;
 }

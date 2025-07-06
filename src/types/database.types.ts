@@ -55,3 +55,15 @@ export enum IssueLevel {
   level_A = 3,
   level_S = 4,
 }
+
+export interface CopanyContributor {
+  id: string;
+  copany_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  email: string;
+  avatar_url: string;
+  contribution: number;
+}
