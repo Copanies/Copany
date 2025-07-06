@@ -1,9 +1,10 @@
 "use server";
 import { getCurrentUser } from "@/actions/auth.actions";
-import { CopanyContributorService } from "@/services/copany_contributor.service";
+import { CopanyContributorService } from "@/services/copanyContributor.service";
 import { IssueService } from "@/services/issue.service";
 import {
   Issue,
+  IssueWithAssignee,
   IssuePriority,
   IssueState,
   IssueLevel,
@@ -29,7 +30,7 @@ export async function createIssueAction(
   });
 }
 
-export async function getIssueAction(issueId: string): Promise<Issue> {
+export async function getIssueAction(issueId: string) {
   return await IssueService.getIssue(issueId);
 }
 
@@ -64,7 +65,7 @@ export async function updateIssueAction(
 export async function updateIssueStateAction(
   issueId: string,
   state: IssueState
-): Promise<Issue> {
+): Promise<IssueWithAssignee> {
   const issue = await IssueService.updateIssueState(issueId, state);
   if (state === IssueState.Done && issue.copany_id && issue.assignee) {
     await CopanyContributorService.createCopanyContributor(
@@ -78,13 +79,20 @@ export async function updateIssueStateAction(
 export async function updateIssuePriorityAction(
   issueId: string,
   priority: IssuePriority
-): Promise<Issue> {
+): Promise<IssueWithAssignee> {
   return await IssueService.updateIssuePriority(issueId, priority);
 }
 
 export async function updateIssueLevelAction(
   issueId: string,
   level: IssueLevel
-): Promise<Issue> {
+): Promise<IssueWithAssignee> {
   return await IssueService.updateIssueLevel(issueId, level);
+}
+
+export async function updateIssueAssigneeAction(
+  issueId: string,
+  assignee: string | null
+): Promise<IssueWithAssignee> {
+  return await IssueService.updateIssueAssignee(issueId, assignee);
 }

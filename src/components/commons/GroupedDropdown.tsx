@@ -2,28 +2,33 @@
 
 import { useState, useRef, useEffect, ReactNode } from "react";
 
-interface DropdownOption {
-  value: number;
+interface GroupedDropdownOption {
+  value: string;
   label: ReactNode;
 }
 
-interface DropdownProps {
+interface GroupedDropdownGroup {
+  title: string | null;
+  options: GroupedDropdownOption[];
+}
+
+interface GroupedDropdownProps {
   trigger: ReactNode;
-  options: DropdownOption[];
-  selectedValue: number | null;
-  onSelect: (value: number) => void;
+  groups: GroupedDropdownGroup[];
+  selectedValue: string | null;
+  onSelect: (value: string) => void;
   showBackground?: boolean;
   className?: string;
 }
 
-export default function Dropdown({
+export default function GroupedDropdown({
   trigger,
-  options,
+  groups,
   selectedValue,
   onSelect,
   showBackground = false,
   className = "",
-}: DropdownProps) {
+}: GroupedDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
@@ -159,7 +164,7 @@ export default function Dropdown({
     }
   }, [isOpen]);
 
-  const handleSelect = async (value: number) => {
+  const handleSelect = async (value: string) => {
     try {
       setIsOpen(false);
       setShouldShowDropdown(false);
@@ -173,6 +178,54 @@ export default function Dropdown({
     e.stopPropagation(); // 阻止事件冒泡
     setIsOpen(!isOpen);
   };
+
+  const renderDropdownContent = () => (
+    <div className="py-1">
+      {groups.map((group, groupIndex) => (
+        <div key={groupIndex}>
+          {/* 分组标题 */}
+          {group.title && (
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+              {group.title}
+            </div>
+          )}
+
+          {/* 分组选项 */}
+          {group.options.map((option) => (
+            <button
+              key={option.value}
+              onClick={(e) => {
+                e.stopPropagation(); // 阻止事件冒泡
+                handleSelect(option.value);
+              }}
+              className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                option.value === selectedValue
+                  ? "bg-gray-100 dark:bg-gray-700 font-medium"
+                  : ""
+              }`}
+            >
+              {option.label}
+              {option.value === selectedValue && (
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div
@@ -199,35 +252,7 @@ export default function Dropdown({
             className="fixed invisible px-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
             style={{ top: "-9999px", left: "-9999px" }}
           >
-            <div className="py-1">
-              {options.map((option) => (
-                <button
-                  key={option.value}
-                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
-                    option.value === selectedValue
-                      ? "bg-gray-100 dark:bg-gray-700 font-medium"
-                      : ""
-                  }`}
-                >
-                  {option.label}
-                  {option.value === selectedValue && (
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
+            {renderDropdownContent()}
           </div>
 
           {/* 实际显示的下拉菜单 */}
@@ -240,35 +265,7 @@ export default function Dropdown({
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="py-1">
-                {options.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={(e) => {
-                      e.stopPropagation(); // 阻止事件冒泡
-                      handleSelect(option.value);
-                    }}
-                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer`}
-                  >
-                    {option.label}
-                    {option.value === selectedValue && (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
+              {renderDropdownContent()}
             </div>
           )}
         </>

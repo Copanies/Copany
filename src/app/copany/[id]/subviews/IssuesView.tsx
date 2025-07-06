@@ -10,21 +10,29 @@ import {
   getIssuesAction,
 } from "@/actions/issue.actions";
 import {
-  Issue,
+  IssueWithAssignee,
   IssueLevel,
   IssuePriority,
   IssueState,
+  CopanyContributor,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
-import { issuesCache, unifiedIssueCache } from "@/utils/cache";
+import {
+  issuesCache,
+  unifiedIssueCache,
+  currentUserManager,
+  contributorsManager,
+} from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
+import { User } from "@supabase/supabase-js";
 
 // 按状态分组的函数
-function groupIssuesByState(issues: Issue[]) {
+function groupIssuesByState(issues: IssueWithAssignee[]) {
   const grouped = issues.reduce((acc, issue) => {
     let state = issue.state || IssueState.Backlog;
 
@@ -38,10 +46,10 @@ function groupIssuesByState(issues: Issue[]) {
     }
     acc[state].push(issue);
     return acc;
-  }, {} as Record<number, Issue[]>);
+  }, {} as Record<number, IssueWithAssignee[]>);
 
   // 优先级排序函数：Urgent > High > Medium > Low > None
-  const sortByPriority = (a: Issue, b: Issue) => {
+  const sortByPriority = (a: IssueWithAssignee, b: IssueWithAssignee) => {
     const priorityOrder: Record<number, number> = {
       [IssuePriority.Urgent]: 0,
       [IssuePriority.High]: 1,
@@ -75,7 +83,7 @@ function groupIssuesByState(issues: Issue[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
-  const [issues, setIssues] = useState<Issue[]>([]);
+  const [issues, setIssues] = useState<IssueWithAssignee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -84,10 +92,30 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     y: number;
     issueId: string;
   }>({ show: false, x: 0, y: 0, issueId: "" });
+
+  // 添加共享的用户和贡献者状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
   const hasMountedRef = useRef(false);
+
+  // 获取用户和贡献者数据的函数
+  const loadUserData = useCallback(async () => {
+    try {
+      const [user, contributorList] = await Promise.all([
+        currentUserManager.getCurrentUser(),
+        contributorsManager.getContributors(copanyId),
+      ]);
+
+      setCurrentUser(user);
+      setContributors(contributorList);
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  }, [copanyId]);
 
   // 静默刷新函数
   const silentRefreshIssues = useCallback(async () => {
@@ -122,8 +150,11 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       } else {
         console.log(`[IssuesView] 🚫 No cache available`);
       }
+
+      // 加载用户数据
+      loadUserData();
     }
-  }, [copanyId, silentRefreshIssues]);
+  }, [copanyId, silentRefreshIssues, loadUserData]);
 
   // 加载 issues 的函数
   const loadIssues = useCallback(async () => {
@@ -169,7 +200,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // 处理 issue 创建完成后的回调
   const handleIssueCreated = useCallback(
-    (newIssue: Issue) => {
+    (newIssue: IssueWithAssignee) => {
       setIssues((prevIssues) => {
         const updatedIssues = [...prevIssues, newIssue];
         // 更新 issues 列表缓存
@@ -231,6 +262,27 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
             const updatedIssue = { ...issue, level: newLevel };
+            // 同时更新单个 issue 缓存
+            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            return updatedIssue;
+          }
+          return issue;
+        });
+        // 更新 issues 列表缓存
+        issuesCache.set(copanyId, updatedIssues);
+        return updatedIssues;
+      });
+    },
+    [copanyId]
+  );
+
+  // 处理 issue assignee 更新后的回调
+  const handleIssueAssigneeUpdated = useCallback(
+    (issueId: string, newAssignee: string | null) => {
+      setIssues((prevIssues) => {
+        const updatedIssues = prevIssues.map((issue) => {
+          if (issue.id === issueId) {
+            const updatedIssue = { ...issue, assignee: newAssignee };
             // 同时更新单个 issue 缓存
             unifiedIssueCache.setIssue(copanyId, updatedIssue);
             return updatedIssue;
@@ -378,6 +430,15 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                         onLevelChange={handleIssueLevelUpdated}
                       />
                     )}
+                  <IssueAssigneeSelector
+                    issueId={issue.id}
+                    initialAssignee={issue.assignee}
+                    assigneeUser={issue.assignee_user}
+                    currentUser={currentUser}
+                    contributors={contributors}
+                    showText={false}
+                    onAssigneeChange={handleIssueAssigneeUpdated}
+                  />
                 </div>
               ))}
             </div>
@@ -413,7 +474,7 @@ function IssueForm({
   onClose,
 }: {
   copanyId: string;
-  onIssueCreated: (newIssue: Issue) => void;
+  onIssueCreated: (newIssue: IssueWithAssignee) => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState("");

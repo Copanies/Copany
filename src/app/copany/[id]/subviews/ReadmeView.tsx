@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
-import { getCurrentUser } from "@/actions/auth.actions";
+import { currentUserManager } from "@/utils/cache";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 import { readmeCache } from "@/utils/cache";
@@ -34,8 +34,8 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         setLoading(true);
         setError(null);
 
-        // 检查用户是否已登录
-        const user = await getCurrentUser();
+        // 检查用户是否已登录（使用缓存管理器）
+        const user = await currentUserManager.getCurrentUser();
 
         if (!user) {
           setReadmeContent("请先登录以查看 README 内容");
