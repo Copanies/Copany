@@ -172,7 +172,30 @@ export default function IssueCreateForm({
         </div>
         <div className="flex justify-end px-3 py-3 border-t border-gray-200 dark:border-gray-800">
           <Button type="submit" variant="primary">
-            {isSubmitting ? "Creating..." : "Create Issue"}
+            <div>
+              {isSubmitting ? (
+                <div className="ftext-gray-500 dark:text-gray-400">
+                  Creating
+                  <span className="inline-block">
+                    <span className="animate-pulse">.</span>
+                    <span
+                      className="animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    >
+                      .
+                    </span>
+                    <span
+                      className="animate-pulse"
+                      style={{ animationDelay: "0.4s" }}
+                    >
+                      .
+                    </span>
+                  </span>
+                </div>
+              ) : (
+                "Create Issue"
+              )}
+            </div>
           </Button>
         </div>
       </form>
