@@ -243,7 +243,9 @@ function renderUserLabel(
         </div>
       )}
       {showText && (
-        <span className="text-sm text-gray-900 dark:text-gray-100">{name}</span>
+        <span className="text-base text-gray-900 dark:text-gray-100">
+          {name}
+        </span>
       )}
     </div>
   );
@@ -254,7 +256,7 @@ function renderUnassignedLabel(showText: boolean) {
     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 -my-[1px]">
       <UserIconSolid className="w-[22px] h-[22px] p-[4px] text-gray-700 dark:text-gray-300 rounded-full border border-gray-300 dark:border-gray-600 border-dashed" />
       {showText && (
-        <span className="text-sm text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100">
           No assignee
         </span>
       )}

@@ -185,7 +185,7 @@ export default function GroupedDropdown({
         <div key={groupIndex}>
           {/* 分组标题 */}
           {group.title && (
-            <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <div className="px-3 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
               {group.title}
             </div>
           )}
