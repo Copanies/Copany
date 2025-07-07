@@ -49,7 +49,7 @@ export default function ContextMenu({
 
   return (
     <div
-      className="context-menu fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg py-1 min-w-[120px]"
+      className="context-menu fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg p-1 min-w-[120px]"
       style={{
         left: x,
         top: y,
@@ -65,8 +65,8 @@ export default function ContextMenu({
             }
           }}
           disabled={item.disabled}
-          className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed ${
-            item.className || "text-gray-700 dark:text-gray-300"
+          className={`block w-full text-left px-4 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+            item.className || "text-gray-900 dark:text-gray-100"
           }`}
         >
           {item.label}

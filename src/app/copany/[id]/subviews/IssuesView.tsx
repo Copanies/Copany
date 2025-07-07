@@ -344,7 +344,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     {
       label: "Delete Issue",
       onClick: () => handleDeleteIssue(contextMenu.issueId),
-      className: "text-gray-700 dark:text-gray-300",
+      className: "text-gray-900 dark:text-gray-100",
     },
   ];
 
