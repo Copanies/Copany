@@ -11,6 +11,7 @@ interface IssuePrioritySelectorProps {
   showText: boolean;
   showBackground?: boolean;
   onPriorityChange?: (issueId: string, newPriority: number) => void;
+  disableServerUpdate?: boolean;
 }
 
 export default function IssuePrioritySelector({
@@ -19,6 +20,7 @@ export default function IssuePrioritySelector({
   showText,
   showBackground = false,
   onPriorityChange,
+  disableServerUpdate = false,
 }: IssuePrioritySelectorProps) {
   const [currentPriority, setCurrentPriority] = useState(initialPriority);
 
@@ -31,10 +33,11 @@ export default function IssuePrioritySelector({
         onPriorityChange(issueId, newPriority);
       }
 
-      // 然后调用更新优先级接口
-      await updateIssuePriorityAction(issueId, newPriority);
-
-      console.log("Priority updated successfully:", newPriority);
+      // 只有在不是创建模式时才调用更新优先级接口
+      if (!disableServerUpdate) {
+        await updateIssuePriorityAction(issueId, newPriority);
+        console.log("Priority updated successfully:", newPriority);
+      }
     } catch (error) {
       console.error("Error updating priority:", error);
       // 出错时回滚状态
@@ -122,7 +125,7 @@ function NoneLabel({ showText }: { showText: boolean }) {
       </div>
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
-          No Priority
+          No priority
         </span>
       )}
     </div>

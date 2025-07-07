@@ -17,6 +17,7 @@ interface IssueAssigneeSelectorProps {
   currentUser?: User | null;
   contributors?: CopanyContributor[];
   showText?: boolean;
+  disableServerUpdate?: boolean;
 }
 
 export default function IssueAssigneeSelector({
@@ -28,6 +29,7 @@ export default function IssueAssigneeSelector({
   currentUser,
   contributors,
   showText = true,
+  disableServerUpdate = false,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
@@ -80,10 +82,11 @@ export default function IssueAssigneeSelector({
           onAssigneeChange(issueId, assigneeValue);
         }
 
-        // 然后调用更新 assignee 接口
-        await updateIssueAssigneeAction(issueId, assigneeValue);
-
-        console.log("Assignee updated successfully:", assigneeValue);
+        // 只有在不是创建模式时才调用更新 assignee 接口
+        if (!disableServerUpdate) {
+          await updateIssueAssigneeAction(issueId, assigneeValue);
+          console.log("Assignee updated successfully:", assigneeValue);
+        }
       } catch (error) {
         console.error("Error updating assignee:", error);
         // 出错时回滚状态
@@ -102,6 +105,7 @@ export default function IssueAssigneeSelector({
       issueId,
       initialAssignee,
       assigneeUser,
+      disableServerUpdate,
     ]
   );
 
@@ -254,7 +258,7 @@ function renderUserLabel(
 function renderUnassignedLabel(showText: boolean) {
   return (
     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 -my-[1px]">
-      <UserIconSolid className="w-[22px] h-[22px] p-[4px] text-gray-700 dark:text-gray-300 rounded-full border border-gray-300 dark:border-gray-600 border-dashed" />
+      <UserIconSolid className="w-[22px] h-[22px] p-[4px] text-gray-600 dark:text-gray-400 rounded-full border border-gray-300 dark:border-gray-600 border-dashed" />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           No assignee

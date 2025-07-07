@@ -11,6 +11,7 @@ interface IssueStateSelectorProps {
   showText: boolean;
   showBackground?: boolean;
   onStateChange?: (issueId: string, newState: number) => void;
+  disableServerUpdate?: boolean;
 }
 
 export default function IssueStateSelector({
@@ -19,6 +20,7 @@ export default function IssueStateSelector({
   showText,
   showBackground = false,
   onStateChange,
+  disableServerUpdate = false,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
 
@@ -31,10 +33,11 @@ export default function IssueStateSelector({
         onStateChange(issueId, newState);
       }
 
-      // 然后调用更新状态接口
-      await updateIssueStateAction(issueId, newState);
-
-      console.log("State updated successfully:", newState);
+      // 只有在不是创建模式时才调用更新状态接口
+      if (!disableServerUpdate) {
+        await updateIssueStateAction(issueId, newState);
+        console.log("State updated successfully:", newState);
+      }
     } catch (error) {
       console.error("Error updating state:", error);
       // 出错时回滚状态
