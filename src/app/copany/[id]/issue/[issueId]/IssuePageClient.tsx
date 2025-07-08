@@ -41,6 +41,8 @@ export default function IssuePageClient({
     const handleBeforeUnload = () => {
       // 如果有未保存的更改，静默保存
       if (hasUnsavedChangesRef.current && issueData) {
+        // 先保存在缓存中
+        issuesManager.updateIssue(copanyId, issueData);
         // 使用 sendBeacon 进行可靠的后台保存
         const payload = JSON.stringify({
           id: issueData.id,
@@ -75,17 +77,6 @@ export default function IssuePageClient({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [issueData]);
-
-  // 组件卸载时的清理
-  useEffect(() => {
-    return () => {
-      // 组件卸载时，如果有未保存的更改，立即缓存
-      if (hasUnsavedChangesRef.current && issueData) {
-        issuesManager.updateIssue(copanyId, issueData);
-        console.log("📦 Cached unsaved changes on component unmount");
-      }
     };
   }, [issueData, copanyId]);
 
@@ -260,7 +251,7 @@ export default function IssuePageClient({
         setIssueData(updated);
         issuesManager.updateIssue(copanyId, updated);
         hasUnsavedChangesRef.current = true;
-        console.log(`[IssuePageClient] 📝 Description updated`);
+        console.log(`[IssuePageClient] 📝 Description updated`, newDescription);
       } catch (error) {
         console.error("Error updating issue description:", error);
       }

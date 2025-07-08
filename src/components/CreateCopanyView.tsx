@@ -1,9 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useTheme } from "next-themes";
 import Image from "next/image";
-import ChevronDownIcon from "@/app/chevron.down.png";
-import ChevronDownIconDark from "@/app/chevron.down.dark.png";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import {
   createCopanyAction,
   getOrgAndReposAction,
@@ -13,7 +11,6 @@ import Button from "./commons/Button";
 import LoadingView from "./commons/LoadingView";
 
 export default function CreateCopanyView() {
-  const { resolvedTheme } = useTheme();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -28,11 +25,6 @@ export default function CreateCopanyView() {
     "loading"
   );
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    setIsDarkMode(resolvedTheme === "dark");
-  }, [resolvedTheme]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -121,7 +113,7 @@ export default function CreateCopanyView() {
             e.stopPropagation();
             setIsDropdownOpen(!isDropdownOpen);
           }}
-          className="flex items-center gap-2 rounded-md border-1 border-gray-300 dark:border-gray-700 px-2 py-1 h-fit min-w-[200px] justify-between hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+          className="flex items-center gap-2 rounded-md border-1 border-gray-300 dark:border-gray-700 px-2 py-1 h-fit min-w-[200px] justify-between hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
         >
           {selectedRepoId ? (
             <div className="flex items-center gap-2">
@@ -147,13 +139,11 @@ export default function CreateCopanyView() {
           ) : (
             <span>Select Project</span>
           )}
-          <Image
-            src={isDarkMode ? ChevronDownIconDark : ChevronDownIcon}
-            alt="Chevron Down"
-            width={12}
-            height={12}
-            style={{ width: "12px", height: "auto" }}
-            className={`text-gray-500 ${isDropdownOpen ? "rotate-180" : ""}`}
+
+          <ChevronDownIcon
+            className={`w-3 h-3 text-gray-900 dark:text-gray-100 ${
+              isDropdownOpen ? "rotate-180" : ""
+            }`}
           />
         </button>
         {isDropdownOpen && (
