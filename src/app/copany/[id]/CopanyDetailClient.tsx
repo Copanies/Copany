@@ -9,7 +9,7 @@ import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
-import ContributionView from "./subviews/Contribution";
+import ContributionView from "./subviews/ContributionView";
 
 interface CopanyDetailClientProps {
   copanyId: string;

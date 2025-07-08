@@ -13,8 +13,6 @@ import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
 
-// Note: renderLevelLabel function removed as it was unused
-
 interface ContributionViewProps {
   copanyId: string;
 }
