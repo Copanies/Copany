@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
@@ -32,8 +32,8 @@ interface ContributionPieChartProps {
   users: AssigneeUser[];
 }
 
-// Color configuration
-const colors = [
+// Color configuration - now with light/dark mode support
+const lightColors = [
   "#8b5cf6", // violet
   "#06b6d4", // cyan
   "#10b981", // emerald
@@ -46,13 +46,26 @@ const colors = [
   "#ec4899", // pink
 ];
 
-// Level colors (same as ContributionChart)
-const levelColors: Record<IssueLevel, string> = {
-  [IssueLevel.level_C]: "#7987FF", // blue
-  [IssueLevel.level_B]: "#E697FF", // purple
-  [IssueLevel.level_A]: "#FFA5CB", // pink
-  [IssueLevel.level_S]: "#FFE372", // yellow
-  [IssueLevel.level_None]: "#E5E7EB", // gray
+const darkColors = [
+  "#A78BFA", // violet-400 - more vibrant
+  "#22D3EE", // cyan-400 - more vibrant
+  "#34D399", // emerald-400 - more vibrant
+  "#FBBF24", // amber-400 - more vibrant
+  "#F87171", // red-400 - more vibrant
+  "#60A5FA", // blue-400 - more vibrant
+  "#C084FC", // violet-300 - even more vibrant for repeat
+  "#FB923C", // orange-400 - more vibrant
+  "#A3E635", // lime-400 - more vibrant
+  "#F472B6", // pink-400 - more vibrant
+];
+
+// Level colors (same as ContributionChart) - now with light/dark mode support
+const levelColors: Record<IssueLevel, { light: string; dark: string }> = {
+  [IssueLevel.level_C]: { light: "#7987FF", dark: "#60A5FA" }, // blue - more vibrant in dark
+  [IssueLevel.level_B]: { light: "#E697FF", dark: "#A78BFA" }, // purple - more vibrant
+  [IssueLevel.level_A]: { light: "#FFA5CB", dark: "#F472B6" }, // pink - more vibrant
+  [IssueLevel.level_S]: { light: "#FFE372", dark: "#FBBF24" }, // yellow - more vibrant
+  [IssueLevel.level_None]: { light: "#E5E7EB", dark: "#6B7280" }, // gray - lighter in dark mode
 };
 
 // Note: levelLabels removed as it was unused
@@ -63,6 +76,35 @@ export default function ContributionPieChart({
 }: ContributionPieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check for dark mode
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const checkDarkMode = () => {
+      const htmlElement = document.documentElement;
+      const isDark =
+        htmlElement.classList.contains("dark") ||
+        (darkModeQuery.matches && !htmlElement.classList.contains("light"));
+      setIsDarkMode(isDark);
+    };
+
+    checkDarkMode();
+
+    // Listen for changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    darkModeQuery.addEventListener("change", checkDarkMode);
+
+    return () => {
+      observer.disconnect();
+      darkModeQuery.removeEventListener("change", checkDarkMode);
+    };
+  }, []);
 
   // Calculate each user's contribution score and level breakdown
   const userContributionData: UserContributionData[] = useMemo(() => {
@@ -120,10 +162,10 @@ export default function ContributionPieChart({
     return data;
   }, [contributions, users]);
 
-  // Color scale
+  // Color scale - choose colors based on theme
   const colorScale = scaleOrdinal<string, string>({
     domain: userContributionData.map((d) => d.user.id),
-    range: colors,
+    range: isDarkMode ? darkColors : lightColors,
   });
 
   const maxWidth = 600;
@@ -159,7 +201,7 @@ export default function ContributionPieChart({
   if (userContributionData.length === 0) {
     return (
       <div className="w-full max-w-4xl">
-        <div className="flex justify-center items-center h-64 text-gray-500">
+        <div className="flex justify-center items-center h-64 text-gray-500 dark:text-gray-400">
           No contribution data available
         </div>
       </div>
@@ -191,8 +233,8 @@ export default function ContributionPieChart({
                         <path
                           d={arcPath}
                           fill={colorScale(arc.data.user.id)}
-                          stroke="white"
-                          strokeWidth={2}
+                          stroke={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker stroke for better contrast
+                          strokeWidth={isDarkMode ? 3 : 2} // thicker stroke in dark mode
                           style={{ cursor: "pointer" }}
                           onMouseEnter={(event) =>
                             handleArcMouseEnter(event, arc.data)
@@ -206,7 +248,7 @@ export default function ContributionPieChart({
                             dy="0.33em"
                             fontSize={12}
                             textAnchor="middle"
-                            fill="white"
+                            fill={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker text for better contrast
                             fontWeight="bold"
                             style={{ pointerEvents: "none" }}
                           >
@@ -242,10 +284,10 @@ export default function ContributionPieChart({
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm truncate">
+                  <div className="font-semibold text-sm truncate text-gray-900 dark:text-gray-100">
                     {data.user.name}
                   </div>
-                  <div className="text-xs font-medium text-gray-600">
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
                     {data.totalScore} P - {data.percentage.toFixed(1)}%
                   </div>
                 </div>
@@ -256,7 +298,13 @@ export default function ContributionPieChart({
       </div>
 
       {/* Tooltip */}
-      {tooltip && <PieTooltip data={tooltip} containerWidth={width} />}
+      {tooltip && (
+        <PieTooltip
+          data={tooltip}
+          containerWidth={width}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }
@@ -264,9 +312,10 @@ export default function ContributionPieChart({
 interface PieTooltipProps {
   data: TooltipData;
   containerWidth: number;
+  isDarkMode: boolean;
 }
 
-function PieTooltip({ data, containerWidth }: PieTooltipProps) {
+function PieTooltip({ data, containerWidth, isDarkMode }: PieTooltipProps) {
   // Calculate tooltip position to prevent overflow
   const tooltipWidth = 280;
   const tooltipHeight = 200;
@@ -306,9 +355,12 @@ function PieTooltip({ data, containerWidth }: PieTooltipProps) {
     },
   ].filter((item) => item.count > 0);
 
+  const getLevelColor = (level: IssueLevel) =>
+    isDarkMode ? levelColors[level].dark : levelColors[level].light;
+
   return (
     <div
-      className="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-sm pointer-events-none"
+      className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 text-sm pointer-events-none"
       style={{
         left: x,
         top: y,
@@ -325,24 +377,28 @@ function PieTooltip({ data, containerWidth }: PieTooltipProps) {
           className="w-6 h-6 rounded-full"
         />
         <div className="flex flex-col gap-0">
-          <div className="font-semibold text-gray-900">{data.user.name}</div>
-          <div className="text-xs text-gray-600">{data.user.email}</div>
+          <div className="font-semibold text-gray-900 dark:text-gray-100">
+            {data.user.name}
+          </div>
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            {data.user.email}
+          </div>
         </div>
       </div>
 
       {/* Total contribution */}
-      <div className="mb-3 p-2 bg-gray-100 rounded-md">
-        <div className="text-lg font-semibold text-gray-900">
+      <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
+        <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {data.totalScore} Points
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           {data.percentage.toFixed(1)}% of total contributions
         </div>
       </div>
 
       {/* Level breakdown */}
       <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700 mb-2">
+        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Issue Level Breakdown:
         </div>
         {levelDisplay.map((item) => (
@@ -350,11 +406,13 @@ function PieTooltip({ data, containerWidth }: PieTooltipProps) {
             <div className="flex items-center gap-2">
               <div
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: levelColors[item.level] }}
+                style={{ backgroundColor: getLevelColor(item.level) }}
               />
-              <span className="text-sm">Level {item.label}</span>
+              <span className="text-sm text-gray-900 dark:text-gray-100">
+                Level {item.label}
+              </span>
             </div>
-            <div className="text-sm font-medium">
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {item.count} × {LEVEL_SCORES[item.level]} P ={" "}
               {item.count * LEVEL_SCORES[item.level]} P
             </div>

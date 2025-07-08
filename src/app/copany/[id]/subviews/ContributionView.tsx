@@ -238,8 +238,10 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   return (
     <div className="flex flex-col gap-6 mb-8">
       <div className="flex flex-col w-full gap-2">
-        <h3 className="text-lg font-semibold mb-4">Distribution</h3>
-        <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+          Distribution
+        </h3>
+        <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200 dark:border-gray-700">
           <ContributionPieChart contributions={contributions} users={users} />
         </div>
       </div>

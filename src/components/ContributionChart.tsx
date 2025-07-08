@@ -78,20 +78,21 @@ const monthNames = [
   "Dec",
 ];
 
-// Level colors
-const levelColors: Record<DisplayLevel, string> = {
-  [IssueLevel.level_C]: "#7987FF", // blue
-  [IssueLevel.level_B]: "#E697FF", // purple
-  [IssueLevel.level_A]: "#FFA5CB", // pink
-  [IssueLevel.level_S]: "#FFE372", // yellow
+// Level colors - now with light/dark mode support
+const levelColors: Record<DisplayLevel, { light: string; dark: string }> = {
+  [IssueLevel.level_C]: { light: "#7987FF", dark: "#60A5FA" }, // blue - more vibrant in dark
+  [IssueLevel.level_B]: { light: "#E697FF", dark: "#A78BFA" }, // purple - more vibrant
+  [IssueLevel.level_A]: { light: "#FFA5CB", dark: "#F472B6" }, // pink - more vibrant
+  [IssueLevel.level_S]: { light: "#FFE372", dark: "#FBBF24" }, // yellow - more vibrant
 };
 
-const levelStrokeColors: Record<DisplayLevel, string> = {
-  [IssueLevel.level_C]: "#165BAA", // blue
-  [IssueLevel.level_B]: "#A155B9", // purple
-  [IssueLevel.level_A]: "#F765A3", // red
-  [IssueLevel.level_S]: "#E6B800", // yellow
-};
+const levelStrokeColors: Record<DisplayLevel, { light: string; dark: string }> =
+  {
+    [IssueLevel.level_C]: { light: "#165BAA", dark: "#3B82F6" }, // blue - brighter stroke
+    [IssueLevel.level_B]: { light: "#A155B9", dark: "#8B5CF6" }, // purple - brighter stroke
+    [IssueLevel.level_A]: { light: "#F765A3", dark: "#EC4899" }, // pink - brighter stroke
+    [IssueLevel.level_S]: { light: "#E6B800", dark: "#F59E0B" }, // yellow - brighter stroke
+  };
 
 // Level labels
 const levelLabels: Record<DisplayLevel, string> = {
@@ -201,7 +202,7 @@ export default function ContributionChart({
   if (!hasData) {
     return (
       <div className="w-full">
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
           {user.name} No contribution data
         </div>
       </div>
@@ -242,8 +243,30 @@ function UserChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
+    // Check for dark mode
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const checkDarkMode = () => {
+      const htmlElement = document.documentElement;
+      const isDark =
+        htmlElement.classList.contains("dark") ||
+        (darkModeQuery.matches && !htmlElement.classList.contains("light"));
+      setIsDarkMode(isDark);
+    };
+
+    checkDarkMode();
+
+    // Listen for changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    darkModeQuery.addEventListener("change", checkDarkMode);
+
     const updateWidth = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
@@ -254,6 +277,8 @@ function UserChart({
     window.addEventListener("resize", updateWidth);
 
     return () => {
+      observer.disconnect();
+      darkModeQuery.removeEventListener("change", checkDarkMode);
       window.removeEventListener("resize", updateWidth);
     };
   }, []);
@@ -373,6 +398,17 @@ function UserChart({
     setTooltip(null);
   };
 
+  // Dynamic colors based on theme
+  const gridColor = isDarkMode ? "#4B5563" : "#E7E7E7"; // gray-600 : gray-200 - lighter grid in dark mode
+  const axisColor = isDarkMode ? "#4B5563" : "#E7E7E7"; // gray-600 : gray-200 - lighter axis in dark mode
+  const lineColor = isDarkMode ? "#60A5FA" : "#2563eb"; // blue-400 : blue-600 - more vibrant line in dark mode
+
+  const getLevelColor = (level: DisplayLevel) =>
+    isDarkMode ? levelColors[level].dark : levelColors[level].light;
+
+  const getLevelStrokeColor = (level: DisplayLevel) =>
+    isDarkMode ? levelStrokeColors[level].dark : levelStrokeColors[level].light;
+
   return (
     <div ref={containerRef} className="mb-10 w-full relative">
       {showUserInfo && (
@@ -388,13 +424,15 @@ function UserChart({
                 className="w-6 h-6 rounded-full mr-2.5"
               />
               <div>
-                <div className="font-bold">{userData.user.name}</div>
+                <div className="font-bold text-gray-900 dark:text-gray-100">
+                  {userData.user.name}
+                </div>
               </div>
             </div>
 
             {/* Rank display in top-right corner */}
             {rank !== undefined && (
-              <div className="text-sm font-semibold text-gray-600 bg-gray-100 rounded-full px-2 py-[2px]">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px]">
                 #{rank}
               </div>
             )}
@@ -419,7 +457,7 @@ function UserChart({
               x2={chartWidth}
               y1={yScaleAdjusted(tickValue)}
               y2={yScaleAdjusted(tickValue)}
-              stroke="#E7E7E7"
+              stroke={gridColor}
               strokeWidth={1}
             />
           ))}
@@ -447,8 +485,13 @@ function UserChart({
               }
               return value;
             }}
-            tickStroke="#E7E7E7"
-            stroke="#E7E7E7"
+            tickStroke={axisColor}
+            stroke={axisColor}
+            tickLabelProps={() => ({
+              fill: isDarkMode ? "#F3F4F6" : "#374151", // gray-100 : gray-700
+              fontSize: 12,
+              textAnchor: "middle",
+            })}
           />
 
           {/* Left Y-axis - Issue Count */}
@@ -458,8 +501,13 @@ function UserChart({
             tickFormat={(value) =>
               Number.isInteger(Number(value)) ? value.toString() : ""
             }
-            tickStroke="#E7E7E7"
-            stroke="#E7E7E7"
+            tickStroke={axisColor}
+            stroke={axisColor}
+            tickLabelProps={() => ({
+              fill: isDarkMode ? "#F3F4F6" : "#374151", // gray-100 : gray-700
+              fontSize: 12,
+              textAnchor: "end",
+            })}
           />
 
           {/* Right Y-axis - Contribution Points */}
@@ -470,8 +518,13 @@ function UserChart({
             tickFormat={(value) =>
               Number.isInteger(Number(value)) ? value.toString() : ""
             }
-            tickStroke="#E7E7E7"
-            stroke="#E7E7E7"
+            tickStroke={axisColor}
+            stroke={axisColor}
+            tickLabelProps={() => ({
+              fill: isDarkMode ? "#F3F4F6" : "#374151", // gray-100 : gray-700
+              fontSize: 12,
+              textAnchor: "start",
+            })}
           />
 
           {/* Draw grouped bar chart */}
@@ -495,8 +548,8 @@ function UserChart({
                   y={barY}
                   width={barWidth}
                   height={barHeight}
-                  fill={levelColors[level]}
-                  stroke={levelStrokeColors[level]}
+                  fill={getLevelColor(level)}
+                  stroke={getLevelStrokeColor(level)}
                   strokeWidth={2}
                   rx={4}
                   ry={4}
@@ -516,7 +569,7 @@ function UserChart({
               data={lineData}
               x={(d) => d.x}
               y={(d) => d.y}
-              stroke="#2563eb"
+              stroke={lineColor}
               strokeWidth={3}
               fill="none"
             />
@@ -530,10 +583,10 @@ function UserChart({
                 key={`point-${index}`}
                 cx={point.x}
                 cy={point.y}
-                r={4}
-                fill="#2563eb"
-                stroke="#ffffff"
-                strokeWidth={2}
+                r={isDarkMode ? 5 : 4} // slightly larger points in dark mode
+                fill={lineColor}
+                stroke={isDarkMode ? "#111827" : "#ffffff"} // gray-900 : white - darker stroke for better contrast
+                strokeWidth={isDarkMode ? 3 : 2} // thicker stroke in dark mode
                 style={{ cursor: "pointer" }}
                 onMouseEnter={(event) =>
                   handleLinePointMouseEnter(event, monthData)
@@ -551,6 +604,7 @@ function UserChart({
           data={tooltip}
           containerWidth={containerWidth}
           containerHeight={height}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -562,18 +616,20 @@ function UserChart({
             <div key={level} className="flex items-center gap-1.5">
               <div
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: levelColors[level] }}
+                style={{ backgroundColor: getLevelColor(level) }}
               />
-              <span className="">{levelLabels[level]}</span>
+              <span className="text-gray-900 dark:text-gray-100">
+                {levelLabels[level]}
+              </span>
             </div>
           ))}
           {/* Contribution Points Line Legend */}
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-0.5 bg-blue-600" />
-            <span className="">Points</span>
+            <div className="w-4 h-0.5" style={{ backgroundColor: lineColor }} />
+            <span className="text-gray-900 dark:text-gray-100">Points</span>
           </div>
         </div>
-        <div className="flex gap-3 text-gray-600">
+        <div className="flex gap-3 text-gray-600 dark:text-gray-400">
           <div className="">L/Y - Issues</div>
           <div className="">R/Y - Points</div>
         </div>
@@ -646,10 +702,12 @@ function ContributionStats({
 
   return (
     <div>
-      <div className="text-3xl font-normal text-gray-900">
+      <div className="text-3xl font-normal text-gray-900 dark:text-gray-100">
         {userTotalScore} P - {percentage.toFixed(1)}%
       </div>
-      <div className="text-sm text-gray-900">{levelCountsDisplay}</div>
+      <div className="text-sm text-gray-900 dark:text-gray-100">
+        {levelCountsDisplay}
+      </div>
     </div>
   );
 }
@@ -658,9 +716,10 @@ interface TooltipProps {
   data: TooltipData;
   containerWidth: number;
   containerHeight: number;
+  isDarkMode: boolean;
 }
 
-function Tooltip({ data, containerWidth }: TooltipProps) {
+function Tooltip({ data, containerWidth, isDarkMode }: TooltipProps) {
   // Calculate tooltip position to prevent overflow
   const tooltipWidth = 200;
   const tooltipHeight = 100;
@@ -676,16 +735,19 @@ function Tooltip({ data, containerWidth }: TooltipProps) {
     y = data.y + 20;
   }
 
+  const getLevelColor = (level: DisplayLevel) =>
+    isDarkMode ? levelColors[level].dark : levelColors[level].light;
+
   return (
     <div
-      className="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
+      className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
       style={{
         left: x,
         top: y,
         minWidth: "150px",
       }}
     >
-      <div className="font-semibold text-gray-900 mb-2">
+      <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
         {data.month} {data.year}
       </div>
 
@@ -694,17 +756,21 @@ function Tooltip({ data, containerWidth }: TooltipProps) {
           <div className="flex items-center gap-2">
             <div
               className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: levelColors[data.level] }}
+              style={{ backgroundColor: getLevelColor(data.level) }}
             />
-            <span className="font-medium">Level {levelLabels[data.level]}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Level {levelLabels[data.level]}
+            </span>
           </div>
-          <div className="text-gray-600">
+          <div className="text-gray-600 dark:text-gray-400">
             Issues:{" "}
-            <span className="font-medium text-gray-900">{data.count}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {data.count}
+            </span>
           </div>
-          <div className="text-gray-600">
+          <div className="text-gray-600 dark:text-gray-400">
             Points:{" "}
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {data.count * levelScores[data.level]}
             </span>
           </div>
@@ -714,12 +780,17 @@ function Tooltip({ data, containerWidth }: TooltipProps) {
       {data.type === "line" && data.contributionScore !== undefined && (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-0.5 bg-blue-600" />
-            <span className="font-medium">Total Points</span>
+            <div
+              className="w-4 h-0.5"
+              style={{ backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb" }}
+            />
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Total Points
+            </span>
           </div>
-          <div className="text-gray-600">
+          <div className="text-gray-600 dark:text-gray-400">
             Score:{" "}
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {data.contributionScore}
             </span>
           </div>
