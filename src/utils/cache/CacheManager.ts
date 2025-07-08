@@ -3,12 +3,14 @@ export interface CacheConfig {
   keyPrefix: string; // 缓存键前缀
   ttl: number; // 缓存时间（毫秒）
   loggerName: string; // 日志标识名称
+  backgroundRefreshInterval?: number; // 后台刷新间隔（毫秒），默认10分钟
 }
 
 // 缓存条目接口
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
+  lastRefreshTime?: number; // 最后一次后台刷新时间
 }
 
 // 键生成器类型
@@ -26,6 +28,7 @@ export class CacheManager<T, K = string> {
   private readonly config: CacheConfig;
   private readonly keyGenerator: KeyGenerator<K>;
   private readonly logInfoGenerator?: LogInfoGenerator<T>;
+  private readonly backgroundRefreshInterval: number;
 
   constructor(
     config: CacheConfig,
@@ -35,6 +38,8 @@ export class CacheManager<T, K = string> {
     this.config = config;
     this.keyGenerator = keyGenerator || ((key: K) => String(key));
     this.logInfoGenerator = logInfoGenerator;
+    this.backgroundRefreshInterval =
+      config.backgroundRefreshInterval || 10 * 60 * 1000; // 默认10分钟
   }
 
   /**
@@ -123,6 +128,99 @@ export class CacheManager<T, K = string> {
       );
       return null;
     }
+  }
+
+  /**
+   * 检查是否需要后台刷新
+   */
+  shouldBackgroundRefresh(key: K): boolean {
+    try {
+      if (typeof window === "undefined") return false;
+
+      const cacheKey = this.config.keyPrefix + this.keyGenerator(key);
+      const stored = localStorage.getItem(cacheKey);
+
+      if (!stored) return false;
+
+      const entry: CacheEntry<T> = JSON.parse(stored);
+      const now = Date.now();
+
+      // 如果从未后台刷新过，应该立即刷新
+      if (!entry.lastRefreshTime) {
+        console.log(`[${this.config.loggerName}] 🔄 首次后台刷新，立即启动`);
+        return true;
+      }
+
+      // 检查距离上次刷新是否超过设定的间隔时间
+      const timeSinceLastRefresh = now - entry.lastRefreshTime;
+      const shouldRefresh =
+        timeSinceLastRefresh > this.backgroundRefreshInterval;
+
+      if (shouldRefresh) {
+        console.log(
+          `[${this.config.loggerName}] 🔄 距离上次刷新 ${Math.floor(
+            timeSinceLastRefresh / 1000
+          )}s，超过间隔 ${Math.floor(
+            this.backgroundRefreshInterval / 1000
+          )}s，启动后台刷新`
+        );
+      } else {
+        console.log(
+          `[${this.config.loggerName}] ⏸️ 距离上次刷新 ${Math.floor(
+            timeSinceLastRefresh / 1000
+          )}s，未达到间隔 ${Math.floor(
+            this.backgroundRefreshInterval / 1000
+          )}s，跳过刷新`
+        );
+      }
+
+      return shouldRefresh;
+    } catch (error) {
+      console.error(
+        `[${this.config.loggerName}] ❌ Failed to check background refresh:`,
+        error
+      );
+      return false;
+    }
+  }
+
+  /**
+   * 更新后台刷新时间戳
+   */
+  updateRefreshTimestamp(key: K): void {
+    try {
+      if (typeof window === "undefined") return;
+
+      const cacheKey = this.config.keyPrefix + this.keyGenerator(key);
+      const stored = localStorage.getItem(cacheKey);
+
+      if (!stored) return;
+
+      const entry: CacheEntry<T> = JSON.parse(stored);
+      entry.lastRefreshTime = Date.now();
+
+      localStorage.setItem(cacheKey, JSON.stringify(entry));
+
+      console.log(
+        `[${this.config.loggerName}] 🔄 Updated refresh timestamp for: ${cacheKey}`
+      );
+    } catch (error) {
+      console.error(
+        `[${this.config.loggerName}] ❌ Failed to update refresh timestamp:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * 获取缓存（用于 SWR 策略）
+   * 返回缓存数据和是否需要后台刷新的标志
+   */
+  getWithRefreshInfo(key: K): { data: T | null; shouldRefresh: boolean } {
+    const data = this.get(key);
+    const shouldRefresh = data !== null && this.shouldBackgroundRefresh(key);
+
+    return { data, shouldRefresh };
   }
 
   /**

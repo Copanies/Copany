@@ -125,18 +125,16 @@ export class IssueService {
   static async updateIssue(
     issue: Omit<
       Issue,
-      | "created_at"
-      | "updated_at"
-      | "assignee"
-      | "closed_at"
-      | "created_by"
-      | "copany_id"
+      "created_at" | "updated_at" | "closed_at" | "created_by" | "copany_id"
     >
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
-      .update(issue)
+      .update({
+        ...issue,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", issue.id)
       .select()
       .single();
@@ -177,6 +175,7 @@ export class IssueService {
           state === IssueState.Duplicate
             ? new Date().toISOString()
             : null,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", issueId)
       .select()
@@ -201,7 +200,7 @@ export class IssueService {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
-      .update({ priority })
+      .update({ priority, updated_at: new Date().toISOString() })
       .eq("id", issueId)
       .select()
       .single();
@@ -225,7 +224,7 @@ export class IssueService {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
-      .update({ level })
+      .update({ level, updated_at: new Date().toISOString() })
       .eq("id", issueId)
       .select()
       .single();
@@ -249,7 +248,7 @@ export class IssueService {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
-      .update({ assignee })
+      .update({ assignee, updated_at: new Date().toISOString() })
       .eq("id", issueId)
       .select()
       .single();

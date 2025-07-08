@@ -14,6 +14,11 @@
     "@octokit/rest": "^22.0.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
+    "@visx/axis": "^3.12.0",
+    "@visx/group": "^3.12.0",
+    "@visx/scale": "^3.12.0",
+    "@visx/shape": "^3.12.0",
+    "@visx/tooltip": "^3.12.0",
     "github-markdown-css": "^5.8.1",
     "next": "15.3.3",
     "next-themes": "^0.4.6",
@@ -34,5 +39,27 @@
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@visx/axis": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@visx/group": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@visx/scale": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@visx/shape": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "@visx/tooltip": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }

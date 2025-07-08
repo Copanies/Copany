@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
-import { currentUserManager } from "@/utils/cache";
+import { currentUserManager, readmeManager } from "@/utils/cache";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
-import { readmeCache } from "@/utils/cache";
 
 interface ReadmeViewProps {
   githubUrl?: string;
@@ -13,8 +12,10 @@ interface ReadmeViewProps {
 
 const decodeGitHubContent = (base64String: string): string => {
   try {
-    // 客户端环境下直接使用浏览器 API
-    return decodeURIComponent(escape(atob(base64String)));
+    const binaryString = atob(base64String);
+    const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+    const decoder = new TextDecoder("utf-8");
+    return decoder.decode(bytes);
   } catch (error) {
     console.error("解码失败:", error);
     throw new Error("无法解码 GitHub 内容");
@@ -49,28 +50,17 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
           return;
         }
 
-        // 首先尝试从缓存获取
-        const cachedContent = readmeCache.get(githubUrl);
-        if (cachedContent) {
-          console.log("📦 使用缓存的 README 内容");
-          setReadmeContent(cachedContent);
-          setLoading(false);
-          return;
-        }
+        // 使用新的 SWR 策略：立即返回缓存 + 后台更新
+        console.log("🔄 使用 SWR 策略获取 README 内容");
+        const content = await readmeManager.getReadme(githubUrl, async () => {
+          const readme = await getRepoReadmeAction(githubUrl);
+          if (!readme?.content) {
+            return "未找到 README 文件";
+          }
+          return decodeGitHubContent(readme.content);
+        });
 
-        // 缓存未命中，从 API 获取
-        console.log("🌐 从 API 获取 README 内容");
-        const readme = await getRepoReadmeAction(githubUrl);
-        if (readme?.content) {
-          const content = decodeGitHubContent(readme.content);
-          setReadmeContent(content);
-
-          // 保存到缓存
-          readmeCache.set(githubUrl, content);
-        } else {
-          const notFoundMessage = "未找到 README 文件";
-          setReadmeContent(notFoundMessage);
-        }
+        setReadmeContent(content);
       } catch (err) {
         console.error("获取 README 失败:", err);
         const errorMessage =

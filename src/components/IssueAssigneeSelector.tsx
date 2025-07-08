@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
@@ -13,7 +13,11 @@ interface IssueAssigneeSelectorProps {
   initialAssignee: string | null;
   assigneeUser?: AssigneeUser | null;
   showBackground?: boolean;
-  onAssigneeChange?: (issueId: string, newAssignee: string | null) => void;
+  onAssigneeChange?: (
+    issueId: string,
+    newAssignee: string | null,
+    assigneeUser: AssigneeUser | null
+  ) => void;
   currentUser?: User | null;
   contributors?: CopanyContributor[];
   showText?: boolean;
@@ -34,12 +38,6 @@ export default function IssueAssigneeSelector({
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
 
-  // 当 props 中的 assignee 信息更新时，同步本地状态
-  useEffect(() => {
-    setCurrentAssignee(initialAssignee);
-    setCurrentAssigneeUser(assigneeUser);
-  }, [initialAssignee, assigneeUser]);
-
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
       try {
@@ -47,10 +45,10 @@ export default function IssueAssigneeSelector({
         setCurrentAssignee(assigneeValue);
 
         // 更新本地的 assignee user 信息
+        let newAssigneeUser: AssigneeUser | null = null;
+
         if (assigneeValue) {
           // 从当前用户或贡献者中找到对应的用户信息
-          let newAssigneeUser: AssigneeUser | null = null;
-
           if (currentUser && assigneeValue === currentUser.id) {
             newAssigneeUser = {
               id: currentUser.id,
@@ -71,15 +69,13 @@ export default function IssueAssigneeSelector({
               };
             }
           }
-
-          setCurrentAssigneeUser(newAssigneeUser);
-        } else {
-          setCurrentAssigneeUser(null);
         }
+
+        setCurrentAssigneeUser(newAssigneeUser);
 
         // 立即调用回调更新前端状态，提供即时反馈
         if (onAssigneeChange) {
-          onAssigneeChange(issueId, assigneeValue);
+          onAssigneeChange(issueId, assigneeValue, newAssigneeUser);
         }
 
         // 只有在不是创建模式时才调用更新 assignee 接口
@@ -94,7 +90,7 @@ export default function IssueAssigneeSelector({
         setCurrentAssigneeUser(assigneeUser);
         // 如果有回调，也需要回滚前端状态
         if (onAssigneeChange) {
-          onAssigneeChange(issueId, initialAssignee);
+          onAssigneeChange(issueId, initialAssignee, assigneeUser || null);
         }
       }
     },
@@ -109,8 +105,8 @@ export default function IssueAssigneeSelector({
     ]
   );
 
-  // 构建分组选项 - 使用 useMemo 缓存
-  const groups = useMemo(() => {
+  // 构建分组选项
+  const groups = (() => {
     const groups = [];
 
     // 添加 "Unassigned" 选项
@@ -162,16 +158,16 @@ export default function IssueAssigneeSelector({
     }
 
     return groups;
-  }, [currentUser, contributors]);
+  })();
 
-  // 获取当前选中的值 - 使用 useMemo 缓存
-  const selectedValue = useMemo(() => {
+  // 获取当前选中的值
+  const selectedValue = (() => {
     if (!currentAssignee) return "unassigned";
     return currentAssignee;
-  }, [currentAssignee]);
+  })();
 
-  // 渲染触发器显示内容 - 使用 useMemo 缓存
-  const trigger = useMemo(() => {
+  // 渲染触发器显示内容
+  const trigger = (() => {
     if (!currentAssignee) {
       return renderUnassignedLabel(showText);
     }
@@ -207,13 +203,7 @@ export default function IssueAssigneeSelector({
 
     // 如果都找不到，显示一个默认的用户标签
     return renderUserLabel("Unknown User", null, showText);
-  }, [
-    currentAssignee,
-    currentAssigneeUser,
-    currentUser,
-    contributors,
-    showText,
-  ]);
+  })();
 
   return (
     <GroupedDropdown

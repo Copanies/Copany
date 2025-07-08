@@ -78,3 +78,24 @@ export interface AssigneeUser {
   email: string;
   avatar_url: string;
 }
+
+export interface Contribution {
+  id: string;
+  user_id: string;
+  copany_id: string;
+  issue_id: string;
+  issue_title: string;
+  issue_level: number;
+  year: number;
+  month: number;
+  day: number;
+}
+
+// 等级分数配置
+export const LEVEL_SCORES: Record<IssueLevel, number> = {
+  [IssueLevel.level_C]: 5,
+  [IssueLevel.level_B]: 20,
+  [IssueLevel.level_A]: 60,
+  [IssueLevel.level_S]: 200,
+  [IssueLevel.level_None]: 0,
+};

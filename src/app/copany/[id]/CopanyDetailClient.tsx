@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { copanyCache } from "@/utils/cache";
+import { copanyManager } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
+import ContributionView from "./subviews/ContributionView";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -21,89 +22,44 @@ export default function CopanyDetailClient({
     copanyId,
   });
 
-  // 初始时使用服务端数据
   const [copany, setCopany] = useState<Copany | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const hasLoadedRef = useRef(false);
-  const hasMountedRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const hasInitialLoadRef = useRef(false);
 
+  // 使用新的 SWR 策略加载数据
   const loadCopany = useCallback(async () => {
+    if (hasInitialLoadRef.current) return;
+    hasInitialLoadRef.current = true;
+
     try {
-      console.log(`[CopanyDetailClient] 🌐 Loading copany from server...`);
-      setIsInitialLoad(true);
-      const data = await getCopanyByIdAction(copanyId);
-      console.log(`[CopanyDetailClient] ✅ Loaded from server:`, data?.name);
+      console.log(
+        `[CopanyDetailClient] 🔄 Loading copany with SWR strategy...`
+      );
+      setIsLoading(true);
+
+      // 使用 SWR 策略：立即返回缓存 + 后台更新
+      const data = await copanyManager.getCopany(copanyId, async () => {
+        const result = await getCopanyByIdAction(copanyId);
+        if (!result) {
+          throw new Error("Copany not found");
+        }
+        return result;
+      });
+
+      console.log(`[CopanyDetailClient] ✅ Loaded copany:`, data?.name);
       setCopany(data);
-      // 更新缓存
-      if (data) {
-        copanyCache.set(copanyId, data);
-      }
     } catch (error) {
       console.error("[CopanyDetailClient] ❌ Error loading copany:", error);
     } finally {
-      setIsInitialLoad(false);
-    }
-  }, [copanyId]);
-
-  const silentRefresh = useCallback(async () => {
-    try {
-      console.log(`[CopanyDetailClient] 🔄 Silent refresh started...`);
-      const data = await getCopanyByIdAction(copanyId);
-      console.log(
-        `[CopanyDetailClient] ✅ Silent refresh completed:`,
-        data?.name
-      );
-      setCopany(data);
-      // 更新缓存
-      if (data) {
-        copanyCache.set(copanyId, data);
-      }
-    } catch (error) {
-      console.error("[CopanyDetailClient] ❌ Error refreshing copany:", error);
-    }
-  }, [copanyId]);
-
-  // 客户端挂载后检查缓存
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      console.log(`[CopanyDetailClient] 📱 Client mounted, checking cache...`);
-
-      // 尝试从缓存读取数据
-      const cachedData = copanyCache.get(copanyId);
-      if (cachedData) {
-        console.log(
-          `[CopanyDetailClient] 💾 Using cached data:`,
-          cachedData.name
-        );
-        setCopany(cachedData);
-        setIsInitialLoad(false);
-      } else {
-        console.log(`[CopanyDetailClient] 🚫 No cache available`);
-      }
+      setIsLoading(false);
     }
   }, [copanyId]);
 
   useEffect(() => {
-    // 如果有缓存或初始数据，静默刷新
-    if (copany && !hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      console.log(`[CopanyDetailClient] 🔄 Scheduling silent refresh...`);
-      // 延迟一点执行静默刷新，让页面先渲染
-      setTimeout(() => {
-        silentRefresh();
-      }, 100);
-    }
-    // 如果没有数据，正常加载
-    else if (!copany && hasMountedRef.current) {
-      console.log(
-        `[CopanyDetailClient] 📥 No data available, loading from server...`
-      );
-      loadCopany();
-    }
-  }, [copanyId, copany, loadCopany, silentRefresh]);
+    loadCopany();
+  }, [loadCopany]);
 
-  if (isInitialLoad) {
+  if (isLoading) {
     return (
       <div className="p-8 max-w-screen-lg mx-auto">
         <LoadingView type="page" />
@@ -149,6 +105,10 @@ export default function CopanyDetailClient({
           {
             label: "Cooperate",
             content: <CooperateView copanyId={copanyId} />,
+          },
+          {
+            label: "Contribution",
+            content: <ContributionView copanyId={copanyId} />,
           },
         ]}
       />
