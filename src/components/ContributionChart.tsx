@@ -49,6 +49,17 @@ interface ContributionChartProps {
   totalContributionScore?: number; // New: total contribution score of all users for percentage calculation
 }
 
+interface TooltipData {
+  type: "bar" | "line";
+  month: string;
+  year: number;
+  level?: DisplayLevel;
+  count?: number;
+  contributionScore?: number;
+  x: number;
+  y: number;
+}
+
 // Month abbreviations
 const monthNames = [
   "Jan",
@@ -224,6 +235,7 @@ function UserChart({
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -321,8 +333,53 @@ function UserChart({
     score: monthData.contributionScore,
   }));
 
+  // Handle mouse events for tooltip
+  const handleBarMouseEnter = (
+    event: React.MouseEvent<SVGRectElement>,
+    monthData: ContributionData,
+    level: DisplayLevel
+  ) => {
+    const count = monthData.levelCounts[level];
+    if (count === 0) return;
+
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    setTooltip({
+      type: "bar",
+      month: monthData.month,
+      year: monthData.year,
+      level,
+      count,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
+  const handleLinePointMouseEnter = (
+    event: React.MouseEvent<SVGCircleElement>,
+    monthData: ContributionData,
+    pointIndex: number
+  ) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    setTooltip({
+      type: "line",
+      month: monthData.month,
+      year: monthData.year,
+      contributionScore: monthData.contributionScore,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
+
   return (
-    <div ref={containerRef} className="mb-10 w-full">
+    <div ref={containerRef} className="mb-10 w-full relative">
       {showUserInfo && (
         <>
           {/* User Info */}
@@ -438,6 +495,11 @@ function UserChart({
                   strokeWidth={2}
                   rx={4}
                   ry={4}
+                  style={{ cursor: "pointer" }}
+                  onMouseEnter={(event) =>
+                    handleBarMouseEnter(event, monthData, level)
+                  }
+                  onMouseLeave={handleMouseLeave}
                 />
               );
             });
@@ -456,19 +518,36 @@ function UserChart({
           )}
 
           {/* Draw line chart data points */}
-          {lineData.map((point, index) => (
-            <circle
-              key={`point-${index}`}
-              cx={point.x}
-              cy={point.y}
-              r={4}
-              fill="#2563eb"
-              stroke="#ffffff"
-              strokeWidth={2}
-            />
-          ))}
+          {lineData.map((point, index) => {
+            const monthData = userData.monthlyData[index];
+            return (
+              <circle
+                key={`point-${index}`}
+                cx={point.x}
+                cy={point.y}
+                r={4}
+                fill="#2563eb"
+                stroke="#ffffff"
+                strokeWidth={2}
+                style={{ cursor: "pointer" }}
+                onMouseEnter={(event) =>
+                  handleLinePointMouseEnter(event, monthData, index)
+                }
+                onMouseLeave={handleMouseLeave}
+              />
+            );
+          })}
         </Group>
       </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <Tooltip
+          data={tooltip}
+          containerWidth={containerWidth}
+          containerHeight={height}
+        />
+      )}
 
       {/* Legend */}
       <div className="flex flex-row mt-2 gap-3 justify-between font-semibold text-xs">
@@ -568,6 +647,81 @@ function ContributionStats({
       <div className="text-3xl font-normal text-gray-900">
         {userTotalScore} P - {percentage.toFixed(1)}%
       </div>
+    </div>
+  );
+}
+
+interface TooltipProps {
+  data: TooltipData;
+  containerWidth: number;
+  containerHeight: number;
+}
+
+function Tooltip({ data, containerWidth, containerHeight }: TooltipProps) {
+  // Calculate tooltip position to prevent overflow
+  const tooltipWidth = 200;
+  const tooltipHeight = 100;
+
+  let x = data.x + 10;
+  let y = data.y - 10;
+
+  // Adjust position if tooltip would overflow
+  if (x + tooltipWidth > containerWidth) {
+    x = data.x - tooltipWidth - 10;
+  }
+  if (y - tooltipHeight < 0) {
+    y = data.y + 20;
+  }
+
+  return (
+    <div
+      className="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
+      style={{
+        left: x,
+        top: y,
+        minWidth: "150px",
+      }}
+    >
+      <div className="font-semibold text-gray-900 mb-2">
+        {data.month} {data.year}
+      </div>
+
+      {data.type === "bar" && data.level && data.count !== undefined && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: levelColors[data.level] }}
+            />
+            <span className="font-medium">Level {levelLabels[data.level]}</span>
+          </div>
+          <div className="text-gray-600">
+            Issues:{" "}
+            <span className="font-medium text-gray-900">{data.count}</span>
+          </div>
+          <div className="text-gray-600">
+            Points:{" "}
+            <span className="font-medium text-gray-900">
+              {data.count * levelScores[data.level]}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {data.type === "line" && data.contributionScore !== undefined && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-0.5 bg-blue-600" />
+            <span className="font-medium">Total Points</span>
+          </div>
+          <div className="text-gray-600">
+            Score:{" "}
+            <span className="font-medium text-gray-900">
+              {data.contributionScore}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
