@@ -175,7 +175,7 @@ export default function IssueCreateForm({
             <div>
               {isSubmitting ? (
                 <div className="ftext-gray-500 dark:text-gray-400">
-                  Creating
+                  Creating Issue
                   <span className="inline-block">
                     <span className="animate-pulse">.</span>
                     <span
