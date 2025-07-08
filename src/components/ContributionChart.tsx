@@ -167,17 +167,30 @@ export default function ContributionChart({
           monthNames[contributionMonth - 1] === data.month
       );
 
-      if (
-        monthDataIndex !== -1 &&
-        displayLevels.includes(level as DisplayLevel)
-      ) {
-        const displayLevel = level as DisplayLevel;
-        monthlyData[monthDataIndex].levelCounts[displayLevel]++;
-        monthlyData[monthDataIndex].total++;
-        // Calculate contribution points (for local line chart display)
-        monthlyData[monthDataIndex].contributionScore +=
-          levelScores[displayLevel];
+      // Debug: Log unmatched contributions
+      if (monthDataIndex === -1) {
+        console.warn(
+          `[ContributionChart] ⚠️ 无法匹配贡献数据:`,
+          `年份=${contributionYear}, 月份=${contributionMonth}, 等级=${level}, 用户=${user.name}`
+        );
+        return;
       }
+
+      // Check if level is valid
+      if (!displayLevels.includes(level as DisplayLevel)) {
+        console.warn(
+          `[ContributionChart] ⚠️ 无效的等级:`,
+          `等级=${level}, 用户=${user.name}`
+        );
+        return;
+      }
+
+      const displayLevel = level as DisplayLevel;
+      monthlyData[monthDataIndex].levelCounts[displayLevel]++;
+      monthlyData[monthDataIndex].total++;
+      // Calculate contribution points (for local line chart display)
+      monthlyData[monthDataIndex].contributionScore +=
+        levelScores[displayLevel];
     });
 
     return {
@@ -267,25 +280,54 @@ function UserChart({
 
     darkModeQuery.addEventListener("change", checkDarkMode);
 
+    // 使用 ResizeObserver 来监听容器大小变化
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
+      }
+    });
+
+    // 初始化宽度
     const updateWidth = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
+        const width = containerRef.current.offsetWidth;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
       }
     };
 
+    // 立即尝试获取宽度
     updateWidth();
+
+    // 如果初始宽度为 0，使用 setTimeout 延迟获取
+    if (containerRef.current && containerRef.current.offsetWidth === 0) {
+      setTimeout(updateWidth, 0);
+      setTimeout(updateWidth, 100);
+    }
+
+    // 开始监听容器大小变化
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    // 监听窗口大小变化作为备用
     window.addEventListener("resize", updateWidth);
 
     return () => {
       observer.disconnect();
       darkModeQuery.removeEventListener("change", checkDarkMode);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", updateWidth);
     };
   }, []);
 
   const height = 200;
   const margin = { top: 32, right: 32, bottom: 32, left: 32 }; // Increase right margin for line chart Y-axis
-  const chartWidth = containerWidth - margin.left - margin.right;
+  const chartWidth = Math.max(containerWidth - margin.left - margin.right, 100); // 确保最小宽度为 100
   const chartHeight = height - margin.top - margin.bottom;
 
   // Note: removed unused yScale and yScoreScale variables
@@ -408,6 +450,48 @@ function UserChart({
 
   const getLevelStrokeColor = (level: DisplayLevel) =>
     isDarkMode ? levelStrokeColors[level].dark : levelStrokeColors[level].light;
+
+  // 如果容器宽度无效，显示加载状态
+  if (containerWidth <= 0) {
+    return (
+      <div ref={containerRef} className="mb-10 w-full relative">
+        {showUserInfo && (
+          <>
+            {/* User Info */}
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center">
+                <Image
+                  src={userData.user.avatar_url}
+                  alt={userData.user.name}
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 rounded-full mr-2.5"
+                />
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-gray-100">
+                    {userData.user.name}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rank display in top-right corner */}
+              {rank !== undefined && (
+                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px]">
+                  #{rank}
+                </div>
+              )}
+            </div>
+
+            {/* Contribution Stats */}
+            <ContributionStats
+              userData={userData}
+              totalContributionScore={totalContributionScore}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="mb-10 w-full relative">
