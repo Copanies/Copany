@@ -75,7 +75,6 @@ export default function IssueEditorView({
   // 使用 ref 来获取最新的状态值
   const titleRef = useRef(title);
   const editingContentRef = useRef(editingContent);
-  const loadingRef = useRef(isSaving);
 
   useEffect(() => {
     titleRef.current = title;
@@ -84,11 +83,6 @@ export default function IssueEditorView({
   useEffect(() => {
     editingContentRef.current = editingContent;
   }, [editingContent]);
-
-  useEffect(() => {
-    loadingRef.current = isSaving;
-    console.log("Loading state updated:", isSaving);
-  }, [isSaving]);
 
   // 标记是否有未保存的更改
   const hasUnsavedChangesRef = useRef(false);
@@ -99,7 +93,7 @@ export default function IssueEditorView({
   // 创建服务器保存函数
   useEffect(() => {
     saveToServerRef.current = async () => {
-      if (loadingRef.current) {
+      if (isSaving) {
         console.log("⏳ Already saving, skipping...");
         return;
       }
@@ -140,6 +134,7 @@ export default function IssueEditorView({
       }
     };
   }, [
+    isSaving,
     issueData.id,
     issueData.title,
     issueData.description,
@@ -153,7 +148,7 @@ export default function IssueEditorView({
   // 自动保存逻辑
   useEffect(() => {
     // 检查是否有变化需要保存
-    if (!hasUnsavedChangesRef.current || loadingRef.current) {
+    if (!hasUnsavedChangesRef.current || isSaving) {
       return;
     }
 
@@ -166,7 +161,7 @@ export default function IssueEditorView({
 
     // 设置新的保存定时器（3秒后执行）
     saveTimeoutRef.current = setTimeout(async () => {
-      if (!hasUnsavedChangesRef.current || loadingRef.current) {
+      if (!hasUnsavedChangesRef.current || isSaving) {
         return;
       }
 
@@ -188,7 +183,7 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [title, editingContent]);
+  }, [isSaving, title, editingContent]);
 
   // 组件卸载时的清理
   useEffect(() => {
