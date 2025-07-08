@@ -9,6 +9,7 @@ import {
   IssuePriority,
   IssueState,
   CopanyContributor,
+  AssigneeUser,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
@@ -17,8 +18,8 @@ import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
 import {
-  issuesCache,
-  unifiedIssueCache,
+  issuesDataManager,
+  issuesManager,
   currentUserManager,
   contributorsManager,
 } from "@/utils/cache";
@@ -95,7 +96,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
-  const hasMountedRef = useRef(false);
 
   // 获取用户和贡献者数据的函数
   const loadUserData = useCallback(async () => {
@@ -112,60 +112,22 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     }
   }, [copanyId]);
 
-  // 静默刷新函数
-  const silentRefreshIssues = useCallback(async () => {
-    try {
-      const issuesData = await getIssuesAction(copanyId);
-      setIssues(issuesData);
-      // 更新缓存
-      issuesCache.set(copanyId, issuesData);
-    } catch (error) {
-      console.error("Error refreshing issues:", error);
-    }
-  }, [copanyId]);
-
-  // 客户端挂载后检查缓存
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      console.log(`[IssuesView] 📱 Client mounted, checking cache...`);
-
-      // 尝试从缓存读取数据
-      const cachedData = issuesCache.get(copanyId);
-      if (cachedData) {
-        console.log(
-          `[IssuesView] 💾 Using cached data: ${cachedData.length} issues`
-        );
-        setIssues(cachedData);
-        setIsLoading(false);
-        // 有缓存数据时，延迟执行静默刷新
-        setTimeout(() => {
-          silentRefreshIssues();
-        }, 500);
-      } else {
-        console.log(`[IssuesView] 🚫 No cache available`);
-      }
-
-      // 加载用户数据
-      loadUserData();
-    }
-  }, [copanyId, silentRefreshIssues, loadUserData]);
-
-  // 加载 issues 的函数
+  // 使用新的 SWR 策略加载 Issues
   const loadIssues = useCallback(async () => {
+    if (hasInitialLoadRef.current) return;
+    hasInitialLoadRef.current = true;
+
     try {
+      console.log(`[IssuesView] 🔄 Loading issues with SWR strategy...`);
       setIsLoading(true);
-      const issuesData = await getIssuesAction(copanyId);
+
+      // 使用 SWR 策略：立即返回缓存 + 后台更新
+      const issuesData = await issuesDataManager.getData(copanyId, () =>
+        getIssuesAction(copanyId)
+      );
+
+      console.log(`[IssuesView] ✅ Loaded ${issuesData.length} issues`);
       setIssues(issuesData);
-      // 更新缓存
-      issuesCache.set(copanyId, issuesData);
-      console.log(
-        `[IssuesView] 💾 Cached ${issuesData.length} issues for copany: ${copanyId}`
-      );
-      console.log(
-        `[IssuesView] 📋 Issue IDs:`,
-        issuesData.map((issue) => issue.id)
-      );
     } catch (error) {
       console.error("Error loading issues:", error);
     } finally {
@@ -175,23 +137,9 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // 组件挂载时加载数据
   useEffect(() => {
-    if (!hasInitialLoadRef.current && hasMountedRef.current) {
-      hasInitialLoadRef.current = true;
-
-      // 如果没有缓存数据，立即加载
-      const cachedData = issuesCache.get(copanyId);
-      if (!cachedData) {
-        loadIssues();
-      }
-
-      // 设置定时静默刷新
-      const interval = setInterval(() => {
-        silentRefreshIssues();
-      }, 30000); // 每30秒静默刷新一次
-
-      return () => clearInterval(interval);
-    }
-  }, [loadIssues, silentRefreshIssues, copanyId]);
+    loadIssues();
+    loadUserData();
+  }, [loadIssues, loadUserData]);
 
   // 处理 issue 创建完成后的回调
   const handleIssueCreated = useCallback(
@@ -199,11 +147,11 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = [...prevIssues, newIssue];
         // 更新 issues 列表缓存
-        issuesCache.set(copanyId, updatedIssues);
+        issuesManager.setIssues(copanyId, updatedIssues);
         return updatedIssues;
       });
       // 同时缓存新创建的 issue
-      unifiedIssueCache.setIssue(copanyId, newIssue);
+      issuesManager.addIssue(copanyId, newIssue);
     },
     [copanyId]
   );
@@ -216,13 +164,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           if (issue.id === issueId) {
             const updatedIssue = { ...issue, state: newState };
             // 同时更新单个 issue 缓存
-            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
         // 更新 issues 列表缓存
-        issuesCache.set(copanyId, updatedIssues);
+        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -237,13 +185,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           if (issue.id === issueId) {
             const updatedIssue = { ...issue, priority: newPriority };
             // 同时更新单个 issue 缓存
-            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
         // 更新 issues 列表缓存
-        issuesCache.set(copanyId, updatedIssues);
+        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -258,13 +206,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           if (issue.id === issueId) {
             const updatedIssue = { ...issue, level: newLevel };
             // 同时更新单个 issue 缓存
-            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
         // 更新 issues 列表缓存
-        issuesCache.set(copanyId, updatedIssues);
+        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -273,19 +221,27 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // 处理 issue assignee 更新后的回调
   const handleIssueAssigneeUpdated = useCallback(
-    (issueId: string, newAssignee: string | null) => {
+    (
+      issueId: string,
+      newAssignee: string | null,
+      assigneeUser: AssigneeUser | null
+    ) => {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = { ...issue, assignee: newAssignee };
+            const updatedIssue = {
+              ...issue,
+              assignee: newAssignee,
+              assignee_user: assigneeUser,
+            };
             // 同时更新单个 issue 缓存
-            unifiedIssueCache.setIssue(copanyId, updatedIssue);
+            issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
         // 更新 issues 列表缓存
-        issuesCache.set(copanyId, updatedIssues);
+        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -302,11 +258,11 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             (issue) => issue.id !== issueId
           );
           // 更新 issues 列表缓存
-          issuesCache.set(copanyId, updatedIssues);
+          issuesDataManager.setData(copanyId, updatedIssues);
           return updatedIssues;
         });
         // 清除单个 issue 缓存
-        unifiedIssueCache.removeIssue(copanyId, issueId);
+        issuesManager.removeIssue(copanyId, issueId);
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // 关闭菜单
 
         // 然后调用删除接口
@@ -314,10 +270,15 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       } catch (error) {
         console.error("Error deleting issue:", error);
         // 如果删除失败，重新加载数据恢复状态
-        loadIssues();
+        const issuesData = await issuesDataManager.getData(
+          copanyId,
+          () => getIssuesAction(copanyId),
+          true // forceRefresh
+        );
+        setIssues(issuesData);
       }
     },
-    [copanyId, loadIssues]
+    [copanyId]
   );
 
   // 处理右键菜单
@@ -387,8 +348,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       `[IssuesView] 🖱️ Clicking issue: ${issue.id} (${issue.title})`
                     );
 
-                    // 智能缓存策略：比较数据新旧程度
-                    unifiedIssueCache.smartSetIssue(copanyId, issue);
+                    // 智能缓存策略：使用新的 IssuesManager
+                    issuesManager.smartSetIssue(copanyId, issue);
 
                     // 保留当前的 URL 参数
                     const params = new URLSearchParams(searchParams.toString());

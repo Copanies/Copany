@@ -125,12 +125,7 @@ export class IssueService {
   static async updateIssue(
     issue: Omit<
       Issue,
-      | "created_at"
-      | "updated_at"
-      | "assignee"
-      | "closed_at"
-      | "created_by"
-      | "copany_id"
+      "created_at" | "updated_at" | "closed_at" | "created_by" | "copany_id"
     >
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();

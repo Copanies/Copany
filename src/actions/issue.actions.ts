@@ -45,12 +45,7 @@ export async function deleteIssueAction(issueId: string) {
 export async function updateIssueAction(
   issue: Omit<
     Issue,
-    | "created_at"
-    | "updated_at"
-    | "assignee"
-    | "closed_at"
-    | "created_by"
-    | "copany_id"
+    "created_at" | "updated_at" | "closed_at" | "created_by" | "copany_id"
   >
 ) {
   const user = await getCurrentUser();

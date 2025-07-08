@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
-import { unifiedIssueCache } from "@/utils/cache";
+import { issuesManager } from "@/utils/cache";
 
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
@@ -27,7 +27,7 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
           description: newDescription,
           updated_at: new Date().toISOString(),
         };
-        unifiedIssueCache.setIssue(issueData.copany_id, updatedIssue);
+        issuesManager.smartSetIssue(issueData.copany_id, updatedIssue);
         console.log("📦 Immediately cached issue changes");
       }
     },
@@ -113,11 +113,12 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
           state: issueData.state ?? 0,
           priority: issueData.priority ?? null,
           level: issueData.level ?? null,
+          assignee: issueData.assignee ?? null,
         });
 
         // 用服务器返回的数据更新缓存（确保数据一致性）
         if (issueData.copany_id) {
-          unifiedIssueCache.setIssue(issueData.copany_id, updatedIssue);
+          issuesManager.smartSetIssue(issueData.copany_id, updatedIssue);
         }
         hasUnsavedChangesRef.current = false;
         console.log("✅ Server save completed successfully");

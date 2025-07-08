@@ -8,6 +8,7 @@ import {
   IssuePriority,
   IssueState,
   CopanyContributor,
+  AssigneeUser,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
@@ -48,23 +49,33 @@ export default function IssueCreateForm({
     setDescription(content);
   }, []);
 
-  const handleStateChange = useCallback((issueId: string, newState: number) => {
-    setState(newState);
-  }, []);
+  const handleStateChange = useCallback(
+    (_issueId: string, newState: number) => {
+      setState(newState);
+    },
+    []
+  );
 
   const handlePriorityChange = useCallback(
-    (issueId: string, newPriority: number) => {
+    (_issueId: string, newPriority: number) => {
       setPriority(newPriority);
     },
     []
   );
 
-  const handleLevelChange = useCallback((issueId: string, newLevel: number) => {
-    setLevel(newLevel);
-  }, []);
+  const handleLevelChange = useCallback(
+    (_issueId: string, newLevel: number) => {
+      setLevel(newLevel);
+    },
+    []
+  );
 
   const handleAssigneeChange = useCallback(
-    (issueId: string, newAssignee: string | null) => {
+    (
+      _issueId: string,
+      newAssignee: string | null,
+      _assigneeUser: AssigneeUser | null
+    ) => {
       setAssignee(newAssignee);
     },
     []

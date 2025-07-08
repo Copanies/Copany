@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import IssueEditorView from "@/components/IssueEditorView";
+import { useState, useEffect, useCallback } from "react";
+import { getIssueAction } from "@/actions/issue.actions";
+import {
+  IssueWithAssignee,
+  IssueState,
+  IssuePriority,
+  CopanyContributor,
+  AssigneeUser,
+} from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
-import { getIssueAction } from "@/actions/issue.actions";
-import { CopanyContributor, IssueWithAssignee } from "@/types/database.types";
-import { unifiedIssueCache } from "@/utils/cache";
-import IssueLevelSelector from "@/components/IssueLevelSelector";
-import LoadingView from "@/components/commons/LoadingView";
+import IssueEditorView from "@/components/IssueEditorView";
+import { issuesManager } from "@/utils/cache";
 import { currentUserManager, contributorsManager } from "@/utils/cache";
+import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
+import IssueLevelSelector from "@/components/IssueLevelSelector";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -24,155 +30,175 @@ export default function IssuePageClient({
 }: IssuePageClientProps) {
   const [issueData, setIssueData] = useState<IssueWithAssignee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const hasMountedRef = useRef(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
 
   useEffect(() => {
-    const loadUserData = async () => {
-      const [user, contributorList] = await Promise.all([
-        currentUserManager.getCurrentUser(),
-        contributorsManager.getContributors(copanyId),
-      ]);
-      setCurrentUser(user);
-      setContributors(contributorList);
-    };
-    loadUserData();
-  }, [copanyId]);
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
 
-  // 客户端挂载后检查缓存，无缓存时请求服务器
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      console.log(`[IssuePageClient] 📱 Client mounted, checking cache...`);
+        // 加载用户和贡献者数据
+        const [user, contributorList] = await Promise.all([
+          currentUserManager.getCurrentUser(),
+          contributorsManager.getContributors(copanyId),
+        ]);
 
-      // 尝试从缓存读取
-      const cachedData = unifiedIssueCache.getIssue(copanyId, issueId);
-      if (cachedData) {
+        setCurrentUser(user);
+        setContributors(contributorList);
+
+        console.log(`[IssuePageClient] 📱 Client mounted, checking cache...`);
+
+        // 首先尝试从缓存获取
+        const cachedData = issuesManager.getIssue(copanyId, issueId);
+        if (cachedData) {
+          console.log(
+            `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
+          );
+          setIssueData(cachedData);
+          setIsLoading(false);
+        } else {
+          console.log(
+            `[IssuePageClient] 🚫 No cache available, loading from server...`
+          );
+        }
+
+        // 然后从服务器获取最新数据
+        const freshIssueData = await getIssueAction(issueId);
         console.log(
-          `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
+          `[IssuePageClient] ✅ Loaded from server:`,
+          freshIssueData?.title
         );
-        setIssueData(cachedData);
+        setIssueData(freshIssueData);
+
+        // 使用智能缓存策略更新缓存
+        if (freshIssueData) {
+          issuesManager.smartSetIssue(copanyId, freshIssueData);
+        }
+      } catch (error) {
+        console.error("Error loading issue data:", error);
+      } finally {
         setIsLoading(false);
-      } else {
-        console.log(
-          `[IssuePageClient] 🚫 No cache available, loading from server...`
-        );
-        // 无缓存时从服务器加载
-        const loadFromServer = async () => {
-          try {
-            const freshIssueData = await getIssueAction(issueId);
-            setIssueData(freshIssueData);
-            // 更新缓存
-            unifiedIssueCache.setIssue(copanyId, freshIssueData);
-          } catch (error) {
-            console.error("Error loading issue:", error);
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        loadFromServer();
       }
-    }
-  }, [issueId, copanyId]);
+    };
 
-  // 处理状态更新
+    loadData();
+  }, [copanyId, issueId]);
+
   const handleStateChange = useCallback(
-    (issueId: string, newState: number) => {
-      setIssueData((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, state: newState };
-        // 更新缓存
-        unifiedIssueCache.setIssue(copanyId, updated);
-        return updated;
-      });
+    async (newState: IssueState) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          state: newState,
+        };
+        setIssueData(updated);
+        issuesManager.smartSetIssue(copanyId, updated);
+      } catch (error) {
+        console.error("Error updating issue state:", error);
+      }
     },
-    [copanyId]
+    [issueData, copanyId]
   );
 
-  // 处理优先级更新
   const handlePriorityChange = useCallback(
-    (issueId: string, newPriority: number) => {
-      setIssueData((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, priority: newPriority };
-        // 更新缓存
-        unifiedIssueCache.setIssue(copanyId, updated);
-        return updated;
-      });
+    async (newPriority: IssuePriority) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          priority: newPriority,
+        };
+        setIssueData(updated);
+        issuesManager.smartSetIssue(copanyId, updated);
+      } catch (error) {
+        console.error("Error updating issue priority:", error);
+      }
     },
-    [copanyId]
+    [issueData, copanyId]
   );
 
-  // 处理等级更新
   const handleLevelChange = useCallback(
-    (issueId: string, newLevel: number) => {
-      setIssueData((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, level: newLevel };
-        // 更新缓存
-        unifiedIssueCache.setIssue(copanyId, updated);
-        return updated;
-      });
+    async (newLevel: number) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          level: newLevel,
+        };
+        setIssueData(updated);
+        issuesManager.smartSetIssue(copanyId, updated);
+      } catch (error) {
+        console.error("Error updating issue level:", error);
+      }
     },
-    [copanyId]
+    [issueData, copanyId]
   );
 
-  // 处理 assignee 更新
   const handleAssigneeChange = useCallback(
-    (issueId: string, newAssignee: string | null) => {
-      setIssueData((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, assignee: newAssignee };
-        // 更新缓存
-        unifiedIssueCache.setIssue(copanyId, updated);
-        return updated;
-      });
+    async (
+      issueId: string,
+      newAssignee: string | null,
+      assigneeUser: AssigneeUser | null
+    ) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          assignee: newAssignee,
+          assignee_user: assigneeUser,
+        };
+        setIssueData(updated);
+        issuesManager.smartSetIssue(copanyId, updated);
+      } catch (error) {
+        console.error("Error updating issue assignee:", error);
+      }
     },
-    [copanyId]
+    [issueData, copanyId]
   );
 
-  if (isLoading || !issueData) {
-    return <LoadingView type="label" />;
+  if (isLoading) {
+    return <LoadingView type="page" />;
+  }
+
+  if (!issueData) {
+    return <div>Issue not found</div>;
   }
 
   return (
     <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto gap-2">
-      {/* 小屏幕下在顶部显示状态和优先级选择器 */}
-
       <div className="md:hidden px-3 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
         <IssueStateSelector
           issueId={issueData.id}
           initialState={issueData.state}
           showText={true}
-          showBackground={true}
-          onStateChange={handleStateChange}
+          onStateChange={(_, newState) => handleStateChange(newState)}
         />
-
         <IssuePrioritySelector
           issueId={issueData.id}
           initialPriority={issueData.priority}
           showText={true}
-          showBackground={true}
-          onPriorityChange={handlePriorityChange}
+          onPriorityChange={(_, newPriority) =>
+            handlePriorityChange(newPriority)
+          }
         />
-
         <IssueLevelSelector
           issueId={issueData.id}
           initialLevel={issueData.level}
           showText={true}
-          showBackground={true}
-          onLevelChange={handleLevelChange}
+          onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
         />
-
         <IssueAssigneeSelector
           issueId={issueData.id}
           initialAssignee={issueData.assignee}
           assigneeUser={issueData.assignee_user}
           currentUser={currentUser}
           contributors={contributors}
-          showBackground={true}
-          showText={true}
           onAssigneeChange={handleAssigneeChange}
         />
       </div>
@@ -192,7 +218,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialState={issueData.state}
               showText={true}
-              onStateChange={handleStateChange}
+              onStateChange={(_, newState) => handleStateChange(newState)}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -203,7 +229,9 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialPriority={issueData.priority}
               showText={true}
-              onPriorityChange={handlePriorityChange}
+              onPriorityChange={(_, newPriority) =>
+                handlePriorityChange(newPriority)
+              }
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -214,7 +242,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialLevel={issueData.level}
               showText={true}
-              onLevelChange={handleLevelChange}
+              onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -227,7 +255,6 @@ export default function IssuePageClient({
               assigneeUser={issueData.assignee_user}
               currentUser={currentUser}
               contributors={contributors}
-              showText={true}
               onAssigneeChange={handleAssigneeChange}
             />
           </div>

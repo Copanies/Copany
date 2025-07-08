@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { generateContributionsFromIssuesAction } from "@/actions/contribution.actions";
 import { getCopanyContributorsAction } from "@/actions/copanyContributor.actions";
 import {
@@ -9,6 +9,10 @@ import {
   CopanyContributor,
   LEVEL_SCORES,
 } from "@/types/database.types";
+import {
+  contributionsDataManager,
+  contributorsDataManager,
+} from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
@@ -22,25 +26,43 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadData = useCallback(
+    async (forceRefresh: boolean = false) => {
       try {
         setIsLoading(true);
-        const [contributionData, contributorData] = await Promise.all([
-          generateContributionsFromIssuesAction(copanyId),
-          getCopanyContributorsAction(copanyId),
+
+        const contributionDataPromise = contributionsDataManager.getData(
+          copanyId,
+          () => generateContributionsFromIssuesAction(copanyId),
+          forceRefresh
+        );
+
+        const contributorDataPromise = contributorsDataManager.getData(
+          copanyId,
+          () => getCopanyContributorsAction(copanyId),
+          forceRefresh
+        );
+
+        // 并行执行请求
+        const [newContributionData, newContributorData] = await Promise.all([
+          contributionDataPromise,
+          contributorDataPromise,
         ]);
-        setContributions(contributionData);
-        setContributors(contributorData);
+
+        setContributions(newContributionData);
+        setContributors(newContributorData);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
         setIsLoading(false);
       }
-    };
+    },
+    [copanyId]
+  );
 
+  useEffect(() => {
     loadData();
-  }, [copanyId]);
+  }, [loadData]);
 
   // 将 contributors 转换为 AssigneeUser 格式
   const users: AssigneeUser[] = contributors.map((contributor) => ({
@@ -238,7 +260,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   return (
     <div className="flex flex-col gap-6 mb-8">
       <div className="flex flex-col w-full gap-2">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Distribution
         </h3>
         <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200 dark:border-gray-700">
