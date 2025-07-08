@@ -13,8 +13,10 @@ interface ReadmeViewProps {
 
 const decodeGitHubContent = (base64String: string): string => {
   try {
-    // 客户端环境下直接使用浏览器 API
-    return decodeURIComponent(escape(atob(base64String)));
+    const binaryString = atob(base64String);
+    const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+    const decoder = new TextDecoder("utf-8");
+    return decoder.decode(bytes);
   } catch (error) {
     console.error("解码失败:", error);
     throw new Error("无法解码 GitHub 内容");

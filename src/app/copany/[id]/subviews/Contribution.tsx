@@ -11,6 +11,7 @@ import {
 } from "@/types/database.types";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
+import ContributionPieChart from "@/components/ContributionPieChart";
 
 // 贡献等级标签渲染函数
 function renderLevelLabel(level: number): string {
@@ -67,137 +68,169 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   }));
 
   // 计算 globalMaxCount、globalMaxScore 和月份范围
-  const { globalMaxCount, globalMaxScore, monthRange } = useMemo(() => {
-    if (contributions.length === 0) {
+  const { globalMaxCount, globalMaxScore, monthRange, totalContributionScore } =
+    useMemo(() => {
+      if (contributions.length === 0) {
+        return {
+          globalMaxCount: 1,
+          globalMaxScore: 1,
+          monthRange: {
+            startYear: new Date().getFullYear(),
+            startMonth: 1,
+            endYear: new Date().getFullYear(),
+            endMonth: 12,
+          },
+          totalContributionScore: 0,
+        };
+      }
+
+      // 找到最早和最晚的年月
+      let earliestYear = Infinity;
+      let earliestMonth = Infinity;
+      let latestYear = -Infinity;
+      let latestMonth = -Infinity;
+
+      contributions.forEach((contribution) => {
+        if (
+          contribution.year < earliestYear ||
+          (contribution.year === earliestYear &&
+            contribution.month < earliestMonth)
+        ) {
+          earliestYear = contribution.year;
+          earliestMonth = contribution.month;
+        }
+        if (
+          contribution.year > latestYear ||
+          (contribution.year === latestYear && contribution.month > latestMonth)
+        ) {
+          latestYear = contribution.year;
+          latestMonth = contribution.month;
+        }
+      });
+
+      // 创建用户月度统计数据结构
+      const userMonthlyData: {
+        [userId: string]: {
+          [yearMonth: string]: {
+            counts: { [level: number]: number };
+            totalCount: number;
+            totalScore: number;
+          };
+        };
+      } = {};
+
+      // 初始化数据结构
+      users.forEach((user) => {
+        userMonthlyData[user.id] = {};
+
+        // 遍历从最早到最晚的所有月份
+        for (let year = earliestYear; year <= latestYear; year++) {
+          const startMonth = year === earliestYear ? earliestMonth : 1;
+          const endMonth = year === latestYear ? latestMonth : 12;
+
+          for (let month = startMonth; month <= endMonth; month++) {
+            const yearMonth = `${year}-${month}`;
+            userMonthlyData[user.id][yearMonth] = {
+              counts: {
+                [IssueLevel.level_C]: 0,
+                [IssueLevel.level_B]: 0,
+                [IssueLevel.level_A]: 0,
+                [IssueLevel.level_S]: 0,
+              },
+              totalCount: 0,
+              totalScore: 0,
+            };
+          }
+        }
+      });
+
+      // 统计贡献数据
+      contributions.forEach((contribution) => {
+        const userId = contribution.user_id;
+        const yearMonth = `${contribution.year}-${contribution.month}`;
+        const level = contribution.issue_level;
+
+        if (
+          userMonthlyData[userId] &&
+          userMonthlyData[userId][yearMonth] &&
+          [
+            IssueLevel.level_C,
+            IssueLevel.level_B,
+            IssueLevel.level_A,
+            IssueLevel.level_S,
+          ].includes(level)
+        ) {
+          userMonthlyData[userId][yearMonth].counts[level]++;
+          userMonthlyData[userId][yearMonth].totalCount++;
+          userMonthlyData[userId][yearMonth].totalScore +=
+            LEVEL_SCORES[level as IssueLevel] || 0;
+        }
+      });
+
+      // 直接从贡献数据计算最大值，确保包含所有贡献
+      const allUserMonthScores: { [userMonth: string]: number } = {};
+      const allUserMonthCounts: { [userMonth: string]: number } = {};
+
+      contributions.forEach((contribution) => {
+        const userId = contribution.user_id;
+        const yearMonth = `${contribution.year}-${contribution.month}`;
+        const level = contribution.issue_level;
+        const userMonth = `${userId}-${yearMonth}`;
+
+        if (
+          [
+            IssueLevel.level_C,
+            IssueLevel.level_B,
+            IssueLevel.level_A,
+            IssueLevel.level_S,
+          ].includes(level)
+        ) {
+          allUserMonthScores[userMonth] =
+            (allUserMonthScores[userMonth] || 0) +
+            (LEVEL_SCORES[level as IssueLevel] || 0);
+          allUserMonthCounts[userMonth] =
+            (allUserMonthCounts[userMonth] || 0) + 1;
+        }
+      });
+
+      // 找到最大值
+      let maxCount = Math.max(...Object.values(allUserMonthCounts), 1);
+      let maxScore = Math.max(...Object.values(allUserMonthScores), 1);
+      let totalScore = Object.values(allUserMonthScores).reduce(
+        (sum, score) => sum + score,
+        0
+      );
+
       return {
-        globalMaxCount: 1,
-        globalMaxScore: 1,
+        globalMaxCount: maxCount,
+        globalMaxScore: maxScore,
+        totalContributionScore: totalScore,
         monthRange: {
-          startYear: new Date().getFullYear(),
-          startMonth: 1,
-          endYear: new Date().getFullYear(),
-          endMonth: 12,
+          startYear: earliestYear,
+          startMonth: earliestMonth,
+          endYear: latestYear,
+          endMonth: latestMonth,
         },
       };
-    }
-
-    // 找到最早和最晚的年月
-    let earliestYear = Infinity;
-    let earliestMonth = Infinity;
-    let latestYear = -Infinity;
-    let latestMonth = -Infinity;
-
-    contributions.forEach((contribution) => {
-      if (
-        contribution.year < earliestYear ||
-        (contribution.year === earliestYear &&
-          contribution.month < earliestMonth)
-      ) {
-        earliestYear = contribution.year;
-        earliestMonth = contribution.month;
-      }
-      if (
-        contribution.year > latestYear ||
-        (contribution.year === latestYear && contribution.month > latestMonth)
-      ) {
-        latestYear = contribution.year;
-        latestMonth = contribution.month;
-      }
-    });
-
-    // 创建用户月度统计数据结构
-    const userMonthlyData: {
-      [userId: string]: {
-        [yearMonth: string]: {
-          counts: { [level: number]: number };
-          totalCount: number;
-          totalScore: number;
-        };
-      };
-    } = {};
-
-    // 初始化数据结构
-    users.forEach((user) => {
-      userMonthlyData[user.id] = {};
-
-      // 遍历从最早到最晚的所有月份
-      for (let year = earliestYear; year <= latestYear; year++) {
-        const startMonth = year === earliestYear ? earliestMonth : 1;
-        const endMonth = year === latestYear ? latestMonth : 12;
-
-        for (let month = startMonth; month <= endMonth; month++) {
-          const yearMonth = `${year}-${month}`;
-          userMonthlyData[user.id][yearMonth] = {
-            counts: {
-              [IssueLevel.level_C]: 0,
-              [IssueLevel.level_B]: 0,
-              [IssueLevel.level_A]: 0,
-              [IssueLevel.level_S]: 0,
-            },
-            totalCount: 0,
-            totalScore: 0,
-          };
-        }
-      }
-    });
-
-    // 统计贡献数据
-    contributions.forEach((contribution) => {
-      const userId = contribution.user_id;
-      const yearMonth = `${contribution.year}-${contribution.month}`;
-      const level = contribution.issue_level;
-
-      if (
-        userMonthlyData[userId] &&
-        userMonthlyData[userId][yearMonth] &&
-        [
-          IssueLevel.level_C,
-          IssueLevel.level_B,
-          IssueLevel.level_A,
-          IssueLevel.level_S,
-        ].includes(level)
-      ) {
-        userMonthlyData[userId][yearMonth].counts[level]++;
-        userMonthlyData[userId][yearMonth].totalCount++;
-        userMonthlyData[userId][yearMonth].totalScore +=
-          LEVEL_SCORES[level as IssueLevel] || 0;
-      }
-    });
-
-    // 找到最大值
-    let maxCount = 1;
-    let maxScore = 1;
-    Object.values(userMonthlyData).forEach((userData) => {
-      Object.values(userData).forEach((monthData) => {
-        maxCount = Math.max(maxCount, monthData.totalCount);
-        maxScore = Math.max(maxScore, monthData.totalScore);
-      });
-    });
-
-    return {
-      globalMaxCount: maxCount,
-      globalMaxScore: maxScore,
-      monthRange: {
-        startYear: earliestYear,
-        startMonth: earliestMonth,
-        endYear: latestYear,
-        endMonth: latestMonth,
-      },
-    };
-  }, [contributions, users]);
+    }, [contributions, users]);
 
   if (isLoading) {
     return <LoadingView type="label" />;
   }
 
   return (
-    <div>
-      {/* 图表展示 */}
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col w-full gap-2">
+        <h3 className="text-lg font-semibold mb-4">Distribution</h3>
+        <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200">
+          <ContributionPieChart contributions={contributions} users={users} />
+        </div>
+      </div>
+
       <div>
-        <h2>用户贡献图表</h2>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-6">
           {users.map((user) => (
-            <div className="w-1/2" key={user.id}>
+            <div className="w-full md:w-1/2" key={user.id}>
               <ContributionChart
                 contributions={contributions.filter(
                   (c) => c.user_id === user.id
@@ -206,46 +239,11 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
                 globalMaxCount={globalMaxCount}
                 globalMaxScore={globalMaxScore}
                 monthRange={monthRange}
+                totalContributionScore={totalContributionScore}
               />
             </div>
           ))}
         </div>
-      </div>
-
-      <hr style={{ margin: "40px 0" }} />
-
-      {/* 列表展示 */}
-      <div>
-        <h2>贡献记录详情 (共 {contributions.length} 条)</h2>
-
-        {contributions.length === 0 ? (
-          <div>
-            <p>暂无贡献记录</p>
-            <p>完成 Issue 后将显示贡献记录</p>
-          </div>
-        ) : (
-          <ul>
-            {contributions.map((contribution) => (
-              <li key={contribution.id}>
-                <div>
-                  <h3>{contribution.issue_title}</h3>
-                  <p>Issue ID: {contribution.issue_id}</p>
-                  <p>
-                    等级: {renderLevelLabel(contribution.issue_level)} (
-                    {LEVEL_SCORES[contribution.issue_level as IssueLevel] || 0}
-                    分)
-                  </p>
-                  <p>
-                    完成时间: {contribution.year}-
-                    {String(contribution.month).padStart(2, "0")}-
-                    {String(contribution.day).padStart(2, "0")}
-                  </p>
-                  <p>贡献者 ID: {contribution.user_id}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   );

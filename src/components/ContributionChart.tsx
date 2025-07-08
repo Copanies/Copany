@@ -12,7 +12,7 @@ import {
   LEVEL_SCORES,
 } from "@/types/database.types";
 
-// 定义显示的等级类型（排除 level_None）
+// Define display level types (excluding level_None)
 type DisplayLevel =
   | IssueLevel.level_C
   | IssueLevel.level_B
@@ -43,11 +43,13 @@ interface ContributionChartProps {
   contributions: Contribution[];
   user: AssigneeUser;
   globalMaxCount?: number;
-  globalMaxScore: number; // 改为必需参数
+  globalMaxScore: number; // Required parameter
   monthRange: MonthRange;
+  showUserInfo?: boolean; // New: whether to show user info, default true
+  totalContributionScore?: number; // New: total contribution score of all users for percentage calculation
 }
 
-// 月份简写
+// Month abbreviations
 const monthNames = [
   "Jan",
   "Feb",
@@ -63,23 +65,30 @@ const monthNames = [
   "Dec",
 ];
 
-// 等级颜色
+// Level colors
 const levelColors: Record<DisplayLevel, string> = {
-  [IssueLevel.level_C]: "#16a34a", // green
-  [IssueLevel.level_B]: "#ea580c", // orange
-  [IssueLevel.level_A]: "#dc2626", // red
-  [IssueLevel.level_S]: "#9333ea", // purple
+  [IssueLevel.level_C]: "#7987FF", // blue
+  [IssueLevel.level_B]: "#E697FF", // purple
+  [IssueLevel.level_A]: "#FFA5CB", // pink
+  [IssueLevel.level_S]: "#FFE372", // yellow
 };
 
-// 等级标签
+const levelStrokeColors: Record<DisplayLevel, string> = {
+  [IssueLevel.level_C]: "#165BAA", // blue
+  [IssueLevel.level_B]: "#A155B9", // purple
+  [IssueLevel.level_A]: "#F765A3", // red
+  [IssueLevel.level_S]: "#E6B800", // yellow
+};
+
+// Level labels
 const levelLabels: Record<DisplayLevel, string> = {
-  [IssueLevel.level_C]: "C级",
-  [IssueLevel.level_B]: "B级",
-  [IssueLevel.level_A]: "A级",
-  [IssueLevel.level_S]: "S级",
+  [IssueLevel.level_C]: "C",
+  [IssueLevel.level_B]: "B",
+  [IssueLevel.level_A]: "A",
+  [IssueLevel.level_S]: "S",
 };
 
-// 等级分数（仅用于显示图例）
+// Level scores (for legend display only)
 const levelScores: Record<DisplayLevel, number> = {
   [IssueLevel.level_C]: LEVEL_SCORES[IssueLevel.level_C],
   [IssueLevel.level_B]: LEVEL_SCORES[IssueLevel.level_B],
@@ -87,7 +96,7 @@ const levelScores: Record<DisplayLevel, number> = {
   [IssueLevel.level_S]: LEVEL_SCORES[IssueLevel.level_S],
 };
 
-// 显示的等级列表
+// Display level list
 const displayLevels: DisplayLevel[] = [
   IssueLevel.level_C,
   IssueLevel.level_B,
@@ -101,12 +110,14 @@ export default function ContributionChart({
   globalMaxCount,
   globalMaxScore,
   monthRange,
+  showUserInfo = true,
+  totalContributionScore = 0,
 }: ContributionChartProps) {
-  // 处理数据：按月份和等级统计
+  // Process data: statistics by month and level
   const userContributionData = useMemo(() => {
     const monthlyData: ContributionData[] = [];
 
-    // 根据 monthRange 生成月份列表
+    // Generate month list based on monthRange
     for (let year = monthRange.startYear; year <= monthRange.endYear; year++) {
       const startMonth =
         year === monthRange.startYear ? monthRange.startMonth : 1;
@@ -128,13 +139,13 @@ export default function ContributionChart({
       }
     }
 
-    // 统计贡献数据（现在只需要计算本地数据，不需要分数计算）
+    // Calculate contribution data (only need local data calculation now)
     contributions.forEach((contribution) => {
       const contributionYear = contribution.year;
       const contributionMonth = contribution.month;
       const level = contribution.issue_level;
 
-      // 找到对应的月份数据
+      // Find corresponding month data
       const monthDataIndex = monthlyData.findIndex(
         (data) =>
           data.year === contributionYear &&
@@ -148,7 +159,7 @@ export default function ContributionChart({
         const displayLevel = level as DisplayLevel;
         monthlyData[monthDataIndex].levelCounts[displayLevel]++;
         monthlyData[monthDataIndex].total++;
-        // 计算贡献分（用于本地折线图显示）
+        // Calculate contribution points (for local line chart display)
         monthlyData[monthDataIndex].contributionScore +=
           levelScores[displayLevel];
       }
@@ -160,15 +171,15 @@ export default function ContributionChart({
     };
   }, [contributions, user, monthRange]);
 
-  // 如果没有传入globalMaxCount，则计算本地最大值作为fallback
+  // If globalMaxCount is not provided, calculate local max value as fallback
   const effectiveMaxCount =
     globalMaxCount ??
     Math.max(
       ...userContributionData.monthlyData.map((monthData) => monthData.total),
-      1 // 确保至少为1
+      1 // Ensure at least 1
     );
 
-  // 检查是否有贡献数据
+  // Check if there is contribution data
   const hasData = userContributionData.monthlyData.some(
     (monthData) => monthData.total > 0
   );
@@ -177,7 +188,7 @@ export default function ContributionChart({
     return (
       <div className="w-full">
         <div className="text-center text-gray-500 py-8">
-          {user.name} 暂无贡献数据
+          {user.name} No contribution data
         </div>
       </div>
     );
@@ -189,6 +200,8 @@ export default function ContributionChart({
         userData={userContributionData}
         globalMaxCount={effectiveMaxCount}
         globalMaxScore={globalMaxScore}
+        showUserInfo={showUserInfo}
+        totalContributionScore={totalContributionScore}
       />
     </div>
   );
@@ -198,12 +211,16 @@ interface UserChartProps {
   userData: UserContributionData;
   globalMaxCount: number;
   globalMaxScore: number;
+  showUserInfo: boolean;
+  totalContributionScore: number;
 }
 
 function UserChart({
   userData,
   globalMaxCount,
   globalMaxScore,
+  showUserInfo,
+  totalContributionScore,
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -223,18 +240,18 @@ function UserChart({
     };
   }, []);
 
-  const height = 300;
-  const margin = { top: 80, right: 80, bottom: 40, left: 60 }; // 增加右边距为折线图Y轴留空间
+  const height = 200;
+  const margin = { top: 32, right: 32, bottom: 32, left: 32 }; // Increase right margin for line chart Y-axis
   const chartWidth = containerWidth - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
-  // 柱状图Y轴 - 使用全局最大值作为Y轴范围
+  // Bar chart Y-axis - use global max value as Y-axis range
   const yScale = scaleLinear<number>({
     range: [chartHeight, 0],
     domain: [0, globalMaxCount],
   });
 
-  // 折线图Y轴 - 贡献分，使用全局最大值确保所有图表刻度一致
+  // Line chart Y-axis - contribution points, use global max to ensure consistent scale across charts
   const yScoreScale = scaleLinear<number>({
     range: [chartHeight, 0],
     domain: [0, globalMaxScore],
@@ -246,111 +263,117 @@ function UserChart({
     padding: 0.2,
   });
 
-  // 为折线图准备数据点
+  // Create sub-scale for level grouping within each month
+  const levelScale = scaleBand<DisplayLevel>({
+    range: [0, xScale.bandwidth()],
+    domain: displayLevels,
+    padding: 0.1,
+  });
+
+  // Calculate max count for each level across all months for proper Y-axis scaling
+  const maxLevelCount = Math.max(
+    ...userData.monthlyData.flatMap((monthData) =>
+      displayLevels.map((level) => monthData.levelCounts[level])
+    ),
+    1
+  );
+
+  // Use the greater of globalMaxCount and maxLevelCount for Y-axis
+  const effectiveMaxCount = Math.max(globalMaxCount, maxLevelCount);
+
+  // Update yScale to use the effective max count
+  const yScaleAdjusted = scaleLinear<number>({
+    range: [chartHeight, 0],
+    domain: [0, effectiveMaxCount],
+  });
+
+  // Calculate max contribution score for this user's data
+  const maxContributionScore = Math.max(
+    ...userData.monthlyData.map((monthData) => monthData.contributionScore),
+    1
+  );
+
+  // Use the greater of globalMaxScore and local max for contribution points Y-axis
+  const effectiveMaxScore = Math.max(globalMaxScore, maxContributionScore);
+
+  // Update contribution points Y-axis scale
+  const yScoreScaleAdjusted = scaleLinear<number>({
+    range: [chartHeight, 0],
+    domain: [0, effectiveMaxScore],
+  });
+
+  // Generate consistent tick values for both Y-axes (max 3 ticks)
+  const generateTickValues = (maxValue: number, numTicks: number = 3) => {
+    const ticks = [];
+    for (let i = 0; i <= numTicks - 1; i++) {
+      ticks.push((maxValue * i) / (numTicks - 1));
+    }
+    return ticks;
+  };
+
+  const leftYTickValues = generateTickValues(effectiveMaxCount);
+  const rightYTickValues = generateTickValues(effectiveMaxScore);
+
+  // Prepare data points for line chart
   const lineData = userData.monthlyData.map((monthData, index) => ({
-    x: (xScale(monthData.month) || 0) + xScale.bandwidth() / 2, // 柱子中心位置
-    y: yScoreScale(monthData.contributionScore),
+    x: (xScale(monthData.month) || 0) + xScale.bandwidth() / 2, // Center position of bar
+    y: yScoreScaleAdjusted(monthData.contributionScore),
     score: monthData.contributionScore,
   }));
 
   return (
-    <div ref={containerRef} style={{ marginBottom: "40px", width: "100%" }}>
-      {/* 用户信息 */}
-      <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}
-      >
-        <img
-          src={userData.user.avatar_url}
-          alt={userData.user.name}
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            marginRight: "10px",
-          }}
-        />
-        <div>
-          <div style={{ fontWeight: "bold" }}>{userData.user.name}</div>
-          <div style={{ fontSize: "14px", color: "#666" }}>
-            {userData.user.email}
+    <div ref={containerRef} className="mb-10 w-full">
+      {showUserInfo && (
+        <>
+          {/* User Info */}
+          <div className="flex items-center mb-5">
+            <img
+              src={userData.user.avatar_url}
+              alt={userData.user.name}
+              className="w-6 h-6 rounded-full mr-2.5"
+            />
+            <div>
+              <div className="font-bold">{userData.user.name}</div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* 图表 */}
+          {/* Contribution Stats */}
+          <ContributionStats
+            userData={userData}
+            globalTotalScore={globalMaxScore}
+            totalContributionScore={totalContributionScore}
+          />
+        </>
+      )}
+
+      {/* Chart */}
       <svg width={containerWidth} height={height}>
         <Group left={margin.left} top={margin.top}>
-          {/* 绘制堆叠柱状图 */}
-          {userData.monthlyData.map((monthData) => {
-            const monthX = xScale(monthData.month) || 0;
-            const barWidth = xScale.bandwidth();
-
-            if (monthData.total === 0) return null;
-
-            let cumulativeHeight = 0;
-
-            return displayLevels.map((level) => {
-              const count = monthData.levelCounts[level];
-
-              if (count === 0) return null;
-
-              const segmentHeight =
-                (count / monthData.total) *
-                (chartHeight - yScale(monthData.total));
-              const barY = yScale(monthData.total) + cumulativeHeight;
-
-              cumulativeHeight += segmentHeight;
-
-              return (
-                <Bar
-                  key={`${monthData.month}-${level}`}
-                  x={monthX}
-                  y={barY}
-                  width={barWidth}
-                  height={segmentHeight}
-                  fill={levelColors[level]}
-                />
-              );
-            });
-          })}
-
-          {/* 绘制贡献分折线图 */}
-          {lineData.length > 1 && (
-            <LinePath
-              data={lineData}
-              x={(d) => d.x}
-              y={(d) => d.y}
-              stroke="#2563eb"
-              strokeWidth={3}
-              fill="none"
-            />
-          )}
-
-          {/* 绘制折线图的数据点 */}
-          {lineData.map((point, index) => (
-            <circle
-              key={`point-${index}`}
-              cx={point.x}
-              cy={point.y}
-              r={4}
-              fill="#2563eb"
-              stroke="#ffffff"
-              strokeWidth={2}
+          {/* Horizontal grid lines */}
+          {leftYTickValues.map((tickValue, index) => (
+            <line
+              key={`grid-${index}`}
+              x1={0}
+              x2={chartWidth}
+              y1={yScaleAdjusted(tickValue)}
+              y2={yScaleAdjusted(tickValue)}
+              stroke="#E7E7E7"
+              strokeWidth={1}
             />
           ))}
 
-          {/* X轴 */}
+          {/* X-axis */}
           <AxisBottom
             top={chartHeight}
             scale={xScale}
             tickFormat={(value, index) => {
-              // 找到对应的月份数据
+              // Find corresponding month data
               const monthData = userData.monthlyData.find(
                 (d) => d.month === value
               );
               if (!monthData) return value;
 
-              // 如果是第一个月，或者年份与前一个月不同，则显示年份
+              // Show year if it's the first month or year differs from previous month
               const isFirstMonth = index === 0;
               const prevMonthData =
                 index > 0 ? userData.monthlyData[index - 1] : null;
@@ -362,79 +385,188 @@ function UserChart({
               }
               return value;
             }}
+            tickStroke="#E7E7E7"
+            stroke="#E7E7E7"
           />
 
-          {/* 左Y轴 - Issue数量 */}
+          {/* Left Y-axis - Issue Count */}
           <AxisLeft
-            scale={yScale}
-            numTicks={Math.min(globalMaxCount || 1, 10)}
+            scale={yScaleAdjusted}
+            tickValues={leftYTickValues}
             tickFormat={(value) =>
               Number.isInteger(Number(value)) ? value.toString() : ""
             }
-            label="Issue 数量"
-            labelProps={{
-              fontSize: 12,
-              textAnchor: "middle",
-              transform: "rotate(-90)",
-            }}
+            tickStroke="#E7E7E7"
+            stroke="#E7E7E7"
           />
 
-          {/* 右Y轴 - 贡献分 */}
+          {/* Right Y-axis - Contribution Points */}
           <AxisRight
             left={chartWidth}
-            scale={yScoreScale}
-            numTicks={Math.min(globalMaxScore || 1, 10)}
+            scale={yScoreScaleAdjusted}
+            tickValues={rightYTickValues}
             tickFormat={(value) =>
               Number.isInteger(Number(value)) ? value.toString() : ""
             }
-            label="贡献分"
-            labelProps={{
-              fontSize: 12,
-              textAnchor: "middle",
-              transform: "rotate(90)",
-            }}
+            tickStroke="#E7E7E7"
+            stroke="#E7E7E7"
           />
+
+          {/* Draw grouped bar chart */}
+          {userData.monthlyData.map((monthData) => {
+            const monthX = xScale(monthData.month) || 0;
+
+            return displayLevels.map((level) => {
+              const count = monthData.levelCounts[level];
+
+              if (count === 0) return null;
+
+              const levelX = monthX + (levelScale(level) || 0);
+              const barWidth = levelScale.bandwidth();
+              const barHeight = chartHeight - yScaleAdjusted(count);
+              const barY = yScaleAdjusted(count);
+
+              return (
+                <Bar
+                  key={`${monthData.month}-${level}`}
+                  x={levelX}
+                  y={barY}
+                  width={barWidth}
+                  height={barHeight}
+                  fill={levelColors[level]}
+                  stroke={levelStrokeColors[level]}
+                  strokeWidth={2}
+                  rx={4}
+                  ry={4}
+                />
+              );
+            });
+          })}
+
+          {/* Draw contribution points line chart */}
+          {lineData.length > 1 && (
+            <LinePath
+              data={lineData}
+              x={(d) => d.x}
+              y={(d) => d.y}
+              stroke="#2563eb"
+              strokeWidth={3}
+              fill="none"
+            />
+          )}
+
+          {/* Draw line chart data points */}
+          {lineData.map((point, index) => (
+            <circle
+              key={`point-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r={4}
+              fill="#2563eb"
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+          ))}
         </Group>
       </svg>
 
-      {/* 图例 */}
-      <div
-        style={{
-          display: "flex",
-          gap: "20px",
-          marginTop: "10px",
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Issue等级图例 */}
-        {displayLevels.map((level) => (
-          <div
-            key={level}
-            style={{ display: "flex", alignItems: "center", gap: "5px" }}
-          >
-            <div
-              style={{
-                width: "16px",
-                height: "16px",
-                backgroundColor: levelColors[level],
-              }}
-            />
-            <span style={{ fontSize: "14px" }}>
-              {levelLabels[level]} ({levelScores[level]}分)
-            </span>
+      {/* Legend */}
+      <div className="flex flex-row mt-2 gap-3 justify-between font-semibold text-xs">
+        <div className="flex gap-3 flex-wrap gap-y-1">
+          {/* Issue Level Legend */}
+          {displayLevels.map((level) => (
+            <div key={level} className="flex items-center gap-1.5">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: levelColors[level] }}
+              />
+              <span className="">{levelLabels[level]}</span>
+            </div>
+          ))}
+          {/* Contribution Points Line Legend */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-0.5 bg-blue-600" />
+            <span className="">Points</span>
           </div>
-        ))}
-        {/* 贡献分折线图例 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <div
-            style={{
-              width: "16px",
-              height: "3px",
-              backgroundColor: "#2563eb",
-            }}
-          />
-          <span style={{ fontSize: "14px" }}>贡献分</span>
         </div>
+        <div className="flex gap-3 text-gray-600">
+          <div className="">L/Y - Issues</div>
+          <div className="">R/Y - Points</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ContributionStatsProps {
+  userData: UserContributionData;
+  globalTotalScore: number;
+  totalContributionScore: number;
+}
+
+function ContributionStats({
+  userData,
+  globalTotalScore,
+  totalContributionScore,
+}: ContributionStatsProps) {
+  // Calculate user's total contribution score
+  const userTotalScore = userData.monthlyData.reduce(
+    (sum, monthData) => sum + monthData.contributionScore,
+    0
+  );
+
+  // Calculate percentage relative to all users' total contribution score
+  const percentage =
+    totalContributionScore > 0
+      ? (userTotalScore / totalContributionScore) * 100
+      : 0;
+
+  // Build display string: XX S, XX A, XX B, XX C = Total Points - XX%
+  const levelCounts = [
+    {
+      level: IssueLevel.level_S,
+      label: "S",
+      count: userData.monthlyData.reduce(
+        (sum, monthData) => sum + monthData.levelCounts[IssueLevel.level_S],
+        0
+      ),
+    },
+    {
+      level: IssueLevel.level_A,
+      label: "A",
+      count: userData.monthlyData.reduce(
+        (sum, monthData) => sum + monthData.levelCounts[IssueLevel.level_A],
+        0
+      ),
+    },
+    {
+      level: IssueLevel.level_B,
+      label: "B",
+      count: userData.monthlyData.reduce(
+        (sum, monthData) => sum + monthData.levelCounts[IssueLevel.level_B],
+        0
+      ),
+    },
+    {
+      level: IssueLevel.level_C,
+      label: "C",
+      count: userData.monthlyData.reduce(
+        (sum, monthData) => sum + monthData.levelCounts[IssueLevel.level_C],
+        0
+      ),
+    },
+  ];
+
+  const levelCountsDisplay = levelCounts
+    .filter((item) => item.count > 0) // Only show levels with count > 0
+    .map((item) => `${item.count} ${item.label}`)
+    .join(", ");
+
+  return (
+    <div>
+      <div className="text-sm text-gray-600">{levelCountsDisplay} = </div>
+      <div className="text-3xl font-normal text-gray-900">
+        {userTotalScore} P - {percentage.toFixed(1)}%
       </div>
     </div>
   );
