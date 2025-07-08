@@ -1,9 +1,10 @@
 "use client";
 import { useMemo, useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { Group } from "@visx/group";
 import { Bar } from "@visx/shape";
 import { LinePath } from "@visx/shape";
-import { scaleLinear, scaleBand, scaleOrdinal } from "@visx/scale";
+import { scaleLinear, scaleBand } from "@visx/scale";
 import { AxisBottom, AxisLeft, AxisRight } from "@visx/axis";
 import {
   Contribution,
@@ -47,6 +48,7 @@ interface ContributionChartProps {
   monthRange: MonthRange;
   showUserInfo?: boolean; // New: whether to show user info, default true
   totalContributionScore?: number; // New: total contribution score of all users for percentage calculation
+  rank?: number; // New: user's rank based on total contribution score
 }
 
 interface TooltipData {
@@ -123,6 +125,7 @@ export default function ContributionChart({
   monthRange,
   showUserInfo = true,
   totalContributionScore = 0,
+  rank,
 }: ContributionChartProps) {
   // Process data: statistics by month and level
   const userContributionData = useMemo(() => {
@@ -213,6 +216,7 @@ export default function ContributionChart({
         globalMaxScore={globalMaxScore}
         showUserInfo={showUserInfo}
         totalContributionScore={totalContributionScore}
+        rank={rank}
       />
     </div>
   );
@@ -224,6 +228,7 @@ interface UserChartProps {
   globalMaxScore: number;
   showUserInfo: boolean;
   totalContributionScore: number;
+  rank?: number; // New: user's rank based on total contribution score
 }
 
 function UserChart({
@@ -232,6 +237,7 @@ function UserChart({
   globalMaxScore,
   showUserInfo,
   totalContributionScore,
+  rank,
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -257,17 +263,7 @@ function UserChart({
   const chartWidth = containerWidth - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
-  // Bar chart Y-axis - use global max value as Y-axis range
-  const yScale = scaleLinear<number>({
-    range: [chartHeight, 0],
-    domain: [0, globalMaxCount],
-  });
-
-  // Line chart Y-axis - contribution points, use global max to ensure consistent scale across charts
-  const yScoreScale = scaleLinear<number>({
-    range: [chartHeight, 0],
-    domain: [0, globalMaxScore],
-  });
+  // Note: removed unused yScale and yScoreScale variables
 
   const xScale = scaleBand<string>({
     range: [0, chartWidth],
@@ -327,7 +323,7 @@ function UserChart({
   const rightYTickValues = generateTickValues(effectiveMaxScore);
 
   // Prepare data points for line chart
-  const lineData = userData.monthlyData.map((monthData, index) => ({
+  const lineData = userData.monthlyData.map((monthData) => ({
     x: (xScale(monthData.month) || 0) + xScale.bandwidth() / 2, // Center position of bar
     y: yScoreScaleAdjusted(monthData.contributionScore),
     score: monthData.contributionScore,
@@ -358,8 +354,7 @@ function UserChart({
 
   const handleLinePointMouseEnter = (
     event: React.MouseEvent<SVGCircleElement>,
-    monthData: ContributionData,
-    pointIndex: number
+    monthData: ContributionData
   ) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -383,21 +378,31 @@ function UserChart({
       {showUserInfo && (
         <>
           {/* User Info */}
-          <div className="flex items-center mb-5">
-            <img
-              src={userData.user.avatar_url}
-              alt={userData.user.name}
-              className="w-6 h-6 rounded-full mr-2.5"
-            />
-            <div>
-              <div className="font-bold">{userData.user.name}</div>
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center">
+              <Image
+                src={userData.user.avatar_url}
+                alt={userData.user.name}
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full mr-2.5"
+              />
+              <div>
+                <div className="font-bold">{userData.user.name}</div>
+              </div>
             </div>
+
+            {/* Rank display in top-right corner */}
+            {rank !== undefined && (
+              <div className="text-sm font-semibold text-gray-600 bg-gray-100 rounded-full px-2 py-[2px]">
+                #{rank}
+              </div>
+            )}
           </div>
 
           {/* Contribution Stats */}
           <ContributionStats
             userData={userData}
-            globalTotalScore={globalMaxScore}
             totalContributionScore={totalContributionScore}
           />
         </>
@@ -531,7 +536,7 @@ function UserChart({
                 strokeWidth={2}
                 style={{ cursor: "pointer" }}
                 onMouseEnter={(event) =>
-                  handleLinePointMouseEnter(event, monthData, index)
+                  handleLinePointMouseEnter(event, monthData)
                 }
                 onMouseLeave={handleMouseLeave}
               />
@@ -579,13 +584,11 @@ function UserChart({
 
 interface ContributionStatsProps {
   userData: UserContributionData;
-  globalTotalScore: number;
   totalContributionScore: number;
 }
 
 function ContributionStats({
   userData,
-  globalTotalScore,
   totalContributionScore,
 }: ContributionStatsProps) {
   // Calculate user's total contribution score
@@ -643,10 +646,10 @@ function ContributionStats({
 
   return (
     <div>
-      <div className="text-sm text-gray-600">{levelCountsDisplay} = </div>
       <div className="text-3xl font-normal text-gray-900">
         {userTotalScore} P - {percentage.toFixed(1)}%
       </div>
+      <div className="text-sm text-gray-900">{levelCountsDisplay}</div>
     </div>
   );
 }
@@ -657,7 +660,7 @@ interface TooltipProps {
   containerHeight: number;
 }
 
-function Tooltip({ data, containerWidth, containerHeight }: TooltipProps) {
+function Tooltip({ data, containerWidth }: TooltipProps) {
   // Calculate tooltip position to prevent overflow
   const tooltipWidth = 200;
   const tooltipHeight = 100;
@@ -690,7 +693,7 @@ function Tooltip({ data, containerWidth, containerHeight }: TooltipProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div
-              className="w-3 h-3 rounded-full"
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: levelColors[data.level] }}
             />
             <span className="font-medium">Level {levelLabels[data.level]}</span>

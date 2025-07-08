@@ -1,10 +1,6 @@
 "use server";
 import { IssueService } from "@/services/issue.service";
-import {
-  Contribution,
-  IssueWithAssignee,
-  IssueState,
-} from "@/types/database.types";
+import { Contribution, IssueState } from "@/types/database.types";
 
 /**
  * 从已完成的 Issues 生成 Contribution 数据

@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
 import { scaleOrdinal } from "@visx/scale";
@@ -54,14 +55,7 @@ const levelColors: Record<IssueLevel, string> = {
   [IssueLevel.level_None]: "#E5E7EB", // gray
 };
 
-// Level labels
-const levelLabels: Record<IssueLevel, string> = {
-  [IssueLevel.level_C]: "C",
-  [IssueLevel.level_B]: "B",
-  [IssueLevel.level_A]: "A",
-  [IssueLevel.level_S]: "S",
-  [IssueLevel.level_None]: "None",
-};
+// Note: levelLabels removed as it was unused
 
 export default function ContributionPieChart({
   contributions,
@@ -186,7 +180,7 @@ export default function ContributionPieChart({
                 innerRadius={radius * 0.4} // Donut chart
               >
                 {(pie) => {
-                  return pie.arcs.map((arc, index) => {
+                  return pie.arcs.map((arc) => {
                     const [centroidX, centroidY] = pie.path.centroid(arc);
                     const hasSpaceForLabel =
                       arc.endAngle - arc.startAngle >= 0.1;
@@ -240,9 +234,11 @@ export default function ContributionPieChart({
 
               {/* User information */}
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <img
+                <Image
                   src={data.user.avatar_url}
                   alt={data.user.name}
+                  width={24}
+                  height={24}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
@@ -260,13 +256,7 @@ export default function ContributionPieChart({
       </div>
 
       {/* Tooltip */}
-      {tooltip && (
-        <PieTooltip
-          data={tooltip}
-          containerWidth={width}
-          containerHeight={height}
-        />
-      )}
+      {tooltip && <PieTooltip data={tooltip} containerWidth={width} />}
     </div>
   );
 }
@@ -274,14 +264,9 @@ export default function ContributionPieChart({
 interface PieTooltipProps {
   data: TooltipData;
   containerWidth: number;
-  containerHeight: number;
 }
 
-function PieTooltip({
-  data,
-  containerWidth,
-  containerHeight,
-}: PieTooltipProps) {
+function PieTooltip({ data, containerWidth }: PieTooltipProps) {
   // Calculate tooltip position to prevent overflow
   const tooltipWidth = 280;
   const tooltipHeight = 200;
@@ -332,9 +317,11 @@ function PieTooltip({
     >
       {/* User info */}
       <div className="flex items-center gap-2 mb-3">
-        <img
+        <Image
           src={data.user.avatar_url}
           alt={data.user.name}
+          width={24}
+          height={24}
           className="w-6 h-6 rounded-full"
         />
         <div className="flex flex-col gap-0">

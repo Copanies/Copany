@@ -13,22 +13,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
 
-// 贡献等级标签渲染函数
-function renderLevelLabel(level: number): string {
-  switch (level) {
-    case IssueLevel.level_S:
-      return "S级";
-    case IssueLevel.level_A:
-      return "A级";
-    case IssueLevel.level_B:
-      return "B级";
-    case IssueLevel.level_C:
-      return "C级";
-    case IssueLevel.level_None:
-    default:
-      return "无等级";
-  }
-}
+// Note: renderLevelLabel function removed as it was unused
 
 interface ContributionViewProps {
   copanyId: string;
@@ -66,6 +51,40 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
     email: contributor.email,
     avatar_url: contributor.avatar_url,
   }));
+
+  // 计算每个用户的总贡献值并排序
+  const usersWithContribution = useMemo(() => {
+    return users
+      .map((user) => {
+        const userContributions = contributions.filter(
+          (c) => c.user_id === user.id
+        );
+        const totalScore = userContributions.reduce((sum, contribution) => {
+          const level = contribution.issue_level;
+          if (
+            [
+              IssueLevel.level_C,
+              IssueLevel.level_B,
+              IssueLevel.level_A,
+              IssueLevel.level_S,
+            ].includes(level)
+          ) {
+            return sum + (LEVEL_SCORES[level as IssueLevel] || 0);
+          }
+          return sum;
+        }, 0);
+
+        return {
+          user,
+          totalScore,
+        };
+      })
+      .sort((a, b) => b.totalScore - a.totalScore) // 按总贡献值降序排序
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1, // 添加排名
+      }));
+  }, [users, contributions]);
 
   // 计算 globalMaxCount、globalMaxScore 和月份范围
   const { globalMaxCount, globalMaxScore, monthRange, totalContributionScore } =
@@ -194,9 +213,9 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
       });
 
       // 找到最大值
-      let maxCount = Math.max(...Object.values(allUserMonthCounts), 1);
-      let maxScore = Math.max(...Object.values(allUserMonthScores), 1);
-      let totalScore = Object.values(allUserMonthScores).reduce(
+      const maxCount = Math.max(...Object.values(allUserMonthCounts), 1);
+      const maxScore = Math.max(...Object.values(allUserMonthScores), 1);
+      const totalScore = Object.values(allUserMonthScores).reduce(
         (sum, score) => sum + score,
         0
       );
@@ -219,7 +238,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 mb-8">
       <div className="flex flex-col w-full gap-2">
         <h3 className="text-lg font-semibold mb-4">Distribution</h3>
         <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200">
@@ -229,17 +248,18 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
 
       <div>
         <div className="flex flex-col md:flex-row gap-6">
-          {users.map((user) => (
-            <div className="w-full md:w-1/2" key={user.id}>
+          {usersWithContribution.map((userItem) => (
+            <div className="w-full md:w-1/2" key={userItem.user.id}>
               <ContributionChart
                 contributions={contributions.filter(
-                  (c) => c.user_id === user.id
+                  (c) => c.user_id === userItem.user.id
                 )}
-                user={user}
+                user={userItem.user}
                 globalMaxCount={globalMaxCount}
                 globalMaxScore={globalMaxScore}
                 monthRange={monthRange}
                 totalContributionScore={totalContributionScore}
+                rank={userItem.rank}
               />
             </div>
           ))}
