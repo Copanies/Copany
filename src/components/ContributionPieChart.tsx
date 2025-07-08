@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
 import { scaleOrdinal } from "@visx/scale";
+import { useTooltip } from "@visx/tooltip";
 import {
   Contribution,
   IssueLevel,
@@ -23,8 +24,6 @@ interface TooltipData {
   totalScore: number;
   percentage: number;
   levelCounts: Record<IssueLevel, number>;
-  x: number;
-  y: number;
 }
 
 interface ContributionPieChartProps {
@@ -75,8 +74,17 @@ export default function ContributionPieChart({
   users,
 }: ContributionPieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 使用 visx 的 useTooltip hook
+  const {
+    tooltipOpen,
+    tooltipLeft,
+    tooltipTop,
+    tooltipData,
+    hideTooltip,
+    showTooltip,
+  } = useTooltip<TooltipData>();
 
   useEffect(() => {
     // Check for dark mode
@@ -180,21 +188,47 @@ export default function ContributionPieChart({
     event: React.MouseEvent<SVGPathElement>,
     data: UserContributionData
   ) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    setTooltip({
+    const tooltipData: TooltipData = {
       user: data.user,
       totalScore: data.totalScore,
       percentage: data.percentage,
       levelCounts: data.levelCounts,
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+    };
+
+    // 计算 tooltip 位置，确保在窗口范围内
+    const tooltipWidth = 280;
+    const tooltipHeight = 200;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let tooltipLeft = event.clientX;
+    let tooltipTop = event.clientY - tooltipHeight - 10;
+
+    // 水平边界检测
+    if (tooltipLeft + tooltipWidth > viewportWidth) {
+      tooltipLeft = event.clientX - tooltipWidth;
+    }
+    if (tooltipLeft < 0) {
+      tooltipLeft = 10;
+    }
+
+    // 垂直边界检测
+    if (tooltipTop < 0) {
+      tooltipTop = event.clientY + 10;
+    }
+    if (tooltipTop + tooltipHeight > viewportHeight) {
+      tooltipTop = viewportHeight - tooltipHeight - 10;
+    }
+
+    showTooltip({
+      tooltipData,
+      tooltipLeft,
+      tooltipTop,
     });
   };
 
   const handleMouseLeave = () => {
-    setTooltip(null);
+    hideTooltip();
   };
 
   // If no data, show empty state
@@ -207,6 +241,35 @@ export default function ContributionPieChart({
       </div>
     );
   }
+
+  // Filter and format level counts for display
+  const levelDisplay = tooltipData
+    ? [
+        {
+          level: IssueLevel.level_S,
+          label: "S",
+          count: tooltipData.levelCounts[IssueLevel.level_S],
+        },
+        {
+          level: IssueLevel.level_A,
+          label: "A",
+          count: tooltipData.levelCounts[IssueLevel.level_A],
+        },
+        {
+          level: IssueLevel.level_B,
+          label: "B",
+          count: tooltipData.levelCounts[IssueLevel.level_B],
+        },
+        {
+          level: IssueLevel.level_C,
+          label: "C",
+          count: tooltipData.levelCounts[IssueLevel.level_C],
+        },
+      ].filter((item) => item.count > 0)
+    : [];
+
+  const getLevelColor = (level: IssueLevel) =>
+    isDarkMode ? levelColors[level].dark : levelColors[level].light;
 
   return (
     <div ref={containerRef} className="w-full max-w-4xl relative">
@@ -298,127 +361,74 @@ export default function ContributionPieChart({
       </div>
 
       {/* Tooltip */}
-      {tooltip && (
-        <PieTooltip
-          data={tooltip}
-          containerWidth={width}
-          isDarkMode={isDarkMode}
-        />
-      )}
-    </div>
-  );
-}
-
-interface PieTooltipProps {
-  data: TooltipData;
-  containerWidth: number;
-  isDarkMode: boolean;
-}
-
-function PieTooltip({ data, containerWidth, isDarkMode }: PieTooltipProps) {
-  // Calculate tooltip position to prevent overflow
-  const tooltipWidth = 280;
-  const tooltipHeight = 200;
-
-  let x = data.x + 10;
-  let y = data.y - 10;
-
-  // Adjust position if tooltip would overflow
-  if (x + tooltipWidth > containerWidth) {
-    x = data.x - tooltipWidth - 10;
-  }
-  if (y - tooltipHeight < 0) {
-    y = data.y + 20;
-  }
-
-  // Filter and format level counts for display
-  const levelDisplay = [
-    {
-      level: IssueLevel.level_S,
-      label: "S",
-      count: data.levelCounts[IssueLevel.level_S],
-    },
-    {
-      level: IssueLevel.level_A,
-      label: "A",
-      count: data.levelCounts[IssueLevel.level_A],
-    },
-    {
-      level: IssueLevel.level_B,
-      label: "B",
-      count: data.levelCounts[IssueLevel.level_B],
-    },
-    {
-      level: IssueLevel.level_C,
-      label: "C",
-      count: data.levelCounts[IssueLevel.level_C],
-    },
-  ].filter((item) => item.count > 0);
-
-  const getLevelColor = (level: IssueLevel) =>
-    isDarkMode ? levelColors[level].dark : levelColors[level].light;
-
-  return (
-    <div
-      className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 text-sm pointer-events-none"
-      style={{
-        left: x,
-        top: y,
-        minWidth: "250px",
-      }}
-    >
-      {/* User info */}
-      <div className="flex items-center gap-2 mb-3">
-        <Image
-          src={data.user.avatar_url}
-          alt={data.user.name}
-          width={24}
-          height={24}
-          className="w-6 h-6 rounded-full"
-        />
-        <div className="flex flex-col gap-0">
-          <div className="font-semibold text-gray-900 dark:text-gray-100">
-            {data.user.name}
+      {tooltipOpen && tooltipData && (
+        <div
+          style={{
+            position: "fixed",
+            left: tooltipLeft,
+            top: tooltipTop,
+            zIndex: 1000,
+            pointerEvents: "none",
+          }}
+          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 text-sm"
+        >
+          {/* User info */}
+          <div className="flex items-center gap-2 mb-3">
+            <Image
+              src={tooltipData.user.avatar_url}
+              alt={tooltipData.user.name}
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded-full"
+            />
+            <div className="flex flex-col gap-0">
+              <div className="font-semibold text-gray-900 dark:text-gray-100">
+                {tooltipData.user.name}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                {tooltipData.user.email}
+              </div>
+            </div>
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400">
-            {data.user.email}
+
+          {/* Total contribution */}
+          <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {tooltipData.totalScore} Points
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {tooltipData.percentage.toFixed(1)}% of total contributions
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Total contribution */}
-      <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
-        <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          {data.totalScore} Points
-        </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {data.percentage.toFixed(1)}% of total contributions
-        </div>
-      </div>
-
-      {/* Level breakdown */}
-      <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Issue Level Breakdown:
-        </div>
-        {levelDisplay.map((item) => (
-          <div key={item.level} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          {/* Level breakdown */}
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Issue Level Breakdown:
+            </div>
+            {levelDisplay.map((item) => (
               <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: getLevelColor(item.level) }}
-              />
-              <span className="text-sm text-gray-900 dark:text-gray-100">
-                Level {item.label}
-              </span>
-            </div>
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {item.count} × {LEVEL_SCORES[item.level]} P ={" "}
-              {item.count * LEVEL_SCORES[item.level]} P
-            </div>
+                key={item.level}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: getLevelColor(item.level) }}
+                  />
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
+                    Level {item.label}
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {item.count} × {LEVEL_SCORES[item.level]} P ={" "}
+                  {item.count * LEVEL_SCORES[item.level]} P
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

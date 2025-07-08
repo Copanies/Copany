@@ -6,6 +6,7 @@ import { Bar } from "@visx/shape";
 import { LinePath } from "@visx/shape";
 import { scaleLinear, scaleBand } from "@visx/scale";
 import { AxisBottom, AxisLeft, AxisRight } from "@visx/axis";
+import { useTooltip } from "@visx/tooltip";
 import {
   Contribution,
   IssueLevel,
@@ -58,8 +59,6 @@ interface TooltipData {
   level?: DisplayLevel;
   count?: number;
   contributionScore?: number;
-  x: number;
-  y: number;
 }
 
 // Month abbreviations
@@ -255,8 +254,17 @@ function UserChart({
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
-  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 使用 visx 的 useTooltip hook
+  const {
+    tooltipOpen,
+    tooltipLeft,
+    tooltipTop,
+    tooltipData,
+    hideTooltip,
+    showTooltip,
+  } = useTooltip<TooltipData>();
 
   useEffect(() => {
     // Check for dark mode
@@ -405,17 +413,43 @@ function UserChart({
     const count = monthData.levelCounts[level];
     if (count === 0) return;
 
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    setTooltip({
+    const tooltipData: TooltipData = {
       type: "bar",
       month: monthData.month,
       year: monthData.year,
       level,
       count,
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+    };
+
+    // 计算 tooltip 位置，确保在窗口范围内
+    const tooltipWidth = 200;
+    const tooltipHeight = 120;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let tooltipLeft = event.clientX;
+    let tooltipTop = event.clientY - tooltipHeight - 10;
+
+    // 水平边界检测
+    if (tooltipLeft + tooltipWidth > viewportWidth) {
+      tooltipLeft = event.clientX - tooltipWidth;
+    }
+    if (tooltipLeft < 0) {
+      tooltipLeft = 10;
+    }
+
+    // 垂直边界检测
+    if (tooltipTop < 0) {
+      tooltipTop = event.clientY + 10;
+    }
+    if (tooltipTop + tooltipHeight > viewportHeight) {
+      tooltipTop = viewportHeight - tooltipHeight - 10;
+    }
+
+    showTooltip({
+      tooltipData,
+      tooltipLeft,
+      tooltipTop,
     });
   };
 
@@ -423,21 +457,47 @@ function UserChart({
     event: React.MouseEvent<SVGCircleElement>,
     monthData: ContributionData
   ) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    setTooltip({
+    const tooltipData: TooltipData = {
       type: "line",
       month: monthData.month,
       year: monthData.year,
       contributionScore: monthData.contributionScore,
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+    };
+
+    // 计算 tooltip 位置，确保在窗口范围内
+    const tooltipWidth = 150;
+    const tooltipHeight = 80;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let tooltipLeft = event.clientX;
+    let tooltipTop = event.clientY - tooltipHeight - 10;
+
+    // 水平边界检测
+    if (tooltipLeft + tooltipWidth > viewportWidth) {
+      tooltipLeft = event.clientX - tooltipWidth;
+    }
+    if (tooltipLeft < 0) {
+      tooltipLeft = 10;
+    }
+
+    // 垂直边界检测
+    if (tooltipTop < 0) {
+      tooltipTop = event.clientY + 10;
+    }
+    if (tooltipTop + tooltipHeight > viewportHeight) {
+      tooltipTop = viewportHeight - tooltipHeight - 10;
+    }
+
+    showTooltip({
+      tooltipData,
+      tooltipLeft,
+      tooltipTop,
     });
   };
 
   const handleMouseLeave = () => {
-    setTooltip(null);
+    hideTooltip();
   };
 
   // Dynamic colors based on theme
@@ -683,13 +743,74 @@ function UserChart({
       </svg>
 
       {/* Tooltip */}
-      {tooltip && (
-        <Tooltip
-          data={tooltip}
-          containerWidth={containerWidth}
-          containerHeight={height}
-          isDarkMode={isDarkMode}
-        />
+      {tooltipOpen && tooltipData && (
+        <div
+          style={{
+            position: "fixed",
+            left: tooltipLeft,
+            top: tooltipTop,
+            zIndex: 1000,
+            pointerEvents: "none",
+          }}
+          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm"
+        >
+          <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {tooltipData.month} {tooltipData.year}
+          </div>
+
+          {tooltipData.type === "bar" &&
+            tooltipData.level &&
+            tooltipData.count !== undefined && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      backgroundColor: getLevelColor(tooltipData.level),
+                    }}
+                  />
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    Level {levelLabels[tooltipData.level]}
+                  </span>
+                </div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Issues:{" "}
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {tooltipData.count}
+                  </span>
+                </div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Points:{" "}
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {tooltipData.count * levelScores[tooltipData.level]}
+                  </span>
+                </div>
+              </div>
+            )}
+
+          {tooltipData.type === "line" &&
+            tooltipData.contributionScore !== undefined && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-0.5"
+                    style={{
+                      backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb",
+                    }}
+                  />
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    Total Points
+                  </span>
+                </div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Score:{" "}
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {tooltipData.contributionScore}
+                  </span>
+                </div>
+              </div>
+            )}
+        </div>
       )}
 
       {/* Legend */}
@@ -792,94 +913,6 @@ function ContributionStats({
       <div className="text-sm text-gray-900 dark:text-gray-100">
         {levelCountsDisplay}
       </div>
-    </div>
-  );
-}
-
-interface TooltipProps {
-  data: TooltipData;
-  containerWidth: number;
-  containerHeight: number;
-  isDarkMode: boolean;
-}
-
-function Tooltip({ data, containerWidth, isDarkMode }: TooltipProps) {
-  // Calculate tooltip position to prevent overflow
-  const tooltipWidth = 200;
-  const tooltipHeight = 100;
-
-  let x = data.x + 10;
-  let y = data.y - 10;
-
-  // Adjust position if tooltip would overflow
-  if (x + tooltipWidth > containerWidth) {
-    x = data.x - tooltipWidth - 10;
-  }
-  if (y - tooltipHeight < 0) {
-    y = data.y + 20;
-  }
-
-  const getLevelColor = (level: DisplayLevel) =>
-    isDarkMode ? levelColors[level].dark : levelColors[level].light;
-
-  return (
-    <div
-      className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
-      style={{
-        left: x,
-        top: y,
-        minWidth: "150px",
-      }}
-    >
-      <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-        {data.month} {data.year}
-      </div>
-
-      {data.type === "bar" && data.level && data.count !== undefined && (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: getLevelColor(data.level) }}
-            />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              Level {levelLabels[data.level]}
-            </span>
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">
-            Issues:{" "}
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {data.count}
-            </span>
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">
-            Points:{" "}
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {data.count * levelScores[data.level]}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {data.type === "line" && data.contributionScore !== undefined && (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-0.5"
-              style={{ backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb" }}
-            />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              Total Points
-            </span>
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">
-            Score:{" "}
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {data.contributionScore}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
