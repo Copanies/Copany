@@ -122,6 +122,3 @@ export class ReadmeManager {
 
 // 导出单例实例
 export const readmeManager = new ReadmeManager();
-
-// 导出推荐使用的数据管理器实例
-export { readmeDataManager };

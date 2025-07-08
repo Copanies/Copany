@@ -90,6 +90,3 @@ export class CurrentUserManager {
 
 // 导出单例实例
 export const currentUserManager = new CurrentUserManager();
-
-// 导出推荐使用的数据管理器实例
-export { currentUserDataManager };

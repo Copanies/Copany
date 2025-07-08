@@ -18,7 +18,6 @@ import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
 import {
-  issuesDataManager,
   issuesManager,
   currentUserManager,
   contributorsManager,
@@ -118,15 +117,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     hasInitialLoadRef.current = true;
 
     try {
-      console.log(`[IssuesView] 🔄 Loading issues with SWR strategy...`);
       setIsLoading(true);
 
       // 使用 SWR 策略：立即返回缓存 + 后台更新
-      const issuesData = await issuesDataManager.getData(copanyId, () =>
+      const issuesData = await issuesManager.getIssues(copanyId, () =>
         getIssuesAction(copanyId)
       );
 
-      console.log(`[IssuesView] ✅ Loaded ${issuesData.length} issues`);
       setIssues(issuesData);
     } catch (error) {
       console.error("Error loading issues:", error);
@@ -150,8 +147,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         issuesManager.setIssues(copanyId, updatedIssues);
         return updatedIssues;
       });
-      // 同时缓存新创建的 issue
-      issuesManager.addIssue(copanyId, newIssue);
     },
     [copanyId]
   );
@@ -162,7 +157,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = { ...issue, state: newState };
+            const updatedIssue = {
+              ...issue,
+              state: newState,
+            };
             // 同时更新单个 issue 缓存
             issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
@@ -170,7 +168,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           return issue;
         });
         // 更新 issues 列表缓存
-        issuesDataManager.setData(copanyId, updatedIssues);
+        issuesManager.setIssues(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -183,15 +181,16 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = { ...issue, priority: newPriority };
+            const updatedIssue = {
+              ...issue,
+              priority: newPriority,
+            };
             // 同时更新单个 issue 缓存
             issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
-        // 更新 issues 列表缓存
-        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -204,15 +203,16 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = { ...issue, level: newLevel };
+            const updatedIssue = {
+              ...issue,
+              level: newLevel,
+            };
             // 同时更新单个 issue 缓存
             issuesManager.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
-        // 更新 issues 列表缓存
-        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -240,8 +240,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           }
           return issue;
         });
-        // 更新 issues 列表缓存
-        issuesDataManager.setData(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
@@ -258,11 +256,9 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             (issue) => issue.id !== issueId
           );
           // 更新 issues 列表缓存
-          issuesDataManager.setData(copanyId, updatedIssues);
+          issuesManager.setIssues(copanyId, updatedIssues);
           return updatedIssues;
         });
-        // 清除单个 issue 缓存
-        issuesManager.removeIssue(copanyId, issueId);
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // 关闭菜单
 
         // 然后调用删除接口
@@ -270,10 +266,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       } catch (error) {
         console.error("Error deleting issue:", error);
         // 如果删除失败，重新加载数据恢复状态
-        const issuesData = await issuesDataManager.getData(
-          copanyId,
-          () => getIssuesAction(copanyId),
-          true // forceRefresh
+        const issuesData = await issuesManager.getIssues(copanyId, () =>
+          getIssuesAction(copanyId)
         );
         setIssues(issuesData);
       }
@@ -344,13 +338,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                   key={issue.id}
                   onClick={() => {
-                    console.log(
-                      `[IssuesView] 🖱️ Clicking issue: ${issue.id} (${issue.title})`
-                    );
-
-                    // 智能缓存策略：使用新的 IssuesManager
-                    issuesManager.smartSetIssue(copanyId, issue);
-
                     // 保留当前的 URL 参数
                     const params = new URLSearchParams(searchParams.toString());
                     router.push(

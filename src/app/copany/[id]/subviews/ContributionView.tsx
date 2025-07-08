@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { generateContributionsFromIssuesAction } from "@/actions/contribution.actions";
-import { getCopanyContributorsAction } from "@/actions/copanyContributor.actions";
 import {
   Contribution,
   IssueLevel,
@@ -9,10 +8,7 @@ import {
   CopanyContributor,
   LEVEL_SCORES,
 } from "@/types/database.types";
-import {
-  contributionsDataManager,
-  contributorsDataManager,
-} from "@/utils/cache";
+import { contributionsManager, contributorsManager } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
@@ -31,17 +27,16 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
       try {
         setIsLoading(true);
 
-        const contributionDataPromise = contributionsDataManager.getData(
-          copanyId,
-          () => generateContributionsFromIssuesAction(copanyId),
-          forceRefresh
-        );
+        const contributionDataPromise = forceRefresh
+          ? contributionsManager.refreshContributions(copanyId, () =>
+              generateContributionsFromIssuesAction(copanyId)
+            )
+          : contributionsManager.getContributions(copanyId, () =>
+              generateContributionsFromIssuesAction(copanyId)
+            );
 
-        const contributorDataPromise = contributorsDataManager.getData(
-          copanyId,
-          () => getCopanyContributorsAction(copanyId),
-          forceRefresh
-        );
+        const contributorDataPromise =
+          contributorsManager.getContributors(copanyId);
 
         // 并行执行请求
         const [newContributionData, newContributorData] = await Promise.all([

@@ -8,50 +8,43 @@ import { issuesManager } from "@/utils/cache";
 
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
+  onTitleChange?: (issueId: string, newTitle: string) => void;
+  onDescriptionChange?: (issueId: string, newDescription: string) => void;
 }
 
-export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
+export default function IssueEditorView({
+  issueData,
+  onTitleChange,
+  onDescriptionChange,
+}: IssueEditorViewProps) {
   const [title, setTitle] = useState(issueData.title || "");
-  const [description, setDescription] = useState(issueData.description || "");
+  const [editingContent, setEditingContent] = useState(
+    issueData.description || ""
+  );
   const [isSaving, setIsSaving] = useState(false);
   const editorDivRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // 立即更新缓存的函数
-  const immediateUpdateCache = useCallback(
-    (newTitle: string, newDescription: string) => {
-      if (issueData.copany_id) {
-        const updatedIssue: IssueWithAssignee = {
-          ...issueData,
-          title: newTitle,
-          description: newDescription,
-          updated_at: new Date().toISOString(),
-        };
-        issuesManager.smartSetIssue(issueData.copany_id, updatedIssue);
-        console.log("📦 Immediately cached issue changes");
-      }
-    },
-    [issueData]
-  );
-
-  // 处理内容变化 - 添加防抖处理
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 处理内容变化 - 添加防抖处理
   const handleContentChange = useCallback(
     (content: string) => {
+      // 立即更新编辑状态，保持编辑器响应
+      setEditingContent(content);
+
       // 清除之前的定时器
       if (contentChangeTimeoutRef.current) {
         clearTimeout(contentChangeTimeoutRef.current);
       }
 
-      // 防抖处理，避免频繁更新状态
+      // 防抖处理，避免频繁通知父组件
       contentChangeTimeoutRef.current = setTimeout(() => {
-        setDescription(content);
-        // 立即更新缓存
-        immediateUpdateCache(titleRef.current, content);
-      }, 300); // 300ms 防抖
+        if (onDescriptionChange) {
+          onDescriptionChange(issueData.id, content);
+        }
+      }, 300);
     },
-    [immediateUpdateCache]
+    [issueData.id, onDescriptionChange]
   );
 
   // 处理标题变化
@@ -59,23 +52,24 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTitle = e.target.value;
       setTitle(newTitle);
-      // 立即更新缓存
-      immediateUpdateCache(newTitle, descriptionRef.current);
+      if (onTitleChange) {
+        onTitleChange(issueData.id, newTitle);
+      }
     },
-    [immediateUpdateCache]
+    [issueData.id, onTitleChange]
   );
 
-  // 使用 ref 来获取最新的 title 和 description 值
+  // 使用 ref 来获取最新的状态值
   const titleRef = useRef(title);
-  const descriptionRef = useRef(description);
+  const editingContentRef = useRef(editingContent);
 
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
 
   useEffect(() => {
-    descriptionRef.current = description;
-  }, [description]);
+    editingContentRef.current = editingContent;
+  }, [editingContent]);
 
   // 标记是否有未保存的更改
   const hasUnsavedChangesRef = useRef(false);
@@ -86,15 +80,11 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
   // 创建服务器保存函数
   useEffect(() => {
     saveToServerRef.current = async () => {
-      if (isSaving) {
-        return;
-      }
+      if (isSaving) return;
 
-      // 获取最新的数据
       const currentTitle = titleRef.current;
-      const currentDescription = descriptionRef.current;
+      const currentDescription = editingContentRef.current;
 
-      // 检查是否有变化
       if (
         currentTitle === issueData.title &&
         currentDescription === issueData.description
@@ -116,15 +106,14 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
           assignee: issueData.assignee ?? null,
         });
 
-        // 用服务器返回的数据更新缓存（确保数据一致性）
         if (issueData.copany_id) {
-          issuesManager.smartSetIssue(issueData.copany_id, updatedIssue);
+          issuesManager.setIssue(issueData.copany_id, updatedIssue);
         }
+
         hasUnsavedChangesRef.current = false;
         console.log("✅ Server save completed successfully");
       } catch (error) {
         console.error("❌ Error saving to server:", error);
-        // 保存失败时保持未保存状态
         hasUnsavedChangesRef.current = true;
       } finally {
         setIsSaving(false);
@@ -134,91 +123,36 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
 
   // 防抖自动保存逻辑
   useEffect(() => {
-    // 检查是否有变化
     const hasChanges =
-      title !== issueData.title || description !== issueData.description;
+      title !== issueData.title || editingContent !== issueData.description;
 
     if (!hasChanges) {
-      console.log("No changes detected, skipping auto-save setup");
       hasUnsavedChangesRef.current = false;
       return;
     }
 
-    console.log("Changes detected, setting up auto-save timer");
     hasUnsavedChangesRef.current = true;
 
-    // 清除之前的定时器
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // 设置新的定时器，10秒后执行服务器保存
     saveTimeoutRef.current = setTimeout(() => {
-      console.log("Auto-save timer triggered");
       if (saveToServerRef.current) {
         saveToServerRef.current();
       }
     }, 10000);
 
-    // 清理函数
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [title, description, issueData]);
-
-  // 页面离开时的保存处理
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // 如果有未保存的更改，静默保存
-      if (hasUnsavedChangesRef.current && saveToServerRef.current) {
-        // 使用 sendBeacon 进行可靠的后台保存
-        const currentTitle = titleRef.current;
-        const currentDescription = descriptionRef.current;
-
-        const payload = JSON.stringify({
-          id: issueData.id,
-          title: currentTitle,
-          description: currentDescription,
-          state: issueData.state ?? 0,
-          priority: issueData.priority ?? null,
-          level: issueData.level ?? null,
-        });
-
-        // 尝试使用 sendBeacon 进行后台保存
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon("/api/issue/update", payload);
-        }
-
-        console.log("🚀 Background save initiated on page unload");
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      // 页面变为隐藏时，立即保存
-      if (
-        document.hidden &&
-        hasUnsavedChangesRef.current &&
-        saveToServerRef.current
-      ) {
-        saveToServerRef.current();
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [issueData]);
+  }, [title, editingContent, issueData]);
 
   // 组件卸载时的清理
   useEffect(() => {
     return () => {
-      // 组件卸载时，立即保存未保存的数据
       if (hasUnsavedChangesRef.current && saveToServerRef.current) {
         saveToServerRef.current();
       }
@@ -231,6 +165,9 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
       }
     };
   }, []);
+
+  // 初始内容只在组件挂载时设置一次
+  const [initialContent] = useState(issueData.description || "");
 
   return (
     <div className="w-full">
@@ -248,12 +185,11 @@ export default function IssueEditorView({ issueData }: IssueEditorViewProps) {
 
         {/* 描述 */}
         <div>
-          <div ref={editorDivRef} className="">
+          <div ref={editorDivRef}>
             <MilkdownEditor
               onContentChange={handleContentChange}
-              initialContent={issueData?.description || ""}
+              initialContent={initialContent}
               isFullScreen={true}
-              key={issueData?.id || "loading"}
             />
           </div>
         </div>

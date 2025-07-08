@@ -95,6 +95,3 @@ export class CopanyManager {
 
 // 导出单例实例
 export const copanyManager = new CopanyManager();
-
-// 导出推荐使用的数据管理器实例
-export { copanyDataManager };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getIssueAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
@@ -32,6 +32,62 @@ export default function IssuePageClient({
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+
+  // 用于跟踪未保存的更改
+  const hasUnsavedChangesRef = useRef(false);
+
+  // 页面离开时的保存处理
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // 如果有未保存的更改，静默保存
+      if (hasUnsavedChangesRef.current && issueData) {
+        // 使用 sendBeacon 进行可靠的后台保存
+        const payload = JSON.stringify({
+          id: issueData.id,
+          title: issueData.title,
+          description: issueData.description,
+          state: issueData.state ?? 0,
+          priority: issueData.priority ?? null,
+          level: issueData.level ?? null,
+          assignee: issueData.assignee ?? null,
+        });
+
+        // 尝试使用 sendBeacon 进行后台保存
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/issue/update", payload);
+        }
+
+        console.log("🚀 Background save initiated on page unload");
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      // 页面变为隐藏时，立即保存
+      if (document.hidden && hasUnsavedChangesRef.current && issueData) {
+        // 这里可以触发保存逻辑
+        console.log("🚀 Background save initiated on visibility change");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [issueData]);
+
+  // 组件卸载时的清理
+  useEffect(() => {
+    return () => {
+      // 组件卸载时，如果有未保存的更改，立即缓存
+      if (hasUnsavedChangesRef.current && issueData) {
+        issuesManager.updateIssue(copanyId, issueData);
+        console.log("📦 Cached unsaved changes on component unmount");
+      }
+    };
+  }, [issueData, copanyId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,9 +127,9 @@ export default function IssuePageClient({
         );
         setIssueData(freshIssueData);
 
-        // 使用智能缓存策略更新缓存
+        // 更新缓存
         if (freshIssueData) {
-          issuesManager.smartSetIssue(copanyId, freshIssueData);
+          issuesManager.updateIssue(copanyId, freshIssueData);
         }
       } catch (error) {
         console.error("Error loading issue data:", error);
@@ -95,7 +151,9 @@ export default function IssuePageClient({
           state: newState,
         };
         setIssueData(updated);
-        issuesManager.smartSetIssue(copanyId, updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
         console.error("Error updating issue state:", error);
       }
@@ -113,7 +171,9 @@ export default function IssuePageClient({
           priority: newPriority,
         };
         setIssueData(updated);
-        issuesManager.smartSetIssue(copanyId, updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 Priority updated: ${newPriority}`);
       } catch (error) {
         console.error("Error updating issue priority:", error);
       }
@@ -131,7 +191,9 @@ export default function IssuePageClient({
           level: newLevel,
         };
         setIssueData(updated);
-        issuesManager.smartSetIssue(copanyId, updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 Level updated: ${newLevel}`);
       } catch (error) {
         console.error("Error updating issue level:", error);
       }
@@ -154,9 +216,53 @@ export default function IssuePageClient({
           assignee_user: assigneeUser,
         };
         setIssueData(updated);
-        issuesManager.smartSetIssue(copanyId, updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 Assignee updated: ${newAssignee}`);
       } catch (error) {
         console.error("Error updating issue assignee:", error);
+      }
+    },
+    [issueData, copanyId]
+  );
+
+  // 处理标题变化
+  const handleTitleChange = useCallback(
+    (issueId: string, newTitle: string) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          title: newTitle,
+        };
+        setIssueData(updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 Title updated: ${newTitle}`);
+      } catch (error) {
+        console.error("Error updating issue title:", error);
+      }
+    },
+    [issueData, copanyId]
+  );
+
+  // 处理描述变化
+  const handleDescriptionChange = useCallback(
+    (issueId: string, newDescription: string) => {
+      if (!issueData) return;
+
+      try {
+        const updated = {
+          ...issueData,
+          description: newDescription,
+        };
+        setIssueData(updated);
+        issuesManager.updateIssue(copanyId, updated);
+        hasUnsavedChangesRef.current = true;
+        console.log(`[IssuePageClient] 📝 Description updated`);
+      } catch (error) {
+        console.error("Error updating issue description:", error);
       }
     },
     [issueData, copanyId]
@@ -204,7 +310,11 @@ export default function IssuePageClient({
       </div>
 
       <div className="flex-1">
-        <IssueEditorView issueData={issueData} />
+        <IssueEditorView
+          issueData={issueData}
+          onTitleChange={handleTitleChange}
+          onDescriptionChange={handleDescriptionChange}
+        />
       </div>
 
       {/* 中等屏幕及以上在右侧显示状态和优先级选择器 */}

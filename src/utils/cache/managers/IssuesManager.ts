@@ -134,14 +134,6 @@ export class IssuesManager {
   }
 
   /**
-   * 智能设置单个 Issue（比较时间戳，只保留最新数据）
-   * 替代原 UnifiedIssueCache.smartSetIssue 功能
-   */
-  smartSetIssue(copanyId: string, issue: IssueWithAssignee): void {
-    issuesDataManager.smartSetItem(copanyId, issue);
-  }
-
-  /**
    * 更新缓存中的单个 Issue（别名方法，保持兼容性）
    */
   updateIssue(copanyId: string, updatedIssue: IssueWithAssignee): void {
@@ -264,6 +256,3 @@ export class IssuesManager {
 
 // 导出单例实例
 export const issuesManager = new IssuesManager();
-
-// 导出推荐使用的数据管理器实例
-export { issuesDataManager };

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
-import { currentUserManager, readmeDataManager } from "@/utils/cache";
+import { currentUserManager, readmeManager } from "@/utils/cache";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 
@@ -52,7 +52,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
 
         // 使用新的 SWR 策略：立即返回缓存 + 后台更新
         console.log("🔄 使用 SWR 策略获取 README 内容");
-        const content = await readmeDataManager.getData(githubUrl, async () => {
+        const content = await readmeManager.getReadme(githubUrl, async () => {
           const readme = await getRepoReadmeAction(githubUrl);
           if (!readme?.content) {
             return "未找到 README 文件";

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { copanyDataManager } from "@/utils/cache";
+import { copanyManager } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
@@ -38,7 +38,7 @@ export default function CopanyDetailClient({
       setIsLoading(true);
 
       // 使用 SWR 策略：立即返回缓存 + 后台更新
-      const data = await copanyDataManager.getData(copanyId, async () => {
+      const data = await copanyManager.getCopany(copanyId, async () => {
         const result = await getCopanyByIdAction(copanyId);
         if (!result) {
           throw new Error("Copany not found");

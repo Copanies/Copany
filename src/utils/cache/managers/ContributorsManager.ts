@@ -80,6 +80,3 @@ export class ContributorsManager {
 
 // 导出单例实例
 export const contributorsManager = new ContributorsManager();
-
-// 导出推荐使用的数据管理器实例
-export { contributorsDataManager };

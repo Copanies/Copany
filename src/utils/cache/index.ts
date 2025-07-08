@@ -12,30 +12,19 @@ export {
   contributionsCache,
 } from "./instances";
 
-// 导出所有数据管理器（推荐使用）
-export { contributionsDataManager } from "./managers/ContributionsManager";
+// 导出所有业务层管理器（推荐使用）
+export {
+  ContributionsManager,
+  contributionsManager,
+} from "./managers/ContributionsManager";
 export {
   ContributorsManager,
   contributorsManager,
-  contributorsDataManager,
 } from "./managers/ContributorsManager";
 export {
   CurrentUserManager,
   currentUserManager,
-  currentUserDataManager,
 } from "./managers/CurrentUserManager";
-export {
-  CopanyManager,
-  copanyManager,
-  copanyDataManager,
-} from "./managers/CopanyManager";
-export {
-  IssuesManager,
-  issuesManager,
-  issuesDataManager,
-} from "./managers/IssuesManager";
-export {
-  ReadmeManager,
-  readmeManager,
-  readmeDataManager,
-} from "./managers/ReadmeManager";
+export { CopanyManager, copanyManager } from "./managers/CopanyManager";
+export { IssuesManager, issuesManager } from "./managers/IssuesManager";
+export { ReadmeManager, readmeManager } from "./managers/ReadmeManager";
