@@ -463,6 +463,11 @@ export default function MilkdownEditor({
           [Crepe.Feature.Placeholder]: true,
           [Crepe.Feature.ImageBlock]: false,
         },
+        featureConfigs: {
+          [Crepe.Feature.Placeholder]: {
+            text: "Add description...",
+          },
+        },
       });
 
       // 等待编辑器完全创建

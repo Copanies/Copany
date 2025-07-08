@@ -2,16 +2,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
-import MilkdownEditor from "@/components/MilkdownEditor";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
-import {
-  createIssueAction,
-  deleteIssueAction,
-  getIssuesAction,
-} from "@/actions/issue.actions";
+import { deleteIssueAction, getIssuesAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
-  IssueLevel,
   IssuePriority,
   IssueState,
   CopanyContributor,
@@ -29,6 +23,7 @@ import {
   contributorsManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
+import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
 
 // 按状态分组的函数
@@ -349,7 +344,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     {
       label: "Delete Issue",
       onClick: () => handleDeleteIssue(contextMenu.issueId),
-      className: "text-gray-700 dark:text-gray-300",
+      className: "text-gray-900 dark:text-gray-100",
     },
   ];
 
@@ -403,6 +398,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       }?${params.toString()}`
                     );
                   }}
+                  onContextMenu={(e) => handleContextMenu(e, issue.id)}
                 >
                   <IssueStateSelector
                     issueId={issue.id}
@@ -416,20 +412,15 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                     showText={false}
                     onPriorityChange={handleIssuePriorityUpdated}
                   />
-                  <div
-                    className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full"
-                    onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                  >
-                    {issue.title}
+                  <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
+                    {issue.title || "No title"}
                   </div>
-                  {issue.level != IssueLevel.level_None &&
-                    issue.level != null && (
-                      <IssueLevelSelector
-                        issueId={issue.id}
-                        initialLevel={issue.level}
-                        onLevelChange={handleIssueLevelUpdated}
-                      />
-                    )}
+                  <IssueLevelSelector
+                    issueId={issue.id}
+                    initialLevel={issue.level}
+                    showText={false}
+                    onLevelChange={handleIssueLevelUpdated}
+                  />
                   <IssueAssigneeSelector
                     issueId={issue.id}
                     initialAssignee={issue.assignee}
@@ -457,107 +448,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
       {/* 创建 Issue 弹窗 */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <IssueForm
+        <IssueCreateForm
           copanyId={copanyId}
           onIssueCreated={handleIssueCreated}
           onClose={() => setIsModalOpen(false)}
+          currentUser={currentUser}
+          contributors={contributors}
         />
       </Modal>
-    </div>
-  );
-}
-
-// Issue 表单组件
-function IssueForm({
-  copanyId,
-  onIssueCreated,
-  onClose,
-}: {
-  copanyId: string;
-  onIssueCreated: (newIssue: IssueWithAssignee) => void;
-  onClose: () => void;
-}) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const editorDivRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  // 使用 useCallback 稳定函数引用
-  const handleContentChange = useCallback((content: string) => {
-    console.log("content", content);
-    setDescription(content);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const newIssue = await createIssueAction({
-        copany_id: copanyId,
-        title: title,
-        description: description,
-        state: IssueState.Backlog,
-        priority: IssuePriority.None,
-        level: IssueLevel.level_None,
-      });
-
-      // 重置表单
-      setTitle("");
-      setDescription("");
-      if (formRef.current) {
-        formRef.current.reset();
-      }
-
-      // 通知父组件刷新数据并关闭弹窗
-      onIssueCreated(newIssue);
-      onClose();
-    } catch (error) {
-      console.error("Error creating issue:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div>
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
-        <div>
-          <input
-            type="text"
-            name="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 focus:ring-blue-500 text-xl font-semibold"
-            required
-            disabled={isSubmitting}
-            placeholder="Issue title"
-          />
-        </div>
-
-        <div>
-          <div ref={editorDivRef}>
-            <MilkdownEditor
-              onContentChange={handleContentChange}
-              isFullScreen={false}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            type="submit"
-            disabled={isSubmitting || title.length === 0}
-            variant="primary"
-          >
-            {isSubmitting ? "Creating..." : "Create Issue"}
-          </Button>
-        </div>
-      </form>
     </div>
   );
 }

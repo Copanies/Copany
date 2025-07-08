@@ -8,15 +8,19 @@ import Dropdown from "@/components/commons/Dropdown";
 interface IssueLevelSelectorProps {
   issueId: string;
   initialLevel: number | null;
+  showText: boolean;
   showBackground?: boolean;
   onLevelChange?: (issueId: string, newLevel: number) => void;
+  disableServerUpdate?: boolean;
 }
 
 export default function IssueLevelSelector({
   issueId,
   initialLevel,
+  showText,
   showBackground = false,
   onLevelChange,
+  disableServerUpdate = false,
 }: IssueLevelSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
 
@@ -29,10 +33,11 @@ export default function IssueLevelSelector({
         onLevelChange(issueId, newLevel);
       }
 
-      // 然后调用更新等级接口
-      await updateIssueLevelAction(issueId, newLevel);
-
-      console.log("Level updated successfully:", newLevel);
+      // 只有在不是创建模式时才调用更新等级接口
+      if (!disableServerUpdate) {
+        await updateIssueLevelAction(issueId, newLevel);
+        console.log("Level updated successfully:", newLevel);
+      }
     } catch (error) {
       console.error("Error updating level:", error);
       // 出错时回滚状态
@@ -55,12 +60,12 @@ export default function IssueLevelSelector({
 
   const levelOptions = allLevels.map((level) => ({
     value: level,
-    label: renderLevelLabel(level),
+    label: renderLevelLabel(level, true),
   }));
 
   return (
     <Dropdown
-      trigger={renderLevelLabel(currentLevel)}
+      trigger={renderLevelLabel(currentLevel, showText)}
       options={levelOptions}
       selectedValue={currentLevel}
       onSelect={handleLevelChange}
@@ -69,25 +74,25 @@ export default function IssueLevelSelector({
   );
 }
 
-export function renderLevelLabel(level: number | null) {
+export function renderLevelLabel(level: number | null, showText: boolean) {
   const getLevelDisplay = (level: number | null) => {
     switch (level) {
       case IssueLevel.level_None:
-        return { symbol: "None" };
+        return { symbol: "-", text: "Unknown level" };
       case IssueLevel.level_C:
-        return { symbol: "C" };
+        return { symbol: "C", text: "Level C" };
       case IssueLevel.level_B:
-        return { symbol: "B" };
+        return { symbol: "B", text: "Level B" };
       case IssueLevel.level_A:
-        return { symbol: "A" };
+        return { symbol: "A", text: "Level A" };
       case IssueLevel.level_S:
-        return { symbol: "S" };
+        return { symbol: "S", text: "Level S" };
       default:
-        return { symbol: "None" };
+        return { symbol: "-", text: "Unknown level" };
     }
   };
 
-  const { symbol } = getLevelDisplay(level);
+  const { symbol, text } = getLevelDisplay(level);
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -96,6 +101,11 @@ export function renderLevelLabel(level: number | null) {
           {symbol}
         </span>
       </div>
+      {showText && (
+        <span className="text-base text-gray-900 dark:text-gray-100">
+          {text}
+        </span>
+      )}
     </div>
   );
 }

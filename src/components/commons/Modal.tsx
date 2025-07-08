@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 // 弹窗组件
 export default function Modal({
@@ -41,22 +42,22 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* 遮罩层 */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/20"
+        className="fixed inset-0 bg-black/20 dark:bg-black/50"
         onClick={onClose}
       />
 
       {/* 弹窗内容 */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* 关闭按钮 */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none cursor-pointer"
+          className="absolute top-5 right-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl leading-none cursor-pointer"
         >
-          ×
+          <XMarkIcon className="w-5 h-5" />
         </button>
 
         {/* 弹窗内容 */}
-        <div className="p-6">{children}</div>
+        <div>{children}</div>
       </div>
     </div>
   );

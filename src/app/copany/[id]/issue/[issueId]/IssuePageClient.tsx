@@ -140,7 +140,7 @@ export default function IssuePageClient({
     <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto gap-2">
       {/* 小屏幕下在顶部显示状态和优先级选择器 */}
 
-      <div className="md:hidden px-5 flex flex-row flex-wrap gap-x-6 gap-y-4 pb-4 border-b border-gray-200 dark:border-gray-800 pb-2">
+      <div className="md:hidden px-3 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
         <IssueStateSelector
           issueId={issueData.id}
           initialState={issueData.state}
@@ -160,6 +160,7 @@ export default function IssuePageClient({
         <IssueLevelSelector
           issueId={issueData.id}
           initialLevel={issueData.level}
+          showText={true}
           showBackground={true}
           onLevelChange={handleLevelChange}
         />
@@ -212,6 +213,7 @@ export default function IssuePageClient({
             <IssueLevelSelector
               issueId={issueData.id}
               initialLevel={issueData.level}
+              showText={true}
               onLevelChange={handleLevelChange}
             />
           </div>

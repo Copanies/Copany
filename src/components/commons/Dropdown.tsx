@@ -176,16 +176,17 @@ export default function Dropdown({
 
   return (
     <div
-      className={`relative ${className} h-5 flex items-center`}
+      className={`relative ${className} flex items-center`}
       ref={dropdownRef}
     >
       <button
         ref={buttonRef}
+        type="button"
         onClick={toggleDropdown}
-        className={`inline-flex items-center -mx-2 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
+        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
-            : "bg-transparent dark:bg-transparent"
+            : "bg-transparent dark:bg-transparent -mx-2"
         }`}
       >
         {trigger}
@@ -203,6 +204,7 @@ export default function Dropdown({
               {options.map((option) => (
                 <button
                   key={option.value}
+                  type="button"
                   className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
@@ -244,6 +246,7 @@ export default function Dropdown({
                 {options.map((option) => (
                   <button
                     key={option.value}
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation(); // 阻止事件冒泡
                       handleSelect(option.value);

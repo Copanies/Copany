@@ -17,7 +17,7 @@ export async function getIssuesAction(copanyId: string) {
 export async function createIssueAction(
   issue: Omit<
     Issue,
-    "id" | "created_at" | "updated_at" | "assignee" | "closed_at" | "created_by"
+    "id" | "created_at" | "updated_at" | "closed_at" | "created_by"
   >
 ) {
   const user = await getCurrentUser();
