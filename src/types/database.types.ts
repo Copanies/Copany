@@ -3,6 +3,10 @@ export interface Copany {
   name: string;
   description: string;
   github_url: string;
+  figma_url: string;
+  notion_url: string;
+  telegram_url: string;
+  discord_url: string;
   organization_avatar_url: string;
   created_at: string;
   updated_at: string;
