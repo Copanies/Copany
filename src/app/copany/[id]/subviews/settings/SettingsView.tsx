@@ -45,7 +45,7 @@ export default function SettingsView({
       value: copany.github_url,
       icon: GithubIcon,
       darkIcon: GithubDarkIcon,
-      id: 0,
+      id: 1,
     },
     {
       label: "Figma",
@@ -53,7 +53,7 @@ export default function SettingsView({
       value: copany.figma_url,
       icon: FigmaIcon,
       darkIcon: FigmaIcon,
-      id: 1,
+      id: 2,
     },
     {
       label: "Notion",
@@ -61,7 +61,7 @@ export default function SettingsView({
       value: copany.notion_url,
       icon: NotionIcon,
       darkIcon: NotionDarkIcon,
-      id: 2,
+      id: 3,
     },
     {
       label: "Telegram",
@@ -69,7 +69,7 @@ export default function SettingsView({
       value: copany.telegram_url,
       icon: TelegramIcon,
       darkIcon: TelegramIcon,
-      id: 3,
+      id: 4,
     },
     {
       label: "Discord",
@@ -77,7 +77,7 @@ export default function SettingsView({
       value: copany.discord_url,
       icon: DiscordIcon,
       darkIcon: DiscordDarkIcon,
-      id: 4,
+      id: 5,
     },
   ];
 
@@ -102,7 +102,7 @@ export default function SettingsView({
     try {
       const updatedCopany = {
         ...copany,
-        [assetLinks[assetType].key]: null,
+        [assetLinks.find((link) => link.id === assetType)?.key || ""]: null,
       };
       await updateCopanyAction(updatedCopany);
       copanyManager.setCopany(copany.id, updatedCopany);
@@ -168,7 +168,7 @@ export default function SettingsView({
                   </div>
                   <div className="flex flex-row gap-1">
                     <button
-                      onClick={() => openEditModal(link.id, link.value)}
+                      onClick={() => openEditModal(link.id, link.value || "")}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
                       title="Edit"
                     >

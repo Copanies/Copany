@@ -41,10 +41,10 @@ export async function createCopanyAction(githubUrl: string) {
       github_url: githubUrl,
       organization_avatar_url: repo.organization?.avatar_url || "",
       created_by: user.id,
-      telegram_url: "",
-      discord_url: "",
-      figma_url: "",
-      notion_url: "",
+      telegram_url: null,
+      discord_url: null,
+      figma_url: null,
+      notion_url: null,
     });
 
     console.log("✅ 公司创建成功:", copany.id);

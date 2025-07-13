@@ -24,7 +24,7 @@ export default function AssetLinkModal({
   assetLinks: {
     key: string;
     label: string;
-    value: string;
+    value: string | null;
     icon: string;
     darkIcon: string;
     id: number;
@@ -62,7 +62,8 @@ export default function AssetLinkModal({
     try {
       const updatedCopany = {
         ...copany,
-        [assetLinks[assetType].key]: assetLink,
+        [assetLinks.find((link) => link.id === assetType)?.key || ""]:
+          assetLink,
       };
       await updateCopanyAction(updatedCopany);
       copanyManager.setCopany(copany.id, updatedCopany);
@@ -90,26 +91,33 @@ export default function AssetLinkModal({
         </h1>
         <div className="flex flex-col gap-3 px-8">
           <p className="text-sm font-semibold">Asset type</p>
-          {isEditMode ? (
+          {isEditMode && assetType !== null ? (
             <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full bg-gray-50 dark:bg-gray-800">
               <Image
                 src={
                   isDarkMode
-                    ? assetLinks[assetType || 0].darkIcon
-                    : assetLinks[assetType || 0].icon
+                    ? assetLinks.find((link) => link.id === assetType)
+                        ?.darkIcon || ""
+                    : assetLinks.find((link) => link.id === assetType)?.icon ||
+                      ""
                 }
-                alt={assetLinks[assetType || 0].label || ""}
+                alt={
+                  assetLinks.find((link) => link.id === assetType)?.label || ""
+                }
                 className="w-5 h-5"
               />
               <p className="text-sm font-semibold w-full text-left">
-                {assetLinks[assetType || 0].label}
+                {assetLinks.find((link) => link.id === assetType)?.label || ""}
               </p>
             </div>
           ) : (
             <Dropdown
               className="w-full"
               options={assetLinks
-                .filter((link) => copany[link.key as keyof Copany] == null)
+                .filter((link) => {
+                  const value = copany[link.key as keyof Copany];
+                  return value === null;
+                })
                 .map((link) => {
                   return {
                     value: Number(link.id),
@@ -128,7 +136,7 @@ export default function AssetLinkModal({
                   };
                 })}
               onSelect={(value) => {
-                setAssetType(assetLinks[value].id);
+                setAssetType(value);
               }}
               selectedValue={assetType ? Number(assetType) : null}
               trigger={
@@ -137,17 +145,22 @@ export default function AssetLinkModal({
                     <Image
                       src={
                         isDarkMode
-                          ? assetLinks[assetType || 0].darkIcon
-                          : assetLinks[assetType || 0].icon
+                          ? assetLinks.find((link) => link.id === assetType)
+                              ?.darkIcon || ""
+                          : assetLinks.find((link) => link.id === assetType)
+                              ?.icon || ""
                       }
-                      alt={assetLinks[assetType || 0].label || ""}
+                      alt={
+                        assetLinks.find((link) => link.id === assetType)
+                          ?.label || ""
+                      }
                       className="w-5 h-5"
                     />
                     <label
                       htmlFor="assetType"
                       className="text-sm font-semibold text-left cursor-pointer"
                     >
-                      {assetLinks[assetType || 0].label}
+                      {assetLinks.find((link) => link.id === assetType)?.label}
                     </label>
                     <ChevronDownIcon className="w-5 h-5" />
                   </div>
@@ -183,18 +196,20 @@ export default function AssetLinkModal({
             Cancel
           </Button>
           <Button
-            disabled={!assetType || !assetLink || isLoading}
+            disabled={assetType === null || !assetLink || isLoading}
             onClick={() => {
-              updateCopanyAssetLinkAction(assetType || -1, assetLink || "");
+              if (assetType !== null) {
+                updateCopanyAssetLinkAction(assetType, assetLink || "");
+              }
             }}
           >
             {isLoading
               ? isEditMode
-                ? "Updating..."
-                : "Adding..."
+                ? "Updating link..."
+                : "Adding link..."
               : isEditMode
-              ? "Update"
-              : "Add"}
+              ? "Update link"
+              : "Add link"}
           </Button>
         </div>
       </div>
