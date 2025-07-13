@@ -4,7 +4,7 @@ import { updateCopanyAction } from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
 import { copanyManager } from "@/utils/cache";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
