@@ -190,7 +190,7 @@ export default function SettingsView({
                   href={link.value}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline"
+                  className="hover:underline inline-block w-fit"
                 >
                   {link.value}
                 </a>
