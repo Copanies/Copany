@@ -89,7 +89,7 @@ export default function AssetLinkModal({
           {isEditMode ? "Edit asset link" : "Add asset link"}
         </h1>
         <div className="flex flex-col gap-3 px-8">
-          <label className="text-sm font-semibold">Asset type</label>
+          <p className="text-sm font-semibold">Asset type</p>
           {isEditMode ? (
             <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full bg-gray-50 dark:bg-gray-800">
               <Image
@@ -101,9 +101,9 @@ export default function AssetLinkModal({
                 alt={assetLinks[assetType || 0].label || ""}
                 className="w-5 h-5"
               />
-              <label className="text-sm font-semibold w-full text-left">
+              <p className="text-sm font-semibold w-full text-left">
                 {assetLinks[assetType || 0].label}
-              </label>
+              </p>
             </div>
           ) : (
             <Dropdown
@@ -133,7 +133,7 @@ export default function AssetLinkModal({
               selectedValue={assetType ? Number(assetType) : null}
               trigger={
                 assetType ? (
-                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full">
+                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2">
                     <Image
                       src={
                         isDarkMode
@@ -145,15 +145,15 @@ export default function AssetLinkModal({
                     />
                     <label
                       htmlFor="assetType"
-                      className="text-sm font-semibold w-full text-left cursor-pointer"
+                      className="text-sm font-semibold text-left cursor-pointer"
                     >
                       {assetLinks[assetType || 0].label}
                     </label>
                     <ChevronDownIcon className="w-5 h-5" />
                   </div>
                 ) : (
-                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-full">
-                    <label className="text-base text-gray-500 w-full cursor-pointer text-left">
+                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1">
+                    <label className="text-base text-gray-500 cursor-pointer text-left">
                       Select asset type
                     </label>
                     <ChevronDownIcon className="w-5 h-5" />
@@ -162,9 +162,7 @@ export default function AssetLinkModal({
               }
             />
           )}
-          <label htmlFor="assetLink" className="text-sm font-semibold">
-            Asset link
-          </label>
+          <p className="text-sm font-semibold">Asset link</p>
           <input
             type="text"
             id="assetLink"

@@ -183,7 +183,7 @@ export default function Dropdown({
         ref={buttonRef}
         type="button"
         onClick={toggleDropdown}
-        className={`inline-flex items-center w-full px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
+        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
             : "bg-transparent dark:bg-transparent -mx-2"

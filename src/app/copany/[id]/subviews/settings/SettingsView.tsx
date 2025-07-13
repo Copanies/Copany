@@ -162,12 +162,9 @@ export default function SettingsView({
                       alt={link.label || ""}
                       className="w-5 h-5"
                     />
-                    <label
-                      htmlFor={link.id.toString()}
-                      className="text-sm font-semibold text-center"
-                    >
+                    <p className="text-sm font-semibold text-center">
                       {link.label}
-                    </label>
+                    </p>
                   </div>
                   <div className="flex flex-row gap-2">
                     <button
