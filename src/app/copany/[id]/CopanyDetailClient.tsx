@@ -17,6 +17,9 @@ import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
 import DiscordIcon from "@/assets/discord_logo.svg";
 import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
+import NotionIcon from "@/assets/notion_logo.svg";
+import NotionDarkIcon from "@/assets/notion_logo_dark.png";
+import SettingsView from "./subviews/settings/SettingsView";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -100,6 +103,16 @@ export default function CopanyDetailClient({
             <h1 className="text-2xl font-bold">{copany.name}</h1>
           </div>
           <div className="flex flex-row gap-3 items-center">
+            {copany.discord_url && (
+              <Image
+                src={isDarkMode ? DiscordDarkIcon : DiscordIcon}
+                alt={copany.discord_url || ""}
+                className="w-5 h-5 cursor-pointer"
+                onClick={() => {
+                  window.open(copany.discord_url, "_blank");
+                }}
+              />
+            )}
             {copany.telegram_url && (
               <Image
                 src={TelegramIcon}
@@ -110,13 +123,13 @@ export default function CopanyDetailClient({
                 }}
               />
             )}
-            {copany.discord_url && (
+            {copany.notion_url && (
               <Image
-                src={isDarkMode ? DiscordDarkIcon : DiscordIcon}
-                alt={copany.discord_url || ""}
+                src={isDarkMode ? NotionDarkIcon : NotionIcon}
+                alt={copany.notion_url || ""}
                 className="w-5 h-5 cursor-pointer"
                 onClick={() => {
-                  window.open(copany.discord_url, "_blank");
+                  window.open(copany.notion_url, "_blank");
                 }}
               />
             )}
@@ -157,6 +170,10 @@ export default function CopanyDetailClient({
           {
             label: "Contribution",
             content: <ContributionView copanyId={copanyId} />,
+          },
+          {
+            label: "Settings",
+            content: <SettingsView copany={copany} />,
           },
         ]}
       />

@@ -62,4 +62,26 @@ export class CopanyService {
 
     return data as Copany;
   }
+
+  static async updateCopany(
+    copany: Omit<Copany, "created_at" | "updated_at">
+  ): Promise<Copany> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("copany")
+      .update({
+        ...copany,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", copany.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating copany:", error);
+      throw new Error(`Failed to update copany: ${error.message}`);
+    }
+
+    return data as Copany;
+  }
 }

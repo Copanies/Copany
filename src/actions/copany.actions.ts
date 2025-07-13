@@ -8,6 +8,7 @@ import {
   getOrgPublicRepos,
   getGithubRepoInfo,
 } from "@/services/github.service";
+import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 /**
@@ -40,6 +41,10 @@ export async function createCopanyAction(githubUrl: string) {
       github_url: githubUrl,
       organization_avatar_url: repo.organization?.avatar_url || "",
       created_by: user.id,
+      telegram_url: "",
+      discord_url: "",
+      figma_url: "",
+      notion_url: "",
     });
 
     console.log("✅ 公司创建成功:", copany.id);
@@ -98,6 +103,25 @@ export async function getCopanyByIdAction(copanyId: string) {
       throw new Error(`获取公司详情失败: ${error.message}`);
     } else {
       throw new Error("获取公司详情失败: 未知错误");
+    }
+  }
+}
+
+/**
+ * 更新公司 - Server Action
+ */
+export async function updateCopanyAction(
+  copany: Omit<Copany, "created_at" | "updated_at">
+) {
+  try {
+    const updatedCopany = await CopanyService.updateCopany(copany);
+    return updatedCopany;
+  } catch (error) {
+    console.error("❌ 更新公司失败:", error);
+    if (error instanceof Error) {
+      throw new Error(`更新公司失败: ${error.message}`);
+    } else {
+      throw new Error("更新公司失败: 未知错误");
     }
   }
 }
