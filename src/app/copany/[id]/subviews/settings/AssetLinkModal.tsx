@@ -17,6 +17,7 @@ export default function AssetLinkModal({
   assetLinks,
   copany,
   editingAssetLink,
+  onCopanyUpdate,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +34,7 @@ export default function AssetLinkModal({
     type: number;
     currentValue: string;
   } | null;
+  onCopanyUpdate: (copany: Copany) => void;
 }) {
   const [assetType, setAssetType] = useState<number | null>(null);
   const [assetLink, setAssetLink] = useState<string | null>(null);
@@ -40,8 +42,6 @@ export default function AssetLinkModal({
 
   const isEditMode = !!editingAssetLink;
   const isDarkMode = useDarkMode();
-
-  
 
   // 当弹窗打开时，设置初始值
   useEffect(() => {
@@ -60,14 +60,13 @@ export default function AssetLinkModal({
   ) {
     setIsLoading(true);
     try {
-      await updateCopanyAction({
+      const updatedCopany = {
         ...copany,
         [assetLinks[assetType].key]: assetLink,
-      });
-      copanyManager.setCopany(copany.id, {
-        ...copany,
-        [assetLinks[assetType].key]: assetLink,
-      });
+      };
+      await updateCopanyAction(updatedCopany);
+      copanyManager.setCopany(copany.id, updatedCopany);
+      onCopanyUpdate(updatedCopany);
       setAssetType(null);
       setAssetLink(null);
       onClose();

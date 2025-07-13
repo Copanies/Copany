@@ -173,7 +173,9 @@ export default function CopanyDetailClient({
           },
           {
             label: "Settings",
-            content: <SettingsView copany={copany} />,
+            content: (
+              <SettingsView copany={copany} onCopanyUpdate={setCopany} />
+            ),
           },
         ]}
       />

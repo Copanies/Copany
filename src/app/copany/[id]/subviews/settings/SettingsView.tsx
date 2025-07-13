@@ -20,9 +20,13 @@ import AssetLinkModal from "./AssetLinkModal";
 
 interface SettingsViewProps {
   copany: Copany;
+  onCopanyUpdate: (copany: Copany) => void;
 }
 
-export default function SettingsView({ copany }: SettingsViewProps) {
+export default function SettingsView({
+  copany,
+  onCopanyUpdate,
+}: SettingsViewProps) {
   const isDarkMode = useDarkMode();
   const [name, setName] = useState(copany.name);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -80,14 +84,13 @@ export default function SettingsView({ copany }: SettingsViewProps) {
   async function renameCopany() {
     setIsRenaming(true);
     try {
-      await updateCopanyAction({
+      const updatedCopany = {
         ...copany,
         name: name,
-      });
-      copanyManager.setCopany(copany.id, {
-        ...copany,
-        name: name,
-      });
+      };
+      await updateCopanyAction(updatedCopany);
+      copanyManager.setCopany(copany.id, updatedCopany);
+      onCopanyUpdate(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -97,14 +100,13 @@ export default function SettingsView({ copany }: SettingsViewProps) {
 
   async function deleteAssetLink(assetType: number) {
     try {
-      await updateCopanyAction({
+      const updatedCopany = {
         ...copany,
         [assetLinks[assetType].key]: null,
-      });
-      copanyManager.setCopany(copany.id, {
-        ...copany,
-        [assetLinks[assetType].key]: null,
-      });
+      };
+      await updateCopanyAction(updatedCopany);
+      copanyManager.setCopany(copany.id, updatedCopany);
+      onCopanyUpdate(updatedCopany);
     } catch (error) {
       console.error(error);
     }
@@ -211,6 +213,7 @@ export default function SettingsView({ copany }: SettingsViewProps) {
           }}
           assetLinks={assetLinks}
           copany={copany}
+          onCopanyUpdate={onCopanyUpdate}
         />
         <AssetLinkModal
           isOpen={isEditAssetLinkModalOpen}
@@ -221,6 +224,7 @@ export default function SettingsView({ copany }: SettingsViewProps) {
           assetLinks={assetLinks}
           copany={copany}
           editingAssetLink={editingAssetLink}
+          onCopanyUpdate={onCopanyUpdate}
         />
       </div>
     );
