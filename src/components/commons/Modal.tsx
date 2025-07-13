@@ -6,10 +6,12 @@ export default function Modal({
   isOpen,
   onClose,
   children,
+  size = "md",
 }: {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  size?: "sm" | "md" | "lg";
 }) {
   useEffect(() => {
     if (isOpen) {
@@ -47,7 +49,11 @@ export default function Modal({
       />
 
       {/* 弹窗内容 */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div
+        className={`relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
+          size === "sm" ? "max-w-md" : size === "md" ? "max-w-2xl" : "max-w-4xl"
+        }`}
+      >
         {/* 关闭按钮 */}
         <button
           onClick={onClose}

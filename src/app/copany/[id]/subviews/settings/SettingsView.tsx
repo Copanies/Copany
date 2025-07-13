@@ -166,7 +166,7 @@ export default function SettingsView({
                       {link.label}
                     </p>
                   </div>
-                  <div className="flex flex-row gap-2">
+                  <div className="flex flex-row gap-1">
                     <button
                       onClick={() => openEditModal(link.id, link.value)}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
