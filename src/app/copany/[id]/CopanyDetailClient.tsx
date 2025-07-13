@@ -91,7 +91,7 @@ export default function CopanyDetailClient({
   return (
     <div className="p-8 max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image
               src={copany.organization_avatar_url || ""}
@@ -102,58 +102,7 @@ export default function CopanyDetailClient({
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
           </div>
-          <div className="flex flex-row gap-3 items-center">
-            {copany.discord_url && (
-              <Image
-                src={isDarkMode ? DiscordDarkIcon : DiscordIcon}
-                alt={copany.discord_url || ""}
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => {
-                  window.open(copany.discord_url, "_blank");
-                }}
-              />
-            )}
-            {copany.telegram_url && (
-              <Image
-                src={TelegramIcon}
-                alt={copany.telegram_url || ""}
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => {
-                  window.open(copany.telegram_url, "_blank");
-                }}
-              />
-            )}
-            {copany.notion_url && (
-              <Image
-                src={isDarkMode ? NotionDarkIcon : NotionIcon}
-                alt={copany.notion_url || ""}
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => {
-                  window.open(copany.notion_url, "_blank");
-                }}
-              />
-            )}
-            {copany.figma_url && (
-              <Image
-                src={FigmaIcon}
-                alt={copany.figma_url || ""}
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => {
-                  window.open(copany.figma_url, "_blank");
-                }}
-              />
-            )}
-            {copany.github_url && (
-              <Image
-                src={isDarkMode ? GithubDarkIcon : GithubIcon}
-                alt={copany.github_url || ""}
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => {
-                  window.open(copany.github_url, "_blank");
-                }}
-              />
-            )}
-          </div>
+          {assetLinksSection(copany)}
         </div>
         <p className="">{copany.description}</p>
       </div>
@@ -181,4 +130,61 @@ export default function CopanyDetailClient({
       />
     </div>
   );
+
+  function assetLinksSection(copany: Copany) {
+    return (
+      <div className="flex flex-row gap-3 items-center">
+        {copany.discord_url && (
+          <Image
+            src={isDarkMode ? DiscordDarkIcon : DiscordIcon}
+            alt={copany.discord_url || ""}
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => {
+              window.open(copany.discord_url, "_blank");
+            }}
+          />
+        )}
+        {copany.telegram_url && (
+          <Image
+            src={TelegramIcon}
+            alt={copany.telegram_url || ""}
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => {
+              window.open(copany.telegram_url, "_blank");
+            }}
+          />
+        )}
+        {copany.notion_url && (
+          <Image
+            src={isDarkMode ? NotionDarkIcon : NotionIcon}
+            alt={copany.notion_url || ""}
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => {
+              window.open(copany.notion_url, "_blank");
+            }}
+          />
+        )}
+        {copany.figma_url && (
+          <Image
+            src={FigmaIcon}
+            alt={copany.figma_url || ""}
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => {
+              window.open(copany.figma_url, "_blank");
+            }}
+          />
+        )}
+        {copany.github_url && (
+          <Image
+            src={isDarkMode ? GithubDarkIcon : GithubIcon}
+            alt={copany.github_url || ""}
+            className="w-5 h-5 cursor-pointer"
+            onClick={() => {
+              window.open(copany.github_url, "_blank");
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 }

@@ -128,16 +128,16 @@ export default function SettingsView({
 
   function renameSection() {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 max-w-full">
         <label htmlFor="name" className="text-sm font-semibold">
           Copany name
         </label>
-        <div className="flex flex-row gap-3">
+        <div className="flex flex-row gap-3 max-w-full">
           <input
             type="text"
             id="name"
             value={name}
-            className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1"
+            className="border border-gray-300 dark:border-gray-700 max-w-full rounded-md px-2 py-1"
             onChange={(e) => setName(e.target.value)}
           />
           <Button onClick={renameCopany} disabled={isRenaming}>
@@ -187,7 +187,7 @@ export default function SettingsView({
                   href={link.value}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline inline-block w-fit"
+                  className="hover:underline inline-block break-all max-w-full"
                 >
                   {link.value}
                 </a>
