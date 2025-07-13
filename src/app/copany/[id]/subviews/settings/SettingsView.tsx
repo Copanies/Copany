@@ -9,7 +9,7 @@ import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
 import DiscordIcon from "@/assets/discord_logo.svg";
-import NotionIcon from "@/assets/notion_logo.svg";
+import NotionIcon from "@/assets/notion_logo.png";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
 import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
 import NotionDarkIcon from "@/assets/notion_logo_dark.png";

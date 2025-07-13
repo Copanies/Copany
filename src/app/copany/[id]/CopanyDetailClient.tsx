@@ -17,7 +17,7 @@ import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
 import DiscordIcon from "@/assets/discord_logo.svg";
 import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
-import NotionIcon from "@/assets/notion_logo.svg";
+import NotionIcon from "@/assets/notion_logo.png";
 import NotionDarkIcon from "@/assets/notion_logo_dark.png";
 import SettingsView from "./subviews/settings/SettingsView";
 import { User } from "@supabase/supabase-js";
