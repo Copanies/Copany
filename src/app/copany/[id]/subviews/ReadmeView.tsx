@@ -7,7 +7,7 @@ import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 
 interface ReadmeViewProps {
-  githubUrl?: string;
+  githubUrl?: string | null;
 }
 
 const decodeGitHubContent = (base64String: string): string => {

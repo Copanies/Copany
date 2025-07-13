@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef } from "react";
 import Image from "next/image";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
@@ -11,6 +11,7 @@ import {
   AssigneeUser,
   LEVEL_SCORES,
 } from "@/types/database.types";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface UserContributionData {
   user: AssigneeUser;
@@ -74,7 +75,9 @@ export default function ContributionPieChart({
   users,
 }: ContributionPieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 使用自定义 hook 检测 dark mode
+  const isDarkMode = useDarkMode();
 
   // 使用 visx 的 useTooltip hook
   const {
@@ -85,34 +88,6 @@ export default function ContributionPieChart({
     hideTooltip,
     showTooltip,
   } = useTooltip<TooltipData>();
-
-  useEffect(() => {
-    // Check for dark mode
-    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const checkDarkMode = () => {
-      const htmlElement = document.documentElement;
-      const isDark =
-        htmlElement.classList.contains("dark") ||
-        (darkModeQuery.matches && !htmlElement.classList.contains("light"));
-      setIsDarkMode(isDark);
-    };
-
-    checkDarkMode();
-
-    // Listen for changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    darkModeQuery.addEventListener("change", checkDarkMode);
-
-    return () => {
-      observer.disconnect();
-      darkModeQuery.removeEventListener("change", checkDarkMode);
-    };
-  }, []);
 
   // Calculate each user's contribution score and level breakdown
   const userContributionData: UserContributionData[] = useMemo(() => {

@@ -395,7 +395,11 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       )}
 
       {/* 创建 Issue 弹窗 */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        size="lg"
+      >
         <IssueCreateForm
           copanyId={copanyId}
           onIssueCreated={handleIssueCreated}

@@ -2,7 +2,11 @@ export interface Copany {
   id: string;
   name: string;
   description: string;
-  github_url: string;
+  github_url: string | null;
+  figma_url: string | null;
+  notion_url: string | null;
+  telegram_url: string | null;
+  discord_url: string | null;
   organization_avatar_url: string;
   created_at: string;
   updated_at: string;

@@ -1,9 +1,8 @@
 "use client";
-import { useMemo, useRef, useEffect, useState } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Group } from "@visx/group";
-import { Bar } from "@visx/shape";
-import { LinePath } from "@visx/shape";
+import { Bar, LinePath } from "@visx/shape";
 import { scaleLinear, scaleBand } from "@visx/scale";
 import { AxisBottom, AxisLeft, AxisRight } from "@visx/axis";
 import { useTooltip } from "@visx/tooltip";
@@ -11,8 +10,9 @@ import {
   Contribution,
   IssueLevel,
   AssigneeUser,
-  LEVEL_SCORES,
+  LEVEL_SCORES as levelScores,
 } from "@/types/database.types";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 // Define display level types (excluding level_None)
 type DisplayLevel =
@@ -99,14 +99,6 @@ const levelLabels: Record<DisplayLevel, string> = {
   [IssueLevel.level_B]: "B",
   [IssueLevel.level_A]: "A",
   [IssueLevel.level_S]: "S",
-};
-
-// Level scores (for legend display only)
-const levelScores: Record<DisplayLevel, number> = {
-  [IssueLevel.level_C]: LEVEL_SCORES[IssueLevel.level_C],
-  [IssueLevel.level_B]: LEVEL_SCORES[IssueLevel.level_B],
-  [IssueLevel.level_A]: LEVEL_SCORES[IssueLevel.level_A],
-  [IssueLevel.level_S]: LEVEL_SCORES[IssueLevel.level_S],
 };
 
 // Display level list
@@ -254,7 +246,9 @@ function UserChart({
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 使用自定义 hook 检测 dark mode
+  const isDarkMode = useDarkMode();
 
   // 使用 visx 的 useTooltip hook
   const {
@@ -267,27 +261,6 @@ function UserChart({
   } = useTooltip<TooltipData>();
 
   useEffect(() => {
-    // Check for dark mode
-    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const checkDarkMode = () => {
-      const htmlElement = document.documentElement;
-      const isDark =
-        htmlElement.classList.contains("dark") ||
-        (darkModeQuery.matches && !htmlElement.classList.contains("light"));
-      setIsDarkMode(isDark);
-    };
-
-    checkDarkMode();
-
-    // Listen for changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    darkModeQuery.addEventListener("change", checkDarkMode);
-
     // 使用 ResizeObserver 来监听容器大小变化
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -326,8 +299,6 @@ function UserChart({
     window.addEventListener("resize", updateWidth);
 
     return () => {
-      observer.disconnect();
-      darkModeQuery.removeEventListener("change", checkDarkMode);
       resizeObserver.disconnect();
       window.removeEventListener("resize", updateWidth);
     };

@@ -37,14 +37,18 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
           <div className="text-sm">ID: {copany.id}</div>
           <div className="text-sm">
             github_url:
-            <a
-              href={copany.github_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline ml-1"
-            >
-              {copany.github_url}
-            </a>
+            {copany.github_url ? (
+              <a
+                href={copany.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline ml-1"
+              >
+                {copany.github_url}
+              </a>
+            ) : (
+              <span className="ml-1 text-gray-500">Not set</span>
+            )}
           </div>
           <div className="text-sm">created_at: {copany.created_at}</div>
           <div className="text-sm">updated_at: {copany.updated_at}</div>
