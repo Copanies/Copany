@@ -1,7 +1,5 @@
 import CopanyListView from "@/components/CopanyListView";
 import { CopanyService } from "@/services/copany.service";
-import UserLoginView from "@/components/UserLoginView";
-import CreateCopanyButton from "@/components/CreateCopanyButton";
 import MainNavigation from "@/components/MainNavigation";
 
 /**

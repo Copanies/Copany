@@ -304,9 +304,12 @@ export default function CreateCopanyButton() {
 
   return (
     <>
-      <Button onClick={() => setIsModalOpen(true)} variant="primary" size="sm">
+      <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
         <div className="flex flex-row items-center gap-1">
-          <PlusIcon className="w-4 h-4" />
+          <PlusIcon
+            strokeWidth={2}
+            className="w-4 h-4 text-gray-900 dark:text-gray-100"
+          />
           New copany
         </div>
       </Button>
@@ -467,7 +470,6 @@ export default function CreateCopanyButton() {
             <div className="relative w-24 h-24">
               {(isUploading || isImageLoading) && (
                 <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10">
-                  <ArrowPathIcon className="w-6 h-6 animate-spin text-gray-600 dark:text-gray-300" />
                 </div>
               )}
               <Image
@@ -500,11 +502,11 @@ export default function CreateCopanyButton() {
           <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
+            disabled={(isUploading || isImageLoading)}
             variant="secondary"
             size="sm"
           >
-            {isUploading ? "Uploading..." : "Upload new picture"}
+            {(isUploading || isImageLoading) ? "Uploading..." : "Upload new picture"}
           </Button>
 
           <p className="text-xs text-gray-500 dark:text-gray-400">
