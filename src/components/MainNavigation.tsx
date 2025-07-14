@@ -2,8 +2,8 @@
 import Image from "next/image";
 import logo from "@/app/favicon.ico";
 import { useRouter } from "next/navigation";
-import Button from "./commons/Button";
 import UserLoginView from "./UserLoginView";
+import CreateCopanyButton from "./CreateCopanyButton";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function MainNavigation() {
         onClick={() => router.push("/")}
       />
       <div className="flex flex-row items-center gap-2">
+        <CreateCopanyButton />
         <UserLoginView />
       </div>
     </div>

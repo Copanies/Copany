@@ -13,7 +13,7 @@ export class StorageService {
   /**
    * 上传 copany logo 到 Supabase Storage
    */
-  async uploadLogo(file: File, copanyId: string): Promise<UploadResult> {
+  async uploadLogo(file: File, copanyName: string): Promise<UploadResult> {
     try {
       // 验证文件类型
       if (!this.isValidImageFile(file)) {
@@ -25,7 +25,7 @@ export class StorageService {
 
       // 生成唯一的文件名
       const fileExtension = file.name.split(".").pop();
-      const fileName = `${copanyId}-${Date.now()}.${fileExtension}`;
+      const fileName = `${copanyName}-${Date.now()}.${fileExtension}`;
       const filePath = `logos/${fileName}`;
 
       // 上传文件到 Supabase Storage
@@ -67,18 +67,18 @@ export class StorageService {
    */
   async deleteLogo(filePath: string): Promise<boolean> {
     try {
-      const { error } = await this.supabase.storage
+      const { data, error } = await this.supabase.storage
         .from(this.bucketName)
         .remove([filePath]);
 
       if (error) {
-        console.error("删除失败:", error);
+        console.error(`❌ StorageService.deleteLogo: 删除失败`, error);
         return false;
       }
 
-      return true;
+      return data && data.length > 0;
     } catch (error) {
-      console.error("删除过程中发生错误:", error);
+      console.error(`💥 StorageService.deleteLogo: 删除过程中发生错误`, error);
       return false;
     }
   }
@@ -99,10 +99,10 @@ export class StorageService {
   }
 
   /**
-   * 获取文件大小限制（5MB）
+   * 获取文件大小限制（1MB）
    */
   getMaxFileSize(): number {
-    return 5 * 1024 * 1024; // 5MB
+    return 1 * 1024 * 1024; // 1MB
   }
 }
 

@@ -1,7 +1,7 @@
 import CopanyListView from "@/components/CopanyListView";
 import { CopanyService } from "@/services/copany.service";
 import UserLoginView from "@/components/UserLoginView";
-import CreateCopanyView from "@/components/CreateCopanyView";
+import CreateCopanyButton from "@/components/CreateCopanyButton";
 import MainNavigation from "@/components/MainNavigation";
 
 /**
@@ -19,7 +19,6 @@ export default async function Home() {
           <h1 className="text-2xl font-bold mb-4">Welcome to Copany</h1>
         </div>
         <div className="flex flex-col gap-4 pt-2">
-          <CreateCopanyView />
           <CopanyListView copanies={copanies} />
         </div>
       </div>

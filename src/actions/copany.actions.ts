@@ -4,9 +4,8 @@ import { getCurrentUser } from "@/actions/auth.actions";
 import { CopanyService } from "@/services/copany.service";
 import { getGithubAccessToken } from "@/services/github.service";
 import {
-  getUserOrg,
-  getOrgPublicRepos,
   getGithubRepoInfo,
+  getUserPublicRepos,
 } from "@/services/github.service";
 import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
@@ -14,8 +13,15 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 /**
  * 创建新公司 - Server Action
  */
-export async function createCopanyAction(githubUrl: string) {
+export async function createCopanyAction(
+  githubUrl: string,
+  logoUrl?: string,
+  customName?: string,
+  customDescription?: string
+) {
   console.log("🏢 开始创建公司:", githubUrl);
+  console.log("🖼️ 接收到的 logoUrl:", logoUrl);
+  console.log("📝 接收到的自定义信息:", { customName, customDescription });
 
   try {
     // 获取当前用户
@@ -34,12 +40,22 @@ export async function createCopanyAction(githubUrl: string) {
 
     const repo = await getGithubRepoInfo(accessToken, githubUrl);
 
+    const finalLogoUrl = logoUrl || repo.organization?.avatar_url || "";
+    const finalName = customName || repo.name;
+    const finalDescription = customDescription || repo.description || "";
+
+    console.log("🎯 最终使用的参数:", {
+      name: finalName,
+      description: finalDescription,
+      logo_url: finalLogoUrl,
+    });
+
     // 创建公司
     const copany = await CopanyService.createCopany({
-      name: repo.name,
-      description: repo.description || "",
+      name: finalName,
+      description: finalDescription,
       github_url: githubUrl,
-      logo_url: repo.organization?.avatar_url || "",
+      logo_url: finalLogoUrl,
       created_by: user.id,
       telegram_url: null,
       discord_url: null,
@@ -47,15 +63,14 @@ export async function createCopanyAction(githubUrl: string) {
       notion_url: null,
     });
 
-    console.log("✅ 公司创建成功:", copany.id);
+    console.log("✅ 公司创建成功:", copany.id, "Logo URL:", copany.logo_url);
     return { success: true, copany };
   } catch (error) {
     console.error("❌ 创建公司失败:", error);
-    if (error instanceof Error) {
-      throw new Error(`创建公司失败: ${error.message}`);
-    } else {
-      throw new Error("创建公司失败: 未知错误");
-    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -64,25 +79,20 @@ export async function createCopanyAction(githubUrl: string) {
  */
 export async function getOrgAndReposAction(): Promise<{
   success: boolean;
-  data?: {
-    org: RestEndpointMethodTypes["orgs"]["listForAuthenticatedUser"]["response"]["data"][0];
-    repos: RestEndpointMethodTypes["repos"]["listForOrg"]["response"]["data"];
-  }[];
+  data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
   error?: string;
 }> {
-  console.log("📋 开始获取GitHub组织和仓库");
+  console.log("📋 开始获取GitHub仓库");
 
   try {
-    const orgs = await getUserOrg();
-    const orgWithRepos = await Promise.all(
-      orgs.map(async (org) => {
-        const repos = await getOrgPublicRepos(org.login);
-        return { org, repos };
-      })
-    );
+    // 只获取用户有权限的所有公共仓库（包括个人和组织仓库）
+    const repos = await getUserPublicRepos();
 
     console.log("✅ 成功获取GitHub数据");
-    return { success: true, data: orgWithRepos };
+    return {
+      success: true,
+      data: repos,
+    };
   } catch (error) {
     console.error("❌ 获取GitHub数据失败:", error);
     const errorMessage = error instanceof Error ? error.message : "未知错误";
