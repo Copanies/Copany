@@ -14,14 +14,9 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
  * 创建新公司 - Server Action
  */
 export async function createCopanyAction(
-  githubUrl: string,
-  logoUrl?: string,
-  customName?: string,
-  customDescription?: string
+  copanyData: Omit<Copany, "id" | "created_at" | "updated_at" | "created_by">
 ) {
-  console.log("🏢 开始创建公司:", githubUrl);
-  console.log("🖼️ 接收到的 logoUrl:", logoUrl);
-  console.log("📝 接收到的自定义信息:", { customName, customDescription });
+  console.log("🏢 开始创建 copany:", copanyData);
 
   try {
     // 获取当前用户
@@ -38,33 +33,26 @@ export async function createCopanyAction(
       throw new Error("获取GitHub访问令牌失败");
     }
 
-    const repo = await getGithubRepoInfo(accessToken, githubUrl);
-
-    const finalLogoUrl = logoUrl || repo.organization?.avatar_url || "";
-    const finalName = customName || repo.name;
-    const finalDescription = customDescription || repo.description || "";
-
-    console.log("🎯 最终使用的参数:", {
-      name: finalName,
-      description: finalDescription,
-      logo_url: finalLogoUrl,
-    });
-
     // 创建公司
-    const copany = await CopanyService.createCopany({
-      name: finalName,
-      description: finalDescription,
-      github_url: githubUrl,
-      logo_url: finalLogoUrl,
+    const newCopany = await CopanyService.createCopany({
+      name: copanyData.name,
+      description: copanyData.description,
+      github_url: copanyData.github_url,
+      logo_url: copanyData.logo_url,
       created_by: user.id,
-      telegram_url: null,
-      discord_url: null,
-      figma_url: null,
-      notion_url: null,
+      telegram_url: copanyData.telegram_url,
+      discord_url: copanyData.discord_url,
+      figma_url: copanyData.figma_url,
+      notion_url: copanyData.notion_url,
     });
 
-    console.log("✅ 公司创建成功:", copany.id, "Logo URL:", copany.logo_url);
-    return { success: true, copany };
+    console.log(
+      "✅ 公司创建成功:",
+      newCopany.id,
+      "Logo URL:",
+      newCopany.logo_url
+    );
+    return { success: true, copany: newCopany };
   } catch (error) {
     console.error("❌ 创建公司失败:", error);
     return {

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import {
   createCopanyAction,
@@ -13,17 +12,18 @@ import LoadingView from "./commons/LoadingView";
 import Modal from "./commons/Modal";
 import { storageService } from "@/services/storage.service";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 type RepoData =
   RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
 
 export default function CreateCopanyButton() {
-  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [copanyName, setCopanyName] = useState("");
   const [copanyDescription, setCopanyDescription] = useState("");
@@ -194,6 +194,7 @@ export default function CreateCopanyButton() {
       const result = await storageService.uploadLogo(file, repo.name);
 
       if (result.success && result.url) {
+        setIsImageLoading(true);
         setUploadedLogoUrl(result.url);
       } else {
         setUploadError(result.error || "Upload failed");
@@ -235,14 +236,16 @@ export default function CreateCopanyButton() {
         logoUrl = getDefaultLogoUrl();
       }
 
-      // 注意：这里需要修改 createCopanyAction 来接受 name 和 description 参数
-      // 目前先使用原有的接口，后续需要更新
-      const result = await createCopanyAction(
-        repo.html_url,
-        logoUrl,
-        copanyName.trim(),
-        copanyDescription.trim()
-      );
+      const result = await createCopanyAction({
+        name: copanyName,
+        description: copanyDescription,
+        logo_url: logoUrl,
+        github_url: repo.html_url,
+        telegram_url: "",
+        discord_url: "",
+        figma_url: "",
+        notion_url: "",
+      });
       if (result.success) {
         setIsModalOpen(false);
         // 使用 Next.js 路由导航，避免页面刷新
@@ -275,6 +278,7 @@ export default function CreateCopanyButton() {
     setSelectedRepoId(null);
     setUploadedLogoUrl(null);
     setIsUploading(false);
+    setIsImageLoading(false);
     setUploadError(null);
     setCopanyName("");
     setCopanyDescription("");
@@ -461,9 +465,9 @@ export default function CreateCopanyButton() {
         <div className="relative">
           {currentLogoUrl ? (
             <div className="relative w-24 h-24">
-              {isUploading && (
-                <div className="absolute inset-0 bg-opacity-50 rounded-lg flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-full animate-spin"></div>
+              {(isUploading || isImageLoading) && (
+                <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10">
+                  <ArrowPathIcon className="w-6 h-6 animate-spin text-gray-600 dark:text-gray-300" />
                 </div>
               )}
               <Image
@@ -471,7 +475,9 @@ export default function CreateCopanyButton() {
                 alt="Copany Logo"
                 width={96}
                 height={96}
-                className="w-24 h-24 border-1 border-gray-300 dark:border-gray-700"
+                className="w-24 h-24 rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                onLoad={() => setIsImageLoading(false)}
+                onError={() => setIsImageLoading(false)}
               />
             </div>
           ) : (
