@@ -14,6 +14,8 @@ interface DropdownProps {
   onSelect: (value: number) => void;
   showBackground?: boolean;
   className?: string;
+  header?: ReactNode; // 新增可选头部容器
+  size?: "sm" | "md" | "lg";
 }
 
 export default function Dropdown({
@@ -22,7 +24,9 @@ export default function Dropdown({
   selectedValue,
   onSelect,
   showBackground = false,
+  size = "md",
   className = "",
+  header,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -41,7 +45,8 @@ export default function Dropdown({
     if (!buttonRef.current) return;
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
-    const dropdownWidth = 192; // w-48 = 12rem = 192px
+    const dropdownWidth =
+      size === "sm" ? 128 : size === "md" ? 192 : size === "lg" ? 256 : 192;
 
     // 获取实际高度
     const actualHeight = dropdownContentRef.current?.offsetHeight;
@@ -197,15 +202,28 @@ export default function Dropdown({
           {/* 隐藏的DOM元素用于计算高度 */}
           <div
             ref={dropdownContentRef}
-            className="fixed invisible px-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+            className={`fixed invisible px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
+              size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+            }`}
             style={{ top: "-9999px", left: "-9999px" }}
           >
+            {header && (
+              <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
+                {header}
+              </div>
+            )}
             <div className="py-1">
               {options.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                    size === "sm"
+                      ? "text-xs"
+                      : size === "md"
+                      ? "text-sm"
+                      : "text-base"
+                  } ${
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
                       : ""
@@ -235,13 +253,20 @@ export default function Dropdown({
           {/* 实际显示的下拉菜单 */}
           {shouldShowDropdown && (
             <div
-              className="fixed my-1 px-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+              className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
+                size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+              }`}
               style={{
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
               }}
               onClick={(e) => e.stopPropagation()}
             >
+              {header && (
+                <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
+                  {header}
+                </div>
+              )}
               <div className="py-1">
                 {options.map((option) => (
                   <button
@@ -251,7 +276,13 @@ export default function Dropdown({
                       e.stopPropagation(); // 阻止事件冒泡
                       handleSelect(option.value);
                     }}
-                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer`}
+                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                      size === "sm"
+                        ? "text-xs"
+                        : size === "md"
+                        ? "text-sm"
+                        : "text-base"
+                    }`}
                   >
                     {option.label}
                     {option.value === selectedValue && (

@@ -19,7 +19,6 @@ export default async function Home() {
           <h1 className="text-2xl font-bold mb-4">Welcome to Copany</h1>
         </div>
         <div className="flex flex-col gap-4 pt-2">
-          <UserLoginView />
           <CreateCopanyView />
           <CopanyListView copanies={copanies} />
         </div>

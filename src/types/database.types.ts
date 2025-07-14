@@ -7,7 +7,7 @@ export interface Copany {
   notion_url: string | null;
   telegram_url: string | null;
   discord_url: string | null;
-  organization_avatar_url: string;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;

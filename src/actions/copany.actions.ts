@@ -39,7 +39,7 @@ export async function createCopanyAction(githubUrl: string) {
       name: repo.name,
       description: repo.description || "",
       github_url: githubUrl,
-      organization_avatar_url: repo.organization?.avatar_url || "",
+      logo_url: repo.organization?.avatar_url || "",
       created_by: user.id,
       telegram_url: null,
       discord_url: null,

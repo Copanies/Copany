@@ -64,7 +64,7 @@ export default function CopanyDetailClient({
         currentUserManager.getCurrentUser(),
       ]);
 
-      console.log(`[CopanyDetailClient] ✅ Loaded copany:`, copanyData?.name);
+      console.log(`[CopanyDetailClient] ✅ Loaded copany:`, copanyData);
       console.log(`[CopanyDetailClient] ✅ Loaded user:`, userData?.email);
 
       setCopany(copanyData);
@@ -131,7 +131,7 @@ export default function CopanyDetailClient({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image
-              src={copany.organization_avatar_url || ""}
+              src={copany.logo_url || ""}
               alt={copany.name || ""}
               width={40}
               height={40}
