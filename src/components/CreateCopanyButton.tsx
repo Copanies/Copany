@@ -219,12 +219,14 @@ export default function CreateCopanyButton() {
     setIsCreatingCopany(true);
     const repo = getSelectedRepo();
     if (!repo) {
+      setIsCreatingCopany(false);
       return;
     }
 
     // 验证必填字段
     if (!copanyName.trim()) {
       setError("Copany name is required");
+      setIsCreatingCopany(false);
       return;
     }
 
