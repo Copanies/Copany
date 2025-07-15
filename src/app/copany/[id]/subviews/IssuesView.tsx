@@ -17,6 +17,8 @@ import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
+import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
   issuesManager,
   currentUserManager,
@@ -303,6 +305,31 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     },
   ];
 
+  if (isLoading) {
+    return <LoadingView type="label" />;
+  }
+
+  if (issues.length === 0) {
+    return (
+      <div>
+        <EmptyPlaceholderView
+          icon={
+            <InboxStackIcon
+              className="w-16 h-16 text-gray-500 dark:text-gray-400"
+              strokeWidth={1}
+            />
+          }
+          title="Add first issue"
+          description="Issues are the smallest task units in Copany and form the foundation of contributions. By completing an Issue, members earn corresponding contribution points. Each Issue has its own priority, status, and contribution level."
+          buttonIcon={<PlusIcon className="w-4 h-4" />}
+          buttonTitle="New Issue"
+          buttonAction={() => setIsModalOpen(true)}
+        />
+        {createIssueModal()}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col gap-3">
       <div className="flex items-center justify-between md:px-4 px-0">
@@ -314,87 +341,84 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           New Issue
         </Button>
       </div>
-
-      {/* Issues 列表 */}
-      {isLoading ? (
-        <LoadingView type="label" />
-      ) : (
-        <div className="relative">
-          {groupIssuesByState(issues).map((group) => (
-            <div key={group.state} className="">
-              {/* 分组标题 */}
-              <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
-                <div className="flex flex-row items-center gap-2">
-                  {group.label}
-                  <span className="text-base text-gray-600 dark:text-gray-400">
-                    {group.issues.length}
-                  </span>
-                </div>
+      <div className="relative">
+        {groupIssuesByState(issues).map((group) => (
+          <div key={group.state} className="">
+            {/* 分组标题 */}
+            <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
+              <div className="flex flex-row items-center gap-2">
+                {group.label}
+                <span className="text-base text-gray-600 dark:text-gray-400">
+                  {group.issues.length}
+                </span>
               </div>
-
-              {/* 该状态下的 issues */}
-              {group.issues.map((issue) => (
-                <div
-                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-                  key={issue.id}
-                  onClick={() => {
-                    // 保留当前的 URL 参数
-                    const params = new URLSearchParams(searchParams.toString());
-                    router.push(
-                      `/copany/${copanyId}/issue/${
-                        issue.id
-                      }?${params.toString()}`
-                    );
-                  }}
-                  onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                >
-                  <IssueStateSelector
-                    issueId={issue.id}
-                    initialState={issue.state}
-                    showText={false}
-                    onStateChange={handleIssueStateUpdated}
-                  />
-                  <IssuePrioritySelector
-                    issueId={issue.id}
-                    initialPriority={issue.priority}
-                    showText={false}
-                    onPriorityChange={handleIssuePriorityUpdated}
-                  />
-                  <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
-                    {issue.title || "No title"}
-                  </div>
-                  <IssueLevelSelector
-                    issueId={issue.id}
-                    initialLevel={issue.level}
-                    showText={false}
-                    onLevelChange={handleIssueLevelUpdated}
-                  />
-                  <IssueAssigneeSelector
-                    issueId={issue.id}
-                    initialAssignee={issue.assignee}
-                    assigneeUser={issue.assignee_user}
-                    currentUser={currentUser}
-                    contributors={contributors}
-                    showText={false}
-                    onAssigneeChange={handleIssueAssigneeUpdated}
-                  />
-                </div>
-              ))}
             </div>
-          ))}
 
-          {/* 右键菜单 */}
-          <ContextMenu
-            show={contextMenu.show}
-            x={contextMenu.x}
-            y={contextMenu.y}
-            items={contextMenuItems}
-            onClose={handleCloseContextMenu}
-          />
-        </div>
-      )}
+            {/* 该状态下的 issues */}
+            {group.issues.map((issue) => (
+              <div
+                className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
+                key={issue.id}
+                onClick={() => {
+                  // 保留当前的 URL 参数
+                  const params = new URLSearchParams(searchParams.toString());
+                  router.push(
+                    `/copany/${copanyId}/issue/${issue.id}?${params.toString()}`
+                  );
+                }}
+                onContextMenu={(e) => handleContextMenu(e, issue.id)}
+              >
+                <IssueStateSelector
+                  issueId={issue.id}
+                  initialState={issue.state}
+                  showText={false}
+                  onStateChange={handleIssueStateUpdated}
+                />
+                <IssuePrioritySelector
+                  issueId={issue.id}
+                  initialPriority={issue.priority}
+                  showText={false}
+                  onPriorityChange={handleIssuePriorityUpdated}
+                />
+                <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
+                  {issue.title || "No title"}
+                </div>
+                <IssueLevelSelector
+                  issueId={issue.id}
+                  initialLevel={issue.level}
+                  showText={false}
+                  onLevelChange={handleIssueLevelUpdated}
+                />
+                <IssueAssigneeSelector
+                  issueId={issue.id}
+                  initialAssignee={issue.assignee}
+                  assigneeUser={issue.assignee_user}
+                  currentUser={currentUser}
+                  contributors={contributors}
+                  showText={false}
+                  onAssigneeChange={handleIssueAssigneeUpdated}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
 
+        {/* 右键菜单 */}
+        <ContextMenu
+          show={contextMenu.show}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={handleCloseContextMenu}
+        />
+      </div>
       {/* 创建 Issue 弹窗 */}
+      {createIssueModal()}
+    </div>
+  );
+
+  function createIssueModal() {
+    return (
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -408,6 +432,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           contributors={contributors}
         />
       </Modal>
-    </div>
-  );
+    );
+  }
 }
