@@ -50,7 +50,7 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 
 export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   const [readmeContent, setReadmeContent] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -67,42 +67,80 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
 
         if (!user) {
           setReadmeContent("请先登录以查看 README 内容");
-          setLoading(false);
           return;
         }
 
         if (!githubUrl) {
           setReadmeContent("未找到仓库信息");
-          setLoading(false);
           return;
         }
+        // 首先检查是否有缓存，只有在需要网络请求时才显示 loading
+        const cachedContent = readmeManager.getCachedReadme(githubUrl);
 
-        // 使用新的 SWR 策略：立即返回缓存 + 后台更新
-        console.log("🔄 使用 SWR 策略获取 README 内容");
-
-        const content = await readmeManager.getReadme(githubUrl, async () => {
-          setLoading(true);
-          const readme = await getRepoReadmeAction(githubUrl);
-          if (!readme?.content) {
+        if (cachedContent) {
+          // 有缓存，立即显示缓存内容，不显示 loading
+          if (cachedContent === "No README") {
             setNotFound(true);
-            return "No README";
+            setReadmeContent("");
+          } else {
+            setReadmeContent(cachedContent);
           }
-          return decodeGitHubContent(readme.content);
-        });
-        if (content === "No README") {
-          setNotFound(true);
-          setReadmeContent("");
-          return;
+
+          // 后台刷新缓存，不显示 loading
+          readmeManager
+            .getReadme(githubUrl, async () => {
+              const readme = await getRepoReadmeAction(githubUrl);
+              if (!readme?.content) {
+                return "No README";
+              }
+              return decodeGitHubContent(readme.content);
+            })
+            .then((freshContent) => {
+              // 只有当内容发生变化时才更新UI
+              if (freshContent !== cachedContent) {
+                if (freshContent === "No README") {
+                  setNotFound(true);
+                  setReadmeContent("");
+                } else {
+                  setNotFound(false);
+                  setReadmeContent(freshContent);
+                }
+              }
+            })
+            .catch((error) => {
+              console.warn("后台刷新 README 失败:", error);
+            });
+        } else {
+          // 无缓存，需要网络请求，显示 loading
+          setLoading(true);
+          try {
+            const content = await readmeManager.getReadme(
+              githubUrl,
+              async () => {
+                const readme = await getRepoReadmeAction(githubUrl);
+                if (!readme?.content) {
+                  return "No README";
+                }
+                return decodeGitHubContent(readme.content);
+              }
+            );
+
+            if (content === "No README") {
+              setNotFound(true);
+              setReadmeContent("");
+            } else {
+              setReadmeContent(content);
+            }
+          } finally {
+            setLoading(false);
+          }
         }
-        setReadmeContent(content);
       } catch (err) {
         console.error("获取 README 失败:", err);
 
         const errorMessage = "无法获取 README 内容。";
         setError(errorMessage);
         setReadmeContent("");
-      } finally {
-        setLoading(false);
       }
     };
 
