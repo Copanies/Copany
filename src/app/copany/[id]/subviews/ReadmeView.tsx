@@ -5,8 +5,8 @@ import MarkdownView from "@/components/MarkdownView";
 import { currentUserManager, readmeManager } from "@/utils/cache";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
-import { BookOpenIcon } from "@heroicons/react/24/outline";
-import Button from "@/components/commons/Button";
+import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 
 interface ReadmeViewProps {
   githubUrl?: string | null;
@@ -167,31 +167,21 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     const newReadmeUrl = githubUrl ? generateNewReadmeUrl(githubUrl) : null;
 
     return (
-      <div className="py-8 text-center">
-        <div className="flex flex-col items-center gap-5">
-          <BookOpenIcon className="w-10 h-10 text-gray-500 dark:text-gray-400" />
-          <div className="flex flex-col items-center gap-2">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Add a README
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Help people interested in this repository understand your project
-              by adding a README.
-            </p>
-          </div>
-          {newReadmeUrl && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                window.open(newReadmeUrl, "_blank");
-              }}
-            >
-              <p>Add a README</p>
-            </Button>
-          )}
-        </div>
-      </div>
+      <EmptyPlaceholderView
+        icon={
+          <BookOpenIcon
+            className="w-16 h-16 text-gray-500 dark:text-gray-400"
+            strokeWidth={1}
+          />
+        }
+        title="Add a README"
+        description="Help people understand your Copany by adding a README — share its purpose, how it works, and how others can contribute."
+        buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
+        buttonTitle="Add a README"
+        buttonAction={
+          newReadmeUrl ? () => window.open(newReadmeUrl, "_blank") : undefined
+        }
+      />
     );
   }
 

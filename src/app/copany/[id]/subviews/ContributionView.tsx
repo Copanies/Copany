@@ -12,12 +12,16 @@ import { contributionsManager, contributorsManager } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
+import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import { ChartPieIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 
 interface ContributionViewProps {
   copanyId: string;
 }
 
 export default function ContributionView({ copanyId }: ContributionViewProps) {
+  const router = useRouter();
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -250,6 +254,27 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
 
   if (isLoading) {
     return <LoadingView type="label" />;
+  }
+
+  // 检查是否有贡献数据
+  if (contributions.length === 0) {
+    return (
+      <EmptyPlaceholderView
+        icon={
+          <ChartPieIcon
+            className="w-16 h-16 text-gray-500 dark:text-gray-400"
+            strokeWidth={1}
+          />
+        }
+        title="No contribution yet"
+        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member’s share of contributions."
+        buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
+        buttonTitle="View issues"
+        buttonAction={() => {
+          router.push(`/copany/${copanyId}?tab=Cooperate`);
+        }}
+      />
+    );
   }
 
   return (
