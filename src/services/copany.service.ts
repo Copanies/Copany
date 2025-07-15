@@ -88,4 +88,13 @@ export class CopanyService {
 
     return data as Copany;
   }
+
+  static async deleteCopany(id: string) {
+    const supabase = await createSupabaseClient();
+    const { error } = await supabase.from("copany").delete().eq("id", id);
+    if (error) {
+      console.error("Error deleting copany:", error);
+      throw new Error(`Failed to delete copany: ${error.message}`);
+    }
+  }
 }

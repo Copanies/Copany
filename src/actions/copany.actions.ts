@@ -152,3 +152,12 @@ export async function updateCopanyAction(
     }
   }
 }
+
+export async function deleteCopanyAction(copanyId: string) {
+  try {
+    await CopanyService.deleteCopany(copanyId);
+  } catch (error) {
+    console.error("❌ 删除公司失败:", error);
+    throw error;
+  }
+}

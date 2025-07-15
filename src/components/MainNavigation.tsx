@@ -106,7 +106,7 @@ export default function MainNavigation() {
       <Image
         src={user.user_metadata.avatar_url}
         alt={user.user_metadata.name || "User Avatar"}
-        className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600"
+        className="w-8 h-8 rounded-full"
         width={32}
         height={32}
       />

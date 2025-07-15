@@ -1,4 +1,4 @@
-import CopanyListView from "@/components/CopanyListView";
+import CopanyListView from "@/app/subviews/CopanyListView";
 import { CopanyService } from "@/services/copany.service";
 import MainNavigation from "@/components/MainNavigation";
 

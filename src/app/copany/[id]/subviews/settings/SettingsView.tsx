@@ -1,7 +1,11 @@
 "use client";
 
-import { updateCopanyAction } from "@/actions/copany.actions";
+import {
+  updateCopanyAction,
+  deleteCopanyAction,
+} from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
+import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
 import { copanyManager } from "@/utils/cache";
 import { useState, useRef } from "react";
@@ -18,6 +22,7 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
+import { useRouter } from "next/navigation";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -28,6 +33,7 @@ export default function SettingsView({
   copany,
   onCopanyUpdate,
 }: SettingsViewProps) {
+  const router = useRouter();
   const isDarkMode = useDarkMode();
   const [name, setName] = useState(copany.name);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -45,6 +51,11 @@ export default function SettingsView({
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 删除 Copany 相关状态
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const assetLinks = [
     {
@@ -213,13 +224,109 @@ export default function SettingsView({
     }
   };
 
+  // 处理删除 Copany
+  async function handleDeleteCopany() {
+    setIsDeleting(true);
+    try {
+      await deleteCopanyAction(copany.id);
+      // 删除成功后跳转到首页
+      router.push("/");
+    } catch (error) {
+      console.error("删除 Copany 失败:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  // 关闭删除弹窗
+  function handleCloseDeleteModal() {
+    setIsDeleteModalOpen(false);
+    setDeleteConfirmName("");
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">General</h1>
-      <div className="flex flex-col gap-2">{renameSection()}</div>
-      <div className="flex flex-col gap-2">{logoSection()}</div>
-      <h1 className="text-2xl font-bold">Assest links</h1>
-      <div className="flex flex-col gap-2">{assetLinksSection()}</div>
+    <div className="flex flex-col gap-8 pb-8">
+      <div className="flex flex-col gap-4">
+        <h1 className="text-2xl font-bold">General</h1>
+        <div className="flex flex-col gap-2">{renameSection()}</div>
+        <div className="flex flex-col gap-2">{logoSection()}</div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-2xl font-bold">Assest links</h1>
+        <div className="flex flex-col gap-2">{assetLinksSection()}</div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-2xl font-bold">Danger Zone</h1>
+        <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
+      </div>
+
+      {/* 删除确认弹窗 */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        size="md"
+      >
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+            Delete {copany.name}
+          </h2>
+
+          {/* Copany 信息展示 */}
+          <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            {copany.logo_url ? (
+              <Image
+                src={copany.logo_url}
+                alt={copany.name}
+                width={96}
+                height={96}
+                className="w-24 h-24 rounded-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                <span className="text-gray-400 text-xs">No Logo</span>
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-gray-900 text-center dark:text-gray-100">
+                {copany.name}
+              </h3>
+              {copany.description && (
+                <p className="text-sm text-gray-500 text-center dark:text-gray-400">
+                  {copany.description}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              To confirm, type{" "}
+              <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
+              in the box below
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmName}
+              onChange={(e) => setDeleteConfirmName(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border-1 border-red-500 dark:border-red-700 dark:bg-gray-900 dark:text-gray-100"
+            />
+          </div>
+
+          <div className="flex w-full">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleDeleteCopany}
+              disabled={deleteConfirmName !== copany.name || isDeleting}
+              className="w-full"
+            >
+              <p className="text-red-500 font-medium w-full">
+                {isDeleting ? "Deleting..." : "Delete this Copany"}
+              </p>
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 
@@ -252,7 +359,7 @@ export default function SettingsView({
       <div className="flex flex-col gap-3 max-w-full">
         <label className="text-sm font-semibold">Copany logo</label>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col space-y-3">
           {/* Logo 展示区域 */}
           <div className="relative">
             {currentLogoUrl ? (
@@ -391,6 +498,27 @@ export default function SettingsView({
           editingAssetLink={editingAssetLink}
           onCopanyUpdate={onCopanyUpdate}
         />
+      </div>
+    );
+  }
+
+  function deleteCopanySection() {
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold">Delete Copany</label>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Once you delete a copany, there is no going back. Please be certain.
+          </p>
+        </div>
+
+        <Button
+          className="w-fit"
+          onClick={() => setIsDeleteModalOpen(true)}
+          size="sm"
+        >
+          <p className="text-red-500 font-medium">Delete this Copany</p>
+        </Button>
       </div>
     );
   }
