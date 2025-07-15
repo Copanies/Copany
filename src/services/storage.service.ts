@@ -29,7 +29,7 @@ export class StorageService {
       const filePath = `logos/${fileName}`;
 
       // 上传文件到 Supabase Storage
-      const { data, error } = await this.supabase.storage
+      const { error } = await this.supabase.storage
         .from(this.bucketName)
         .upload(filePath, file, {
           cacheControl: "3600",

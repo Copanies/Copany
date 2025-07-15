@@ -3,10 +3,7 @@
 import { getCurrentUser } from "@/actions/auth.actions";
 import { CopanyService } from "@/services/copany.service";
 import { getGithubAccessToken } from "@/services/github.service";
-import {
-  getGithubRepoInfo,
-  getUserPublicRepos,
-} from "@/services/github.service";
+import { Octokit } from "@octokit/rest";
 import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
@@ -59,6 +56,38 @@ export async function createCopanyAction(
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+}
+
+/**
+ * 获取当前用户的公共仓库
+ */
+async function getUserPublicRepos(): Promise<
+  RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"]
+> {
+  console.log("📋 开始获取用户个人公共仓库");
+
+  try {
+    const accessToken = await getGithubAccessToken();
+    if (!accessToken) {
+      throw new Error("GitHub访问令牌获取失败");
+    }
+
+    const octokit = new Octokit({
+      auth: accessToken,
+    });
+
+    const response = await octokit.rest.repos.listForAuthenticatedUser({
+      visibility: "public",
+      sort: "updated",
+      per_page: 100,
+    });
+
+    console.log(`✅ 成功获取 ${response.data.length} 个用户公共仓库`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ 获取用户公共仓库失败:", error);
+    throw error;
   }
 }
 

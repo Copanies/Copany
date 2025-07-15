@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 
 interface DropdownOption {
   value: number;
@@ -41,15 +41,19 @@ export default function Dropdown({
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // 计算下拉菜单位置
-  const calculateDropdownPosition = () => {
+  const calculateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const dropdownWidth =
       size === "sm" ? 128 : size === "md" ? 192 : size === "lg" ? 256 : 192;
 
-    // 获取实际高度
+    // 获取实际高度，但要考虑最大高度限制
     const actualHeight = dropdownContentRef.current?.offsetHeight;
+    const maxHeight = 512; // max-h-128 对应的像素值
+    const effectiveHeight = actualHeight
+      ? Math.min(actualHeight, maxHeight)
+      : maxHeight;
 
     // 如果没有实际高度，不显示下拉菜单
     if (!actualHeight) {
@@ -66,8 +70,8 @@ export default function Dropdown({
     let alignRight = false;
     let showAbove = false;
 
-    // 检查各种显示可能性
-    const canShowBelow = buttonRect.bottom + actualHeight <= viewportHeight;
+    // 检查各种显示可能性 - 使用有效高度而不是实际高度
+    const canShowBelow = buttonRect.bottom + effectiveHeight <= viewportHeight;
     const canShowLeftAligned = buttonRect.left + dropdownWidth <= viewportWidth;
     const canShowRightAligned = buttonRect.right - dropdownWidth >= 0;
 
@@ -89,9 +93,9 @@ export default function Dropdown({
         );
       }
     } else {
-      // 在上方显示，底边紧贴按钮顶边
+      // 在上方显示，底边紧贴按钮顶边 - 使用有效高度
       showAbove = true;
-      top = buttonRect.top - actualHeight;
+      top = buttonRect.top - effectiveHeight;
       if (canShowLeftAligned) {
         // 左对齐：菜单左边与按钮左边对齐
         left = buttonRect.left;
@@ -110,7 +114,7 @@ export default function Dropdown({
 
     setDropdownPosition({ top, left, alignRight, showAbove });
     setShouldShowDropdown(true);
-  };
+  }, [size]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -162,7 +166,7 @@ export default function Dropdown({
     } else {
       setShouldShowDropdown(false);
     }
-  }, [isOpen]);
+  }, [isOpen, calculateDropdownPosition]);
 
   const handleSelect = async (value: number) => {
     try {
@@ -212,7 +216,7 @@ export default function Dropdown({
                 {header}
               </div>
             )}
-            <div className="py-1">
+            <div className="py-1 max-h-128 overflow-y-auto">
               {options.map((option) => (
                 <button
                   key={option.value}
@@ -267,7 +271,7 @@ export default function Dropdown({
                   {header}
                 </div>
               )}
-              <div className="py-1">
+              <div className="py-1 max-h-128 overflow-y-auto">
                 {options.map((option) => (
                   <button
                     key={option.value}

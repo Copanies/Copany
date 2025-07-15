@@ -12,12 +12,15 @@ import LoadingView from "./commons/LoadingView";
 import Modal from "./commons/Modal";
 import { storageService } from "@/services/storage.service";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+
+import { copanyManager } from "@/utils/cache";
+import { useRouter } from "next/navigation";
 
 type RepoData =
   RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
 
 export default function CreateCopanyButton() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
@@ -246,10 +249,15 @@ export default function CreateCopanyButton() {
         figma_url: "",
         notion_url: "",
       });
-      if (result.success) {
+      if (result.success && result.copany) {
+        // 将新创建的 copany 添加到缓存中
+        copanyManager.setCopany(result.copany.id, result.copany);
+
+        // 关闭弹窗
         setIsModalOpen(false);
-        // 使用 Next.js 路由导航，避免页面刷新
-        // router.push("/");
+
+        // 跳转到新创建的 copany 详情页
+        router.push(`/copany/${result.copany.id}`);
       } else {
         setError(result.error || "Failed to create copany");
       }
@@ -385,11 +393,11 @@ export default function CreateCopanyButton() {
 
     return (
       <div
-        className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-64 overflow-y-auto"
+        className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-84 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "loading" && (
-          <div className="p-2">
+          <div className="py-8">
             <LoadingView type="label" />
           </div>
         )}
@@ -414,7 +422,7 @@ export default function CreateCopanyButton() {
                 />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{repo.full_name}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                     {repo.description || "No description"}
                   </span>
                 </div>
@@ -469,8 +477,7 @@ export default function CreateCopanyButton() {
           {currentLogoUrl ? (
             <div className="relative w-24 h-24">
               {(isUploading || isImageLoading) && (
-                <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10">
-                </div>
+                <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10"></div>
               )}
               <Image
                 src={currentLogoUrl}
@@ -502,11 +509,13 @@ export default function CreateCopanyButton() {
           <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={(isUploading || isImageLoading)}
+            disabled={isUploading || isImageLoading}
             variant="secondary"
             size="sm"
           >
-            {(isUploading || isImageLoading) ? "Uploading..." : "Upload new picture"}
+            {isUploading || isImageLoading
+              ? "Uploading..."
+              : "Upload new picture"}
           </Button>
 
           <p className="text-xs text-gray-500 dark:text-gray-400">
