@@ -83,7 +83,6 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         const content = await readmeManager.getReadme(githubUrl, async () => {
           setLoading(true);
           const readme = await getRepoReadmeAction(githubUrl);
-          console.log("readme", readme);
           if (!readme?.content) {
             setNotFound(true);
             return "No README";

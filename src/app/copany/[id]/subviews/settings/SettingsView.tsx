@@ -4,7 +4,7 @@ import { updateCopanyAction } from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
 import { copanyManager } from "@/utils/cache";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
@@ -17,6 +17,7 @@ import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import AssetLinkModal from "./AssetLinkModal";
+import { storageService } from "@/services/storage.service";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -37,6 +38,13 @@ export default function SettingsView({
     type: number;
     currentValue: string;
   } | null>(null);
+
+  // Logo 相关状态
+  const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const assetLinks = [
     {
@@ -117,10 +125,99 @@ export default function SettingsView({
     setIsEditAssetLinkModalOpen(true);
   }
 
+  // 从 Supabase Storage URL 中提取文件路径
+  const extractFilePathFromUrl = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split("/");
+      const bucketIndex = pathParts.findIndex(
+        (part) => part === "copany-logos"
+      );
+
+      if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
+        return pathParts.slice(bucketIndex + 1).join("/");
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to parse URL:", error);
+      return null;
+    }
+  };
+
+  // 处理 logo 文件选择和上传
+  const handleLogoFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件大小
+    const maxSize = storageService.getMaxFileSize();
+    if (file.size > maxSize) {
+      setUploadError(
+        `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`
+      );
+      return;
+    }
+
+    // 检查文件类型
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select an image file");
+      return;
+    }
+
+    // 清除错误并开始上传
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      // 如果已经有上传的 logo，先删除它
+      if (uploadedLogoUrl) {
+        try {
+          const filePath = extractFilePathFromUrl(uploadedLogoUrl);
+          if (filePath) {
+            await storageService.deleteLogo(filePath);
+          }
+        } catch (deleteError) {
+          console.warn("Failed to delete previous logo:", deleteError);
+        }
+      }
+
+      // 上传新的 logo
+      const result = await storageService.uploadLogo(file, copany.name);
+
+      if (result.success && result.url) {
+        setIsImageLoading(true);
+        setUploadedLogoUrl(result.url);
+
+        // 立即更新 copany 的 logo_url
+        const updatedCopany = {
+          ...copany,
+          logo_url: result.url,
+        };
+        await updateCopanyAction(updatedCopany);
+        copanyManager.setCopany(copany.id, updatedCopany);
+        onCopanyUpdate(updatedCopany);
+      } else {
+        setUploadError(result.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Logo upload failed:", error);
+      setUploadError("Upload failed");
+    } finally {
+      setIsUploading(false);
+      // 清空文件输入，允许重新选择相同文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">General</h1>
       <div className="flex flex-col gap-2">{renameSection()}</div>
+      <div className="flex flex-col gap-2">{logoSection()}</div>
       <h1 className="text-2xl font-bold">Assest links</h1>
       <div className="flex flex-col gap-2">{assetLinksSection()}</div>
     </div>
@@ -143,6 +240,77 @@ export default function SettingsView({
           <Button onClick={renameCopany} disabled={isRenaming}>
             {isRenaming ? "Renaming..." : "Rename"}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  function logoSection() {
+    const currentLogoUrl = uploadedLogoUrl || copany.logo_url;
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-sm font-semibold">Copany logo</label>
+
+        <div className="flex flex-col gap-3">
+          {/* Logo 展示区域 */}
+          <div className="relative">
+            {currentLogoUrl ? (
+              <div className="relative w-24 h-24">
+                {(isUploading || isImageLoading) && (
+                  <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex justify-center z-10"></div>
+                )}
+                <Image
+                  src={currentLogoUrl}
+                  alt="Copany Logo"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  onLoad={() => setIsImageLoading(false)}
+                  onError={() => setIsImageLoading(false)}
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                <span className="text-gray-400 text-sm">No Logo</span>
+              </div>
+            )}
+          </div>
+
+          {/* 上传按钮 */}
+          <div className="flex flex-col w-fit space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+              onChange={handleLogoFileChange}
+              className="hidden"
+            />
+
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || isImageLoading}
+              variant="secondary"
+              size="sm"
+              className="w-fit"
+            >
+              {isUploading || isImageLoading
+                ? "Uploading..."
+                : "Upload new picture"}
+            </Button>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              PNG, JPG, JPEG, GIF, WebP • Max 1MB
+            </p>
+
+            {/* 错误提示 */}
+            {uploadError && (
+              <div className="text-xs text-red-600 dark:text-red-400 text-center">
+                {uploadError}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

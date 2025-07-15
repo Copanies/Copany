@@ -232,7 +232,6 @@ export async function getRepoReadme(
 
   try {
     const response = await octokit.request(`GET /repos/${repo}/readme`);
-    console.log("response", response);
     return response.data;
   } catch (error: unknown) {
     // 如果是 404 错误（README 不存在），返回 null 而不是抛出错误
