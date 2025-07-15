@@ -3,19 +3,17 @@
 import { getCurrentUser } from "@/actions/auth.actions";
 import { CopanyService } from "@/services/copany.service";
 import { getGithubAccessToken } from "@/services/github.service";
-import {
-  getUserOrg,
-  getOrgPublicRepos,
-  getGithubRepoInfo,
-} from "@/services/github.service";
+import { Octokit } from "@octokit/rest";
 import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 /**
  * 创建新公司 - Server Action
  */
-export async function createCopanyAction(githubUrl: string) {
-  console.log("🏢 开始创建公司:", githubUrl);
+export async function createCopanyAction(
+  copanyData: Omit<Copany, "id" | "created_at" | "updated_at" | "created_by">
+) {
+  console.log("🏢 开始创建 copany:", copanyData);
 
   try {
     // 获取当前用户
@@ -32,30 +30,64 @@ export async function createCopanyAction(githubUrl: string) {
       throw new Error("获取GitHub访问令牌失败");
     }
 
-    const repo = await getGithubRepoInfo(accessToken, githubUrl);
-
     // 创建公司
-    const copany = await CopanyService.createCopany({
-      name: repo.name,
-      description: repo.description || "",
-      github_url: githubUrl,
-      organization_avatar_url: repo.organization?.avatar_url || "",
+    const newCopany = await CopanyService.createCopany({
+      name: copanyData.name,
+      description: copanyData.description,
+      github_url: copanyData.github_url,
+      logo_url: copanyData.logo_url,
       created_by: user.id,
-      telegram_url: null,
-      discord_url: null,
-      figma_url: null,
-      notion_url: null,
+      telegram_url: copanyData.telegram_url,
+      discord_url: copanyData.discord_url,
+      figma_url: copanyData.figma_url,
+      notion_url: copanyData.notion_url,
     });
 
-    console.log("✅ 公司创建成功:", copany.id);
-    return { success: true, copany };
+    console.log(
+      "✅ 公司创建成功:",
+      newCopany.id,
+      "Logo URL:",
+      newCopany.logo_url
+    );
+    return { success: true, copany: newCopany };
   } catch (error) {
     console.error("❌ 创建公司失败:", error);
-    if (error instanceof Error) {
-      throw new Error(`创建公司失败: ${error.message}`);
-    } else {
-      throw new Error("创建公司失败: 未知错误");
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * 获取当前用户的公共仓库
+ */
+async function getUserPublicRepos(): Promise<
+  RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"]
+> {
+  console.log("📋 开始获取用户个人公共仓库");
+
+  try {
+    const accessToken = await getGithubAccessToken();
+    if (!accessToken) {
+      throw new Error("GitHub访问令牌获取失败");
     }
+
+    const octokit = new Octokit({
+      auth: accessToken,
+    });
+
+    const response = await octokit.rest.repos.listForAuthenticatedUser({
+      visibility: "public",
+      sort: "updated",
+      per_page: 100,
+    });
+
+    console.log(`✅ 成功获取 ${response.data.length} 个用户公共仓库`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ 获取用户公共仓库失败:", error);
+    throw error;
   }
 }
 
@@ -64,25 +96,20 @@ export async function createCopanyAction(githubUrl: string) {
  */
 export async function getOrgAndReposAction(): Promise<{
   success: boolean;
-  data?: {
-    org: RestEndpointMethodTypes["orgs"]["listForAuthenticatedUser"]["response"]["data"][0];
-    repos: RestEndpointMethodTypes["repos"]["listForOrg"]["response"]["data"];
-  }[];
+  data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
   error?: string;
 }> {
-  console.log("📋 开始获取GitHub组织和仓库");
+  console.log("📋 开始获取GitHub仓库");
 
   try {
-    const orgs = await getUserOrg();
-    const orgWithRepos = await Promise.all(
-      orgs.map(async (org) => {
-        const repos = await getOrgPublicRepos(org.login);
-        return { org, repos };
-      })
-    );
+    // 只获取用户有权限的所有公共仓库（包括个人和组织仓库）
+    const repos = await getUserPublicRepos();
 
     console.log("✅ 成功获取GitHub数据");
-    return { success: true, data: orgWithRepos };
+    return {
+      success: true,
+      data: repos,
+    };
   } catch (error) {
     console.error("❌ 获取GitHub数据失败:", error);
     const errorMessage = error instanceof Error ? error.message : "未知错误";
@@ -123,5 +150,14 @@ export async function updateCopanyAction(
     } else {
       throw new Error("更新公司失败: 未知错误");
     }
+  }
+}
+
+export async function deleteCopanyAction(copanyId: string) {
+  try {
+    await CopanyService.deleteCopany(copanyId);
+  } catch (error) {
+    console.error("❌ 删除公司失败:", error);
+    throw error;
   }
 }

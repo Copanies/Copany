@@ -22,13 +22,13 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
             }}
             className="cursor-pointer flex flex-col gap-2"
           >
-            {copany.organization_avatar_url && (
+            {copany.logo_url && (
               <Image
-                src={copany.organization_avatar_url}
+                src={copany.logo_url}
                 alt={"Organization Avatar"}
                 className="w-32 h-32 border-1 border-gray-300 dark:border-gray-700"
-                width={100}
-                height={100}
+                width={128}
+                height={128}
               />
             )}
             <div className="font-medium text-lg">{copany.name}</div>

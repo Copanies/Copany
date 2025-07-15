@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 
 interface DropdownOption {
   value: number;
@@ -14,6 +14,8 @@ interface DropdownProps {
   onSelect: (value: number) => void;
   showBackground?: boolean;
   className?: string;
+  header?: ReactNode; // 新增可选头部容器
+  size?: "sm" | "md" | "lg";
 }
 
 export default function Dropdown({
@@ -22,7 +24,9 @@ export default function Dropdown({
   selectedValue,
   onSelect,
   showBackground = false,
+  size = "md",
   className = "",
+  header,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -37,14 +41,19 @@ export default function Dropdown({
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // 计算下拉菜单位置
-  const calculateDropdownPosition = () => {
+  const calculateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
-    const dropdownWidth = 192; // w-48 = 12rem = 192px
+    const dropdownWidth =
+      size === "sm" ? 128 : size === "md" ? 192 : size === "lg" ? 256 : 192;
 
-    // 获取实际高度
+    // 获取实际高度，但要考虑最大高度限制
     const actualHeight = dropdownContentRef.current?.offsetHeight;
+    const maxHeight = 512; // max-h-128 对应的像素值
+    const effectiveHeight = actualHeight
+      ? Math.min(actualHeight, maxHeight)
+      : maxHeight;
 
     // 如果没有实际高度，不显示下拉菜单
     if (!actualHeight) {
@@ -61,8 +70,8 @@ export default function Dropdown({
     let alignRight = false;
     let showAbove = false;
 
-    // 检查各种显示可能性
-    const canShowBelow = buttonRect.bottom + actualHeight <= viewportHeight;
+    // 检查各种显示可能性 - 使用有效高度而不是实际高度
+    const canShowBelow = buttonRect.bottom + effectiveHeight <= viewportHeight;
     const canShowLeftAligned = buttonRect.left + dropdownWidth <= viewportWidth;
     const canShowRightAligned = buttonRect.right - dropdownWidth >= 0;
 
@@ -84,9 +93,9 @@ export default function Dropdown({
         );
       }
     } else {
-      // 在上方显示，底边紧贴按钮顶边
+      // 在上方显示，底边紧贴按钮顶边 - 使用有效高度
       showAbove = true;
-      top = buttonRect.top - actualHeight;
+      top = buttonRect.top - effectiveHeight;
       if (canShowLeftAligned) {
         // 左对齐：菜单左边与按钮左边对齐
         left = buttonRect.left;
@@ -105,7 +114,7 @@ export default function Dropdown({
 
     setDropdownPosition({ top, left, alignRight, showAbove });
     setShouldShowDropdown(true);
-  };
+  }, [size]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -157,7 +166,7 @@ export default function Dropdown({
     } else {
       setShouldShowDropdown(false);
     }
-  }, [isOpen]);
+  }, [isOpen, calculateDropdownPosition]);
 
   const handleSelect = async (value: number) => {
     try {
@@ -197,15 +206,28 @@ export default function Dropdown({
           {/* 隐藏的DOM元素用于计算高度 */}
           <div
             ref={dropdownContentRef}
-            className="fixed invisible px-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+            className={`fixed invisible px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
+              size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+            }`}
             style={{ top: "-9999px", left: "-9999px" }}
           >
-            <div className="py-1">
+            {header && (
+              <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
+                {header}
+              </div>
+            )}
+            <div className="py-1 max-h-128 overflow-y-auto">
               {options.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                    size === "sm"
+                      ? "text-xs"
+                      : size === "md"
+                      ? "text-sm"
+                      : "text-base"
+                  } ${
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
                       : ""
@@ -235,14 +257,21 @@ export default function Dropdown({
           {/* 实际显示的下拉菜单 */}
           {shouldShowDropdown && (
             <div
-              className="fixed my-1 px-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+              className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
+                size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+              }`}
               style={{
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="py-1">
+              {header && (
+                <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
+                  {header}
+                </div>
+              )}
+              <div className="py-1 max-h-128 overflow-y-auto">
                 {options.map((option) => (
                   <button
                     key={option.value}
@@ -251,7 +280,13 @@ export default function Dropdown({
                       e.stopPropagation(); // 阻止事件冒泡
                       handleSelect(option.value);
                     }}
-                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer`}
+                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                      size === "sm"
+                        ? "text-xs"
+                        : size === "md"
+                        ? "text-sm"
+                        : "text-base"
+                    }`}
                   >
                     {option.label}
                     {option.value === selectedValue && (

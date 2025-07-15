@@ -48,6 +48,9 @@ export class CopanyService {
   static async createCopany(
     copany: Omit<Copany, "id" | "created_at" | "updated_at">
   ): Promise<Copany> {
+    console.log("📋 CopanyService.createCopany 接收到的数据:", copany);
+    console.log("🖼️ CopanyService.createCopany logo_url:", copany.logo_url);
+
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("copany")
@@ -60,6 +63,7 @@ export class CopanyService {
       throw new Error(`Failed to create copany: ${error.message}`);
     }
 
+    console.log("✅ CopanyService.createCopany 创建成功，返回数据:", data);
     return data as Copany;
   }
 
@@ -83,5 +87,14 @@ export class CopanyService {
     }
 
     return data as Copany;
+  }
+
+  static async deleteCopany(id: string) {
+    const supabase = await createSupabaseClient();
+    const { error } = await supabase.from("copany").delete().eq("id", id);
+    if (error) {
+      console.error("Error deleting copany:", error);
+      throw new Error(`Failed to delete copany: ${error.message}`);
+    }
   }
 }

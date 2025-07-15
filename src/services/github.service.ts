@@ -132,7 +132,7 @@ export async function clearGithubTokenCookie(): Promise<void> {
  *
  * API: GET https://api.github.com/repos/{owner}/{repo}
  */
-export async function getGithubRepoInfo(
+export async function _getGithubRepoInfo(
   accessToken: string,
   url: string
 ): Promise<RestEndpointMethodTypes["repos"]["get"]["response"]["data"]> {
@@ -229,28 +229,22 @@ export async function getRepoReadme(
   const octokit = new Octokit({
     auth: accessToken as string,
   });
-  const response = await octokit.request(`GET /repos/${repo}/readme`);
-  return response.data;
-}
 
-/**
- * 从 GitHub URL 中提取 owner/repo 路径
- * @param githubUrl GitHub 仓库 URL
- * @returns owner/repo 格式的字符串，如果解析失败则返回 null
- */
-export const extractRepoPathFromUrl = (githubUrl: string): string | null => {
   try {
-    const url = new URL(githubUrl);
-    const pathSegments = url.pathname.split("/").filter(Boolean);
-    if (pathSegments.length >= 2) {
-      const [owner, repo] = pathSegments;
-      // 移除可能的 .git 后缀
-      const cleanRepo = repo.replace(/\.git$/, "");
-      return `${owner}/${cleanRepo}`;
+    const response = await octokit.request(`GET /repos/${repo}/readme`);
+    return response.data;
+  } catch (error: unknown) {
+    // 如果是 404 错误（README 不存在），返回 null 而不是抛出错误
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 404
+    ) {
+      console.log(`ℹ️ Repository ${repo} does not have a README file`);
+      return null;
     }
-    return null;
-  } catch (error) {
-    console.error("解析 GitHub URL 失败:", error);
-    return null;
+    // 其他错误直接抛出
+    throw error;
   }
-};
+}
