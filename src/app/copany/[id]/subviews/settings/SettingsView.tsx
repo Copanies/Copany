@@ -182,22 +182,22 @@ export default function SettingsView({
     setIsUploading(true);
 
     try {
-      // 如果已经有上传的 logo，先删除它
-      if (uploadedLogoUrl) {
-        try {
-          const filePath = extractFilePathFromUrl(uploadedLogoUrl);
-          if (filePath) {
-            await storageService.deleteLogo(filePath);
-          }
-        } catch (deleteError) {
-          console.warn("Failed to delete previous logo:", deleteError);
-        }
-      }
-
-      // 上传新的 logo
+      // 先上传新的 logo
       const result = await storageService.uploadLogo(file, copany.name);
 
       if (result.success && result.url) {
+        // 上传成功后，删除旧的 logo
+        if (uploadedLogoUrl) {
+          try {
+            const filePath = extractFilePathFromUrl(uploadedLogoUrl);
+            if (filePath) {
+              await storageService.deleteLogo(filePath);
+            }
+          } catch (deleteError) {
+            console.warn("Failed to delete previous logo:", deleteError);
+          }
+        }
+
         setIsImageLoading(true);
         setUploadedLogoUrl(result.url);
 

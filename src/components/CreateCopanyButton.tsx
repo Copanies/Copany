@@ -181,22 +181,22 @@ export default function CreateCopanyButton() {
     setIsUploading(true);
 
     try {
-      // 如果已经有上传的 logo，先删除它
-      if (uploadedLogoUrl) {
-        try {
-          const filePath = extractFilePathFromUrl(uploadedLogoUrl);
-          if (filePath) {
-            await storageService.deleteLogo(filePath);
-          }
-        } catch (deleteError) {
-          console.warn("Failed to delete previous logo:", deleteError);
-        }
-      }
-
-      // 上传新的 logo
+      // 先上传新的 logo
       const result = await storageService.uploadLogo(file, repo.name);
 
       if (result.success && result.url) {
+        // 上传成功后，删除旧的 logo
+        if (uploadedLogoUrl) {
+          try {
+            const filePath = extractFilePathFromUrl(uploadedLogoUrl);
+            if (filePath) {
+              await storageService.deleteLogo(filePath);
+            }
+          } catch (deleteError) {
+            console.warn("Failed to delete previous logo:", deleteError);
+          }
+        }
+
         setIsImageLoading(true);
         setUploadedLogoUrl(result.url);
       } else {
@@ -246,10 +246,10 @@ export default function CreateCopanyButton() {
         description: copanyDescription,
         logo_url: logoUrl,
         github_url: repo.html_url,
-        telegram_url: "",
-        discord_url: "",
-        figma_url: "",
-        notion_url: "",
+        telegram_url: null,
+        discord_url: null,
+        figma_url: null,
+        notion_url: null,
       });
       if (result.success && result.copany) {
         // 将新创建的 copany 添加到缓存中
