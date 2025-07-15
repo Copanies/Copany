@@ -59,7 +59,6 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
 
     const fetchReadme = async () => {
       try {
-        setLoading(true);
         setError(null);
         setNotFound(false);
 
@@ -82,15 +81,20 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         console.log("🔄 使用 SWR 策略获取 README 内容");
 
         const content = await readmeManager.getReadme(githubUrl, async () => {
+          setLoading(true);
           const readme = await getRepoReadmeAction(githubUrl);
           console.log("readme", readme);
           if (!readme?.content) {
             setNotFound(true);
-            setReadmeContent("");
-            return "";
+            return "No README";
           }
           return decodeGitHubContent(readme.content);
         });
+        if (content === "No README") {
+          setNotFound(true);
+          setReadmeContent("");
+          return;
+        }
         setReadmeContent(content);
       } catch (err) {
         console.error("获取 README 失败:", err);
@@ -107,7 +111,11 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   }, [githubUrl]);
 
   if (loading) {
-    return <LoadingView type="label" />;
+    return (
+      <div className="py-8 text-center">
+        <LoadingView type="label" />
+      </div>
+    );
   }
 
   if (error) {
