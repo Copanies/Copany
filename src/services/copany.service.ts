@@ -13,7 +13,7 @@ export class CopanyService {
     const { data, error } = await supabase
       .from("copany")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Error fetching copanies:", error);
