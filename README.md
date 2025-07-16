@@ -1,7 +1,6 @@
 # Copany
 
 > At Copany, we’re building a world where people don’t need to join a company to build something great together. Just show up, contribute, and be part of the future.
-> A project powered by the Copany open contribution and revenue-sharing model.
 
 ## 🚀 项目简介
 
