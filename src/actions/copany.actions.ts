@@ -32,15 +32,8 @@ export async function createCopanyAction(
 
     // 创建公司
     const newCopany = await CopanyService.createCopany({
-      name: copanyData.name,
-      description: copanyData.description,
-      github_url: copanyData.github_url,
-      logo_url: copanyData.logo_url,
+      ...copanyData,
       created_by: user.id,
-      telegram_url: copanyData.telegram_url,
-      discord_url: copanyData.discord_url,
-      figma_url: copanyData.figma_url,
-      notion_url: copanyData.notion_url,
     });
 
     console.log(
