@@ -9,6 +9,10 @@ import DiscordIcon from "@/assets/discord_logo.svg";
 import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
 import NotionIcon from "@/assets/notion_logo.png";
 import NotionDarkIcon from "@/assets/notion_logo_dark.png";
+import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
+import GooglePlayStoreIcon from "@/assets/google_play_store_logo.png";
+import WebsiteIcon from "@/assets/website_logo.svg";
+import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import { useState, useEffect } from "react";
 
 export default function AssetLinksSection({
@@ -30,6 +34,12 @@ export default function AssetLinksSection({
   const currentDiscordIcon =
     mounted && isDarkMode ? DiscordDarkIcon : DiscordIcon;
   const currentNotionIcon = mounted && isDarkMode ? NotionDarkIcon : NotionIcon;
+  const currentWebsiteIcon =
+    mounted && isDarkMode ? WebsiteDarkIcon : WebsiteIcon;
+  const currentAppleAppStoreIcon =
+    mounted && isDarkMode ? AppleAppStoreIcon : AppleAppStoreIcon;
+  const currentGooglePlayStoreIcon =
+    mounted && isDarkMode ? GooglePlayStoreIcon : GooglePlayStoreIcon;
 
   const sizeClasses = {
     sm: "w-4 h-4",
@@ -46,6 +56,48 @@ export default function AssetLinksSection({
 
   return (
     <div className={`flex flex-row items-center ${gapClasses[size]}`}>
+      {copany.apple_app_store_url && (
+        <Image
+          src={currentAppleAppStoreIcon}
+          alt={copany.apple_app_store_url || ""}
+          className={`${sizeClasses[size]} cursor-pointer`}
+          width={iconWidth}
+          height={iconHeight}
+          onClick={() => {
+            if (copany.apple_app_store_url) {
+              window.open(copany.apple_app_store_url, "_blank");
+            }
+          }}
+        />
+      )}
+      {copany.google_play_store_url && (
+        <Image
+          src={currentGooglePlayStoreIcon}
+          alt={copany.google_play_store_url || ""}
+          className={`${sizeClasses[size]} cursor-pointer`}
+          width={iconWidth}
+          height={iconHeight}
+          onClick={() => {
+            if (copany.google_play_store_url) {
+              window.open(copany.google_play_store_url, "_blank");
+            }
+          }}
+        />
+      )}
+      {copany.website_url && (
+        <Image
+          src={currentWebsiteIcon}
+          alt={copany.website_url || ""}
+          className={`${sizeClasses[size]} cursor-pointer`}
+          width={iconWidth}
+          height={iconHeight}
+          onClick={() => {
+            if (copany.website_url) {
+              window.open(copany.website_url, "_blank");
+            }
+          }}
+        />
+      )}
       {copany.discord_url && (
         <Image
           src={currentDiscordIcon}

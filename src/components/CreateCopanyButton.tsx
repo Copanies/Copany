@@ -255,6 +255,9 @@ export default function CreateCopanyButton() {
         discord_url: null,
         figma_url: null,
         notion_url: null,
+        website_url: null,
+        apple_app_store_url: null,
+        google_play_store_url: null,
       });
       if (result.success && result.copany) {
         // 将新创建的 copany 添加到缓存中
