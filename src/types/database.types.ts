@@ -8,6 +8,9 @@ export interface Copany {
   telegram_url: string | null;
   discord_url: string | null;
   logo_url: string | null;
+  website_url: string | null;
+  apple_app_store_url: string | null;
+  google_play_store_url: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;

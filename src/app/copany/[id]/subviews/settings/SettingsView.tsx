@@ -17,6 +17,10 @@ import NotionIcon from "@/assets/notion_logo.png";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
 import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
 import NotionDarkIcon from "@/assets/notion_logo_dark.png";
+import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
+import GooglePlayStoreIcon from "@/assets/google_play_store_logo.png";
+import WebsiteIcon from "@/assets/website_logo.svg";
+import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
@@ -101,6 +105,30 @@ export default function SettingsView({
       icon: DiscordIcon,
       darkIcon: DiscordDarkIcon,
       id: 5,
+    },
+    {
+      label: "Website",
+      key: "website_url",
+      value: copany.website_url,
+      icon: WebsiteIcon,
+      darkIcon: WebsiteDarkIcon,
+      id: 6,
+    },
+    {
+      label: "Apple App Store",
+      key: "apple_app_store_url",
+      value: copany.apple_app_store_url,
+      icon: AppleAppStoreIcon,
+      darkIcon: AppleAppStoreIcon,
+      id: 7,
+    },
+    {
+      label: "Google Play Store",
+      key: "google_play_store_url",
+      value: copany.google_play_store_url,
+      icon: GooglePlayStoreIcon,
+      darkIcon: GooglePlayStoreIcon,
+      id: 8,
     },
   ];
 
