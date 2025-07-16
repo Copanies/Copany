@@ -4,23 +4,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { copanyManager, currentUserManager } from "@/utils/cache";
-import { useDarkMode } from "@/utils/useDarkMode";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
 import ContributionView from "./subviews/ContributionView";
-import GithubIcon from "@/assets/github_logo.svg";
-import GithubDarkIcon from "@/assets/github_logo_dark.svg";
-import FigmaIcon from "@/assets/figma_logo.svg";
-import TelegramIcon from "@/assets/telegram_logo.svg";
-import DiscordIcon from "@/assets/discord_logo.svg";
-import DiscordDarkIcon from "@/assets/discord_logo_dark.svg";
-import NotionIcon from "@/assets/notion_logo.png";
-import NotionDarkIcon from "@/assets/notion_logo_dark.png";
 import SettingsView from "./subviews/settings/SettingsView";
 import { User } from "@supabase/supabase-js";
+import AssetLinksSection from "@/components/AssetLinksSection";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -37,9 +29,6 @@ export default function CopanyDetailClient({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasInitialLoadRef = useRef(false);
-
-  // 使用自定义 hook 检测 dark mode
-  const isDarkMode = useDarkMode();
 
   // 使用新的 SWR 策略加载数据
   const loadCopany = useCallback(async () => {
@@ -135,82 +124,15 @@ export default function CopanyDetailClient({
               alt={copany.name || ""}
               width={40}
               height={40}
-              className="border-1 border-gray-300 dark:border-gray-700"
+              className="rounded-md"
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
           </div>
-          {assetLinksSection(copany)}
+          <AssetLinksSection copany={copany} />
         </div>
         <p className="">{copany.description}</p>
       </div>
       <TabView tabs={tabs} />
     </div>
   );
-
-  function assetLinksSection(copany: Copany) {
-    return (
-      <div className="flex flex-row gap-3 items-center">
-        {copany.discord_url && (
-          <Image
-            src={isDarkMode ? DiscordDarkIcon : DiscordIcon}
-            alt={copany.discord_url || ""}
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => {
-              if (copany.discord_url) {
-                window.open(copany.discord_url, "_blank");
-              }
-            }}
-          />
-        )}
-        {copany.telegram_url && (
-          <Image
-            src={TelegramIcon}
-            alt={copany.telegram_url || ""}
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => {
-              if (copany.telegram_url) {
-                window.open(copany.telegram_url, "_blank");
-              }
-            }}
-          />
-        )}
-        {copany.notion_url && (
-          <Image
-            src={isDarkMode ? NotionDarkIcon : NotionIcon}
-            alt={copany.notion_url || ""}
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => {
-              if (copany.notion_url) {
-                window.open(copany.notion_url, "_blank");
-              }
-            }}
-          />
-        )}
-        {copany.figma_url && (
-          <Image
-            src={FigmaIcon}
-            alt={copany.figma_url || ""}
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => {
-              if (copany.figma_url) {
-                window.open(copany.figma_url, "_blank");
-              }
-            }}
-          />
-        )}
-        {copany.github_url && (
-          <Image
-            src={isDarkMode ? GithubDarkIcon : GithubIcon}
-            alt={copany.github_url || ""}
-            className="w-5 h-5 cursor-pointer"
-            onClick={() => {
-              if (copany.github_url) {
-                window.open(copany.github_url, "_blank");
-              }
-            }}
-          />
-        )}
-      </div>
-    );
-  }
 }

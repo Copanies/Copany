@@ -177,7 +177,7 @@ export default function MainNavigation() {
   return (
     <div className="flex flex-row items-center justify-between px-5 py-2 border-b border-gray-200 dark:border-gray-800">
       <Image
-        className="cursor-pointer"
+        className="cursor-pointer rounded-md"
         src={logo}
         alt="logo"
         width={32}

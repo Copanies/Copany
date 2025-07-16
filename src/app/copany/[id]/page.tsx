@@ -9,7 +9,7 @@ export default async function CopanyDetailView({
   const { id } = await params;
 
   return (
-    <main>
+    <main className="h-min-screen">
       <MainNavigation />
       <CopanyDetailClient copanyId={id} />
     </main>

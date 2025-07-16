@@ -10,12 +10,9 @@ export default async function Home() {
   const copanies = await CopanyService.getCopanies();
 
   return (
-    <main>
+    <main className="h-min-screen">
       <MainNavigation />
       <div className="p-8 max-w-screen-lg mx-auto flex flex-col">
-        <div>
-          <h1 className="text-2xl font-bold mb-4">Welcome to Copany</h1>
-        </div>
         <div className="flex flex-col gap-4 pt-2">
           <CopanyListView copanies={copanies} />
         </div>
