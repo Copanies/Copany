@@ -1,147 +1,89 @@
-# Copany App
+# Copany
 
-一个基于 Next.js 和 Supabase 的现代 Web 应用。
+> A project powered by the Copany open contribution and revenue-sharing model.
 
-## 🚀 快速开始
+---
 
-### 1. 环境变量配置
+## 🚀 项目简介
 
-在项目根目录创建 `.env.local` 文件：
+本项目是一个开源协作项目，任何人都可以参与贡献并按贡献比例分享项目收益。
 
-```bash
-# Supabase 配置 - 只需要 anon key
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+我们相信开源不只是代码共享，更应该是**价值共享**。通过 Copany 协议（COSL），我们建立了一套透明、公正、可持续的贡献激励机制。
 
-# 可选：网站 URL
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
+---
 
-#### 如何获取 Supabase Anon Key：
+## ⚙️ 特点
 
-1. 登录到 [Supabase Dashboard](https://supabase.com/dashboard)
-2. 选择你的项目
-3. 进入 **Settings** → **API**
-4. 复制 **anon** key 到 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- ✅ **开放协作**：所有任务以 Issue 管理，人人可参与
+- 📊 **贡献积分**：每项任务根据难度赋予积分，记录个人贡献
+- 💰 **收益共享**：项目产生任何收益，将按贡献积分分配给所有贡献者
+- 📖 **许可协议清晰**：基于 [Copany Open Source License (COSL v0.1)](./LICENSE)
+- 🌍 **社区驱动**：所有流程公开透明，欢迎监督
 
-### 2. 安装依赖
+---
 
-```bash
-npm install
-```
+## 🧑‍💻 如何参与贡献
 
-### 3. 启动开发服务器
+1. 打开 [Issues](https://copany-app-229305319236.asia-east1.run.app/copany/5?tab=Cooperate) 页面，挑选一个你想完成的任务；
+2. 阅读任务说明并留言认领；
+3. Fork 项目并提交 PR；
+4. 任务审核通过后，你将获得对应的**贡献积分（Contribution Points, CP）**；
+5. 所有贡献将记录在 [Contribution](https://copany-app-229305319236.asia-east1.run.app/copany/5?tab=Contribution) 页面中。
 
-```bash
-npm run dev
-```
+---
 
-访问 [http://localhost:3000](http://localhost:3000) 查看应用。
+## 📊 贡献积分说明
 
-## 🏗️ 架构说明
+| 等级 | 描述              | 预估工时 | CP 分值 |
+| ---- | ----------------- | -------- | ------- |
+| C    | 小修复/文档更新   | 1-2h     | 5       |
+| B    | 常规功能开发      | 4-6h     | 20      |
+| A    | 核心模块或设计    | 12-18h   | 60      |
+| S    | 架构设计/主导开发 | 32-40h   | 200     |
 
-- **简化配置**：只使用 Supabase anon key，无需 service role key
-- **分层架构**：数据服务层、认证操作层、视图组件层
-- **安全考虑**：anon key 权限受限，适合客户端使用
+---
 
-## 📋 功能特性
+## 💰 收益分配机制
 
-- ✅ GitHub OAuth 登录
-- ✅ 用户信息显示
-- ✅ 公司列表查看
-- ✅ SSR 和客户端状态管理
+当本项目获得以下任意形式的经济收益时（包括但不限于）：
 
-## 🔧 技术栈
+- 赞助、众筹
+- 商业授权
+- 收费服务或产品
+- 投资或并购
 
-- **前端**：Next.js 14 (App Router)
-- **数据库**：Supabase
-- **认证**：Supabase Auth (GitHub OAuth)
-- **样式**：Tailwind CSS
-- **类型**：TypeScript
+将根据当前贡献积分总表进行收益分配：
 
-## 📁 项目结构
+个人收益 =（你的 CP）/（总 CP） × 净收益
 
-```
-src/
-├── app/                 # Next.js 页面
-├── components/          # React 组件
-├── services/            # 数据服务层
-├── actions/             # Server Actions
-└── utils/               # 工具函数
-```
+所有收益分配记录将通过 Copany 公布，或托管在 Copany 平台进行自动化分配。
 
-详细架构说明请查看 [ARCHITECTURE.md](./ARCHITECTURE.md)。
+---
 
-## Learn More
+## 📄 许可协议
 
-To learn more about Next.js, take a look at the following resources:
+本项目采用 **Copany Open Source License (COSL v0.1)**
+📖 阅读完整协议：[LICENSE](./LICENSE)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧾 法律声明
 
-## Deploy on Vercel
+- 本项目及其贡献内容均以“按现状”提供，不做任何功能性或可用性保证；
+- 提交贡献即视为同意遵守 COSL 协议及其中的收益分配条款；
+- 如违反协议，贡献者保留追责与维权权利。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🌍 加入社区
 
-## GitHub 认证与 Token 持久化
+📬 有问题或建议？欢迎提 Issue 或加入 Copany 社区讨论！  
+🌐 了解更多：[https://copany-app-229305319236.asia-east1.run.app/copany](https://copany-app-229305319236.asia-east1.run.app/copany)  
+📧 联系方式：[jinhongw982@gmail.com]
 
-### 概述
+---
 
-本应用使用 Supabase OAuth 进行 GitHub 登录，并将 GitHub access token 持久化到 Cookie 中，以支持服务端渲染 (SSR) 场景下的 API 调用。
+## 🙌 致谢
 
-### 实现机制
-
-#### 1. 登录流程
-
-- 用户通过 `signInWithGitHub()` 函数发起 GitHub OAuth 登录
-- OAuth 回调处理 (`/auth/callback`) 将 `provider_token` 保存到 HttpOnly Cookie
-- Cookie 设置：
-  - 名称：`github_access_token`
-  - HttpOnly：true（防止 XSS 攻击）
-  - Secure：生产环境为 true
-  - SameSite：lax
-  - 有效期：7 天
-
-#### 2. Token 获取策略
-
-`getGithubAccessToken()` 函数采用以下优先级策略：
-
-1. 首先尝试从 Supabase session 获取 `provider_token`
-2. 如果 session 中没有 token，则从 Cookie 中读取
-3. 当从 session 获取到 token 时，自动更新 Cookie
-
-#### 3. 登出流程
-
-- `signOut()` 函数会同时清除 Supabase session 和 Cookie
-- 确保完全清理用户认证状态
-
-#### 4. SSR 支持
-
-- 在 SSR 场景下，即使 Supabase session 不可用，也能从 Cookie 读取 token
-- 支持在 `getRepoReadme()` 等服务端函数中访问 GitHub API
-
-### 使用示例
-
-```typescript
-// 在 SSR 组件中使用
-export default async function MyComponent() {
-  const readme = await getRepoReadme("owner/repo");
-  // 函数会自动处理 token 获取，无论是从 session 还是 Cookie
-  return <div>{readme && atob(readme.content)}</div>;
-}
-```
-
-### 安全考虑
-
-- 使用 HttpOnly Cookie 防止客户端 JavaScript 访问 token
-- Cookie 在生产环境中仅通过 HTTPS 传输
-- Token 有效期限制为 7 天，需要重新登录刷新
-
-### 注意事项
-
-- Cookie 只能在 Server Action 或 Route Handler 中修改，页面组件中无法修改
-- GitHub API 调用需要完整的 "owner/repo" 格式路径
-- 系统会自动从 `github_url` 字段解析出正确的仓库路径格式
+感谢所有参与贡献的朋友！  
+我们一起让开源更有温度，更有价值。
