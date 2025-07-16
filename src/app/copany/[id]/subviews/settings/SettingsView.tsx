@@ -440,7 +440,6 @@ export default function SettingsView({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || isImageLoading}
-              variant="secondary"
               size="sm"
               className="w-fit"
             >
