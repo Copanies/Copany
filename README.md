@@ -77,7 +77,7 @@
 ## 🌍 加入社区
 
 📬 有问题或建议？欢迎提 Issue 或加入 Copany 社区讨论！  
-🌐 了解更多：[Copany 社区](https://copany-app-229305319236.asia-east1.run.app/copany)  
+🌐 了解更多：[Copany 社区](https://copany-app-229305319236.asia-east1.run.app/copany/5)  
 📧 联系方式：[jinhongw982@gmail.com]
 
 ---
