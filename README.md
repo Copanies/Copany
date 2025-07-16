@@ -1,8 +1,7 @@
 # Copany
 
+> At Copany, we’re building a world where people don’t need to join a company to build something great together. Just show up, contribute, and be part of the future.
 > A project powered by the Copany open contribution and revenue-sharing model.
-
----
 
 ## 🚀 项目简介
 
@@ -17,7 +16,7 @@
 - ✅ **开放协作**：所有任务以 Issue 管理，人人可参与
 - 📊 **贡献积分**：每项任务根据难度赋予积分，记录个人贡献
 - 💰 **收益共享**：项目产生任何收益，将按贡献积分分配给所有贡献者
-- 📖 **许可协议清晰**：基于 [Copany Open Source License (COSL v0.1)](./LICENSE)
+- 📖 **许可协议清晰**：基于 [Copany Open Source License (COSL v0.1)](https://github.com/Copanies/Copany/blob/main/LICENSE)
 - 🌍 **社区驱动**：所有流程公开透明，欢迎监督
 
 ---
@@ -63,7 +62,7 @@
 ## 📄 许可协议
 
 本项目采用 **Copany Open Source License (COSL v0.1)**
-📖 阅读完整协议：[LICENSE](./LICENSE)
+📖 阅读完整协议：[LICENSE](https://github.com/Copanies/Copany/blob/main/LICENSE)
 
 ---
 
@@ -78,7 +77,7 @@
 ## 🌍 加入社区
 
 📬 有问题或建议？欢迎提 Issue 或加入 Copany 社区讨论！  
-🌐 了解更多：[https://copany-app-229305319236.asia-east1.run.app/copany](https://copany-app-229305319236.asia-east1.run.app/copany)  
+🌐 了解更多：[Copany 社区](https://copany-app-229305319236.asia-east1.run.app/copany)  
 📧 联系方式：[jinhongw982@gmail.com]
 
 ---

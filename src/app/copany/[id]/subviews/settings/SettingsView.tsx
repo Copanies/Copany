@@ -36,6 +36,7 @@ export default function SettingsView({
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const [name, setName] = useState(copany.name);
+  const [description, setDescription] = useState(copany.description || "");
   const [isRenaming, setIsRenaming] = useState(false);
   const [isAddAssetLinkModalOpen, setIsAddAssetLinkModalOpen] = useState(false);
   const [isEditAssetLinkModalOpen, setIsEditAssetLinkModalOpen] =
@@ -56,6 +57,9 @@ export default function SettingsView({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // 更新 Description 相关状态
+  const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
 
   const assetLinks = [
     {
@@ -114,6 +118,23 @@ export default function SettingsView({
       console.error(error);
     } finally {
       setIsRenaming(false);
+    }
+  }
+
+  async function updateDescription() {
+    setIsUpdatingDescription(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        description: description,
+      };
+      await updateCopanyAction(updatedCopany);
+      copanyManager.setCopany(copany.id, updatedCopany);
+      onCopanyUpdate(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingDescription(false);
     }
   }
 
@@ -249,6 +270,7 @@ export default function SettingsView({
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold">General</h1>
         <div className="flex flex-col gap-2">{renameSection()}</div>
+        <div className="flex flex-col gap-2">{descriptionSection()}</div>
         <div className="flex flex-col gap-2">{logoSection()}</div>
       </div>
       <div className="flex flex-col gap-4">
@@ -352,6 +374,26 @@ export default function SettingsView({
     );
   }
 
+  function descriptionSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-sm font-semibold">Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="border border-gray-300 dark:border-gray-700 max-w-lg rounded-md px-2 py-1"
+        />
+        <Button
+          onClick={updateDescription}
+          disabled={isUpdatingDescription}
+          className="w-fit"
+        >
+          {isUpdatingDescription ? "Updating..." : "Update Description"}
+        </Button>
+      </div>
+    );
+  }
+
   function logoSection() {
     const currentLogoUrl = uploadedLogoUrl || copany.logo_url;
 
@@ -398,7 +440,6 @@ export default function SettingsView({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || isImageLoading}
-              variant="secondary"
               size="sm"
               className="w-fit"
             >
