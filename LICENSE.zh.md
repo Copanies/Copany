@@ -73,4 +73,4 @@ Copany 开源协议（以下简称“COSL”）是一份专为推动开放协作
 本协议为 COSL 第 0.1 版。Copany 基金会将根据需要发布后续版本。项目可通过声明明确采用新版本。
 
 最新版本及协议详情请访问：
-https://copany.org/license
+https://github.com/Copanies/Copany/blob/main/LICENSE
