@@ -104,11 +104,22 @@ export class IssueService {
     issue: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at">
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
+    const updatedIssue = {
+      ...issue,
+      closed_at:
+        issue.state === IssueState.Done ||
+        issue.state === IssueState.Canceled ||
+        issue.state === IssueState.Duplicate
+          ? new Date().toISOString()
+          : null,
+    };
+
     const { data, error } = await supabase
       .from("issue")
-      .insert(issue)
+      .insert(updatedIssue)
       .select()
       .single();
+
     if (error) {
       console.error("Error creating issue:", error);
       throw new Error(`Failed to create issue: ${error.message}`);

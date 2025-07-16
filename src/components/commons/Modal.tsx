@@ -44,13 +44,13 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* 遮罩层 */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/50"
+        className="fixed inset-0 bg-black/20 dark:bg-gray-500/20"
         onClick={onClose}
       />
 
       {/* 弹窗内容 */}
       <div
-        className={`relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
+        className={`relative bg-background dark:bg-background-dark rounded-lg shadow-xl dark:border dark:border-gray-800 w-full mx-4 max-h-[90vh] overflow-y-auto ${
           size === "sm" ? "max-w-md" : size === "md" ? "max-w-2xl" : "max-w-4xl"
         }`}
       >
