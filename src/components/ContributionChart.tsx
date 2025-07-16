@@ -59,6 +59,7 @@ interface TooltipData {
   level?: DisplayLevel;
   count?: number;
   contributionScore?: number;
+  issues?: Array<{ id: string; title: string }>;
 }
 
 // Month abbreviations
@@ -145,43 +146,26 @@ export default function ContributionChart({
       }
     }
 
-    // Calculate contribution data (only need local data calculation now)
+    // Statistics contribution data
     contributions.forEach((contribution) => {
-      const contributionYear = contribution.year;
-      const contributionMonth = contribution.month;
-      const level = contribution.issue_level;
+      const month = monthNames[contribution.month - 1];
+      const year = contribution.year;
+      const level = contribution.issue_level as DisplayLevel;
 
-      // Find corresponding month data
-      const monthDataIndex = monthlyData.findIndex(
-        (data) =>
-          data.year === contributionYear &&
-          monthNames[contributionMonth - 1] === data.month
+      // Check level validity
+      if (!displayLevels.includes(level)) {
+        return;
+      }
+
+      const monthData = monthlyData.find(
+        (data) => data.month === month && data.year === year
       );
 
-      // Debug: Log unmatched contributions
-      if (monthDataIndex === -1) {
-        console.warn(
-          `[ContributionChart] ⚠️ 无法匹配贡献数据:`,
-          `年份=${contributionYear}, 月份=${contributionMonth}, 等级=${level}, 用户=${user.name}`
-        );
-        return;
+      if (monthData) {
+        monthData.levelCounts[level]++;
+        monthData.total++;
+        monthData.contributionScore += levelScores[level] || 0;
       }
-
-      // Check if level is valid
-      if (!displayLevels.includes(level as DisplayLevel)) {
-        console.warn(
-          `[ContributionChart] ⚠️ 无效的等级:`,
-          `等级=${level}, 用户=${user.name}`
-        );
-        return;
-      }
-
-      const displayLevel = level as DisplayLevel;
-      monthlyData[monthDataIndex].levelCounts[displayLevel]++;
-      monthlyData[monthDataIndex].total++;
-      // Calculate contribution points (for local line chart display)
-      monthlyData[monthDataIndex].contributionScore +=
-        levelScores[displayLevel];
     });
 
     return {
@@ -222,6 +206,7 @@ export default function ContributionChart({
         showUserInfo={showUserInfo}
         totalContributionScore={totalContributionScore}
         rank={rank}
+        contributions={contributions}
       />
     </div>
   );
@@ -234,6 +219,7 @@ interface UserChartProps {
   showUserInfo: boolean;
   totalContributionScore: number;
   rank?: number; // New: user's rank based on total contribution score
+  contributions: Contribution[]; // 添加 contributions 参数
 }
 
 function UserChart({
@@ -243,6 +229,7 @@ function UserChart({
   showUserInfo,
   totalContributionScore,
   rank,
+  contributions,
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -306,7 +293,8 @@ function UserChart({
 
   const height = 200;
   const margin = { top: 32, right: 32, bottom: 32, left: 32 }; // Increase right margin for line chart Y-axis
-  const chartWidth = Math.max(containerWidth - margin.left - margin.right, 100); // 确保最小宽度为 100
+  const availableWidth = containerWidth - margin.left - margin.right;
+  const chartWidth = availableWidth > 50 ? availableWidth : 50; // 确保最小宽度为 50px
   const chartHeight = height - margin.top - margin.bottom;
 
   // Note: removed unused yScale and yScoreScale variables
@@ -384,29 +372,52 @@ function UserChart({
     const count = monthData.levelCounts[level];
     if (count === 0) return;
 
+    // 找到该月该等级的所有 Issues
+    const monthIssues = contributions
+      .filter(
+        (contribution: Contribution) =>
+          contribution.issue_level === level &&
+          contribution.month === monthNames.indexOf(monthData.month) + 1 &&
+          contribution.year === monthData.year
+      )
+      .map((contribution: Contribution) => ({
+        id: contribution.issue_id,
+        title: contribution.issue_title,
+      }));
+
     const tooltipData: TooltipData = {
       type: "bar",
       month: monthData.month,
       year: monthData.year,
       level,
       count,
+      issues: monthIssues,
     };
 
     // 计算 tooltip 位置，确保在窗口范围内
-    const tooltipWidth = 200;
-    const tooltipHeight = 120;
+    const tooltipHeight = Math.min(200 + monthIssues.length * 24, 400); // 动态高度
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let tooltipLeft = event.clientX;
+    let tooltipLeft = event.clientX + 2; // 紧贴鼠标位置
     let tooltipTop = event.clientY - tooltipHeight - 10;
 
-    // 水平边界检测
+    // 获取 tooltip 实际宽度
+    const tooltipContent = generateTooltipContent(
+      monthData,
+      monthIssues,
+      "bar",
+      level,
+      count
+    );
+    const tooltipWidth = getTooltipWidth(tooltipContent);
+
+    // 水平边界检测 - 如果右侧空间不足，显示在左侧
     if (tooltipLeft + tooltipWidth > viewportWidth) {
-      tooltipLeft = event.clientX - tooltipWidth;
+      tooltipLeft = event.clientX - tooltipWidth - 2; // 使用实际宽度，左侧留出 2px 间距
     }
-    if (tooltipLeft < 0) {
-      tooltipLeft = 10;
+    if (tooltipLeft < 2) {
+      tooltipLeft = 2;
     }
 
     // 垂直边界检测
@@ -428,28 +439,52 @@ function UserChart({
     event: React.MouseEvent<SVGCircleElement>,
     monthData: ContributionData
   ) => {
+    // 找到该月的所有 Issues
+    const monthIssues = contributions
+      .filter(
+        (contribution: Contribution) =>
+          contribution.month === monthNames.indexOf(monthData.month) + 1 &&
+          contribution.year === monthData.year
+      )
+      .map((contribution: Contribution) => ({
+        id: contribution.issue_id,
+        title: contribution.issue_title,
+      }));
+
     const tooltipData: TooltipData = {
       type: "line",
       month: monthData.month,
       year: monthData.year,
       contributionScore: monthData.contributionScore,
+      count: Object.values(monthData.levelCounts).reduce(
+        (sum, v) => sum + v,
+        0
+      ),
+      issues: monthIssues,
     };
 
     // 计算 tooltip 位置，确保在窗口范围内
-    const tooltipWidth = 150;
-    const tooltipHeight = 80;
+    const tooltipHeight = Math.min(150 + monthIssues.length * 24, 400); // 动态高度
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let tooltipLeft = event.clientX;
+    let tooltipLeft = event.clientX + 2; // 紧贴鼠标位置
     let tooltipTop = event.clientY - tooltipHeight - 10;
 
-    // 水平边界检测
+    // 获取 tooltip 实际宽度
+    const tooltipContent = generateTooltipContent(
+      monthData,
+      monthIssues,
+      "line"
+    );
+    const tooltipWidth = getTooltipWidth(tooltipContent);
+
+    // 水平边界检测 - 如果右侧空间不足，显示在左侧
     if (tooltipLeft + tooltipWidth > viewportWidth) {
-      tooltipLeft = event.clientX - tooltipWidth;
+      tooltipLeft = event.clientX - tooltipWidth - 2; // 使用实际宽度，左侧留出 2px 间距
     }
-    if (tooltipLeft < 0) {
-      tooltipLeft = 10;
+    if (tooltipLeft < 2) {
+      tooltipLeft = 2;
     }
 
     // 垂直边界检测
@@ -465,6 +500,99 @@ function UserChart({
       tooltipLeft,
       tooltipTop,
     });
+  };
+
+  // 获取 tooltip 实际宽度的辅助函数
+  const getTooltipWidth = (content: string): number => {
+    const tempTooltip = document.createElement("div");
+    tempTooltip.className =
+      "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm max-h-96 overflow-y-auto min-w-48 max-w-sm";
+    tempTooltip.style.position = "fixed";
+    tempTooltip.style.left = "-9999px"; // 放在视图外
+    tempTooltip.style.visibility = "hidden";
+    document.body.appendChild(tempTooltip);
+
+    tempTooltip.innerHTML = content;
+    const width = tempTooltip.offsetWidth;
+    document.body.removeChild(tempTooltip);
+
+    return width;
+  };
+
+  // 生成 tooltip 内容的辅助函数
+  const generateTooltipContent = (
+    monthData: ContributionData,
+    monthIssues: Array<{ id: string; title: string }>,
+    type: "bar" | "line",
+    level?: DisplayLevel,
+    count?: number
+  ): string => {
+    const baseContent = `
+      <div class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        ${monthData.month} ${monthData.year}
+      </div>
+      <div class="space-y-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            ${
+              type === "bar"
+                ? `<div class="w-2 h-2 rounded-full" style="background-color: ${
+                    isDarkMode
+                      ? levelColors[level!].dark
+                      : levelColors[level!].light
+                  };"></div>
+                 <span class="font-medium text-gray-900 dark:text-gray-100">Level ${
+                   levelLabels[level!]
+                 }</span>`
+                : `<div class="w-4 h-0.5" style="background-color: ${
+                    isDarkMode ? "#3B82F6" : "#2563eb"
+                  };"></div>
+                 <span class="font-medium text-gray-900 dark:text-gray-100">Total CP</span>`
+            }
+          </div>
+          ${
+            type === "bar"
+              ? `<div class="text-gray-600 dark:text-gray-400">
+                 Issues: <span class="font-medium text-gray-900 dark:text-gray-100">${count}</span>
+               </div>
+               <div class="text-gray-600 dark:text-gray-400">
+                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${
+                   count! * levelScores[level!]
+                 }</span>
+               </div>`
+              : `<div class="text-gray-600 dark:text-gray-400">
+                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${monthData.contributionScore}</span>
+               </div>`
+          }
+        </div>
+        ${
+          monthIssues.length > 0
+            ? `
+          <div class="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
+            <div class="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Related Issues${
+                type === "line" ? ` (${monthIssues.length})` : ""
+              }:
+            </div>
+            <div class="space-y-1 max-h-32 overflow-y-auto">
+              ${monthIssues
+                .map(
+                  (issue) => `
+                <div class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                  • ${issue.title}
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    `;
+
+    return baseContent;
   };
 
   const handleMouseLeave = () => {
@@ -625,7 +753,7 @@ function UserChart({
             })}
           />
 
-          {/* Right Y-axis - Contribution Points */}
+          {/* Right Y-axis - Contribution CP */}
           <AxisRight
             left={chartWidth}
             scale={yScoreScaleAdjusted}
@@ -723,7 +851,7 @@ function UserChart({
             zIndex: 1000,
             pointerEvents: "none",
           }}
-          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm"
+          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm min-w-48 max-w-sm"
         >
           <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {tooltipData.month} {tooltipData.year}
@@ -732,53 +860,103 @@ function UserChart({
           {tooltipData.type === "bar" &&
             tooltipData.level &&
             tooltipData.count !== undefined && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: getLevelColor(tooltipData.level),
-                    }}
-                  />
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    Level {levelLabels[tooltipData.level]}
-                  </span>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: getLevelColor(tooltipData.level),
+                      }}
+                    />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      Level {levelLabels[tooltipData.level]}
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">
+                    Issues:{" "}
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {tooltipData.count}
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">
+                    CP:{" "}
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {tooltipData.count * levelScores[tooltipData.level]}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">
-                  Issues:{" "}
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {tooltipData.count}
-                  </span>
-                </div>
-                <div className="text-gray-600 dark:text-gray-400">
-                  Points:{" "}
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {tooltipData.count * levelScores[tooltipData.level]}
-                  </span>
-                </div>
+
+                {/* Issues 列表 */}
+                {tooltipData.issues && tooltipData.issues.length > 0 && (
+                  <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Related Issues:
+                    </div>
+                    <div className="space-y-1">
+                      {tooltipData.issues.map((issue) => (
+                        <div
+                          key={issue.id}
+                          className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                          title={issue.title}
+                        >
+                          • {issue.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
           {tooltipData.type === "line" &&
             tooltipData.contributionScore !== undefined && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-0.5"
-                    style={{
-                      backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb",
-                    }}
-                  />
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    Total Points
-                  </span>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-0.5"
+                      style={{
+                        backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb",
+                      }}
+                    />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      Total CP
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">
+                    Issues:{" "}
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {tooltipData.count}
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">
+                    CP:{" "}
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {tooltipData.contributionScore}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-gray-600 dark:text-gray-400">
-                  Score:{" "}
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {tooltipData.contributionScore}
-                  </span>
-                </div>
+
+                {/* Issues 列表 */}
+                {tooltipData.issues && tooltipData.issues.length > 0 && (
+                  <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Related Issues:
+                    </div>
+                    <div className="space-y-1">
+                      {tooltipData.issues.map((issue) => (
+                        <div
+                          key={issue.id}
+                          className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                          title={issue.title}
+                        >
+                          • {issue.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
         </div>
@@ -799,15 +977,15 @@ function UserChart({
               </span>
             </div>
           ))}
-          {/* Contribution Points Line Legend */}
+          {/* Contribution CP Line Legend */}
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-0.5" style={{ backgroundColor: lineColor }} />
-            <span className="text-gray-900 dark:text-gray-100">Points</span>
+            <span className="text-gray-900 dark:text-gray-100">CP</span>
           </div>
         </div>
         <div className="flex gap-3 text-gray-600 dark:text-gray-400">
           <div className="">L/Y - Issues</div>
-          <div className="">R/Y - Points</div>
+          <div className="">R/Y - CP</div>
         </div>
       </div>
     </div>
@@ -835,7 +1013,7 @@ function ContributionStats({
       ? (userTotalScore / totalContributionScore) * 100
       : 0;
 
-  // Build display string: XX S, XX A, XX B, XX C = Total Points - XX%
+  // Build display string: XX S, XX A, XX B, XX C = Total CP - XX%
   const levelCounts = [
     {
       level: IssueLevel.level_S,
@@ -879,7 +1057,7 @@ function ContributionStats({
   return (
     <div>
       <div className="text-3xl font-normal text-gray-900 dark:text-gray-100">
-        {userTotalScore} P - {percentage.toFixed(1)}%
+        {userTotalScore} CP - {percentage.toFixed(1)}%
       </div>
       <div className="text-sm text-gray-900 dark:text-gray-100">
         {levelCountsDisplay}
