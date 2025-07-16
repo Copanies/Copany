@@ -26,5 +26,5 @@
 
 ## 📄 协议
 
-本项目适用 Copany 开源协议（COSL），具体见 [LICENSE](https://github.com/Copanies/Copany/blob/main/LICENSE))。  
+本项目适用 Copany 开源协议（COSL），具体见 [LICENSE](https://github.com/Copanies/Copany/blob/main/LICENSE)。  
 提交 PR 即表示你同意此贡献机制及条款。
