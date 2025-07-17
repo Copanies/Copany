@@ -358,7 +358,7 @@ export default function SettingsView({
               type="text"
               value={deleteConfirmName}
               onChange={(e) => setDeleteConfirmName(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border-1 border-red-500 dark:border-red-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full px-3 py-2 rounded-md border-1 border-red-500 dark:border-red-700 bg-transparent dark:text-gray-100"
             />
           </div>
 
