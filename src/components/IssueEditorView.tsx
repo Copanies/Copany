@@ -28,19 +28,19 @@ export default function IssueEditorView({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 处理内容变化 - 添加防抖处理
+  // Handle content changes - add debounce processing
   const handleContentChange = useCallback(
     (content: string) => {
       console.log("📝 Content changed, length:", content.length);
       setEditingContent(content);
       setSaveError(null);
 
-      // 清除之前的内容更新定时器
+      // Clear previous content update timer
       if (contentChangeTimeoutRef.current) {
         clearTimeout(contentChangeTimeoutRef.current);
       }
 
-      // 延迟通知父组件
+      // Delay notifying parent component
       contentChangeTimeoutRef.current = setTimeout(() => {
         console.log("🔄 Notifying parent component of content change");
         if (onDescriptionChange) {
@@ -48,13 +48,13 @@ export default function IssueEditorView({
         }
       }, 300);
 
-      // 标记有未保存的更改，但不立即触发保存
+      // Mark unsaved changes, but don't trigger save immediately
       hasUnsavedChangesRef.current = true;
     },
     [issueData.id, onDescriptionChange]
   );
 
-  // 处理标题变化
+  // Handle title changes
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTitle = e.target.value;
@@ -66,13 +66,13 @@ export default function IssueEditorView({
         onTitleChange(issueData.id, newTitle);
       }
 
-      // 标记有未保存的更改，但不立即触发保存
+      // Mark unsaved changes, but don't trigger save immediately
       hasUnsavedChangesRef.current = true;
     },
     [issueData.id, onTitleChange]
   );
 
-  // 使用 ref 来获取最新的状态值
+  // Use ref to get latest state values
   const titleRef = useRef(title);
   const editingContentRef = useRef(editingContent);
 
@@ -84,13 +84,13 @@ export default function IssueEditorView({
     editingContentRef.current = editingContent;
   }, [editingContent]);
 
-  // 标记是否有未保存的更改
+  // Mark if there are unsaved changes
   const hasUnsavedChangesRef = useRef(false);
 
-  // 服务器保存函数
+  // Server save function
   const saveToServerRef = useRef<(() => Promise<void>) | null>(null);
 
-  // 创建服务器保存函数
+  // Create server save function
   useEffect(() => {
     saveToServerRef.current = async () => {
       if (isSaving) {
@@ -127,7 +127,9 @@ export default function IssueEditorView({
         console.error("❌ Error saving to server:", error);
         hasUnsavedChangesRef.current = true;
         setSaveError(
-          error instanceof Error ? error.message : "保存失败，请稍后重试"
+          error instanceof Error
+            ? error.message
+            : "Save failed, please try again later"
         );
       } finally {
         setIsSaving(false);
@@ -145,21 +147,21 @@ export default function IssueEditorView({
     issueData.copany_id,
   ]);
 
-  // 自动保存逻辑
+  // Auto-save logic
   useEffect(() => {
-    // 检查是否有变化需要保存
+    // Check if there are changes that need saving
     if (!hasUnsavedChangesRef.current || isSaving) {
       return;
     }
 
-    // 清除之前的保存定时器
+    // Clear previous save timer
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
     console.log("📝 Changes detected, scheduling auto-save");
 
-    // 设置新的保存定时器（3秒后执行）
+    // Set new save timer (execute after 3 seconds)
     saveTimeoutRef.current = setTimeout(async () => {
       if (!hasUnsavedChangesRef.current || isSaving) {
         return;
@@ -185,10 +187,10 @@ export default function IssueEditorView({
     };
   }, [isSaving, title, editingContent]);
 
-  // 组件卸载时的清理
+  // Cleanup when component unmounts
   useEffect(() => {
     return () => {
-      // 如果有未保存的更改，立即保存
+      // If there are unsaved changes, save immediately
       if (hasUnsavedChangesRef.current && saveToServerRef.current) {
         console.log("💾 Saving changes before unmount");
         saveToServerRef.current().catch((error) => {
@@ -196,7 +198,7 @@ export default function IssueEditorView({
         });
       }
 
-      // 清理所有定时器
+      // Clean up all timers
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
@@ -206,13 +208,13 @@ export default function IssueEditorView({
     };
   }, []);
 
-  // 初始内容只在组件挂载时设置一次
+  // The initial content is only set once when the component is mounted
   const [initialContent] = useState(issueData.description || "");
 
   return (
     <div className="w-full">
       <div className="space-y-2">
-        {/* 标题 */}
+        {/* Title */}
         <div className="relative">
           <input
             type="text"
@@ -221,7 +223,7 @@ export default function IssueEditorView({
             className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
             placeholder="Issue title"
           />
-          {/* 保存状态指示器 */}
+          {/* Save status indicator */}
           {isSaving && (
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-500">
               <ArrowPathIcon className="w-5 h-5 animate-spin" />
@@ -229,14 +231,14 @@ export default function IssueEditorView({
           )}
         </div>
 
-        {/* 错误提示 */}
+        {/* Error message */}
         {saveError && (
           <div className="flex flex-row items-center px-3 py-2 mx-2 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded">
             <span>Error: {saveError}</span>
           </div>
         )}
 
-        {/* 描述 */}
+        {/* Description */}
         <div>
           <div ref={editorDivRef}>
             <MilkdownEditor

@@ -11,24 +11,24 @@ export class StorageService {
   private bucketName = "copany-logos";
 
   /**
-   * 上传 copany logo 到 Supabase Storage
+   * Upload copany logo to Supabase Storage
    */
   async uploadLogo(file: File, copanyName: string): Promise<UploadResult> {
     try {
-      // 验证文件类型
+      // Validate file type
       if (!this.isValidImageFile(file)) {
         return {
           success: false,
-          error: "请选择有效的图片文件 (PNG, JPG, JPEG, GIF, WebP)",
+          error: "Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)",
         };
       }
 
-      // 生成唯一的文件名
+      // Generate unique filename
       const fileExtension = file.name.split(".").pop();
       const fileName = `${copanyName}-${Date.now()}.${fileExtension}`;
       const filePath = `logos/${fileName}`;
 
-      // 上传文件到 Supabase Storage
+      // Upload file to Supabase Storage
       const { error } = await this.supabase.storage
         .from(this.bucketName)
         .upload(filePath, file, {
@@ -37,14 +37,14 @@ export class StorageService {
         });
 
       if (error) {
-        console.error("上传失败:", error);
+        console.error("Upload failed:", error);
         return {
           success: false,
-          error: `上传失败: ${error.message}`,
+          error: `Upload failed: ${error.message}`,
         };
       }
 
-      // 获取公共 URL
+      // Get public URL
       const { data: urlData } = this.supabase.storage
         .from(this.bucketName)
         .getPublicUrl(filePath);
@@ -54,16 +54,16 @@ export class StorageService {
         url: urlData.publicUrl,
       };
     } catch (error) {
-      console.error("上传过程中发生错误:", error);
+      console.error("Error occurred during upload:", error);
       return {
         success: false,
-        error: "上传过程中发生未知错误",
+        error: "Unknown error occurred during upload",
       };
     }
   }
 
   /**
-   * 删除 copany logo
+   * Delete copany logo
    */
   async deleteLogo(filePath: string): Promise<boolean> {
     try {
@@ -72,19 +72,22 @@ export class StorageService {
         .remove([filePath]);
 
       if (error) {
-        console.error(`❌ StorageService.deleteLogo: 删除失败`, error);
+        console.error(`❌ StorageService.deleteLogo: Deletion failed`, error);
         return false;
       }
 
       return data && data.length > 0;
     } catch (error) {
-      console.error(`💥 StorageService.deleteLogo: 删除过程中发生错误`, error);
+      console.error(
+        `💥 StorageService.deleteLogo: Error occurred during deletion`,
+        error
+      );
       return false;
     }
   }
 
   /**
-   * 验证文件是否为有效的图片文件
+   * Validate if file is a valid image file
    */
   private isValidImageFile(file: File): boolean {
     const validTypes = [
@@ -99,7 +102,7 @@ export class StorageService {
   }
 
   /**
-   * 获取文件大小限制（1MB）
+   * Get file size limit (1MB)
    */
   getMaxFileSize(): number {
     return 1 * 1024 * 1024; // 1MB

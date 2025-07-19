@@ -219,7 +219,7 @@ interface UserChartProps {
   showUserInfo: boolean;
   totalContributionScore: number;
   rank?: number; // New: user's rank based on total contribution score
-  contributions: Contribution[]; // 添加 contributions 参数
+  contributions: Contribution[]; // Add contributions parameter
 }
 
 function UserChart({
@@ -234,10 +234,10 @@ function UserChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
 
-  // 使用自定义 hook 检测 dark mode
+  // Use custom hook to detect dark mode
   const isDarkMode = useDarkMode();
 
-  // 使用 visx 的 useTooltip hook
+  // Use visx's useTooltip hook
   const {
     tooltipOpen,
     tooltipLeft,
@@ -248,7 +248,7 @@ function UserChart({
   } = useTooltip<TooltipData>();
 
   useEffect(() => {
-    // 使用 ResizeObserver 来监听容器大小变化
+    // Use ResizeObserver to monitor container size changes
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = entry.contentRect.width;
@@ -258,7 +258,7 @@ function UserChart({
       }
     });
 
-    // 初始化宽度
+    // Initialize width
     const updateWidth = () => {
       if (containerRef.current) {
         const width = containerRef.current.offsetWidth;
@@ -268,21 +268,21 @@ function UserChart({
       }
     };
 
-    // 立即尝试获取宽度
+    // Try to get width immediately
     updateWidth();
 
-    // 如果初始宽度为 0，使用 setTimeout 延迟获取
+    // If initial width is 0, use setTimeout to delay getting it
     if (containerRef.current && containerRef.current.offsetWidth === 0) {
       setTimeout(updateWidth, 0);
       setTimeout(updateWidth, 100);
     }
 
-    // 开始监听容器大小变化
+    // Start monitoring container size changes
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
 
-    // 监听窗口大小变化作为备用
+    // Monitor window size changes as backup
     window.addEventListener("resize", updateWidth);
 
     return () => {
@@ -294,7 +294,7 @@ function UserChart({
   const height = 200;
   const margin = { top: 32, right: 32, bottom: 32, left: 32 }; // Increase right margin for line chart Y-axis
   const availableWidth = containerWidth - margin.left - margin.right;
-  const chartWidth = availableWidth > 50 ? availableWidth : 50; // 确保最小宽度为 50px
+  const chartWidth = availableWidth > 50 ? availableWidth : 50; // Ensure minimum width of 50px
   const chartHeight = height - margin.top - margin.bottom;
 
   // Note: removed unused yScale and yScoreScale variables
@@ -372,7 +372,7 @@ function UserChart({
     const count = monthData.levelCounts[level];
     if (count === 0) return;
 
-    // 找到该月该等级的所有 Issues
+    // Find all Issues for this month and level
     const monthIssues = contributions
       .filter(
         (contribution: Contribution) =>
@@ -394,15 +394,15 @@ function UserChart({
       issues: monthIssues,
     };
 
-    // 计算 tooltip 位置，确保在窗口范围内
-    const tooltipHeight = Math.min(200 + monthIssues.length * 24, 400); // 动态高度
+    // Calculate tooltip position, ensure it's within window bounds
+    const tooltipHeight = Math.min(200 + monthIssues.length * 24, 400); // Dynamic height
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let tooltipLeft = event.clientX + 2; // 紧贴鼠标位置
+    let tooltipLeft = event.clientX + 2; // Close to mouse position
     let tooltipTop = event.clientY - tooltipHeight - 10;
 
-    // 获取 tooltip 实际宽度
+    // Get actual tooltip width
     const tooltipContent = generateTooltipContent(
       monthData,
       monthIssues,
@@ -412,20 +412,20 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
-    // 水平边界检测 - 如果右侧空间不足，显示在左侧
+    // Horizontal boundary detection - if right side space is insufficient, display on left
     if (tooltipLeft + tooltipWidth > viewportWidth) {
-      tooltipLeft = event.clientX - tooltipWidth - 2; // 使用实际宽度，左侧留出 2px 间距
+      tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
     }
     if (tooltipLeft < 2) {
-      tooltipLeft = 2;
+      tooltipLeft = 2; // Ensure minimum left margin
     }
 
-    // 垂直边界检测
-    if (tooltipTop < 0) {
-      tooltipTop = event.clientY + 10;
+    // Vertical boundary detection
+    if (tooltipTop < 2) {
+      tooltipTop = event.clientY + 10; // Display below mouse if top space is insufficient
     }
     if (tooltipTop + tooltipHeight > viewportHeight) {
-      tooltipTop = viewportHeight - tooltipHeight - 10;
+      tooltipTop = viewportHeight - tooltipHeight - 2; // Ensure it doesn't exceed bottom boundary
     }
 
     showTooltip({
@@ -439,7 +439,7 @@ function UserChart({
     event: React.MouseEvent<SVGCircleElement>,
     monthData: ContributionData
   ) => {
-    // 找到该月的所有 Issues
+    // Find all Issues for this month
     const monthIssues = contributions
       .filter(
         (contribution: Contribution) =>
@@ -463,15 +463,15 @@ function UserChart({
       issues: monthIssues,
     };
 
-    // 计算 tooltip 位置，确保在窗口范围内
-    const tooltipHeight = Math.min(150 + monthIssues.length * 24, 400); // 动态高度
+    // Calculate tooltip position, ensure it's within window bounds
+    const tooltipHeight = Math.min(150 + monthIssues.length * 24, 400); // Dynamic height
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let tooltipLeft = event.clientX + 2; // 紧贴鼠标位置
+    let tooltipLeft = event.clientX + 2; // Close to mouse position
     let tooltipTop = event.clientY - tooltipHeight - 10;
 
-    // 获取 tooltip 实际宽度
+    // Get actual tooltip width
     const tooltipContent = generateTooltipContent(
       monthData,
       monthIssues,
@@ -479,15 +479,15 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
-    // 水平边界检测 - 如果右侧空间不足，显示在左侧
+    // Horizontal boundary detection - if right side space is insufficient, display on left
     if (tooltipLeft + tooltipWidth > viewportWidth) {
-      tooltipLeft = event.clientX - tooltipWidth - 2; // 使用实际宽度，左侧留出 2px 间距
+      tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
     }
     if (tooltipLeft < 2) {
       tooltipLeft = 2;
     }
 
-    // 垂直边界检测
+    // Vertical boundary detection
     if (tooltipTop < 0) {
       tooltipTop = event.clientY + 10;
     }
@@ -502,13 +502,13 @@ function UserChart({
     });
   };
 
-  // 获取 tooltip 实际宽度的辅助函数
+  // Helper function to get actual tooltip width
   const getTooltipWidth = (content: string): number => {
     const tempTooltip = document.createElement("div");
     tempTooltip.className =
       "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm max-h-96 overflow-y-auto min-w-48 max-w-sm";
     tempTooltip.style.position = "fixed";
-    tempTooltip.style.left = "-9999px"; // 放在视图外
+    tempTooltip.style.left = "-9999px"; // Place outside viewport
     tempTooltip.style.visibility = "hidden";
     document.body.appendChild(tempTooltip);
 
@@ -519,7 +519,7 @@ function UserChart({
     return width;
   };
 
-  // 生成 tooltip 内容的辅助函数
+  // Helper function to generate tooltip content
   const generateTooltipContent = (
     monthData: ContributionData,
     monthIssues: Array<{ id: string; title: string }>,
@@ -610,7 +610,7 @@ function UserChart({
   const getLevelStrokeColor = (level: DisplayLevel) =>
     isDarkMode ? levelStrokeColors[level].dark : levelStrokeColors[level].light;
 
-  // 如果容器宽度无效，显示加载状态
+  // If container width is invalid, show loading state
   if (containerWidth <= 0) {
     return (
       <div ref={containerRef} className="mb-10 w-full relative">

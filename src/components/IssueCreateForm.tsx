@@ -17,7 +17,7 @@ import Button from "@/components/commons/Button";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 
-// Issue 表单组件
+// Issue form component
 export default function IssueCreateForm({
   copanyId,
   onIssueCreated,
@@ -35,7 +35,7 @@ export default function IssueCreateForm({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 添加属性状态管理
+  // Add property state management
   const [state, setState] = useState<number>(IssueState.Backlog);
   const [priority, setPriority] = useState<number>(IssuePriority.None);
   const [level, setLevel] = useState<number>(IssueLevel.level_None);
@@ -99,7 +99,7 @@ export default function IssueCreateForm({
         assignee: assignee,
       });
 
-      // 重置表单
+      // Reset form
       setTitle("");
       setDescription("");
       setState(IssueState.Backlog);
@@ -111,7 +111,7 @@ export default function IssueCreateForm({
         formRef.current.reset();
       }
 
-      // 通知父组件刷新数据并关闭弹窗
+      // Notify parent component to refresh data and close modal
       onIssueCreated(newIssue);
       onClose();
     } catch (error) {

@@ -1,30 +1,30 @@
 # Contributing to This Copany Project
 
-感谢你对本项目的兴趣！本项目采用 Copany 开源协作模型，支持开放贡献 + 收益共享。
+Thank you for your interest in this project! This project adopts the Copany open-source collaboration model, supporting open contribution + revenue sharing.
 
-## ✅ 如何参与
+## ✅ How to Participate
 
-1. 浏览 Issues 页面并认领任务；
-2. 提交 Pull Request 并等待审核；
-3. 审核通过后，你将获得对应贡献积分（CP）。
+1. Browse the Issues page and claim tasks;
+2. Submit Pull Requests and wait for review;
+3. After approval, you will receive corresponding contribution points (CP).
 
-## 📊 积分规则
+## 📊 Points Rules
 
-| 等级 | 描述              | 预估工时 | CP 分值 |
-| ---- | ----------------- | -------- | ------- |
-| C    | 小修复/文档更新   | 1-2h     | 5       |
-| B    | 常规功能开发      | 4-6h     | 20      |
-| A    | 核心模块或设计    | 12-18h   | 60      |
-| S    | 架构设计/主导开发 | 32-40h   | 200     |
+| Level | Description                          | Estimated Hours | CP Points |
+| ----- | ------------------------------------ | --------------- | --------- |
+| C     | Small fixes/doc updates              | 1-2h            | 5         |
+| B     | Regular feature development          | 4-6h            | 20        |
+| A     | Core modules or design               | 12-18h          | 60        |
+| S     | Architecture design/lead development | 32-40h          | 200       |
 
-所有积分记录将汇总公开，并用于未来收益分配。
+All point records will be publicly summarized and used for future revenue distribution.
 
-## 💰 收益共享
+## 💰 Revenue Sharing
 
-当本项目获得经济收益（捐赠、授权、销售等），将按照 CP 占比进行分配。  
-例如：Alice 有 30 分，Bob 有 10 分，共同获得 4000 元净收益，Alice 得 3000，Bob 得 1000。
+When this project receives economic benefits (donations, licensing, sales, etc.), distribution will be based on CP ratio.  
+For example: Alice has 30 points, Bob has 10 points, together they receive 4000 yuan net revenue, Alice gets 3000, Bob gets 1000.
 
-## 📄 协议
+## 📄 Agreement
 
-本项目适用 Copany 开源协议（COSL），具体见 [LICENSE](https://github.com/Copanies/Copany/blob/main/LICENSE)。  
-提交 PR 即表示你同意此贡献机制及条款。
+This project applies the Copany open-source agreement (COSL), see [LICENSE](https://github.com/Copanies/Copany/blob/main/LICENSE) for details.  
+Submitting a PR means you agree to this contribution mechanism and terms.

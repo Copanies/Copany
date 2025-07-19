@@ -26,7 +26,7 @@ export class IssueService {
 
     const issues = data as Issue[];
 
-    // 获取所有有 assignee 的 issue 的用户信息
+    // Get user information for all issues with assignees
     const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo(issues);
 
     return issuesWithAssignee;
@@ -53,12 +53,12 @@ export class IssueService {
   static async enrichIssuesWithAssigneeInfo(
     issues: Issue[]
   ): Promise<IssueWithAssignee[]> {
-    // 获取所有唯一的 assignee ID
+    // Get all unique assignee IDs
     const assigneeIds = [
       ...new Set(issues.map((issue) => issue.assignee).filter(Boolean)),
     ] as string[];
 
-    // 如果没有 assignee，直接返回转换后的数据
+    // If there are no assignees, return the converted data directly
     if (assigneeIds.length === 0) {
       return issues.map((issue) => ({
         ...issue,
@@ -66,11 +66,11 @@ export class IssueService {
       }));
     }
 
-    // 使用 admin client 获取用户信息
+    // Use admin client to get user information
     const adminSupabase = await createAdminSupabaseClient();
     const assigneeUsers: Record<string, AssigneeUser> = {};
 
-    // 批量获取用户信息
+    // Batch get user information
     for (const assigneeId of assigneeIds) {
       try {
         const { data: userData, error: userError } =
@@ -91,7 +91,7 @@ export class IssueService {
       }
     }
 
-    // 组合 issue 和 assignee 信息
+    // Combine issue and assignee information
     return issues.map((issue) => ({
       ...issue,
       assignee_user: issue.assignee

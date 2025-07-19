@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 调用现有的 issue 更新 action
+    // Call existing issue update action
     const updatedIssue = await updateIssueAction({
       id,
       title,

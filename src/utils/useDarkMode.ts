@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 /**
- * 检测当前是否为 dark mode
+ * Detect if current mode is dark mode
  */
 function checkDarkMode(): boolean {
   if (typeof window === "undefined") return false;
@@ -15,39 +15,39 @@ function checkDarkMode(): boolean {
 }
 
 /**
- * 自定义 hook 用于检测 dark mode 状态
- * 统一项目中的 dark mode 检测逻辑
- * 使用懒初始化避免延迟问题
+ * Custom hook for detecting dark mode state
+ * Unifies dark mode detection logic across the project
+ * Uses lazy initialization to avoid delay issues
  */
 export function useDarkMode(): boolean {
-  // 使用懒初始化，首次渲染时就获得正确的值
+  // Use lazy initialization to get the correct value on first render
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // 服务端渲染时返回 false，避免水化不匹配
+    // Return false during server-side rendering to avoid hydration mismatch
     if (typeof window === "undefined") return false;
     return checkDarkMode();
   });
 
   useEffect(() => {
-    // 客户端挂载后立即同步状态，确保正确性
+    // Immediately sync state after client-side mount to ensure correctness
     const currentDarkMode = checkDarkMode();
     if (currentDarkMode !== isDarkMode) {
       setIsDarkMode(currentDarkMode);
     }
 
-    // 监听系统偏好变化
+    // Listen for system preference changes
     const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => setIsDarkMode(checkDarkMode());
 
     darkModeQuery.addEventListener("change", handleChange);
 
-    // 监听 HTML 元素 class 变化（手动主题切换）
+    // Monitor HTML element class changes (manual theme switching)
     const observer = new MutationObserver(handleChange);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
 
-    // 清理函数
+    // Cleanup function
     return () => {
       darkModeQuery.removeEventListener("change", handleChange);
       observer.disconnect();

@@ -2,7 +2,7 @@
 import { CopanyContributorService } from "@/services/copanyContributor.service";
 
 /**
- * 获取公司贡献者列表 - Server Action
+ * Get company contributors list - Server Action
  */
 export async function getCopanyContributorsAction(copanyId: string) {
   try {
@@ -10,11 +10,11 @@ export async function getCopanyContributorsAction(copanyId: string) {
       await CopanyContributorService.getCopanyContributorsByCopanyId(copanyId);
     return contributors;
   } catch (error) {
-    console.error("❌ 获取公司贡献者失败:", error);
+    console.error("❌ Failed to get company contributors:", error);
     if (error instanceof Error) {
-      throw new Error(`获取公司贡献者失败: ${error.message}`);
+      throw new Error(`Failed to get company contributors: ${error.message}`);
     } else {
-      throw new Error("获取公司贡献者失败: 未知错误");
+      throw new Error("Failed to get company contributors: Unknown error");
     }
   }
 }

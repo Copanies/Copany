@@ -3,71 +3,73 @@ import { createSupabaseClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
 /**
- * 获取当前用户的 GitHub 访问令牌
- * 优先从 Supabase session 获取，如果获取不到则从 Cookie 获取（SSR 场景）
- * @returns GitHub 访问令牌，如果未找到则返回 null
+ * Get current user's GitHub access token
+ * Priority: fetch from Supabase session first, if not available then from Cookie (for SSR scenarios)
+ * @returns GitHub access token, or null if not found
  */
 export async function getGithubAccessToken(): Promise<string | null> {
   try {
-    console.log("🔍 开始获取 GitHub 访问令牌...");
+    console.log("🔍 Starting to get GitHub access token...");
     const supabase = await createSupabaseClient();
 
-    // 获取当前用户并验证身份
+    // Get current user and verify identity
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
 
     if (userError) {
-      console.error("❌ 获取用户信息失败:", userError.message);
-      // 用户获取失败时，尝试从 Cookie 获取
+      console.error("❌ Failed to get user information:", userError.message);
+      // When user retrieval fails, try to get from Cookie
       return await getTokenFromCookie();
     }
 
     if (!user) {
-      console.log("ℹ️ 用户未登录 - 没有找到有效用户，尝试从 Cookie 获取");
+      console.log(
+        "ℹ️ User not logged in - No valid user found, trying to get from Cookie"
+      );
       return await getTokenFromCookie();
     }
 
-    console.log("ℹ️ 找到用户，用户ID:", user.id);
+    console.log("ℹ️ User found, user ID:", user.id);
 
-    // 由于 getUser() 不返回 provider_token，我们需要从会话中获取
-    // 但这里我们首先验证了用户身份
+    // Since getUser() doesn't return provider_token, we need to get it from the session
+    // But here we first verified the user identity
     const {
       data: { session },
       error: sessionError,
     } = await supabase.auth.getSession();
 
     if (sessionError || !session) {
-      console.log("ℹ️ 无法获取会话令牌，尝试从 Cookie 获取");
+      console.log("ℹ️ Unable to get session token, trying to get from Cookie");
       return await getTokenFromCookie();
     }
 
-    // 从会话中获取 provider_token (GitHub 访问令牌)
+    // Get provider_token (GitHub access token) from session
     const accessToken = session.provider_token;
 
     if (!accessToken) {
       console.log(
-        "⚠️ 会话中未找到 GitHub 访问令牌 - provider_token 为空，尝试从 Cookie 获取"
+        "⚠️ GitHub access token not found in session - provider_token is empty, trying to get from Cookie"
       );
       return await getTokenFromCookie();
     }
 
-    // 注意：在页面组件中无法修改 Cookie，只在 Server Action 或 Route Handler 中更新
-    // Cookie 更新逻辑已移至 OAuth 回调处理中
+    // Note: Cannot modify Cookies in page components, only update in Server Action or Route Handler
+    // Cookie update logic has been moved to OAuth callback handler
 
-    console.log("✅ 成功从会话获取 GitHub 访问令牌");
+    console.log("✅ Successfully retrieved GitHub access token from session");
     return accessToken;
   } catch (error) {
-    console.error("❌ 获取 GitHub 访问令牌异常:", error);
-    // 发生异常时，尝试从 Cookie 获取
+    console.error("❌ Exception when getting GitHub access token:", error);
+    // When exception occurs, try to get from Cookie
     return await getTokenFromCookie();
   }
 }
 
 /**
- * 从 Cookie 中获取 GitHub 访问令牌（用于 SSR 场景）
- * @returns GitHub 访问令牌，如果未找到则返回 null
+ * Get GitHub access token from Cookie (for SSR scenarios)
+ * @returns GitHub access token, or null if not found
  */
 async function getTokenFromCookie(): Promise<string | null> {
   try {
@@ -75,22 +77,22 @@ async function getTokenFromCookie(): Promise<string | null> {
     const token = cookieStore.get("github_access_token")?.value;
 
     if (!token) {
-      console.log("ℹ️ Cookie 中未找到 GitHub 访问令牌");
+      console.log("ℹ️ GitHub access token not found in Cookie");
       return null;
     }
 
-    console.log("✅ 成功从 Cookie 获取 GitHub 访问令牌");
+    console.log("✅ Successfully retrieved GitHub access token from Cookie");
     return token;
   } catch (error) {
-    console.error("❌ 从 Cookie 获取 GitHub 访问令牌失败:", error);
+    console.error("❌ Failed to get GitHub access token from Cookie:", error);
     return null;
   }
 }
 
 /**
- * 更新 Cookie 中的 GitHub 访问令牌
- * 当检测到 Supabase session 中有新的 provider_token 时调用
- * @param token GitHub 访问令牌
+ * Update GitHub access token in Cookie
+ * Called when a new provider_token is detected in Supabase session
+ * @param token GitHub access token
  */
 export async function updateGithubTokenCookie(token: string): Promise<void> {
   try {
@@ -101,22 +103,22 @@ export async function updateGithubTokenCookie(token: string): Promise<void> {
       sameSite: "lax",
       path: "/",
     });
-    console.log("✅ GitHub access token Cookie 已更新");
+    console.log("✅ GitHub access token Cookie updated");
   } catch (error) {
-    console.error("❌ 更新 GitHub access token Cookie 失败:", error);
+    console.error("❌ Failed to update GitHub access token Cookie:", error);
   }
 }
 
 /**
- * 清除 Cookie 中的 GitHub 访问令牌
+ * Clear GitHub access token from Cookie
  */
 export async function clearGithubTokenCookie(): Promise<void> {
   try {
     const cookieStore = await cookies();
     cookieStore.delete("github_access_token");
-    console.log("✅ GitHub access token Cookie 已清除");
+    console.log("✅ GitHub access token Cookie cleared");
   } catch (error) {
-    console.error("❌ 清除 GitHub access token Cookie 失败:", error);
+    console.error("❌ Failed to clear GitHub access token Cookie:", error);
   }
 }
 
@@ -210,6 +212,37 @@ export async function getOrgPublicRepos(
 }
 
 /**
+ * Get repository README without authentication
+ * @param repo Repository path, in the format "owner/repo"
+ * @returns Repository README content, or null if it doesn't exist
+ */
+export async function getPublicRepoReadme(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
+> {
+  const octokit = new Octokit(); // No auth parameter, using anonymous request
+
+  try {
+    const response = await octokit.request(`GET /repos/${repo}/readme`);
+    return response.data;
+  } catch (error: unknown) {
+    // If it's a 404 error (README doesn't exist), return null instead of throwing an error
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 404
+    ) {
+      console.log(`ℹ️ Repository ${repo} does not have a README file`);
+      return null;
+    }
+    // Other errors are thrown directly
+    throw error;
+  }
+}
+
+/**
  * Get repository README from GitHub
  * @param repo Repository name in the format "owner/repo"
  * @returns Repository README content
@@ -222,29 +255,36 @@ export async function getRepoReadme(
   RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
 > {
   const accessToken = await getGithubAccessToken();
-  console.log("accessToken", accessToken);
-  if (!accessToken) {
-    return null;
-  }
-  const octokit = new Octokit({
-    auth: accessToken as string,
-  });
 
-  try {
-    const response = await octokit.request(`GET /repos/${repo}/readme`);
-    return response.data;
-  } catch (error: unknown) {
-    // 如果是 404 错误（README 不存在），返回 null 而不是抛出错误
-    if (
-      error &&
-      typeof error === "object" &&
-      "status" in error &&
-      error.status === 404
-    ) {
-      console.log(`ℹ️ Repository ${repo} does not have a README file`);
-      return null;
+  // If we have an access token, use authenticated request (can access private repository README)
+  if (accessToken) {
+    console.log("Using authenticated request to get README");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
+
+    try {
+      const response = await octokit.request(`GET /repos/${repo}/readme`);
+      return response.data;
+    } catch (error: unknown) {
+      // If it's a 404 error (README doesn't exist), return null instead of throwing an error
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.log(`ℹ️ Repository ${repo} does not have a README file`);
+        return null;
+      }
+      // Other errors are thrown directly
+      throw error;
     }
-    // 其他错误直接抛出
-    throw error;
+  } else {
+    // If we don't have an access token, try to get public repository README without authentication
+    console.log(
+      "No access token, trying to get public repository README anonymously"
+    );
+    return await getPublicRepoReadme(repo);
   }
 }

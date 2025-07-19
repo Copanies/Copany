@@ -8,43 +8,43 @@ import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 /**
- * 创建新公司 - Server Action
+ * Create new company - Server Action
  */
 export async function createCopanyAction(
   copanyData: Omit<Copany, "id" | "created_at" | "updated_at" | "created_by">
 ) {
-  console.log("🏢 开始创建 copany:", copanyData);
+  console.log("🏢 Starting to create copany:", copanyData);
 
   try {
-    // 获取当前用户
+    // Get current user
     const user = await getCurrentUser();
     if (!user) {
-      console.error("❌ 用户未登录");
-      throw new Error("用户未登录");
+      console.error("❌ User not logged in");
+      throw new Error("User not logged in");
     }
 
     const accessToken = await getGithubAccessToken();
 
     if (!accessToken) {
-      console.error("❌ 获取GitHub访问令牌失败");
-      throw new Error("获取GitHub访问令牌失败");
+      console.error("❌ Failed to get GitHub access token");
+      throw new Error("Failed to get GitHub access token");
     }
 
-    // 创建公司
+    // Create company
     const newCopany = await CopanyService.createCopany({
       ...copanyData,
       created_by: user.id,
     });
 
     console.log(
-      "✅ 公司创建成功:",
+      "✅ Company created successfully:",
       newCopany.id,
       "Logo URL:",
       newCopany.logo_url
     );
     return { success: true, copany: newCopany };
   } catch (error) {
-    console.error("❌ 创建公司失败:", error);
+    console.error("❌ Failed to create company:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -53,17 +53,17 @@ export async function createCopanyAction(
 }
 
 /**
- * 获取当前用户的公共仓库
+ * Get current user's public repositories
  */
 async function getUserPublicRepos(): Promise<
   RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"]
 > {
-  console.log("📋 开始获取用户个人公共仓库");
+  console.log("📋 Starting to fetch user's public repositories");
 
   try {
     const accessToken = await getGithubAccessToken();
     if (!accessToken) {
-      throw new Error("GitHub访问令牌获取失败");
+      throw new Error("Failed to get GitHub access token");
     }
 
     const octokit = new Octokit({
@@ -76,59 +76,62 @@ async function getUserPublicRepos(): Promise<
       per_page: 100,
     });
 
-    console.log(`✅ 成功获取 ${response.data.length} 个用户公共仓库`);
+    console.log(
+      `✅ Successfully fetched ${response.data.length} user public repositories`
+    );
     return response.data;
   } catch (error) {
-    console.error("❌ 获取用户公共仓库失败:", error);
+    console.error("❌ Failed to fetch user's public repositories:", error);
     throw error;
   }
 }
 
 /**
- * 获取用户的GitHub组织和仓库 - Server Action
+ * Get user's GitHub organizations and repositories - Server Action
  */
 export async function getOrgAndReposAction(): Promise<{
   success: boolean;
   data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
   error?: string;
 }> {
-  console.log("📋 开始获取GitHub仓库");
+  console.log("📋 Starting to fetch GitHub repositories");
 
   try {
-    // 只获取用户有权限的所有公共仓库（包括个人和组织仓库）
+    // Only get all public repositories the user has access to (including personal and organization repos)
     const repos = await getUserPublicRepos();
 
-    console.log("✅ 成功获取GitHub数据");
+    console.log("✅ Successfully fetched GitHub data");
     return {
       success: true,
       data: repos,
     };
   } catch (error) {
-    console.error("❌ 获取GitHub数据失败:", error);
-    const errorMessage = error instanceof Error ? error.message : "未知错误";
+    console.error("❌ Failed to fetch GitHub data:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: errorMessage };
   }
 }
 
 /**
- * 获取公司详情 - Server Action
+ * Get company details - Server Action
  */
 export async function getCopanyByIdAction(copanyId: string) {
   try {
     const copany = await CopanyService.getCopanyById(copanyId);
     return copany;
   } catch (error) {
-    console.error("❌ 获取公司详情失败:", error);
+    console.error("❌ Failed to get company details:", error);
     if (error instanceof Error) {
-      throw new Error(`获取公司详情失败: ${error.message}`);
+      throw new Error(`Failed to get company details: ${error.message}`);
     } else {
-      throw new Error("获取公司详情失败: 未知错误");
+      throw new Error("Failed to get company details: Unknown error");
     }
   }
 }
 
 /**
- * 更新公司 - Server Action
+ * Update company - Server Action
  */
 export async function updateCopanyAction(
   copany: Omit<Copany, "created_at" | "updated_at">
@@ -137,11 +140,11 @@ export async function updateCopanyAction(
     const updatedCopany = await CopanyService.updateCopany(copany);
     return updatedCopany;
   } catch (error) {
-    console.error("❌ 更新公司失败:", error);
+    console.error("❌ Failed to update company:", error);
     if (error instanceof Error) {
-      throw new Error(`更新公司失败: ${error.message}`);
+      throw new Error(`Failed to update company: ${error.message}`);
     } else {
-      throw new Error("更新公司失败: 未知错误");
+      throw new Error("Failed to update company: Unknown error");
     }
   }
 }
@@ -150,7 +153,7 @@ export async function deleteCopanyAction(copanyId: string) {
   try {
     await CopanyService.deleteCopany(copanyId);
   } catch (error) {
-    console.error("❌ 删除公司失败:", error);
+    console.error("❌ Failed to delete company:", error);
     throw error;
   }
 }

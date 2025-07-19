@@ -4,7 +4,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface TabViewProps {
   tabs: { label: string; content: React.ReactNode }[];
-  urlParamName?: string; // 可选的 URL 参数名称
+  urlParamName?: string; // Optional URL parameter name
 }
 
 export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
@@ -12,7 +12,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // 从 URL 获取初始 tab，如果没有则使用第一个 tab
+  // Get initial tab from URL, if not found use the first tab
   const getInitialTab = () => {
     const urlTab = searchParams.get(urlParamName);
     const validTab = tabs.find((tab) => tab.label === urlTab);
@@ -21,7 +21,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
-  // 当 URL 参数变化时更新 activeTab
+  // Update activeTab when URL parameters change
   useEffect(() => {
     const urlTab = searchParams.get(urlParamName);
     if (urlTab && tabs.find((tab) => tab.label === urlTab)) {
@@ -29,7 +29,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     }
   }, [searchParams, urlParamName, tabs]);
 
-  // 更新 URL 参数
+  // Update URL parameters
   const updateUrlParam = (tabLabel: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(urlParamName, tabLabel);
@@ -41,7 +41,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     updateUrlParam(tabLabel);
   };
 
-  // 使用 useMemo 缓存 tabs 内容
+  // Use useMemo to cache tab contents
   const tabContents = useMemo(() => {
     return tabs.map((tab) => (
       <div

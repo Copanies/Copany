@@ -19,15 +19,15 @@ const decodeGitHubContent = (base64String: string): string => {
     const decoder = new TextDecoder("utf-8");
     return decoder.decode(bytes);
   } catch (error) {
-    console.error("解码失败:", error);
-    throw new Error("无法解码 GitHub 内容");
+    console.error("Failed to decode GitHub content:", error);
+    throw new Error("Failed to decode GitHub content");
   }
 };
 
 /**
- * 从 GitHub URL 生成新建 README 文件的链接
- * @param githubUrl GitHub 仓库 URL
- * @returns 新建 README 文件的链接，如果解析失败则返回 null
+ * Generate a link to create a new README file from GitHub URL
+ * @param githubUrl GitHub repository URL
+ * @returns Link to create a new README file, or null if parsing fails
  */
 const generateNewReadmeUrl = (githubUrl: string): string | null => {
   try {
@@ -36,14 +36,14 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 
     if (pathSegments.length >= 2) {
       const [owner, repo] = pathSegments;
-      // 移除可能的 .git 后缀
+      // Remove possible .git suffix
       const cleanRepo = repo.replace(/\.git$/, "");
-      // 构造新建 README 文件的 URL
+      // Construct URL for creating a new README file
       return `https://github.com/${owner}/${cleanRepo}/new/main?filename=README.md`;
     }
     return null;
   } catch (error) {
-    console.error("生成新建 README URL 失败:", error);
+    console.error("Failed to generate new README URL:", error);
     return null;
   }
 };
@@ -53,6 +53,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     console.log("ReadmeTabView mounted, starting to fetch README");
@@ -62,23 +63,20 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         setError(null);
         setNotFound(false);
 
-        // 检查用户是否已登录（使用缓存管理器）
+        // Check if user is logged in, but don't prevent non-logged in users from viewing public repository README
         const user = await currentUserManager.getCurrentUser();
-
-        if (!user) {
-          setReadmeContent("请先登录以查看 README 内容");
-          return;
-        }
+        setIsLoggedIn(!!user);
 
         if (!githubUrl) {
-          setReadmeContent("未找到仓库信息");
+          setReadmeContent("No repository information found");
           return;
         }
-        // 首先检查是否有缓存，只有在需要网络请求时才显示 loading
+
+        // First check if there's a cache, only show loading when network request is needed
         const cachedContent = readmeManager.getCachedReadme(githubUrl);
 
         if (cachedContent) {
-          // 有缓存，立即显示缓存内容，不显示 loading
+          // Cache exists, immediately display cached content without showing loading
           if (cachedContent === "No README") {
             setNotFound(true);
             setReadmeContent("");
@@ -86,7 +84,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             setReadmeContent(cachedContent);
           }
 
-          // 后台刷新缓存，不显示 loading
+          // Refresh cache in background without showing loading
           readmeManager
             .getReadme(githubUrl, async () => {
               const readme = await getRepoReadmeAction(githubUrl);
@@ -96,7 +94,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
               return decodeGitHubContent(readme.content);
             })
             .then((freshContent) => {
-              // 只有当内容发生变化时才更新UI
+              // Only update UI when content has changed
               if (freshContent !== cachedContent) {
                 if (freshContent === "No README") {
                   setNotFound(true);
@@ -108,10 +106,10 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
               }
             })
             .catch((error) => {
-              console.warn("后台刷新 README 失败:", error);
+              console.warn("Background refresh README failed:", error);
             });
         } else {
-          // 无缓存，需要网络请求，显示 loading
+          // No cache, network request needed, show loading
           setLoading(true);
           try {
             const content = await readmeManager.getReadme(
@@ -136,9 +134,9 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
           }
         }
       } catch (err) {
-        console.error("获取 README 失败:", err);
+        console.error("Failed to get README:", err);
 
-        const errorMessage = "无法获取 README 内容。";
+        const errorMessage = "Failed to get README content.";
         setError(errorMessage);
         setReadmeContent("");
       }
@@ -157,8 +155,8 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-600">{error}</p>
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -174,12 +172,20 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             strokeWidth={1}
           />
         }
-        title="Add a README"
-        description="Help people understand your Copany by adding a README — share its purpose, how it works, and how others can contribute."
-        buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-        buttonTitle="Add a README"
+        title="Add README"
+        description={
+          isLoggedIn
+            ? "Help people learn about your Copany by adding a README — share its purpose, how it works, and how others can contribute."
+            : "This repository does not have a README yet. Log in to add a README file."
+        }
+        buttonIcon={
+          isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
+        }
+        buttonTitle={isLoggedIn ? "Add README" : undefined}
         buttonAction={
-          newReadmeUrl ? () => window.open(newReadmeUrl, "_blank") : undefined
+          isLoggedIn && newReadmeUrl
+            ? () => window.open(newReadmeUrl, "_blank")
+            : undefined
         }
       />
     );
