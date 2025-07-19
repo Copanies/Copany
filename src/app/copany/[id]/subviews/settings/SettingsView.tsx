@@ -7,7 +7,7 @@ import {
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
@@ -65,7 +65,14 @@ export default function SettingsView({
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
 
-  const copanyManager = new CopanyManager();
+  // Create a memoized CopanyManager instance with callback for real-time updates
+  const copanyManager = useMemo(() => {
+    return new CopanyManager((key, updatedData) => {
+      console.log(`[SettingsView] 后台数据更新: ${key}`, updatedData);
+      // Update the copany data when background refresh occurs
+      onCopanyUpdate(updatedData);
+    });
+  }, [onCopanyUpdate]);
 
   const assetLinks = [
     {

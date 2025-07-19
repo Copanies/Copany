@@ -412,9 +412,6 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
-    // Calculate max tooltip width: min(viewportWidth - 24px, 420px)
-    const maxTooltipWidth = Math.min(viewportWidth - 24, 420);
-
     // Horizontal boundary detection with 12px safety margin
     if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
       tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
@@ -481,9 +478,6 @@ function UserChart({
       "line"
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
-
-    // Calculate max tooltip width: min(viewportWidth - 24px, 420px)
-    const maxTooltipWidth = Math.min(viewportWidth - 24, 420);
 
     // Horizontal boundary detection with 12px safety margin
     if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
