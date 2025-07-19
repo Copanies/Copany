@@ -2,25 +2,30 @@ import { readmeCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 /**
- * README 数据验证器
+ * README data validator
  */
 function validateReadme(content: string): string {
   if (typeof content !== "string") {
-    console.warn(`[ReadmeManager] ⚠️ 无效的 README 内容类型:`, typeof content);
+    console.warn(
+      `[ReadmeManager] ⚠️ Invalid README content type:`,
+      typeof content
+    );
     return "";
   }
 
   if (content.length > 1024 * 1024) {
-    // 1MB 限制
-    console.warn(`[ReadmeManager] ⚠️ README 内容过大: ${content.length} 字符`);
-    return content.substring(0, 1024 * 1024) + "\n\n[内容已截断...]";
+    // 1MB limit
+    console.warn(
+      `[ReadmeManager] ⚠️ README content too large: ${content.length} characters`
+    );
+    return content.substring(0, 1024 * 1024) + "\n\n[Content truncated...]";
   }
 
   return content;
 }
 
 /**
- * 内部 README 数据管理器实现
+ * Internal README data manager implementation
  */
 class ReadmeDataManager extends GenericDataManager<string> {
   constructor() {
@@ -28,27 +33,27 @@ class ReadmeDataManager extends GenericDataManager<string> {
       cacheManager: readmeCache,
       managerName: "ReadmeManager",
       validator: validateReadme,
-      enableStaleCache: true, // README 数据可以使用过期缓存降级
+      enableStaleCache: true, // README data can use stale cache for fallback
     });
   }
 
   protected getDataInfo(data: string): string {
     const lines = data.split("\n").length;
     const chars = data.length;
-    return `${chars} 字符, ${lines} 行`;
+    return `${chars} characters, ${lines} lines`;
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const readmeDataManager = new ReadmeDataManager();
 
 /**
- * README 数据管理器
- * 提供统一的 README 缓存管理
+ * README data manager
+ * Provides unified README cache management
  */
 export class ReadmeManager {
   /**
-   * 获取指定 GitHub 仓库的 README，优先从缓存获取
+   * Get README for specified GitHub repository, prioritize cache
    */
   async getReadme(
     githubUrl: string,
@@ -58,7 +63,7 @@ export class ReadmeManager {
   }
 
   /**
-   * 强制刷新 README 数据
+   * Force refresh README data
    */
   async refreshReadme(
     githubUrl: string,
@@ -68,42 +73,42 @@ export class ReadmeManager {
   }
 
   /**
-   * 清除指定 GitHub 仓库的 README 缓存
+   * Clear README cache for specified GitHub repository
    */
   clearReadme(githubUrl: string): void {
     readmeDataManager.clearCache(githubUrl);
   }
 
   /**
-   * 清除所有 README 缓存
+   * Clear all README cache
    */
   clearAllReadme(): void {
     readmeDataManager.clearCache();
   }
 
   /**
-   * 手动设置 README 缓存
+   * Manually set README cache
    */
   setReadme(githubUrl: string, content: string): void {
     readmeDataManager.setData(githubUrl, content);
   }
 
   /**
-   * 获取缓存的 README（不会触发网络请求）
+   * Get cached README (won't trigger network request)
    */
   getCachedReadme(githubUrl: string): string | null {
     return readmeDataManager.getCachedData(githubUrl);
   }
 
   /**
-   * 检查指定 GitHub 仓库的 README 是否已缓存
+   * Check if README for specified GitHub repository is cached
    */
   hasReadme(githubUrl: string): boolean {
     return readmeDataManager.hasData(githubUrl);
   }
 
   /**
-   * 预热缓存
+   * Preload cache
    */
   async preloadReadme(
     githubUrl: string,
@@ -113,12 +118,12 @@ export class ReadmeManager {
   }
 
   /**
-   * 获取缓存统计信息
+   * Get cache statistics
    */
   getCacheStats(): { count: number; totalSize: number } {
     return readmeDataManager.getCacheStats();
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const readmeManager = new ReadmeManager();

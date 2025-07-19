@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Crepe } from "@milkdown/crepe";
-// 仅导入通用样式，不使用预设主题
+// Only import common styles, don't use preset themes
 import "@milkdown/crepe/theme/common/style.css";
 
-// 完全基于原始 Nord 主题的自定义样式实现
+// Custom style implementation based entirely on original Nord theme
 const nordThemeStyles = `
-  /* ===== 亮色模式 Nord 主题变量 ===== */
+  /* ===== Light mode Nord theme variables ===== */
   .milkdown-editor.nord-light {
     --crepe-color-background: transparent;
     --crepe-color-on-background: #1b1c1d;
@@ -33,7 +33,7 @@ const nordThemeStyles = `
     --crepe-shadow-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   }
 
-  /* ===== 暗色模式 Nord 主题变量 ===== */
+  /* ===== Dark mode Nord theme variables ===== */
   .milkdown-editor.nord-dark {
     --crepe-color-background: transparent;
     --crepe-color-on-background: #f8f9ff;
@@ -61,7 +61,7 @@ const nordThemeStyles = `
     --crepe-shadow-2: 0px 1px 2px 0px rgba(255, 255, 255, 0.3), 0px 2px 6px 2px rgba(255, 255, 255, 0.15);
   }
 
-  /* ===== 媒体查询自动主题切换 ===== */
+  /* ===== Media query automatic theme switching ===== */
   @media (prefers-color-scheme: light) {
     .milkdown-editor:not(.force-dark) {
       --crepe-color-background: transparent;
@@ -120,7 +120,7 @@ const nordThemeStyles = `
     }
   }
 
-  /* ===== 基础样式覆盖 ===== */
+  /* ===== Base style overrides ===== */
   .milkdown-editor.milkdown {
     position: relative;
     font-family: var(--crepe-font-default);
@@ -151,7 +151,7 @@ const nordThemeStyles = `
     outline: none;
   }
 
-  /* ===== ProseMirror 编辑器样式 ===== */
+  /* ===== ProseMirror editor styles ===== */
   .milkdown-editor.milkdown .ProseMirror {
     padding: 8px 12px;
     outline: none;
@@ -180,7 +180,7 @@ const nordThemeStyles = `
     outline: 2px solid var(--crepe-color-primary);
   }
 
-  /* ===== 标题样式 ===== */
+  /* ===== Heading styles ===== */
   .milkdown-editor.milkdown .ProseMirror h1,
   .milkdown-editor.milkdown .ProseMirror h2,
   .milkdown-editor.milkdown .ProseMirror h3,
@@ -229,14 +229,14 @@ const nordThemeStyles = `
     margin-top: 16px;
   }
 
-  /* ===== 段落和文本样式 ===== */
+  /* ===== Paragraph and text styles ===== */
   .milkdown-editor.milkdown .ProseMirror p {
     font-size: 16px;
     line-height: 24px;
     padding: 4px 0;
   }
 
-  /* ===== 代码样式 ===== */
+  /* ===== Code styles ===== */
   .milkdown-editor.milkdown .ProseMirror code {
     color: var(--crepe-color-inline-code);
     background: color-mix(in srgb, var(--crepe-color-inline-area), transparent 40%);
@@ -262,13 +262,13 @@ const nordThemeStyles = `
     padding: 0;
   }
 
-  /* ===== 链接样式 ===== */
+  /* ===== Link styles ===== */
   .milkdown-editor.milkdown .ProseMirror a {
     color: var(--crepe-color-primary);
     text-decoration: underline;
   }
 
-  /* ===== 引用块样式 ===== */
+  /* ===== Quote block styles ===== */
   .milkdown-editor.milkdown .ProseMirror blockquote {
     border-left: 4px solid var(--crepe-color-primary);
     padding: 8px 16px;
@@ -277,7 +277,7 @@ const nordThemeStyles = `
     font-style: italic;
   }
 
-  /* ===== 分割线样式 ===== */
+  /* ===== Divider styles ===== */
   .milkdown-editor.milkdown .ProseMirror hr {
     border: none;
     height: 2px;
@@ -290,7 +290,7 @@ const nordThemeStyles = `
     background: var(--crepe-color-primary);
   }
 
-  /* ===== 列表样式 ===== */
+  /* ===== List styles ===== */
   .milkdown-editor.milkdown .ProseMirror ul,
   .milkdown-editor.milkdown .ProseMirror ol {
     padding-left: 24px;
@@ -301,7 +301,7 @@ const nordThemeStyles = `
     margin: 4px 0;
   }
 
-  /* ===== 占位符样式 ===== */
+  /* ===== Placeholder styles ===== */
   .milkdown-editor.milkdown .crepe-placeholder::before {
     position: absolute;
     color: color-mix(in srgb, var(--crepe-color-on-background), transparent 60%);
@@ -310,7 +310,7 @@ const nordThemeStyles = `
     content: attr(data-placeholder);
   }
 
-  /* ===== 工具栏样式 ===== */
+  /* ===== Toolbar styles ===== */
   .milkdown-editor.milkdown .milkdown-toolbar {
     z-index: 10;
     position: absolute;
@@ -361,7 +361,7 @@ const nordThemeStyles = `
     fill: var(--crepe-color-primary);
   }
 
-  /* ===== 代码块样式 ===== */
+  /* ===== Code block styles ===== */
   .milkdown-editor.milkdown .milkdown-code-block {
     display: block;
     position: relative;
@@ -385,13 +385,13 @@ const nordThemeStyles = `
     background: var(--crepe-color-surface);
   }
 
-  /* ===== CodeMirror 活动行号样式 ===== */
+  /* ===== CodeMirror active line number styles ===== */
   .milkdown-editor.milkdown .milkdown-code-block .ͼo .cm-activeLineGutter {
     background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 85%) !important;
     color: color-mix(in srgb, var(--crepe-color-on-surface), transparent 30%) !important;
   }
 
-  /* 亮色模式下的活动行号 */
+  /* Active line number in light mode */
   @media (prefers-color-scheme: light) {
     .milkdown-editor.milkdown:not(.force-dark) .milkdown-code-block .ͼo .cm-activeLineGutter {
       background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 90%) !important;
@@ -399,7 +399,7 @@ const nordThemeStyles = `
     }
   }
 
-  /* 暗色模式下的活动行号 */
+  /* Active line number in dark mode */
   @media (prefers-color-scheme: dark) {
     .milkdown-editor.milkdown:not(.force-light) .milkdown-code-block .ͼo .cm-activeLineGutter {
       background-color: color-mix(in srgb, var(--crepe-color-outline), transparent 80%) !important;
@@ -407,7 +407,7 @@ const nordThemeStyles = `
     }
   }
 
-  /* ===== 确保平滑过渡 ===== */
+  /* ===== Ensure smooth transition ===== */
   .milkdown-editor,
   .milkdown-editor *,
   .milkdown-editor .milkdown,
@@ -416,7 +416,7 @@ const nordThemeStyles = `
   }
 `;
 
-// Crepe 编辑器组件
+// Crepe editor component
 export default function MilkdownEditor({
   onContentChange,
   initialContent = "",
@@ -431,12 +431,12 @@ export default function MilkdownEditor({
   const onContentChangeRef = useRef(onContentChange);
   const isInitializingRef = useRef(false);
 
-  // 保持 onContentChange 的最新引用
+  // Keep the latest reference to onContentChange
   useEffect(() => {
     onContentChangeRef.current = onContentChange;
   }, [onContentChange]);
 
-  // 创建编辑器的函数
+  // Function to create the editor
   const createEditor = useCallback(async () => {
     if (!divRef.current || isInitializingRef.current || crepeRef.current) {
       return;
@@ -445,12 +445,12 @@ export default function MilkdownEditor({
     isInitializingRef.current = true;
 
     try {
-      // 完全清空容器
+      // Completely clear the container
       divRef.current.innerHTML = "";
 
       console.log("Creating Crepe editor with content:", initialContent);
 
-      // 创建编辑器
+      // Create the editor
       const crepe = new Crepe({
         root: divRef.current,
         defaultValue: initialContent,
@@ -470,19 +470,19 @@ export default function MilkdownEditor({
         },
       });
 
-      // 等待编辑器完全创建
+      // Wait for the editor to be fully created
       await crepe.create();
 
-      // 验证编辑器是否成功创建
+      // Validate if the editor was successfully created
       if (!divRef.current) {
         await crepe.destroy();
         return;
       }
 
-      // 设置编辑器引用
+      // Set the editor reference
       crepeRef.current = crepe;
 
-      // 延迟设置监听器，确保编辑器完全就绪
+      // Delay setting listeners to ensure the editor is fully ready
       setTimeout(() => {
         if (crepeRef.current && divRef.current) {
           try {
@@ -512,7 +512,7 @@ export default function MilkdownEditor({
   }, [initialContent, isFullScreen]);
 
   useEffect(() => {
-    // 创建编辑器
+    // Create the editor
     if (divRef.current && !crepeRef.current && !isInitializingRef.current) {
       createEditor();
     }

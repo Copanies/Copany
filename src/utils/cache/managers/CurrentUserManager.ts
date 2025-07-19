@@ -4,27 +4,27 @@ import { currentUserCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 /**
- * 内部当前用户数据管理器实现
+ * Internal current user data manager implementation
  */
 class CurrentUserDataManager extends GenericDataManager<User> {
   constructor() {
     super({
       cacheManager: currentUserCache,
       managerName: "CurrentUserManager",
-      enableStaleCache: false, // 用户数据敏感，不使用过期缓存
+      enableStaleCache: false, // User data is sensitive, don't use stale cache
     });
   }
 
   protected getDataInfo(data: User): string {
-    return `用户 ${data.email || data.id}`;
+    return `User ${data.email || data.id}`;
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const currentUserDataManager = new CurrentUserDataManager();
 
 /**
- * 获取当前用户的数据获取函数
+ * Get current user data fetching function
  */
 async function fetchCurrentUser(): Promise<User> {
   const supabase = createClient();
@@ -46,12 +46,12 @@ async function fetchCurrentUser(): Promise<User> {
 }
 
 /**
- * 简化的当前用户管理器
- * 提供缓存和统一的用户获取接口
+ * Simplified current user manager
+ * Provides caching and unified user fetching interface
  */
 export class CurrentUserManager {
   /**
-   * 获取当前用户，优先从缓存获取
+   * Get current user, prioritize cache
    */
   async getCurrentUser(): Promise<User | null> {
     try {
@@ -67,26 +67,26 @@ export class CurrentUserManager {
   }
 
   /**
-   * 清除用户缓存（用于登出）
+   * Clear user cache (for logout)
    */
   clearUser(): void {
     currentUserDataManager.clearCache("current_user");
   }
 
   /**
-   * 手动设置用户（用于登录后立即缓存）
+   * Manually set user (for immediate caching after login)
    */
   setUser(user: User): void {
     currentUserDataManager.setData("current_user", user);
   }
 
   /**
-   * 获取缓存的用户（不会触发网络请求）
+   * Get cached user (won't trigger network request)
    */
   getCachedUser(): User | null {
     return currentUserDataManager.getCachedData("current_user");
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const currentUserManager = new CurrentUserManager();

@@ -1,56 +1,56 @@
-# Copany App 架构文档
+# Copany App Architecture Documentation
 
-## 架构模式
+## Architecture Pattern
 
-采用**分层架构**模式，实现关注点分离和数据驱动的设计。
+Adopts a **layered architecture** pattern, implementing separation of concerns and data-driven design.
 
-## 文件结构
+## File Structure
 
 ```
 src/
-├── app/                    # Next.js App Router 页面
-│   ├── page.tsx           # 页面组件（数据获取层）
-│   └── layout.tsx         # 布局组件
-├── components/            # UI 组件（纯渲染层）
-│   └── CopanyListView.tsx # 列表视图组件
-├── services/              # 业务逻辑层
-│   └── copany.service.ts  # Copany 数据服务
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Page components (data fetching layer)
+│   └── layout.tsx         # Layout components
+├── components/            # UI components (pure rendering layer)
+│   └── CopanyListView.tsx # List view components
+├── services/              # Business logic layer
+│   └── copany.service.ts  # Copany data services
 ├── actions/               # Server Actions
-│   └── auth.actions.ts    # 认证操作
-├── lib/                   # 工具库
-│   └── supabase.ts        # Supabase 客户端配置
-└── hooks/                 # 自定义 Hooks（可选）
-    └── useCopanies.ts     # 客户端状态管理示例
+│   └── auth.actions.ts    # Authentication operations
+├── lib/                   # Utility libraries
+│   └── supabase.ts        # Supabase client configuration
+└── hooks/                 # Custom Hooks (optional)
+    └── useCopanies.ts     # Client-side state management example
 ```
 
-## 分层说明
+## Layer Descriptions
 
-### 1. 数据层 (Data Layer)
+### 1. Data Layer
 
-- **位置**: `src/lib/supabase.ts`
-- **职责**: 数据库连接配置
-- **特点**: 区分服务端和客户端连接
+- **Location**: `src/lib/supabase.ts`
+- **Responsibility**: Database connection configuration
+- **Features**: Distinguishes between server-side and client-side connections
 
-### 2. 业务逻辑层 (Service Layer)
+### 2. Business Logic Layer (Service Layer)
 
-- **位置**: `src/services/`
-- **职责**: 封装所有业务逻辑和数据操作
-- **特点**: 静态方法，可复用，错误处理
+- **Location**: `src/services/`
+- **Responsibility**: Encapsulates all business logic and data operations
+- **Features**: Static methods, reusable, error handling
 
-### 3. 操作层 (Actions Layer)
+### 3. Actions Layer
 
-- **位置**: `src/actions/`
-- **职责**: Server Actions，处理用户交互
-- **特点**: `"use server"` 指令，服务端执行
+- **Location**: `src/actions/`
+- **Responsibility**: Server Actions, handles user interactions
+- **Features**: `"use server"` directive, server-side execution
 
-### 4. 页面层 (Page Layer)
+### 4. Page Layer
 
-- **位置**: `src/app/page.tsx`
-- **职责**: 数据获取和页面布局
-- **特点**: 服务端组件，负责数据编排
+- **Location**: `src/app/page.tsx`
+- **Responsibility**: Data fetching and page layout
+- **Features**: Server components, responsible for data orchestration
 
-### 5. 视图层 (View Layer)
+### 5. View Layer
 
-- **位置**: `src/components/`
-- **职责**: 纯渲染组件
-- **特点**: 接收 props，无业务逻辑
+- **Location**: `src/components/`
+- **Responsibility**: Pure rendering components
+- **Features**: Receives props, no business logic

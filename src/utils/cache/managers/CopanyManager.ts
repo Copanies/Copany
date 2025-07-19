@@ -3,32 +3,32 @@ import { copanyCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 /**
- * 内部 Copany 数据管理器实现
+ * Internal Copany data manager implementation
  */
 class CopanyDataManager extends GenericDataManager<Copany> {
   constructor() {
     super({
       cacheManager: copanyCache,
       managerName: "CopanyManager",
-      enableStaleCache: false, // Copany 数据相对稳定，不需要过期缓存降级
+      enableStaleCache: false, // Copany data is relatively stable, no need for stale cache fallback
     });
   }
 
   protected getDataInfo(data: Copany): string {
-    return `项目 ${data.name} (${data.github_url})`;
+    return `Project ${data.name} (${data.github_url})`;
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const copanyDataManager = new CopanyDataManager();
 
 /**
- * Copany 数据管理器
- * 提供统一的 Copany 数据缓存管理
+ * Copany data manager
+ * Provides unified Copany data cache management
  */
 export class CopanyManager {
   /**
-   * 获取指定 Copany 数据，优先从缓存获取
+   * Get specified Copany data, prioritize cache
    */
   async getCopany(
     copanyId: string,
@@ -38,7 +38,7 @@ export class CopanyManager {
   }
 
   /**
-   * 强制刷新 Copany 数据
+   * Force refresh Copany data
    */
   async refreshCopany(
     copanyId: string,
@@ -48,42 +48,42 @@ export class CopanyManager {
   }
 
   /**
-   * 清除指定 Copany 的缓存
+   * Clear cache for specified Copany
    */
   clearCopany(copanyId: string): void {
     copanyDataManager.clearCache(copanyId);
   }
 
   /**
-   * 清除所有 Copany 缓存
+   * Clear all Copany cache
    */
   clearAllCopany(): void {
     copanyDataManager.clearCache();
   }
 
   /**
-   * 手动设置 Copany 缓存
+   * Manually set Copany cache
    */
   setCopany(copanyId: string, copany: Copany): void {
     copanyDataManager.setData(copanyId, copany);
   }
 
   /**
-   * 获取缓存的 Copany（不会触发网络请求）
+   * Get cached Copany (won't trigger network request)
    */
   getCachedCopany(copanyId: string): Copany | null {
     return copanyDataManager.getCachedData(copanyId);
   }
 
   /**
-   * 检查指定 Copany 是否已缓存
+   * Check if specified Copany is cached
    */
   hasCopany(copanyId: string): boolean {
     return copanyDataManager.hasData(copanyId);
   }
 
   /**
-   * 预热缓存
+   * Preload cache
    */
   async preloadCopany(
     copanyId: string,
@@ -93,5 +93,5 @@ export class CopanyManager {
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const copanyManager = new CopanyManager();

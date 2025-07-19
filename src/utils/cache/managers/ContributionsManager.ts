@@ -3,27 +3,30 @@ import { contributionsCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 /**
- * 贡献数据验证器
+ * Contribution data validator
  */
 function validateContributions(contributions: Contribution[]): Contribution[] {
   return contributions.filter((contribution) => {
-    // 基本验证
+    // Basic validation
     if (!contribution.id || !contribution.user_id || !contribution.copany_id) {
-      console.warn(`[ContributionsManager] ⚠️ 无效的贡献记录:`, contribution);
+      console.warn(
+        `[ContributionsManager] ⚠️ Invalid contribution record:`,
+        contribution
+      );
       return false;
     }
 
-    // 时间验证
+    // Time validation
     if (
       contribution.year < 2020 ||
       contribution.year > new Date().getFullYear() + 1
     ) {
-      console.warn(`[ContributionsManager] ⚠️ 年份异常:`, contribution);
+      console.warn(`[ContributionsManager] ⚠️ Abnormal year:`, contribution);
       return false;
     }
 
     if (contribution.month < 1 || contribution.month > 12) {
-      console.warn(`[ContributionsManager] ⚠️ 月份异常:`, contribution);
+      console.warn(`[ContributionsManager] ⚠️ Abnormal month:`, contribution);
       return false;
     }
 
@@ -32,8 +35,8 @@ function validateContributions(contributions: Contribution[]): Contribution[] {
 }
 
 /**
- * 贡献数据缓存管理器
- * 提供高级缓存功能，包括智能刷新和数据验证
+ * Contribution data cache manager
+ * Provides advanced caching functionality, including intelligent refresh and data validation
  */
 class ContributionsDataManager extends GenericDataManager<Contribution[]> {
   constructor() {
@@ -46,20 +49,20 @@ class ContributionsDataManager extends GenericDataManager<Contribution[]> {
   }
 
   protected getDataInfo(data: Contribution[]): string {
-    return `${data.length} 条`;
+    return `${data.length} records`;
   }
 }
 
-// 创建内部数据管理器实例
+// Create internal data manager instance
 const contributionsDataManager = new ContributionsDataManager();
 
 /**
- * 贡献数据管理器
- * 提供统一的贡献数据缓存管理
+ * Contribution data manager
+ * Provides unified contribution data cache management
  */
 export class ContributionsManager {
   /**
-   * 获取指定 Copany 的贡献数据，优先从缓存获取
+   * Get contribution data for specified Copany, prioritize cache
    */
   async getContributions(
     copanyId: string,
@@ -69,7 +72,7 @@ export class ContributionsManager {
   }
 
   /**
-   * 强制刷新贡献数据
+   * Force refresh contribution data
    */
   async refreshContributions(
     copanyId: string,
@@ -79,42 +82,42 @@ export class ContributionsManager {
   }
 
   /**
-   * 清除指定 Copany 的贡献缓存
+   * Clear contribution cache for specified Copany
    */
   clearContributions(copanyId: string): void {
     contributionsDataManager.clearCache(copanyId);
   }
 
   /**
-   * 清除所有贡献缓存
+   * Clear all contribution cache
    */
   clearAllContributions(): void {
     contributionsDataManager.clearCache();
   }
 
   /**
-   * 手动设置贡献缓存
+   * Manually set contribution cache
    */
   setContributions(copanyId: string, contributions: Contribution[]): void {
     contributionsDataManager.setData(copanyId, contributions);
   }
 
   /**
-   * 获取缓存的贡献数据（不会触发网络请求）
+   * Get cached contribution data (won't trigger network request)
    */
   getCachedContributions(copanyId: string): Contribution[] | null {
     return contributionsDataManager.getCachedData(copanyId);
   }
 
   /**
-   * 检查指定 Copany 的贡献是否已缓存
+   * Check if contributions for specified Copany are cached
    */
   hasContributions(copanyId: string): boolean {
     return contributionsDataManager.hasData(copanyId);
   }
 
   /**
-   * 预热缓存
+   * Preload cache
    */
   async preloadContributions(
     copanyId: string,
@@ -124,12 +127,12 @@ export class ContributionsManager {
   }
 
   /**
-   * 获取缓存统计信息
+   * Get cache statistics
    */
   getCacheStats(): { count: number; totalSize: number } {
     return contributionsDataManager.getCacheStats();
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const contributionsManager = new ContributionsManager();

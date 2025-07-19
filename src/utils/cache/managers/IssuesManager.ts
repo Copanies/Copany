@@ -3,13 +3,13 @@ import { issuesCache } from "../instances";
 import { GenericDataManager, DataItemOperations } from "../GenericDataManager";
 
 /**
- * Issues 数据验证器
+ * Issues data validator
  */
 function validateIssues(issues: IssueWithAssignee[]): IssueWithAssignee[] {
   return issues.filter((issue) => {
-    // 基本验证
+    // Basic validation
     if (!issue.id || !issue.title || !issue.copany_id) {
-      console.warn(`[IssuesManager] ⚠️ 无效的 issue 记录:`, issue);
+      console.warn(`[IssuesManager] ⚠️ Invalid issue record:`, issue);
       return false;
     }
     return true;
@@ -17,7 +17,7 @@ function validateIssues(issues: IssueWithAssignee[]): IssueWithAssignee[] {
 }
 
 /**
- * Issues 单个数据项操作定义
+ * Issues single data item operations definition
  */
 const issueItemOperations: DataItemOperations<
   IssueWithAssignee[],
@@ -42,12 +42,12 @@ const issueItemOperations: DataItemOperations<
   },
 
   addItem: (issues: IssueWithAssignee[], newIssue: IssueWithAssignee) => {
-    // 检查是否已存在，避免重复
+    // Check if already exists, avoid duplicates
     const exists = issues.some((issue) => issue.id === newIssue.id);
     if (exists) {
       return issues;
     }
-    return [newIssue, ...issues]; // 添加到开头
+    return [newIssue, ...issues]; // Add to beginning
   },
 
   removeItem: (issues: IssueWithAssignee[], issueId: string) => {
@@ -56,7 +56,7 @@ const issueItemOperations: DataItemOperations<
 };
 
 /**
- * 内部 Issues 数据管理器实现
+ * Internal Issues data manager implementation
  */
 class IssuesDataManager extends GenericDataManager<
   IssueWithAssignee[],
@@ -68,14 +68,14 @@ class IssuesDataManager extends GenericDataManager<
         cacheManager: issuesCache,
         managerName: "IssuesManager",
         validator: validateIssues,
-        enableStaleCache: true, // Issues 数据可能需要降级处理
+        enableStaleCache: true, // Issues data may need fallback processing
       },
       issueItemOperations
     );
   }
 
   protected getDataInfo(data: IssueWithAssignee[]): string {
-    // 计算开放状态的 Issues (除了 Done, Canceled, Duplicate 之外的状态)
+    // Calculate open state Issues (states other than Done, Canceled, Duplicate)
     const openStates = [
       IssueState.Backlog,
       IssueState.Todo,
@@ -84,21 +84,21 @@ class IssuesDataManager extends GenericDataManager<
     const openCount = data.filter(
       (issue) => issue.state !== null && openStates.includes(issue.state)
     ).length;
-    return `${data.length} 个 Issues (${openCount} 开放)`;
+    return `${data.length} Issues (${openCount} open)`;
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const issuesDataManager = new IssuesDataManager();
 
 /**
- * Issues 数据管理器
- * 提供统一的 Issues 数据缓存管理，整合了原有的 UnifiedIssueCache 功能
- * 现在支持单个Issue的CRUD操作和智能缓存策略
+ * Issues data manager
+ * Provides unified Issues data cache management, integrating original UnifiedIssueCache functionality
+ * Now supports individual Issue CRUD operations and intelligent caching strategies
  */
 export class IssuesManager {
   /**
-   * 获取指定 Copany 的 Issues 列表，优先从缓存获取
+   * Get Issues list for specified Copany, prioritize cache
    */
   async getIssues(
     copanyId: string,
@@ -108,7 +108,7 @@ export class IssuesManager {
   }
 
   /**
-   * 强制刷新 Issues 数据
+   * Force refresh Issues data
    */
   async refreshIssues(
     copanyId: string,
@@ -118,23 +118,23 @@ export class IssuesManager {
   }
 
   /**
-   * 获取单个 Issue（从缓存的 Issues 列表中查找）
-   * 替代原 UnifiedIssueCache.getIssue 功能
+   * Get single Issue (find from cached Issues list)
+   * Replaces original UnifiedIssueCache.getIssue functionality
    */
   getIssue(copanyId: string, issueId: string): IssueWithAssignee | null {
     return issuesDataManager.findItem(copanyId, issueId);
   }
 
   /**
-   * 更新缓存中的单个 Issue
-   * 替代原 UnifiedIssueCache.setIssue 功能
+   * Update single Issue in cache
+   * Replaces original UnifiedIssueCache.setIssue functionality
    */
   setIssue(copanyId: string, issue: IssueWithAssignee): void {
     issuesDataManager.updateItem(copanyId, String(issue.id), issue);
   }
 
   /**
-   * 更新缓存中的单个 Issue（别名方法，保持兼容性）
+   * Update single Issue in cache (alias method, maintain compatibility)
    */
   updateIssue(copanyId: string, updatedIssue: IssueWithAssignee): void {
     issuesDataManager.updateItem(
@@ -145,57 +145,57 @@ export class IssuesManager {
   }
 
   /**
-   * 添加新 Issue 到缓存
+   * Add new Issue to cache
    */
   addIssue(copanyId: string, newIssue: IssueWithAssignee): void {
     issuesDataManager.addItem(copanyId, newIssue);
   }
 
   /**
-   * 从缓存中删除 Issue
-   * 替代原 UnifiedIssueCache.removeIssue 功能
+   * Remove Issue from cache
+   * Replaces original UnifiedIssueCache.removeIssue functionality
    */
   removeIssue(copanyId: string, issueId: string): void {
     issuesDataManager.removeItem(copanyId, issueId);
   }
 
   /**
-   * 清除指定 Copany 的 Issues 缓存
+   * Clear Issues cache for specified Copany
    */
   clearIssues(copanyId: string): void {
     issuesDataManager.clearCache(copanyId);
   }
 
   /**
-   * 清除所有 Issues 缓存
+   * Clear all Issues cache
    */
   clearAllIssues(): void {
     issuesDataManager.clearCache();
   }
 
   /**
-   * 手动设置 Issues 缓存
+   * Manually set Issues cache
    */
   setIssues(copanyId: string, issues: IssueWithAssignee[]): void {
     issuesDataManager.setData(copanyId, issues);
   }
 
   /**
-   * 获取缓存的 Issues（不会触发网络请求）
+   * Get cached Issues (won't trigger network request)
    */
   getCachedIssues(copanyId: string): IssueWithAssignee[] | null {
     return issuesDataManager.getCachedData(copanyId);
   }
 
   /**
-   * 检查指定 Copany 的 Issues 是否已缓存
+   * Check if Issues for specified Copany are cached
    */
   hasIssues(copanyId: string): boolean {
     return issuesDataManager.hasData(copanyId);
   }
 
   /**
-   * 预热缓存
+   * Preload cache
    */
   async preloadIssues(
     copanyId: string,
@@ -205,35 +205,28 @@ export class IssuesManager {
   }
 
   /**
-   * 获取缓存统计信息
+   * Get cache statistics
    */
   getCacheStats(): { count: number; totalSize: number } {
     return issuesDataManager.getCacheStats();
   }
 
-  // ===== 兼容 UnifiedIssueCache 的方法 =====
-
   /**
-   * 检查单个 Issue 是否存在于缓存中
-   * 兼容原 UnifiedIssueCache.hasIssue 功能
+   * Check if specific Issue is cached
    */
   hasIssue(copanyId: string, issueId: string): boolean {
-    return this.getIssue(copanyId, issueId) !== null;
+    return issuesDataManager.hasItem(copanyId, issueId);
   }
 
   /**
-   * 批量设置 Issues（用于初始加载或刷新）
-   * 兼容原 UnifiedIssueCache 的批量操作
+   * Batch set Issues to cache
    */
   batchSetIssues(copanyId: string, issues: IssueWithAssignee[]): void {
-    this.setIssues(copanyId, issues);
-    console.log(
-      `[IssuesManager] 📦 Batch cached ${issues.length} issues for copany: ${copanyId}`
-    );
+    issuesDataManager.batchSetData(copanyId, issues);
   }
 
   /**
-   * 获取Issue列表中特定状态的Issues数量
+   * Get Issue count by state
    */
   getIssueCountByState(copanyId: string, state: IssueState): number {
     const issues = this.getCachedIssues(copanyId);
@@ -242,7 +235,7 @@ export class IssuesManager {
   }
 
   /**
-   * 获取Issue列表中特定用户的Issues
+   * Get Issues by assignee
    */
   getIssuesByAssignee(
     copanyId: string,
@@ -254,5 +247,5 @@ export class IssuesManager {
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const issuesManager = new IssuesManager();

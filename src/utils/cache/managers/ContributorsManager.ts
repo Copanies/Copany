@@ -4,32 +4,32 @@ import { contributorsCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 /**
- * 内部贡献者数据管理器实现
+ * Internal contributors data manager implementation
  */
 class ContributorsDataManager extends GenericDataManager<CopanyContributor[]> {
   constructor() {
     super({
       cacheManager: contributorsCache,
       managerName: "ContributorsManager",
-      enableStaleCache: false, // 贡献者数据相对稳定，不需要过期缓存降级
+      enableStaleCache: false, // Contributors data is relatively stable, no need for stale cache fallback
     });
   }
 
   protected getDataInfo(data: CopanyContributor[]): string {
-    return `${data.length} 名贡献者`;
+    return `${data.length} contributors`;
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const contributorsDataManager = new ContributorsDataManager();
 
 /**
- * 贡献者管理器
- * 提供缓存和统一的贡献者获取接口
+ * Contributors manager
+ * Provides caching and unified contributors fetching interface
  */
 export class ContributorsManager {
   /**
-   * 获取指定 copany 的贡献者列表，优先从缓存获取
+   * Get contributors list for specified copany, prioritize cache
    */
   async getContributors(copanyId: string): Promise<CopanyContributor[]> {
     try {
@@ -43,40 +43,40 @@ export class ContributorsManager {
   }
 
   /**
-   * 清除指定 copany 的贡献者缓存
+   * Clear contributors cache for specified copany
    */
   clearContributors(copanyId: string): void {
     contributorsDataManager.clearCache(copanyId);
   }
 
   /**
-   * 清除所有贡献者缓存
+   * Clear all contributors cache
    */
   clearAllContributors(): void {
     contributorsDataManager.clearCache();
   }
 
   /**
-   * 手动设置贡献者缓存
+   * Manually set contributors cache
    */
   setContributors(copanyId: string, contributors: CopanyContributor[]): void {
     contributorsDataManager.setData(copanyId, contributors);
   }
 
   /**
-   * 获取缓存的贡献者（不会触发网络请求）
+   * Get cached contributors (won't trigger network request)
    */
   getCachedContributors(copanyId: string): CopanyContributor[] | null {
     return contributorsDataManager.getCachedData(copanyId);
   }
 
   /**
-   * 检查指定 copany 的贡献者是否已缓存
+   * Check if contributors for specified copany are cached
    */
   hasContributors(copanyId: string): boolean {
     return contributorsDataManager.hasData(copanyId);
   }
 }
 
-// 导出单例实例
+// Export singleton instance
 export const contributorsManager = new ContributorsManager();

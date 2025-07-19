@@ -24,22 +24,22 @@ export default function ContextMenu({
   items,
   onClose,
 }: ContextMenuProps) {
-  // 点击其他地方关闭菜单
+  // Click elsewhere to close menu
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
-      // 检查点击是否在菜单内部
+      // Check if click is inside the menu
       const target = event.target as HTMLElement;
       if (target.closest(".context-menu")) {
-        return; // 如果点击在菜单内部，不关闭菜单
+        return; // If click is inside menu, don't close it
       }
-      // 阻止事件传播，防止触发被点击元素的点击事件
+      // Prevent event propagation to avoid triggering click events on clicked elements
       event.stopPropagation();
       event.preventDefault();
       onClose();
     };
 
     if (show) {
-      // 使用 capture 阶段来确保我们能够先处理事件
+      // Use capture phase to ensure we handle the event first
       document.addEventListener("click", handleClick, true);
       return () => document.removeEventListener("click", handleClick, true);
     }
