@@ -208,13 +208,13 @@ export default function IssueEditorView({
     };
   }, []);
 
-  // 初始内容只在组件挂载时设置一次
+  // The initial content is only set once when the component is mounted
   const [initialContent] = useState(issueData.description || "");
 
   return (
     <div className="w-full">
       <div className="space-y-2">
-        {/* 标题 */}
+        {/* Title */}
         <div className="relative">
           <input
             type="text"
@@ -223,7 +223,7 @@ export default function IssueEditorView({
             className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
             placeholder="Issue title"
           />
-          {/* 保存状态指示器 */}
+          {/* Save status indicator */}
           {isSaving && (
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-500">
               <ArrowPathIcon className="w-5 h-5 animate-spin" />
@@ -231,14 +231,14 @@ export default function IssueEditorView({
           )}
         </div>
 
-        {/* 错误提示 */}
+        {/* Error message */}
         {saveError && (
           <div className="flex flex-row items-center px-3 py-2 mx-2 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded">
             <span>Error: {saveError}</span>
           </div>
         )}
 
-        {/* 描述 */}
+        {/* Description */}
         <div>
           <div ref={editorDivRef}>
             <MilkdownEditor
