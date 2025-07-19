@@ -1,28 +1,28 @@
-// 缓存配置接口
+// Cache configuration interface
 export interface CacheConfig {
-  keyPrefix: string; // 缓存键前缀
-  ttl: number; // 缓存时间（毫秒）
-  loggerName: string; // 日志标识名称
-  backgroundRefreshInterval?: number; // 后台刷新间隔（毫秒），默认10分钟
+  keyPrefix: string; // Cache key prefix
+  ttl: number; // Cache time (milliseconds)
+  loggerName: string; // Log identifier name
+  backgroundRefreshInterval?: number; // Background refresh interval (milliseconds), default 10 minutes
 }
 
-// 缓存条目接口
+// Cache entry interface
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
-  lastRefreshTime?: number; // 最后一次后台刷新时间
+  lastRefreshTime?: number; // Last background refresh time
 }
 
-// 键生成器类型
+// Key generator type
 export type KeyGenerator<K> = (key: K) => string;
 
-// 日志信息生成器类型
+// Log information generator type
 export type LogInfoGenerator<T> = (data: T) => Record<string, unknown>;
 
 /**
- * 通用缓存管理器
- * @template T 缓存数据类型
- * @template K 缓存键类型
+ * Generic cache manager
+ * @template T Cache data type
+ * @template K Cache key type
  */
 export class CacheManager<T, K = string> {
   private readonly config: CacheConfig;
@@ -39,11 +39,11 @@ export class CacheManager<T, K = string> {
     this.keyGenerator = keyGenerator || ((key: K) => String(key));
     this.logInfoGenerator = logInfoGenerator;
     this.backgroundRefreshInterval =
-      config.backgroundRefreshInterval || 10 * 60 * 1000; // 默认10分钟
+      config.backgroundRefreshInterval || 1 * 60 * 1000; // Default 1 minute
   }
 
   /**
-   * 设置缓存
+   * Set cache
    */
   set(key: K, data: T): void {
     const entry: CacheEntry<T> = {
@@ -74,7 +74,7 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 获取缓存
+   * Get cache
    */
   get(key: K): T | null {
     try {
@@ -131,7 +131,7 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 检查是否需要后台刷新
+   * Check if background refresh is needed
    */
   shouldBackgroundRefresh(key: K): boolean {
     try {
@@ -145,32 +145,32 @@ export class CacheManager<T, K = string> {
       const entry: CacheEntry<T> = JSON.parse(stored);
       const now = Date.now();
 
-      // 如果从未后台刷新过，应该立即刷新
+      // If never been refreshed before, should refresh immediately
       if (!entry.lastRefreshTime) {
-        console.log(`[${this.config.loggerName}] 🔄 首次后台刷新，立即启动`);
+        console.log(`[${this.config.loggerName}] 🔄 First background refresh, start immediately`);
         return true;
       }
 
-      // 检查距离上次刷新是否超过设定的间隔时间
+      // Check if the time since last refresh exceeds the set interval
       const timeSinceLastRefresh = now - entry.lastRefreshTime;
       const shouldRefresh =
         timeSinceLastRefresh > this.backgroundRefreshInterval;
 
       if (shouldRefresh) {
         console.log(
-          `[${this.config.loggerName}] 🔄 距离上次刷新 ${Math.floor(
+          `[${this.config.loggerName}] 🔄 Time since last refresh ${Math.floor(
             timeSinceLastRefresh / 1000
-          )}s，超过间隔 ${Math.floor(
+          )}s, exceeds interval ${Math.floor(
             this.backgroundRefreshInterval / 1000
-          )}s，启动后台刷新`
+          )}s, start background refresh`
         );
       } else {
         console.log(
-          `[${this.config.loggerName}] ⏸️ 距离上次刷新 ${Math.floor(
+          `[${this.config.loggerName}] ⏸️ Time since last refresh ${Math.floor(
             timeSinceLastRefresh / 1000
-          )}s，未达到间隔 ${Math.floor(
+          )}s, not reached interval ${Math.floor(
             this.backgroundRefreshInterval / 1000
-          )}s，跳过刷新`
+          )}s, skip refresh`
         );
       }
 
@@ -185,7 +185,7 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 更新后台刷新时间戳
+   * Update background refresh timestamp
    */
   updateRefreshTimestamp(key: K): void {
     try {
@@ -213,8 +213,8 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 获取缓存（用于 SWR 策略）
-   * 返回缓存数据和是否需要后台刷新的标志
+   * Get cache (for SWR strategy)
+   * Return cache data and whether background refresh is needed
    */
   getWithRefreshInfo(key: K): { data: T | null; shouldRefresh: boolean } {
     const data = this.get(key);
@@ -224,7 +224,7 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 清除缓存
+   * Clear cache
    */
   clear(key?: K): void {
     try {
@@ -237,7 +237,7 @@ export class CacheManager<T, K = string> {
           `[${this.config.loggerName}] 🗑️ Cleared cache for key: ${cacheKey}`
         );
       } else {
-        // 清除所有相关缓存
+        // Clear all related cache
         const keys = Object.keys(localStorage);
         let clearedCount = 0;
         keys.forEach((storageKey) => {
@@ -259,14 +259,14 @@ export class CacheManager<T, K = string> {
   }
 
   /**
-   * 检查缓存是否存在且未过期
+   * Check if cache exists and is not expired
    */
   has(key: K): boolean {
     return this.get(key) !== null;
   }
 
   /**
-   * 获取缓存统计信息
+   * Get cache statistics
    */
   getStats(): { count: number; totalSize: number } {
     if (typeof window === "undefined") {

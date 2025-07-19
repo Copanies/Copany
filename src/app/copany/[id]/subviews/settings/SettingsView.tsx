@@ -7,7 +7,6 @@ import {
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
-import { copanyManager } from "@/utils/cache";
 import { useState, useRef } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
@@ -27,6 +26,7 @@ import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
+import { CopanyManager } from "@/utils/cache";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -64,6 +64,8 @@ export default function SettingsView({
 
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
+
+  const copanyManager = new CopanyManager();
 
   const assetLinks = [
     {

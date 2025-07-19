@@ -62,13 +62,16 @@ class IssuesDataManager extends GenericDataManager<
   IssueWithAssignee[],
   IssueWithAssignee
 > {
-  constructor() {
+  constructor(
+    onDataUpdated?: (key: string, data: IssueWithAssignee[]) => void
+  ) {
     super(
       {
         cacheManager: issuesCache,
         managerName: "IssuesManager",
         validator: validateIssues,
         enableStaleCache: true, // Issues data may need fallback processing
+        onDataUpdated, // Configure data update callback
       },
       issueItemOperations
     );
@@ -88,15 +91,15 @@ class IssuesDataManager extends GenericDataManager<
   }
 }
 
-// Create singleton instance
-const issuesDataManager = new IssuesDataManager();
-
-/**
- * Issues data manager
- * Provides unified Issues data cache management, integrating original UnifiedIssueCache functionality
- * Now supports individual Issue CRUD operations and intelligent caching strategies
- */
 export class IssuesManager {
+  private dataManager: IssuesDataManager;
+
+  constructor(
+    onDataUpdated?: (key: string, data: IssueWithAssignee[]) => void
+  ) {
+    this.dataManager = new IssuesDataManager(onDataUpdated);
+  }
+
   /**
    * Get Issues list for specified Copany, prioritize cache
    */
@@ -104,7 +107,7 @@ export class IssuesManager {
     copanyId: string,
     fetchFn: () => Promise<IssueWithAssignee[]>
   ): Promise<IssueWithAssignee[]> {
-    return issuesDataManager.getData(copanyId, fetchFn);
+    return this.dataManager.getData(copanyId, fetchFn);
   }
 
   /**
@@ -112,7 +115,7 @@ export class IssuesManager {
    * Replaces original UnifiedIssueCache.getIssue functionality
    */
   getIssue(copanyId: string, issueId: string): IssueWithAssignee | null {
-    return issuesDataManager.findItem(copanyId, issueId);
+    return this.dataManager.findItem(copanyId, issueId);
   }
 
   /**
@@ -120,14 +123,14 @@ export class IssuesManager {
    * Replaces original UnifiedIssueCache.setIssue functionality
    */
   setIssue(copanyId: string, issue: IssueWithAssignee): void {
-    issuesDataManager.updateItem(copanyId, String(issue.id), issue);
+    this.dataManager.updateItem(copanyId, String(issue.id), issue);
   }
 
   /**
    * Update single Issue in cache (alias method, maintain compatibility)
    */
   updateIssue(copanyId: string, updatedIssue: IssueWithAssignee): void {
-    issuesDataManager.updateItem(
+    this.dataManager.updateItem(
       copanyId,
       String(updatedIssue.id),
       updatedIssue
@@ -138,9 +141,9 @@ export class IssuesManager {
    * Manually set Issues cache
    */
   setIssues(copanyId: string, issues: IssueWithAssignee[]): void {
-    issuesDataManager.setData(copanyId, issues);
+    this.dataManager.setData(copanyId, issues);
   }
 }
 
-// Export singleton instance
+// Default instance (no callback, for simple operations)
 export const issuesManager = new IssuesManager();

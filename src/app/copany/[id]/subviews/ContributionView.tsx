@@ -8,7 +8,10 @@ import {
   CopanyContributor,
   LEVEL_SCORES,
 } from "@/types/database.types";
-import { contributionsManager, contributorsManager } from "@/utils/cache";
+import {
+  contributorsManager,
+  ContributionsManager,
+} from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
@@ -26,23 +29,35 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Create ContributionsManager instance with data update callback
+  const contributionsManagerWithCallback = useMemo(() => {
+    return new ContributionsManager((key, updatedData) => {
+      console.log(
+        `[ContributionView] Background refresh completed, data updated: ${key}`,
+        updatedData
+      );
+      setContributions(updatedData); // Automatically update UI
+    });
+  }, []);
+
   const loadData = useCallback(
     async (forceRefresh: boolean = false) => {
       try {
         setIsLoading(true);
 
         const contributionDataPromise = forceRefresh
-          ? contributionsManager.refreshContributions(copanyId, () =>
-              generateContributionsFromIssuesAction(copanyId)
+          ? contributionsManagerWithCallback.refreshContributions(
+              copanyId,
+              () => generateContributionsFromIssuesAction(copanyId)
             )
-          : contributionsManager.getContributions(copanyId, () =>
+          : contributionsManagerWithCallback.getContributions(copanyId, () =>
               generateContributionsFromIssuesAction(copanyId)
             );
 
         const contributorDataPromise =
           contributorsManager.getContributors(copanyId);
 
-        // 并行执行请求
+        // Execute requests in parallel
         const [newContributionData, newContributorData] = await Promise.all([
           contributionDataPromise,
           contributorDataPromise,
@@ -56,14 +71,14 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         setIsLoading(false);
       }
     },
-    [copanyId]
+    [copanyId, contributionsManagerWithCallback]
   );
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // 将 contributors 转换为 AssigneeUser 格式
+  // Convert contributors to AssigneeUser format
   const users: AssigneeUser[] = contributors.map((contributor) => ({
     id: contributor.user_id,
     name: contributor.name,
@@ -71,7 +86,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
     avatar_url: contributor.avatar_url,
   }));
 
-  // 计算每个用户的总贡献值并排序
+  // Calculate total contribution value for each user and sort
   const usersWithContribution = useMemo(() => {
     return users
       .map((user) => {
@@ -98,14 +113,14 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
           totalScore,
         };
       })
-      .sort((a, b) => b.totalScore - a.totalScore) // 按总贡献值降序排序
+      .sort((a, b) => b.totalScore - a.totalScore) // Sort by total contribution value in descending order
       .map((item, index) => ({
         ...item,
-        rank: index + 1, // 添加排名
+        rank: index + 1, // Add rank
       }));
   }, [users, contributions]);
 
-  // 计算 globalMaxCount、globalMaxScore 和月份范围
+  // Calculate globalMaxCount, globalMaxScore and month range
   const { globalMaxCount, globalMaxScore, monthRange, totalContributionScore } =
     useMemo(() => {
       if (contributions.length === 0) {
@@ -122,7 +137,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         };
       }
 
-      // 找到最早和最晚的年月
+      // Find earliest and latest year and month
       let earliestYear = Infinity;
       let earliestMonth = Infinity;
       let latestYear = -Infinity;
@@ -146,7 +161,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         }
       });
 
-      // 创建用户月度统计数据结构
+      // Create user monthly statistics data structure
       const userMonthlyData: {
         [userId: string]: {
           [yearMonth: string]: {
@@ -157,11 +172,11 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         };
       } = {};
 
-      // 初始化数据结构
+      // Initialize data structure
       users.forEach((user) => {
         userMonthlyData[user.id] = {};
 
-        // 遍历从最早到最晚的所有月份
+        // Iterate through all months from earliest to latest
         for (let year = earliestYear; year <= latestYear; year++) {
           const startMonth = year === earliestYear ? earliestMonth : 1;
           const endMonth = year === latestYear ? latestMonth : 12;
@@ -182,7 +197,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         }
       });
 
-      // 统计贡献数据
+      // Count contribution data
       contributions.forEach((contribution) => {
         const userId = contribution.user_id;
         const yearMonth = `${contribution.year}-${contribution.month}`;
@@ -205,7 +220,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         }
       });
 
-      // 直接从贡献数据计算最大值，确保包含所有贡献
+      // Calculate maximum values directly from contribution data, ensuring all contributions are included
       const allUserMonthScores: { [userMonth: string]: number } = {};
       const allUserMonthCounts: { [userMonth: string]: number } = {};
 
@@ -231,7 +246,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         }
       });
 
-      // 找到最大值
+      // Find maximum values
       const maxCount = Math.max(...Object.values(allUserMonthCounts), 1);
       const maxScore = Math.max(...Object.values(allUserMonthScores), 1);
       const totalScore = Object.values(allUserMonthScores).reduce(
@@ -256,7 +271,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
     return <LoadingView type="label" />;
   }
 
-  // 检查是否有贡献数据
+  // Check if there is contribution data
   if (contributions.length === 0) {
     return (
       <EmptyPlaceholderView

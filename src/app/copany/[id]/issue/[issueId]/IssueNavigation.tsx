@@ -9,7 +9,7 @@ export default function IssueNavigation() {
   const searchParams = useSearchParams();
 
   const handleBack = () => {
-    // 构建返回 URL，保留 tab 和 subtab 参数
+    // Build return URL, keep tab and subtab parameters
     const copanyId = params.id;
     const tab = searchParams.get("tab") || "Cooperate";
     const subtab = searchParams.get("subtab") || "Issue";

@@ -3,15 +3,6 @@ export { CacheManager } from "./CacheManager";
 export { GenericDataManager } from "./GenericDataManager";
 export type { DataManagerConfig } from "./GenericDataManager";
 
-export {
-  copanyCache,
-  issuesCache,
-  readmeCache,
-  currentUserCache,
-  contributorsCache,
-  contributionsCache,
-} from "./instances";
-
 // Export all business layer managers (recommended to use)
 export {
   ContributionsManager,

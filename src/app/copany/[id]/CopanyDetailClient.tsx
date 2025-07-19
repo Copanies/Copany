@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { copanyManager, currentUserManager } from "@/utils/cache";
+import {
+  currentUserManager,
+  CopanyManager,
+} from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import Image from "next/image";
@@ -30,7 +33,18 @@ export default function CopanyDetailClient({
   const [isLoading, setIsLoading] = useState(true);
   const hasInitialLoadRef = useRef(false);
 
-  // 使用新的 SWR 策略加载数据
+  // Create a CopanyManager instance with a data update callback
+  const copanyManagerWithCallback = useMemo(() => {
+    return new CopanyManager((key, updatedData) => {
+      console.log(
+        `[CopanyDetailClient] 后台刷新完成，数据已更新: ${key}`,
+        updatedData
+      );
+      setCopany(updatedData); // Automatically update UI
+    });
+  }, []);
+
+  // Use new SWR strategy to load data
   const loadCopany = useCallback(async () => {
     if (hasInitialLoadRef.current) return;
     hasInitialLoadRef.current = true;
@@ -41,9 +55,9 @@ export default function CopanyDetailClient({
       );
       setIsLoading(true);
 
-      // 并行加载 copany 数据和当前用户信息
+      // Load copany data and current user information in parallel
       const [copanyData, userData] = await Promise.all([
-        copanyManager.getCopany(copanyId, async () => {
+        copanyManagerWithCallback.getCopany(copanyId, async () => {
           const result = await getCopanyByIdAction(copanyId);
           if (!result) {
             throw new Error("Copany not found");
@@ -63,7 +77,7 @@ export default function CopanyDetailClient({
     } finally {
       setIsLoading(false);
     }
-  }, [copanyId]);
+  }, [copanyId, copanyManagerWithCallback]);
 
   useEffect(() => {
     loadCopany();
@@ -85,10 +99,10 @@ export default function CopanyDetailClient({
     );
   }
 
-  // 检查当前用户是否是 copany 的创建者
+  // Check if the current user is the copany creator
   const isCreator = currentUser && currentUser.id === copany.created_by;
 
-  // 构建 tabs 数组，仅在用户是创建者时包含 Settings tab
+  // Build tabs array, only include Settings tab if user is creator
   const tabs = [
     {
       label: "README",
