@@ -210,25 +210,16 @@ export async function getOrgPublicRepos(
 }
 
 /**
- * Get repository README from GitHub
- * @param repo Repository name in the format "owner/repo"
- * @returns Repository README content
- *
- * API: GET https://api.github.com/repos/{owner}/{repo}/readme
+ * 无需认证即可获取公共仓库的 README
+ * @param repo 仓库路径，格式为 "owner/repo"
+ * @returns 仓库 README 内容，如果不存在则返回 null
  */
-export async function getRepoReadme(
+export async function getPublicRepoReadme(
   repo: string
 ): Promise<
   RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
 > {
-  const accessToken = await getGithubAccessToken();
-  console.log("accessToken", accessToken);
-  if (!accessToken) {
-    return null;
-  }
-  const octokit = new Octokit({
-    auth: accessToken as string,
-  });
+  const octokit = new Octokit(); // 不提供 auth 参数，使用匿名请求
 
   try {
     const response = await octokit.request(`GET /repos/${repo}/readme`);
@@ -246,5 +237,50 @@ export async function getRepoReadme(
     }
     // 其他错误直接抛出
     throw error;
+  }
+}
+
+/**
+ * Get repository README from GitHub
+ * @param repo Repository name in the format "owner/repo"
+ * @returns Repository README content
+ *
+ * API: GET https://api.github.com/repos/{owner}/{repo}/readme
+ */
+export async function getRepoReadme(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
+> {
+  const accessToken = await getGithubAccessToken();
+
+  // 如果有访问令牌，使用认证请求（可以访问私有仓库的 README）
+  if (accessToken) {
+    console.log("使用认证方式获取 README");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
+
+    try {
+      const response = await octokit.request(`GET /repos/${repo}/readme`);
+      return response.data;
+    } catch (error: unknown) {
+      // 如果是 404 错误（README 不存在），返回 null 而不是抛出错误
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.log(`ℹ️ Repository ${repo} does not have a README file`);
+        return null;
+      }
+      // 其他错误直接抛出
+      throw error;
+    }
+  } else {
+    // 如果没有访问令牌，尝试使用无需认证的方式获取公共仓库的 README
+    console.log("无访问令牌，尝试匿名获取公共仓库 README");
+    return await getPublicRepoReadme(repo);
   }
 }

@@ -19,8 +19,8 @@ const decodeGitHubContent = (base64String: string): string => {
     const decoder = new TextDecoder("utf-8");
     return decoder.decode(bytes);
   } catch (error) {
-    console.error("解码失败:", error);
-    throw new Error("无法解码 GitHub 内容");
+    console.error("Failed to decode GitHub content:", error);
+    throw new Error("Failed to decode GitHub content");
   }
 };
 
@@ -43,7 +43,7 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
     }
     return null;
   } catch (error) {
-    console.error("生成新建 README URL 失败:", error);
+    console.error("Failed to generate new README URL:", error);
     return null;
   }
 };
@@ -53,6 +53,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     console.log("ReadmeTabView mounted, starting to fetch README");
@@ -62,18 +63,15 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         setError(null);
         setNotFound(false);
 
-        // 检查用户是否已登录（使用缓存管理器）
+        // 检查用户是否已登录，但不阻止未登录用户查看公共仓库的 README
         const user = await currentUserManager.getCurrentUser();
-
-        if (!user) {
-          setReadmeContent("请先登录以查看 README 内容");
-          return;
-        }
+        setIsLoggedIn(!!user);
 
         if (!githubUrl) {
-          setReadmeContent("未找到仓库信息");
+          setReadmeContent("No repository information found");
           return;
         }
+
         // 首先检查是否有缓存，只有在需要网络请求时才显示 loading
         const cachedContent = readmeManager.getCachedReadme(githubUrl);
 
@@ -108,7 +106,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
               }
             })
             .catch((error) => {
-              console.warn("后台刷新 README 失败:", error);
+              console.warn("Background refresh README failed:", error);
             });
         } else {
           // 无缓存，需要网络请求，显示 loading
@@ -136,9 +134,9 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
           }
         }
       } catch (err) {
-        console.error("获取 README 失败:", err);
+        console.error("Failed to get README:", err);
 
-        const errorMessage = "无法获取 README 内容。";
+        const errorMessage = "Failed to get README content.";
         setError(errorMessage);
         setReadmeContent("");
       }
@@ -157,8 +155,8 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-600">{error}</p>
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -174,12 +172,20 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             strokeWidth={1}
           />
         }
-        title="Add a README"
-        description="Help people understand your Copany by adding a README — share its purpose, how it works, and how others can contribute."
-        buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-        buttonTitle="Add a README"
+        title="Add README"
+        description={
+          isLoggedIn
+            ? "Help people learn about your Copany by adding a README — share its purpose, how it works, and how others can contribute."
+            : "This repository does not have a README yet. Log in to add a README file."
+        }
+        buttonIcon={
+          isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
+        }
+        buttonTitle={isLoggedIn ? "Add README" : undefined}
         buttonAction={
-          newReadmeUrl ? () => window.open(newReadmeUrl, "_blank") : undefined
+          isLoggedIn && newReadmeUrl
+            ? () => window.open(newReadmeUrl, "_blank")
+            : undefined
         }
       />
     );
