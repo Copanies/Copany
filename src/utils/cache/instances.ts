@@ -11,9 +11,9 @@ import { User } from "@supabase/supabase-js";
 export const copanyCache = new CacheManager<Copany, string>(
   {
     keyPrefix: "copany_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1 day
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "CopanyCache",
-    backgroundRefreshInterval: 30 * 60 * 1000, // 30 minutes - project info changes less frequently
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
   },
   undefined, // Use default key generator
   (data: Copany) => ({ copanyName: data.name }) // Log info generator
@@ -23,9 +23,9 @@ export const copanyCache = new CacheManager<Copany, string>(
 export const issuesCache = new CacheManager<IssueWithAssignee[], string>(
   {
     keyPrefix: "issues_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1 day
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "IssuesCache",
-    backgroundRefreshInterval: 5 * 60 * 1000, // 5 minutes - Issues change more frequently
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
   },
   undefined, // Use default key generator
   (data: IssueWithAssignee[]) => ({ issueCount: data.length }) // Log info generator
@@ -35,9 +35,9 @@ export const issuesCache = new CacheManager<IssueWithAssignee[], string>(
 export const currentUserCache = new CacheManager<User, string>(
   {
     keyPrefix: "current_user_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1 day
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "CurrentUserCache",
-    backgroundRefreshInterval: 15 * 60 * 1000, // 15 minutes - moderate refresh rate for user info
+    backgroundRefreshInterval: 60 * 60 * 1000, // 1 hour - moderate refresh rate for user info
   },
   () => "current_user", // Fixed key because there's only one current user
   (data: User) => ({ userId: data.id, userEmail: data.email }) // Log info generator
@@ -47,9 +47,9 @@ export const currentUserCache = new CacheManager<User, string>(
 export const contributorsCache = new CacheManager<CopanyContributor[], string>(
   {
     keyPrefix: "contributors_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1 day
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ContributorsCache",
-    backgroundRefreshInterval: 5 * 60 * 1000, // 5 minutes - contributors are relatively stable
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
   },
   undefined, // Use default key generator (copanyId)
   (data: CopanyContributor[]) => ({ contributorCount: data.length }) // Log info generator
@@ -59,9 +59,9 @@ export const contributorsCache = new CacheManager<CopanyContributor[], string>(
 export const contributionsCache = new CacheManager<Contribution[], string>(
   {
     keyPrefix: "contributions_cache_",
-    ttl: 12 * 60 * 60 * 1000, // 12 hours - contribution data changes relatively frequently
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ContributionsCache",
-    backgroundRefreshInterval: 10 * 60 * 1000, // 10 minutes - contribution data needs more frequent updates
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
   },
   undefined, // Use default key generator (copanyId)
   (data: Contribution[]) => ({ contributionCount: data.length }) // Log info generator
@@ -73,9 +73,9 @@ export const contributionsCache = new CacheManager<Contribution[], string>(
 export const readmeCache = new CacheManager<string, string>(
   {
     keyPrefix: "readme_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1 day
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ReadmeCache",
-    backgroundRefreshInterval: 60 * 60 * 1000, // 60 minutes - READMEs change least frequently
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
   },
   // Custom key generator: handle GitHub URL
   (githubUrl: string) =>
