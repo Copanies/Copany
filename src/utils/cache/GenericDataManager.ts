@@ -1,37 +1,39 @@
 import { CacheManager } from "./CacheManager";
 
 /**
- * 缓存配置选项
+ * Cache configuration options
  */
 export interface DataManagerConfig<T> {
-  /** 缓存管理器实例 */
+  /** Cache manager instance */
   cacheManager: CacheManager<T, string>;
-  /** 管理器名称（用于日志） */
+  /** Manager name (for logging) */
   managerName: string;
-  /** 数据验证函数（可选） */
+  /** Data validation function (optional) */
   validator?: (data: T) => T;
-  /** 是否支持过期缓存降级 */
+  /** Whether to support stale cache fallback */
   enableStaleCache?: boolean;
+  /** Data update callback function (for UI notification after background refresh) */
+  onDataUpdated?: (key: string, data: T) => void;
 }
 
 /**
- * 单个数据项操作接口（用于数组类型的数据）
+ * Single item operation interface (for array-type data)
  */
 export interface DataItemOperations<T, TItem> {
-  /** 从数组中查找单个项的函数 */
+  /** Function to find a single item from an array */
   findItem?: (data: T, itemId: string) => TItem | null;
-  /** 更新数组中单个项的函数 */
+  /** Function to update a single item in an array */
   updateItem?: (data: T, itemId: string, updatedItem: TItem) => T;
-  /** 向数组添加新项的函数 */
+  /** Function to add a new item to an array */
   addItem?: (data: T, newItem: TItem) => T;
-  /** 从数组删除项的函数 */
+  /** Function to remove an item from an array */
   removeItem?: (data: T, itemId: string) => T;
 }
 
 /**
- * 通用数据管理器基类
- * 提供智能缓存、数据验证、降级处理等高级功能
- * 支持 SWR (Stale While Revalidate) 策略
+ * Generic data manager base class
+ * Provides advanced features like smart caching, data validation, fallback handling, etc.
+ * Supports SWR (Stale While Revalidate) strategy
  */
 export abstract class GenericDataManager<T, TItem = T> {
   protected readonly config: DataManagerConfig<T>;
@@ -47,87 +49,103 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 获取数据（支持 SWR 策略）
-   * @param key 缓存键
-   * @param fetchFn 数据获取函数
-   * @param forceRefresh 是否强制刷新
-   * @returns 数据
+   * Get data (supports SWR strategy)
+   * @param key Cache key
+   * @param fetchFn Data fetch function
+   * @param forceRefresh Whether to force refresh
+   * @returns Data
    */
   async getData(
     key: string,
     fetchFn: () => Promise<T>,
     forceRefresh: boolean = false
   ): Promise<T> {
-    // 如果强制刷新，清除缓存并等待网络请求
+    // If force refresh, clear cache and wait for network request
     if (forceRefresh) {
       this.config.cacheManager.clear(key);
       return this.fetchAndCache(key, fetchFn);
     }
 
-    // 获取缓存和刷新信息
+    // Get cache and refresh information
     const { data: cachedData, shouldRefresh } =
       this.config.cacheManager.getWithRefreshInfo(key);
 
-    // 缓存命中
+    // Cache hit
     if (cachedData !== null) {
       console.log(
-        `[${this.config.managerName}] ✅ 缓存命中，立即返回: ${this.getDataInfo(
+        `[${this.config.managerName}] ✅ Cache hit, return immediately: ${this.getDataInfo(
           cachedData
         )}`
       );
 
-      // 检查是否需要后台刷新（首次访问或超过时间间隔）
+      // Check if background refresh is needed (first access or time interval exceeded)
       if (shouldRefresh && !this.backgroundRefreshPromises.has(key)) {
         console.log(
-          `[${this.config.managerName}] 🚀 立即启动后台刷新，获取最新数据...`
+          `[${this.config.managerName}] 🚀 Immediately start background refresh, get latest data...`
         );
         this.startBackgroundRefresh(key, fetchFn);
       } else if (this.backgroundRefreshPromises.has(key)) {
         console.log(
-          `[${this.config.managerName}] ⏳ 后台刷新已在进行中，跳过重复请求`
+          `[${this.config.managerName}] ⏳ Background refresh is in progress, skipping duplicate request`
         );
       }
 
       return cachedData;
     }
 
-    // 缓存未命中，等待网络请求
-    console.log(`[${this.config.managerName}] ❌ 缓存未命中，等待网络请求...`);
+    // Cache miss, wait for network request
+    console.log(`[${this.config.managerName}] ❌ Cache miss, waiting for network request...`);
     return this.fetchAndCache(key, fetchFn);
   }
 
   /**
-   * 启动后台刷新
+   * Start background refresh
    */
   private startBackgroundRefresh(key: string, fetchFn: () => Promise<T>): void {
-    // 立即更新刷新时间戳，防止重复刷新
+    // Immediately update refresh timestamp to prevent duplicate refresh
     this.config.cacheManager.updateRefreshTimestamp(key);
 
-    // 启动后台刷新
+    // Start background refresh
     const refreshPromise = this.fetchAndCache(key, fetchFn, true)
       .then((data) => {
         console.log(
-          `[${this.config.managerName}] ✅ 后台刷新完成: ${this.getDataInfo(
+          `[${this.config.managerName}] ✅ Background refresh completed: ${this.getDataInfo(
             data
           )}`
         );
+
+        // Notify UI that data has been updated
+        if (this.config.onDataUpdated) {
+          try {
+            this.config.onDataUpdated(key, data);
+            console.log(
+              `[${this.config.managerName}] 📡 UI data updated notification sent: ${key}`
+            );
+          } catch (error) {
+            console.error(
+              `[${this.config.managerName}] ❌ Failed to notify UI update:`,
+              error
+            );
+          }
+        }
+
         return data;
       })
       .catch((error) => {
-        console.error(`[${this.config.managerName}] ❌ 后台刷新失败:`, error);
+        console.error(`[${this.config.managerName}] ❌ Background refresh failed:`, error);
         throw error;
       })
       .finally(() => {
-        // 清理 Promise 引用
+        // Clean up Promise reference
         this.backgroundRefreshPromises.delete(key);
       });
 
-    // 存储 Promise 引用，防止重复刷新
+    // Store Promise reference to prevent duplicate refresh
     this.backgroundRefreshPromises.set(key, refreshPromise);
   }
 
   /**
-   * 获取并缓存数据
+   * Fetch and cache data
    */
   private async fetchAndCache(
     key: string,
@@ -136,22 +154,22 @@ export abstract class GenericDataManager<T, TItem = T> {
   ): Promise<T> {
     try {
       if (!isBackgroundRefresh) {
-        console.log(`[${this.config.managerName}] 🔄 正在加载数据...`);
+        console.log(`[${this.config.managerName}] 🔄 Loading data...`);
       }
 
       const data = await fetchFn();
 
-      // 验证数据
+      // Validate data
       const validData = this.config.validator
         ? this.config.validator(data)
         : data;
 
-      // 缓存数据
+      // Cache data
       this.config.cacheManager.set(key, validData);
 
       if (!isBackgroundRefresh) {
         console.log(
-          `[${this.config.managerName}] ✅ 数据加载完成: ${this.getDataInfo(
+          `[${this.config.managerName}] ✅ Data loaded: ${this.getDataInfo(
             validData
           )}`
         );
@@ -160,22 +178,22 @@ export abstract class GenericDataManager<T, TItem = T> {
       return validData;
     } catch (error) {
       if (!isBackgroundRefresh) {
-        console.error(`[${this.config.managerName}] ❌ 加载数据失败:`, error);
+        console.error(`[${this.config.managerName}] ❌ Failed to load data:`, error);
 
-        // 如果启用了过期缓存降级，尝试返回过期数据
+        // If stale cache fallback is enabled, try returning stale data
         if (this.config.enableStaleCache) {
           const staleCache = this.getStaleCache(key);
           if (staleCache) {
             console.log(
               `[${
                 this.config.managerName
-              }] ⚠️ 使用过期缓存数据: ${this.getDataInfo(staleCache)}`
+              }] ⚠️ Using stale cache data: ${this.getDataInfo(staleCache)}`
             );
             return staleCache;
           }
         }
       } else {
-        console.error(`[${this.config.managerName}] ❌ 后台刷新失败:`, error);
+        console.error(`[${this.config.managerName}] ❌ Background refresh failed:`, error);
       }
 
       throw error;
@@ -183,72 +201,72 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 清除缓存
-   * @param key 缓存键（可选，不传则清除所有）
+   * Clear cache
+   * @param key Cache key (optional, if not provided, all cache will be cleared)
    */
   clearCache(key?: string): void {
     if (key) {
       this.config.cacheManager.clear(key);
-      // 取消对应的后台刷新
+      // Cancel corresponding background refresh
       this.backgroundRefreshPromises.delete(key);
-      console.log(`[${this.config.managerName}] 🗑️ 已清除键 ${key} 的缓存`);
+      console.log(`[${this.config.managerName}] 🗑️ Cache cleared for key: ${key}`);
     } else {
       this.config.cacheManager.clear();
-      // 清除所有后台刷新
+      // Clear all background refreshes
       this.backgroundRefreshPromises.clear();
-      console.log(`[${this.config.managerName}] 🗑️ 已清除所有缓存`);
+      console.log(`[${this.config.managerName}] 🗑️ All cache cleared`);
     }
   }
 
   /**
-   * 获取缓存的数据（不会触发网络请求）
+   * Get cached data (does not trigger network request)
    */
   getCachedData(key: string): T | null {
     return this.config.cacheManager.get(key);
   }
 
   /**
-   * 检查数据是否已缓存
+   * Check if data is cached
    */
   hasData(key: string): boolean {
     return this.config.cacheManager.has(key);
   }
 
   /**
-   * 手动设置缓存数据
+   * Manually set cache data
    */
   setData(key: string, data: T): void {
     this.config.cacheManager.set(key, data);
   }
 
   /**
-   * 获取缓存统计信息
+   * Get cache statistics
    */
   getCacheStats(): { count: number; totalSize: number } {
     return this.config.cacheManager.getStats();
   }
 
   /**
-   * 预热缓存
+   * Warm up cache
    */
   async preloadData(key: string, fetchFn: () => Promise<T>): Promise<void> {
     try {
       await this.getData(key, fetchFn);
-      console.log(`[${this.config.managerName}] ✅ 缓存预热完成: ${key}`);
+      console.log(`[${this.config.managerName}] ✅ Cache warmed up: ${key}`);
     } catch (error) {
-      console.error(`[${this.config.managerName}] ❌ 缓存预热失败:`, error);
+      console.error(`[${this.config.managerName}] ❌ Cache warm up failed:`, error);
     }
   }
 
   /**
-   * 检查是否正在后台刷新
+   * Check if background refresh is in progress
    */
   isBackgroundRefreshing(key: string): boolean {
     return this.backgroundRefreshPromises.has(key);
   }
 
   /**
-   * 等待后台刷新完成
+   * Wait for background refresh to complete
    */
   async waitForBackgroundRefresh(key: string): Promise<T | null> {
     const promise = this.backgroundRefreshPromises.get(key);
@@ -263,17 +281,17 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 获取过期缓存数据（用于降级处理）
+   * Get stale cache data (for fallback handling)
    */
   protected getStaleCache(key: string): T | null {
     try {
       const stats = this.config.cacheManager.getStats();
       if (stats.count === 0) return null;
 
-      // 尝试从 localStorage 查找匹配的键
+      // Try to find matching key in localStorage
       const allKeys = Object.keys(localStorage);
       for (const storageKey of allKeys) {
-        // 如果这个键对应的是我们想要的数据
+        // If this key corresponds to the data we want
         if (storageKey.endsWith("_" + key) || storageKey.includes(key)) {
           const stored = localStorage.getItem(storageKey);
           if (stored) {
@@ -281,7 +299,7 @@ export abstract class GenericDataManager<T, TItem = T> {
               const entry = JSON.parse(stored);
               return entry.data || null;
             } catch {
-              // 忽略解析错误
+              // Ignore parsing errors
             }
           }
         }
@@ -295,7 +313,7 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 从缓存中查找单个数据项（仅适用于数组类型数据）
+   * Find a single item from cache (only applicable for array-type data)
    */
   findItem(key: string, itemId: string): TItem | null {
     if (!this.itemOps?.findItem) {
@@ -328,7 +346,7 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 更新缓存中的单个数据项（仅适用于数组类型数据）
+   * Update a single item in cache (only applicable for array-type data)
    */
   updateItem(key: string, itemId: string, updatedItem: TItem): void {
     if (!this.itemOps?.updateItem) {
@@ -354,7 +372,7 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 向缓存添加新的数据项（仅适用于数组类型数据）
+   * Add a new item to cache (only applicable for array-type data)
    */
   addItem(key: string, newItem: TItem): void {
     if (!this.itemOps?.addItem) {
@@ -371,7 +389,7 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 从缓存删除数据项（仅适用于数组类型数据）
+   * Remove an item from cache (only applicable for array-type data)
    */
   removeItem(key: string, itemId: string): void {
     if (!this.itemOps?.removeItem) {
@@ -397,8 +415,8 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
-   * 获取数据信息字符串（用于日志）
-   * 子类应该重写此方法来提供有意义的数据描述
+   * Get data information string (for logging)
+   * Subclasses should override this method to provide meaningful data description
    */
   protected abstract getDataInfo(data: T): string;
 }

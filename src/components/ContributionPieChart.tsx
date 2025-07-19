@@ -177,22 +177,22 @@ export default function ContributionPieChart({
     const viewportHeight = window.innerHeight;
 
     let tooltipLeft = event.clientX;
-    let tooltipTop = event.clientY - tooltipHeight - 10;
+    let tooltipTop = event.clientY - tooltipHeight - 12;
 
     // Horizontal boundary detection
     if (tooltipLeft + tooltipWidth > viewportWidth) {
       tooltipLeft = event.clientX - tooltipWidth;
     }
     if (tooltipLeft < 0) {
-      tooltipLeft = 10;
+      tooltipLeft = 12;
     }
 
     // Vertical boundary detection
     if (tooltipTop < 0) {
-      tooltipTop = event.clientY + 10;
+      tooltipTop = event.clientY + 12;
     }
     if (tooltipTop + tooltipHeight > viewportHeight) {
-      tooltipTop = viewportHeight - tooltipHeight - 10;
+      tooltipTop = viewportHeight - tooltipHeight - 12;
     }
 
     showTooltip({

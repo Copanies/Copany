@@ -13,8 +13,11 @@ import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
-import { issuesManager } from "@/utils/cache";
-import { currentUserManager, contributorsManager } from "@/utils/cache";
+import {
+  currentUserManager,
+  contributorsManager,
+  issuesManager,
+} from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
@@ -33,17 +36,17 @@ export default function IssuePageClient({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
 
-  // 用于跟踪未保存的更改
+  // For tracking unsaved changes
   const hasUnsavedChangesRef = useRef(false);
 
-  // 页面离开时的保存处理
+  // Save handling when page leaves
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // 如果有未保存的更改，静默保存
+      // If there are unsaved changes, save silently
       if (hasUnsavedChangesRef.current && issueData) {
-        // 先保存在缓存中
+        // Save in cache first
         issuesManager.updateIssue(copanyId, issueData);
-        // 使用 sendBeacon 进行可靠的后台保存
+        // Use sendBeacon for reliable background save
         const payload = JSON.stringify({
           id: issueData.id,
           title: issueData.title,
@@ -54,7 +57,7 @@ export default function IssuePageClient({
           assignee: issueData.assignee ?? null,
         });
 
-        // 尝试使用 sendBeacon 进行后台保存
+        // Try using sendBeacon for background save
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/api/issue/update", payload);
         }
@@ -64,9 +67,9 @@ export default function IssuePageClient({
     };
 
     const handleVisibilityChange = () => {
-      // 页面变为隐藏时，立即保存
+      // Save immediately when page becomes hidden
       if (document.hidden && hasUnsavedChangesRef.current && issueData) {
-        // 这里可以触发保存逻辑
+        // Here you can trigger save logic
         console.log("🚀 Background save initiated on visibility change");
       }
     };
@@ -85,7 +88,7 @@ export default function IssuePageClient({
       try {
         setIsLoading(true);
 
-        // 加载用户和贡献者数据
+        // Load user and contributor data
         const [user, contributorList] = await Promise.all([
           currentUserManager.getCurrentUser(),
           contributorsManager.getContributors(copanyId),
@@ -96,7 +99,7 @@ export default function IssuePageClient({
 
         console.log(`[IssuePageClient] 📱 Client mounted, checking cache...`);
 
-        // 首先尝试从缓存获取
+        // First try to get from cache
         const cachedData = issuesManager.getIssue(copanyId, issueId);
         if (cachedData) {
           console.log(
@@ -110,7 +113,7 @@ export default function IssuePageClient({
           );
         }
 
-        // 然后从服务器获取最新数据
+        // Then get latest data from server
         const freshIssueData = await getIssueAction(issueId);
         console.log(
           `[IssuePageClient] ✅ Loaded from server:`,
@@ -118,7 +121,7 @@ export default function IssuePageClient({
         );
         setIssueData(freshIssueData);
 
-        // 更新缓存
+        // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
         }
@@ -217,7 +220,7 @@ export default function IssuePageClient({
     [issueData, copanyId]
   );
 
-  // 处理标题变化
+  // Handle title change
   const handleTitleChange = useCallback(
     (issueId: string, newTitle: string) => {
       if (!issueData) return;
@@ -238,7 +241,7 @@ export default function IssuePageClient({
     [issueData, copanyId]
   );
 
-  // 处理描述变化
+  // Handle description change
   const handleDescriptionChange = useCallback(
     (issueId: string, newDescription: string) => {
       if (!issueData) return;
@@ -308,7 +311,7 @@ export default function IssuePageClient({
         />
       </div>
 
-      {/* 中等屏幕及以上在右侧显示状态和优先级选择器 */}
+      {/* Show state and priority selectors on larger screens */}
       <div className="hidden md:block md:w-1/3">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">

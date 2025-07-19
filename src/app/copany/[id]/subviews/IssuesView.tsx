@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
@@ -20,20 +20,20 @@ import { renderStateLabel } from "@/components/IssueStateSelector";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
-  issuesManager,
   currentUserManager,
   contributorsManager,
+  IssuesManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
 
-// 按状态分组的函数
+// Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
   const grouped = issues.reduce((acc, issue) => {
     let state = issue.state || IssueState.Backlog;
 
-    // 将 Duplicate 状态合并到 Canceled 分组
+    // Merge Duplicate state into Canceled group
     if (state === IssueState.Duplicate) {
       state = IssueState.Canceled;
     }
@@ -45,7 +45,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     return acc;
   }, {} as Record<number, IssueWithAssignee[]>);
 
-  // 优先级排序函数：Urgent > High > Medium > Low > None
+  // Priority sorting function: Urgent > High > Medium > Low > None
   const sortByPriority = (a: IssueWithAssignee, b: IssueWithAssignee) => {
     const priorityOrder: Record<number, number> = {
       [IssuePriority.Urgent]: 0,
@@ -61,7 +61,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     return priorityOrder[aPriority] - priorityOrder[bPriority];
   };
 
-  // 按状态顺序排序
+  // Sort by state order
   const stateOrder = [
     IssueState.InProgress,
     IssueState.Todo,
@@ -75,7 +75,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     .map((state) => ({
       state,
       label: renderStateLabel(state, true, true),
-      issues: grouped[state].sort(sortByPriority), // 在每个状态组内按优先级排序
+      issues: grouped[state].sort(sortByPriority), // Sort by priority within each state group
     }));
 }
 
@@ -90,7 +90,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     issueId: string;
   }>({ show: false, x: 0, y: 0, issueId: "" });
 
-  // 添加共享的用户和贡献者状态
+  // Add shared user and contributor status
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
 
@@ -98,7 +98,15 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
 
-  // 获取用户和贡献者数据的函数
+  // Create IssuesManager instance with data update callback
+  const issuesManagerWithCallback = useMemo(() => {
+    return new IssuesManager((key, updatedData) => {
+      console.log(`[IssuesView] Background refresh completed, data updated: ${key}`, updatedData);
+      setIssues(updatedData); // 自动更新 UI
+    });
+  }, []);
+
+  // Function to load user and contributor data
   const loadUserData = useCallback(async () => {
     try {
       const [user, contributorList] = await Promise.all([
@@ -113,7 +121,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     }
   }, [copanyId]);
 
-  // 使用新的 SWR 策略加载 Issues
+  // Use new SWR strategy to load Issues
   const loadIssues = useCallback(async () => {
     if (hasInitialLoadRef.current) return;
     hasInitialLoadRef.current = true;
@@ -121,9 +129,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     try {
       setIsLoading(true);
 
-      // 使用 SWR 策略：立即返回缓存 + 后台更新
-      const issuesData = await issuesManager.getIssues(copanyId, () =>
-        getIssuesAction(copanyId)
+      // Use IssuesManager with callback, support background refresh to automatically update UI
+      const issuesData = await issuesManagerWithCallback.getIssues(
+        copanyId,
+        () => getIssuesAction(copanyId)
       );
 
       setIssues(issuesData);
@@ -132,28 +141,28 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     } finally {
       setIsLoading(false);
     }
-  }, [copanyId]);
+  }, [copanyId, issuesManagerWithCallback]);
 
-  // 组件挂载时加载数据
+  // Load data when component mounts
   useEffect(() => {
     loadIssues();
     loadUserData();
   }, [loadIssues, loadUserData]);
 
-  // 处理 issue 创建完成后的回调
+  // Handle issue creation callback
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
       setIssues((prevIssues) => {
         const updatedIssues = [...prevIssues, newIssue];
-        // 更新 issues 列表缓存
-        issuesManager.setIssues(copanyId, updatedIssues);
+        // Update issues list cache
+        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理 issue 状态更新后的回调
+  // Handle issue state update callback
   const handleIssueStateUpdated = useCallback(
     (issueId: string, newState: number) => {
       setIssues((prevIssues) => {
@@ -163,21 +172,21 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               ...issue,
               state: newState,
             };
-            // 同时更新单个 issue 缓存
-            issuesManager.updateIssue(copanyId, updatedIssue);
+            // Update single issue cache
+            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
         });
-        // 更新 issues 列表缓存
-        issuesManager.setIssues(copanyId, updatedIssues);
+        // Update issues list cache
+        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
         return updatedIssues;
       });
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理 issue 优先级更新后的回调
+  // Handle issue priority update callback
   const handleIssuePriorityUpdated = useCallback(
     (issueId: string, newPriority: number) => {
       setIssues((prevIssues) => {
@@ -187,8 +196,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               ...issue,
               priority: newPriority,
             };
-            // 同时更新单个 issue 缓存
-            issuesManager.updateIssue(copanyId, updatedIssue);
+            // Update single issue cache
+            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
@@ -196,10 +205,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理 issue 等级更新后的回调
+  // Handle issue level update callback
   const handleIssueLevelUpdated = useCallback(
     (issueId: string, newLevel: number) => {
       setIssues((prevIssues) => {
@@ -209,8 +218,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               ...issue,
               level: newLevel,
             };
-            // 同时更新单个 issue 缓存
-            issuesManager.updateIssue(copanyId, updatedIssue);
+            // Update single issue cache
+            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
@@ -218,10 +227,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理 issue assignee 更新后的回调
+  // Handle issue assignee update callback
   const handleIssueAssigneeUpdated = useCallback(
     (
       issueId: string,
@@ -236,8 +245,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               assignee: newAssignee,
               assignee_user: assigneeUser,
             };
-            // 同时更新单个 issue 缓存
-            issuesManager.updateIssue(copanyId, updatedIssue);
+            // Update single issue cache
+            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
           }
           return issue;
@@ -245,39 +254,40 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理删除 issue
+  // Handle issue deletion
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
       try {
-        // 先从前端移除
+        // Remove from frontend first
         setIssues((prevIssues) => {
           const updatedIssues = prevIssues.filter(
             (issue) => issue.id !== issueId
           );
-          // 更新 issues 列表缓存
-          issuesManager.setIssues(copanyId, updatedIssues);
+          // Update issues list cache
+          issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
           return updatedIssues;
         });
-        setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // 关闭菜单
+        setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // Close menu
 
-        // 然后调用删除接口
+        // Then call delete interface
         await deleteIssueAction(issueId);
       } catch (error) {
         console.error("Error deleting issue:", error);
-        // 如果删除失败，重新加载数据恢复状态
-        const issuesData = await issuesManager.getIssues(copanyId, () =>
-          getIssuesAction(copanyId)
+        // If deletion fails, reload data to restore state
+        const issuesData = await issuesManagerWithCallback.getIssues(
+          copanyId,
+          () => getIssuesAction(copanyId)
         );
         setIssues(issuesData);
       }
     },
-    [copanyId]
+    [copanyId, issuesManagerWithCallback]
   );
 
-  // 处理右键菜单
+  // Handle right-click menu
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, issueId: string) => {
       e.preventDefault();
@@ -291,12 +301,12 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     []
   );
 
-  // 关闭右键菜单
+  // Close right-click menu
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu({ show: false, x: 0, y: 0, issueId: "" });
   }, []);
 
-  // 创建菜单项
+  // Create menu items
   const contextMenuItems: ContextMenuItem[] = [
     {
       label: "Delete Issue",
@@ -344,7 +354,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       <div className="relative">
         {groupIssuesByState(issues).map((group) => (
           <div key={group.state} className="">
-            {/* 分组标题 */}
+            {/* Group title */}
             <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
               <div className="flex flex-row items-center gap-2">
                 {group.label}
@@ -354,13 +364,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               </div>
             </div>
 
-            {/* 该状态下的 issues */}
+            {/* Issues in this state */}
             {group.issues.map((issue) => (
               <div
                 className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                 key={issue.id}
                 onClick={() => {
-                  // 保留当前的 URL 参数
+                  // Keep current URL parameters
                   const params = new URLSearchParams(searchParams.toString());
                   router.push(
                     `/copany/${copanyId}/issue/${issue.id}?${params.toString()}`
@@ -403,7 +413,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           </div>
         ))}
 
-        {/* 右键菜单 */}
+        {/* Right-click menu */}
         <ContextMenu
           show={contextMenu.show}
           x={contextMenu.x}
@@ -412,7 +422,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           onClose={handleCloseContextMenu}
         />
       </div>
-      {/* 创建 Issue 弹窗 */}
+      {/* Create Issue modal */}
       {createIssueModal()}
     </div>
   );

@@ -39,12 +39,13 @@ function validateContributions(contributions: Contribution[]): Contribution[] {
  * Provides advanced caching functionality, including intelligent refresh and data validation
  */
 class ContributionsDataManager extends GenericDataManager<Contribution[]> {
-  constructor() {
+  constructor(onDataUpdated?: (key: string, data: Contribution[]) => void) {
     super({
       cacheManager: contributionsCache,
       managerName: "ContributionsManager",
       validator: validateContributions,
       enableStaleCache: true,
+      onDataUpdated, // Configure data update callback
     });
   }
 
@@ -53,20 +54,27 @@ class ContributionsDataManager extends GenericDataManager<Contribution[]> {
   }
 }
 
-const contributionsDataManager = new ContributionsDataManager();
-
 export class ContributionsManager {
+  private dataManager: ContributionsDataManager;
+
+  constructor(onDataUpdated?: (key: string, data: Contribution[]) => void) {
+    this.dataManager = new ContributionsDataManager(onDataUpdated);
+  }
+
   async getContributions(
     copanyId: string,
     fetchFn: () => Promise<Contribution[]>
   ): Promise<Contribution[]> {
-    return contributionsDataManager.getData(copanyId, fetchFn);
+    return this.dataManager.getData(copanyId, fetchFn);
   }
+
   async refreshContributions(
     copanyId: string,
     fetchFn: () => Promise<Contribution[]>
   ): Promise<Contribution[]> {
-    return contributionsDataManager.getData(copanyId, fetchFn, true);
+    return this.dataManager.getData(copanyId, fetchFn, true);
   }
 }
+
+// Default instance (no callback, for simple operations)
 export const contributionsManager = new ContributionsManager();
