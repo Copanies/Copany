@@ -108,16 +108,6 @@ export class IssuesManager {
   }
 
   /**
-   * Force refresh Issues data
-   */
-  async refreshIssues(
-    copanyId: string,
-    fetchFn: () => Promise<IssueWithAssignee[]>
-  ): Promise<IssueWithAssignee[]> {
-    return issuesDataManager.getData(copanyId, fetchFn, true);
-  }
-
-  /**
    * Get single Issue (find from cached Issues list)
    * Replaces original UnifiedIssueCache.getIssue functionality
    */
@@ -145,105 +135,10 @@ export class IssuesManager {
   }
 
   /**
-   * Add new Issue to cache
-   */
-  addIssue(copanyId: string, newIssue: IssueWithAssignee): void {
-    issuesDataManager.addItem(copanyId, newIssue);
-  }
-
-  /**
-   * Remove Issue from cache
-   * Replaces original UnifiedIssueCache.removeIssue functionality
-   */
-  removeIssue(copanyId: string, issueId: string): void {
-    issuesDataManager.removeItem(copanyId, issueId);
-  }
-
-  /**
-   * Clear Issues cache for specified Copany
-   */
-  clearIssues(copanyId: string): void {
-    issuesDataManager.clearCache(copanyId);
-  }
-
-  /**
-   * Clear all Issues cache
-   */
-  clearAllIssues(): void {
-    issuesDataManager.clearCache();
-  }
-
-  /**
    * Manually set Issues cache
    */
   setIssues(copanyId: string, issues: IssueWithAssignee[]): void {
     issuesDataManager.setData(copanyId, issues);
-  }
-
-  /**
-   * Get cached Issues (won't trigger network request)
-   */
-  getCachedIssues(copanyId: string): IssueWithAssignee[] | null {
-    return issuesDataManager.getCachedData(copanyId);
-  }
-
-  /**
-   * Check if Issues for specified Copany are cached
-   */
-  hasIssues(copanyId: string): boolean {
-    return issuesDataManager.hasData(copanyId);
-  }
-
-  /**
-   * Preload cache
-   */
-  async preloadIssues(
-    copanyId: string,
-    fetchFn: () => Promise<IssueWithAssignee[]>
-  ): Promise<void> {
-    return issuesDataManager.preloadData(copanyId, fetchFn);
-  }
-
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): { count: number; totalSize: number } {
-    return issuesDataManager.getCacheStats();
-  }
-
-  /**
-   * Check if specific Issue is cached
-   */
-  hasIssue(copanyId: string, issueId: string): boolean {
-    return issuesDataManager.hasItem(copanyId, issueId);
-  }
-
-  /**
-   * Batch set Issues to cache
-   */
-  batchSetIssues(copanyId: string, issues: IssueWithAssignee[]): void {
-    issuesDataManager.batchSetData(copanyId, issues);
-  }
-
-  /**
-   * Get Issue count by state
-   */
-  getIssueCountByState(copanyId: string, state: IssueState): number {
-    const issues = this.getCachedIssues(copanyId);
-    if (!issues) return 0;
-    return issues.filter((issue) => issue.state === state).length;
-  }
-
-  /**
-   * Get Issues by assignee
-   */
-  getIssuesByAssignee(
-    copanyId: string,
-    assigneeId: string
-  ): IssueWithAssignee[] {
-    const issues = this.getCachedIssues(copanyId);
-    if (!issues) return [];
-    return issues.filter((issue) => issue.assignee === assigneeId);
   }
 }
 
