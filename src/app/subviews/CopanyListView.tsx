@@ -9,7 +9,7 @@ interface CopanyListViewProps {
 }
 
 /**
- * Copany 列表视图组件 - 纯渲染组件
+ * Copany list view component - Pure rendering component
  */
 export default function CopanyListView({ copanies }: CopanyListViewProps) {
   const router = useRouter();

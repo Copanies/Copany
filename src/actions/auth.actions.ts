@@ -7,28 +7,28 @@ import { clearGithubTokenCookie } from "@/services/github.service";
 import { currentUserManager } from "@/utils/cache";
 
 /**
- * 认证相关的 Server Actions
+ * Authentication related Server Actions
  */
 
 /**
- * GitHub OAuth 登录 - 使用 PKCE 流程
+ * GitHub OAuth login - Using PKCE flow
  */
 export async function signInWithGitHub() {
-  console.log("🚀 开始 GitHub OAuth 登录");
+  console.log("🚀 Starting GitHub OAuth login");
 
   const supabase = await createSupabaseClient();
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
-  // 检查必需的环境变量
+  // Check required environment variables
   if (!siteUrl) {
-    console.error("❌ NEXT_PUBLIC_SITE_URL 未设置");
+    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
     throw new Error(
-      "NEXT_PUBLIC_SITE_URL 环境变量未设置。请检查你的 .env.local 文件。"
+      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
     );
   }
 
-  console.log("🔍 NEXT_PUBLIC_SITE_URL 设置为:", siteUrl);
+  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
@@ -39,51 +39,51 @@ export async function signInWithGitHub() {
   });
 
   if (error) {
-    console.error("❌ GitHub 登录失败:", error.message);
-    throw new Error(`GitHub 登录失败: ${error.message}`);
+    console.error("❌ GitHub login failed:", error.message);
+    throw new Error(`GitHub login failed: ${error.message}`);
   }
 
   if (data.url) {
-    console.log("↗️ 重定向到 GitHub 授权页面");
-    redirect(data.url); // 这里会抛出 NEXT_REDIRECT，这是正常的
+    console.log("↗️ Redirecting to GitHub authorization page");
+    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
   } else {
-    console.log("⚠️ 未获取到 GitHub 授权 URL");
-    throw new Error("未获取到 GitHub 授权 URL");
+    console.log("⚠️ Failed to get GitHub authorization URL");
+    throw new Error("Failed to get GitHub authorization URL");
   }
 }
 
 /**
- * 用户登出
+ * User sign out
  */
 export async function signOut() {
-  console.log("🔓 开始用户登出");
+  console.log("🔓 Starting user sign out");
 
   const supabase = await createSupabaseClient();
 
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    console.error("❌ 登出失败:", error.message);
-    throw new Error(`登出失败: ${error.message}`);
+    console.error("❌ Sign out failed:", error.message);
+    throw new Error(`Sign out failed: ${error.message}`);
   }
 
-  // 清除 GitHub access token Cookie
+  // Clear GitHub access token Cookie
   await clearGithubTokenCookie();
 
-  // 清除 CurrentUserManager 缓存
+  // Clear CurrentUserManager cache
   currentUserManager.clearUser();
-  console.log("🗑️ 已清除用户缓存");
+  console.log("🗑️ User cache cleared");
 
-  console.log("✅ 用户登出成功");
-  redirect("/"); // 这里会抛出 NEXT_REDIRECT，这是正常的
+  console.log("✅ User sign out successful");
+  redirect("/"); // This will throw NEXT_REDIRECT, which is normal
 }
 
 /**
- * 获取当前用户信息
- * 注意：在 SSR 环境中，如果没有认证会话，会返回 null 而不是抛出错误
+ * Get current user information
+ * Note: In SSR environment, if there's no authentication session, returns null instead of throwing an error
  */
 export async function getCurrentUser(): Promise<User | null> {
-  console.log("👤 获取当前用户信息");
+  console.log("👤 Getting current user information");
 
   try {
     const supabase = await createSupabaseClient();
@@ -94,25 +94,25 @@ export async function getCurrentUser(): Promise<User | null> {
     } = await supabase.auth.getUser();
 
     if (error) {
-      // 如果是认证会话缺失错误，这是正常的（用户未登录）
+      // If it's an authentication session missing error, this is normal (user not logged in)
       if (error.message?.includes("Auth session missing")) {
-        console.log("ℹ️ 用户未登录 (会话缺失)");
+        console.log("ℹ️ User not logged in (session missing)");
         return null;
       }
-      console.error("❌ 获取用户信息失败:", error.message);
+      console.error("❌ Failed to get user information:", error.message);
       return null;
     }
 
     if (user) {
-      console.log("✅ 用户已登录:", user.email || user.id);
+      console.log("✅ User logged in:", user.email || user.id);
     } else {
-      console.log("ℹ️ 用户未登录");
+      console.log("ℹ️ User not logged in");
     }
 
     return user;
   } catch (error) {
-    // 捕获任何意外的错误，避免崩溃
-    console.error("❌ 获取用户信息异常:", error);
+    // Catch any unexpected errors to avoid crashes
+    console.error("❌ Exception when getting user information:", error);
     return null;
   }
 }

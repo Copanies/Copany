@@ -25,7 +25,7 @@ export class CopanyContributorService {
     userId: string
   ): Promise<CopanyContributor> {
     const supabase = await createSupabaseClient();
-    // 首先检查是否已存在相同的 copany_id 和 user_id 组合
+    // First check if the combination of copany_id and user_id already exists
     const { data: existingData } = await supabase
       .from("copany_contributor")
       .select("*")
@@ -34,7 +34,7 @@ export class CopanyContributorService {
       .single();
 
     if (existingData) {
-      // 如果已存在，直接返回现有记录
+      // If it exists, return the existing record
       return existingData as CopanyContributor;
     }
 
@@ -46,7 +46,7 @@ export class CopanyContributorService {
       throw new Error(`Failed to fetch user: ${userError.message}`);
     }
 
-    // 如果不存在，创建新记录
+    // If it doesn't exist, create a new record
     const { data, error } = await supabase
       .from("copany_contributor")
       .insert({

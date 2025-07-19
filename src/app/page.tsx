@@ -3,10 +3,10 @@ import { CopanyService } from "@/services/copany.service";
 import MainNavigation from "@/components/MainNavigation";
 
 /**
- * 主页 - 负责数据获取和页面布局
+ * Home page - Responsible for data fetching and page layout
  */
 export default async function Home() {
-  // 使用服务层获取数据
+  // Use service layer to fetch data
   const copanies = await CopanyService.getCopanies();
 
   return (

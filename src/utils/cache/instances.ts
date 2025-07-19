@@ -7,78 +7,78 @@ import {
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 
-// Copany 缓存实例
+// Copany cache instance
 export const copanyCache = new CacheManager<Copany, string>(
   {
     keyPrefix: "copany_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1天
+    ttl: 24 * 60 * 60 * 1000, // 1 day
     loggerName: "CopanyCache",
-    backgroundRefreshInterval: 30 * 60 * 1000, // 30分钟 - 项目信息变化较少
+    backgroundRefreshInterval: 30 * 60 * 1000, // 30 minutes - project info changes less frequently
   },
-  undefined, // 使用默认的键生成器
-  (data: Copany) => ({ copanyName: data.name }) // 日志信息生成器
+  undefined, // Use default key generator
+  (data: Copany) => ({ copanyName: data.name }) // Log info generator
 );
 
-// Issues 缓存实例
+// Issues cache instance
 export const issuesCache = new CacheManager<IssueWithAssignee[], string>(
   {
     keyPrefix: "issues_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1天
+    ttl: 24 * 60 * 60 * 1000, // 1 day
     loggerName: "IssuesCache",
-    backgroundRefreshInterval: 5 * 60 * 1000, // 5分钟 - Issues 变化较频繁
+    backgroundRefreshInterval: 5 * 60 * 1000, // 5 minutes - Issues change more frequently
   },
-  undefined, // 使用默认的键生成器
-  (data: IssueWithAssignee[]) => ({ issueCount: data.length }) // 日志信息生成器
+  undefined, // Use default key generator
+  (data: IssueWithAssignee[]) => ({ issueCount: data.length }) // Log info generator
 );
 
-// 当前用户缓存实例
+// Current user cache instance
 export const currentUserCache = new CacheManager<User, string>(
   {
     keyPrefix: "current_user_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1天
+    ttl: 24 * 60 * 60 * 1000, // 1 day
     loggerName: "CurrentUserCache",
-    backgroundRefreshInterval: 15 * 60 * 1000, // 15分钟 - 用户信息适中刷新频率
+    backgroundRefreshInterval: 15 * 60 * 1000, // 15 minutes - moderate refresh rate for user info
   },
-  () => "current_user", // 固定键，因为只有一个当前用户
-  (data: User) => ({ userId: data.id, userEmail: data.email }) // 日志信息生成器
+  () => "current_user", // Fixed key because there's only one current user
+  (data: User) => ({ userId: data.id, userEmail: data.email }) // Log info generator
 );
 
-// Copany 贡献者缓存实例
+// Copany contributors cache instance
 export const contributorsCache = new CacheManager<CopanyContributor[], string>(
   {
     keyPrefix: "contributors_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1天
+    ttl: 24 * 60 * 60 * 1000, // 1 day
     loggerName: "ContributorsCache",
-    backgroundRefreshInterval: 5 * 60 * 1000, // 5分钟 - 贡献者相对稳定
+    backgroundRefreshInterval: 5 * 60 * 1000, // 5 minutes - contributors are relatively stable
   },
-  undefined, // 使用默认的键生成器（copanyId）
-  (data: CopanyContributor[]) => ({ contributorCount: data.length }) // 日志信息生成器
+  undefined, // Use default key generator (copanyId)
+  (data: CopanyContributor[]) => ({ contributorCount: data.length }) // Log info generator
 );
 
-// Contribution 缓存实例
+// Contribution cache instance
 export const contributionsCache = new CacheManager<Contribution[], string>(
   {
     keyPrefix: "contributions_cache_",
-    ttl: 12 * 60 * 60 * 1000, // 12小时 - 贡献数据变化相对频繁
+    ttl: 12 * 60 * 60 * 1000, // 12 hours - contribution data changes relatively frequently
     loggerName: "ContributionsCache",
-    backgroundRefreshInterval: 10 * 60 * 1000, // 10分钟 - 贡献数据需要较频繁更新
+    backgroundRefreshInterval: 10 * 60 * 1000, // 10 minutes - contribution data needs more frequent updates
   },
-  undefined, // 使用默认的键生成器（copanyId）
-  (data: Contribution[]) => ({ contributionCount: data.length }) // 日志信息生成器
+  undefined, // Use default key generator (copanyId)
+  (data: Contribution[]) => ({ contributionCount: data.length }) // Log info generator
 );
 
-// 注意：单个 Issue 缓存现在通过 IssuesManager 管理，从 issues 列表缓存中派生
+// Note: Single Issue cache is now managed through IssuesManager, derived from the issues list cache
 
-// README 缓存实例
+// README cache instance
 export const readmeCache = new CacheManager<string, string>(
   {
     keyPrefix: "readme_cache_",
-    ttl: 24 * 60 * 60 * 1000, // 1天
+    ttl: 24 * 60 * 60 * 1000, // 1 day
     loggerName: "ReadmeCache",
-    backgroundRefreshInterval: 60 * 60 * 1000, // 60分钟 - README 变化最少
+    backgroundRefreshInterval: 60 * 60 * 1000, // 60 minutes - READMEs change least frequently
   },
-  // 自定义键生成器：处理 GitHub URL
+  // Custom key generator: handle GitHub URL
   (githubUrl: string) =>
     githubUrl.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9]/g, "_"),
-  (content: string) => ({ contentLength: content.length }) // 日志信息生成器
+  (content: string) => ({ contentLength: content.length }) // Log info generator
 );

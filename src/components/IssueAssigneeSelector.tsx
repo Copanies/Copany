@@ -44,11 +44,11 @@ export default function IssueAssigneeSelector({
         const assigneeValue = newAssignee === "unassigned" ? null : newAssignee;
         setCurrentAssignee(assigneeValue);
 
-        // 更新本地的 assignee user 信息
+        // Update local assignee user information
         let newAssigneeUser: AssigneeUser | null = null;
 
         if (assigneeValue) {
-          // 从当前用户或贡献者中找到对应的用户信息
+          // Find corresponding user information from current user or contributors
           if (currentUser && assigneeValue === currentUser.id) {
             newAssigneeUser = {
               id: currentUser.id,
@@ -73,22 +73,22 @@ export default function IssueAssigneeSelector({
 
         setCurrentAssigneeUser(newAssigneeUser);
 
-        // 立即调用回调更新前端状态，提供即时反馈
+        // Immediately call callback to update frontend state, provide instant feedback
         if (onAssigneeChange) {
           onAssigneeChange(issueId, assigneeValue, newAssigneeUser);
         }
 
-        // 只有在不是创建模式时才调用更新 assignee 接口
+        // Only call the update assignee API when not in creation mode
         if (!disableServerUpdate) {
           await updateIssueAssigneeAction(issueId, assigneeValue);
           console.log("Assignee updated successfully:", assigneeValue);
         }
       } catch (error) {
         console.error("Error updating assignee:", error);
-        // 出错时回滚状态
+        // Rollback state on error
         setCurrentAssignee(initialAssignee);
         setCurrentAssigneeUser(assigneeUser);
-        // 如果有回调，也需要回滚前端状态
+        // If there's a callback, also need to rollback frontend state
         if (onAssigneeChange) {
           onAssigneeChange(issueId, initialAssignee, assigneeUser || null);
         }
@@ -105,11 +105,11 @@ export default function IssueAssigneeSelector({
     ]
   );
 
-  // 构建分组选项
+  // Build grouped options
   const groups = (() => {
     const groups = [];
 
-    // 添加 "Unassigned" 选项
+    // Add "Unassigned" option
     groups.push({
       title: null,
       options: [
@@ -120,7 +120,7 @@ export default function IssueAssigneeSelector({
       ],
     });
 
-    // 第一个分组：Me (当前用户)
+    // First group: Me (current user)
     if (currentUser) {
       groups.push({
         title: "Self",
@@ -137,7 +137,7 @@ export default function IssueAssigneeSelector({
       });
     }
 
-    // 第二个分组：Contributors (贡献者，排除当前用户)
+    // Second group: Contributors (excluding current user)
     const otherContributors =
       contributors?.filter(
         (contributor) => contributor.user_id !== currentUser?.id
@@ -160,19 +160,19 @@ export default function IssueAssigneeSelector({
     return groups;
   })();
 
-  // 获取当前选中的值
+  // Get the currently selected value
   const selectedValue = (() => {
     if (!currentAssignee) return "unassigned";
     return currentAssignee;
   })();
 
-  // 渲染触发器显示内容
+  // Render trigger display content
   const trigger = (() => {
     if (!currentAssignee) {
       return renderUnassignedLabel(showText);
     }
 
-    // 优先使用 currentAssigneeUser 的信息（来自 IssueWithAssignee）
+    // Prioritize currentAssigneeUser information (from IssueWithAssignee)
     if (currentAssigneeUser) {
       return renderUserLabel(
         currentAssigneeUser.name,
@@ -181,7 +181,7 @@ export default function IssueAssigneeSelector({
       );
     }
 
-    // 如果没有 assigneeUser 信息，则查找当前用户或贡献者信息
+    // If no assigneeUser information, find current user or contributor information
     if (currentUser && currentAssignee === currentUser.id) {
       return renderUserLabel(
         currentUser.user_metadata?.name || "Unknown",
@@ -201,7 +201,7 @@ export default function IssueAssigneeSelector({
       );
     }
 
-    // 如果都找不到，显示一个默认的用户标签
+    // If not found, display a default user label
     return renderUserLabel("Unknown User", null, showText);
   })();
 

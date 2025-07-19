@@ -25,9 +25,9 @@ const decodeGitHubContent = (base64String: string): string => {
 };
 
 /**
- * 从 GitHub URL 生成新建 README 文件的链接
- * @param githubUrl GitHub 仓库 URL
- * @returns 新建 README 文件的链接，如果解析失败则返回 null
+ * Generate a link to create a new README file from GitHub URL
+ * @param githubUrl GitHub repository URL
+ * @returns Link to create a new README file, or null if parsing fails
  */
 const generateNewReadmeUrl = (githubUrl: string): string | null => {
   try {
@@ -36,9 +36,9 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 
     if (pathSegments.length >= 2) {
       const [owner, repo] = pathSegments;
-      // 移除可能的 .git 后缀
+      // Remove possible .git suffix
       const cleanRepo = repo.replace(/\.git$/, "");
-      // 构造新建 README 文件的 URL
+      // Construct URL for creating a new README file
       return `https://github.com/${owner}/${cleanRepo}/new/main?filename=README.md`;
     }
     return null;
@@ -63,7 +63,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         setError(null);
         setNotFound(false);
 
-        // 检查用户是否已登录，但不阻止未登录用户查看公共仓库的 README
+        // Check if user is logged in, but don't prevent non-logged in users from viewing public repository README
         const user = await currentUserManager.getCurrentUser();
         setIsLoggedIn(!!user);
 
@@ -72,11 +72,11 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
           return;
         }
 
-        // 首先检查是否有缓存，只有在需要网络请求时才显示 loading
+        // First check if there's a cache, only show loading when network request is needed
         const cachedContent = readmeManager.getCachedReadme(githubUrl);
 
         if (cachedContent) {
-          // 有缓存，立即显示缓存内容，不显示 loading
+          // Cache exists, immediately display cached content without showing loading
           if (cachedContent === "No README") {
             setNotFound(true);
             setReadmeContent("");
@@ -84,7 +84,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             setReadmeContent(cachedContent);
           }
 
-          // 后台刷新缓存，不显示 loading
+          // Refresh cache in background without showing loading
           readmeManager
             .getReadme(githubUrl, async () => {
               const readme = await getRepoReadmeAction(githubUrl);
@@ -94,7 +94,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
               return decodeGitHubContent(readme.content);
             })
             .then((freshContent) => {
-              // 只有当内容发生变化时才更新UI
+              // Only update UI when content has changed
               if (freshContent !== cachedContent) {
                 if (freshContent === "No README") {
                   setNotFound(true);
@@ -109,7 +109,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
               console.warn("Background refresh README failed:", error);
             });
         } else {
-          // 无缓存，需要网络请求，显示 loading
+          // No cache, network request needed, show loading
           setLoading(true);
           try {
             const content = await readmeManager.getReadme(

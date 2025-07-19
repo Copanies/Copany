@@ -7,25 +7,25 @@ export async function GET(request: Request) {
   // if "next" is in param, use it as the redirect URL
   let next = searchParams.get("next") ?? "/";
 
-  console.log("🔄 OAuth 回调处理 - code:", !!code, "next:", next);
+  console.log("🔄 OAuth callback handling - code:", !!code, "next:", next);
 
   if (!next.startsWith("/")) {
     // if "next" is not a relative URL, use the default
     next = "/";
-    console.log("⚠️ next 参数不是相对路径，重置为 /");
+    console.log("⚠️ next parameter is not a relative path, resetting to /");
   }
 
   if (code) {
     try {
       const supabase = await createSupabaseClient();
-      console.log("🔑 正在交换授权码...");
+      console.log("🔑 Exchanging authorization code...");
 
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
-        console.log("✅ 授权码交换成功");
+        console.log("✅ Authorization code exchange successful");
 
-        // 先验证用户身份，然后获取会话中的 provider_token
+        // First verify user identity, then get the provider_token from the session
         const {
           data: { user },
           error: userError,
@@ -34,19 +34,19 @@ export async function GET(request: Request) {
         let providerToken: string | null = null;
 
         if (userError || !user) {
-          console.warn("⚠️ 用户验证失败，无法设置 Cookie");
+          console.warn("⚠️ User verification failed, cannot set Cookie");
         } else {
-          // 用户身份验证成功后，获取会话中的 provider_token
+          // After user identity verification, get provider_token from session
           const {
             data: { session },
             error: sessionError,
           } = await supabase.auth.getSession();
 
           if (!sessionError && session?.provider_token) {
-            console.log("🍪 获取到 GitHub access token");
+            console.log("🍪 Retrieved GitHub access token");
             providerToken = session.provider_token;
           } else {
-            console.warn("⚠️ 未找到 provider_token，无法设置 Cookie");
+            console.warn("⚠️ provider_token not found, cannot set Cookie");
           }
         }
 
@@ -63,35 +63,35 @@ export async function GET(request: Request) {
           redirectUrl = `${origin}${next}`;
         }
 
-        console.log("↗️ 重定向到:", redirectUrl);
+        console.log("↗️ Redirecting to:", redirectUrl);
         const response = NextResponse.redirect(redirectUrl);
 
-        // 如果用户验证通过且有 provider_token，设置到 Cookie
+        // If user verification passes and provider_token exists, set it in a Cookie
         if (!userError && user && providerToken) {
-          // 设置 HttpOnly Cookie，有效期 7 天
+          // Set HttpOnly Cookie with 7-day validity
           response.cookies.set("github_access_token", providerToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 7, // 7 天
+            maxAge: 60 * 60 * 24 * 7, // 7 days
             path: "/",
           });
-          console.log("✅ GitHub access token 已保存到 Cookie");
+          console.log("✅ GitHub access token saved to Cookie");
         }
 
         return response;
       } else {
-        console.error("❌ 授权码交换失败:", error.message);
+        console.error("❌ Authorization code exchange failed:", error.message);
       }
     } catch (error) {
-      console.error("❌ OAuth 回调处理异常:", error);
+      console.error("❌ OAuth callback handling exception:", error);
     }
   } else {
-    console.log("⚠️ 未收到授权码");
+    console.log("⚠️ No authorization code received");
   }
 
   // return the user to an error page with instructions
   const errorUrl = `${origin}/auth/auth-code-error`;
-  console.log("❌ 重定向到错误页面:", errorUrl);
+  console.log("❌ Redirecting to error page:", errorUrl);
   return NextResponse.redirect(errorUrl);
 }

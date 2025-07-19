@@ -2,11 +2,11 @@ import { createSupabaseClient } from "@/utils/supabase/server";
 import { Copany } from "@/types/database.types";
 
 /**
- * Copany 数据服务 - 处理所有与 Copany 相关的数据操作
+ * Copany data service - Handles all operations related to Copany data
  */
 export class CopanyService {
   /**
-   * 获取所有公司列表
+   * Get all companies list
    */
   static async getCopanies(): Promise<Copany[]> {
     const supabase = await createSupabaseClient();
@@ -24,7 +24,7 @@ export class CopanyService {
   }
 
   /**
-   * 根据 ID 获取单个公司
+   * Get a single company by ID
    */
   static async getCopanyById(id: string): Promise<Copany | null> {
     const supabase = await createSupabaseClient();
@@ -43,12 +43,12 @@ export class CopanyService {
   }
 
   /**
-   * 创建新公司
+   * Create new company
    */
   static async createCopany(
     copany: Omit<Copany, "id" | "created_at" | "updated_at">
   ): Promise<Copany> {
-    console.log("📋 CopanyService.createCopany 接收到的数据:", copany);
+    console.log("📋 CopanyService.createCopany received data:", copany);
     console.log("🖼️ CopanyService.createCopany logo_url:", copany.logo_url);
 
     const supabase = await createSupabaseClient();
@@ -63,7 +63,10 @@ export class CopanyService {
       throw new Error(`Failed to create copany: ${error.message}`);
     }
 
-    console.log("✅ CopanyService.createCopany 创建成功，返回数据:", data);
+    console.log(
+      "✅ CopanyService.createCopany created successfully, returned data:",
+      data
+    );
     return data as Copany;
   }
 

@@ -28,28 +28,28 @@ export default function IssuePrioritySelector({
     try {
       setCurrentPriority(newPriority);
 
-      // 立即调用回调更新前端状态，提供即时反馈
+      // Immediately call callback to update frontend state, provide instant feedback
       if (onPriorityChange) {
         onPriorityChange(issueId, newPriority);
       }
 
-      // 只有在不是创建模式时才调用更新优先级接口
+      // Only call the update priority API when not in creation mode
       if (!disableServerUpdate) {
         await updateIssuePriorityAction(issueId, newPriority);
         console.log("Priority updated successfully:", newPriority);
       }
     } catch (error) {
       console.error("Error updating priority:", error);
-      // 出错时回滚状态
+      // Rollback state on error
       setCurrentPriority(initialPriority);
-      // 如果有回调，也需要回滚前端状态
+      // If there's a callback, also need to rollback frontend state
       if (onPriorityChange && initialPriority !== null) {
         onPriorityChange(issueId, initialPriority);
       }
     }
   };
 
-  // 获取所有可用优先级
+  // Get all available priorities
   const allPriorities = [
     IssuePriority.None,
     IssuePriority.Urgent,
@@ -104,7 +104,7 @@ function NoneLabel({ showText }: { showText: boolean }) {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          {/* 两个短分隔符并排 */}
+          {/* Two short separators side by side */}
           <line
             x1="8"
             y1="16"
@@ -142,7 +142,7 @@ function UrgentLabel({ showText }: { showText: boolean }) {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          {/* 圆角方形内部感叹号 */}
+          {/* Rounded rectangle with exclamation mark inside */}
           <rect
             x="5"
             y="9"
@@ -189,7 +189,7 @@ function HighLabel({ showText }: { showText: boolean }) {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          {/* 信号强度 - 3格满，适中间距，微圆角，更细 */}
+          {/* Signal strength - 3 bars full, moderate spacing, slightly rounded corners, thinner */}
           <rect
             x="5"
             y="16"
@@ -233,7 +233,7 @@ function MediumLabel({ showText }: { showText: boolean }) {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          {/* 信号强度 - 2格满，1格淡，适中间距，微圆角，更细 */}
+          {/* Signal strength - 2 bars full, 1 bar faded, moderate spacing, slightly rounded corners, thinner */}
           <rect
             x="5"
             y="16"
@@ -281,7 +281,7 @@ function LowLabel({ showText }: { showText: boolean }) {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          {/* 信号强度 - 1格满，2格淡，适中间距，微圆角，更细 */}
+          {/* Signal strength - 1 bar full, 2 bars faded, moderate spacing, slightly rounded corners, thinner */}
           <rect
             x="5"
             y="16"

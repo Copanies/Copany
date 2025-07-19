@@ -1,4 +1,4 @@
-// 缓存系统统一导出
+// Unified cache system exports
 export { CacheManager } from "./CacheManager";
 export { GenericDataManager } from "./GenericDataManager";
 export type { DataManagerConfig } from "./GenericDataManager";
@@ -12,7 +12,7 @@ export {
   contributionsCache,
 } from "./instances";
 
-// 导出所有业务层管理器（推荐使用）
+// Export all business layer managers (recommended to use)
 export {
   ContributionsManager,
   contributionsManager,

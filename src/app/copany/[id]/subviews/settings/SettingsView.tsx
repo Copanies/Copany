@@ -50,19 +50,19 @@ export default function SettingsView({
     currentValue: string;
   } | null>(null);
 
-  // Logo 相关状态
+  // Logo related states
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 删除 Copany 相关状态
+  // Delete Copany related states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 更新 Description 相关状态
+  // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
 
   const assetLinks = [
@@ -185,7 +185,7 @@ export default function SettingsView({
     setIsEditAssetLinkModalOpen(true);
   }
 
-  // 从 Supabase Storage URL 中提取文件路径
+  // Extract file path from Supabase Storage URL
   const extractFilePathFromUrl = (url: string): string | null => {
     try {
       const urlObj = new URL(url);
@@ -204,14 +204,14 @@ export default function SettingsView({
     }
   };
 
-  // 处理 logo 文件选择和上传
+  // Handle logo file selection and upload
   const handleLogoFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // 检查文件大小
+    // Check file size
     const maxSize = storageService.getMaxFileSize();
     if (file.size > maxSize) {
       setUploadError(
@@ -220,22 +220,22 @@ export default function SettingsView({
       return;
     }
 
-    // 检查文件类型
+    // Check file type
     if (!file.type.startsWith("image/")) {
       setUploadError("Please select an image file");
       return;
     }
 
-    // 清除错误并开始上传
+    // Clear errors and start upload
     setUploadError(null);
     setIsUploading(true);
 
     try {
-      // 先上传新的 logo
+      // Upload new logo first
       const result = await storageService.uploadLogo(file, copany.name);
 
       if (result.success && result.url) {
-        // 上传成功后，删除旧的 logo
+        // After successful upload, delete old logo
         if (uploadedLogoUrl) {
           try {
             const filePath = extractFilePathFromUrl(uploadedLogoUrl);
@@ -250,7 +250,7 @@ export default function SettingsView({
         setIsImageLoading(true);
         setUploadedLogoUrl(result.url);
 
-        // 立即更新 copany 的 logo_url
+        // Immediately update copany's logo_url
         const updatedCopany = {
           ...copany,
           logo_url: result.url,
@@ -266,28 +266,28 @@ export default function SettingsView({
       setUploadError("Upload failed");
     } finally {
       setIsUploading(false);
-      // 清空文件输入，允许重新选择相同文件
+      // Clear file input to allow reselecting the same file
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
 
-  // 处理删除 Copany
+  // Handle delete Copany
   async function handleDeleteCopany() {
     setIsDeleting(true);
     try {
       await deleteCopanyAction(copany.id);
-      // 删除成功后跳转到首页
+      // Redirect to home page after successful deletion
       router.push("/");
     } catch (error) {
-      console.error("删除 Copany 失败:", error);
+      console.error("Failed to delete Copany:", error);
     } finally {
       setIsDeleting(false);
     }
   }
 
-  // 关闭删除弹窗
+  // Close delete modal
   function handleCloseDeleteModal() {
     setIsDeleteModalOpen(false);
     setDeleteConfirmName("");
@@ -310,7 +310,7 @@ export default function SettingsView({
         <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
       </div>
 
-      {/* 删除确认弹窗 */}
+      {/* Delete confirmation modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={handleCloseDeleteModal}
@@ -321,7 +321,7 @@ export default function SettingsView({
             Delete {copany.name}
           </h2>
 
-          {/* Copany 信息展示 */}
+          {/* Copany information display */}
           <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             {copany.logo_url ? (
               <Image
@@ -430,7 +430,7 @@ export default function SettingsView({
         <label className="text-sm font-semibold">Copany logo</label>
 
         <div className="flex flex-col space-y-3">
-          {/* Logo 展示区域 */}
+          {/* Logo display area */}
           <div className="relative">
             {currentLogoUrl ? (
               <div className="relative w-24 h-24">
@@ -454,7 +454,7 @@ export default function SettingsView({
             )}
           </div>
 
-          {/* 上传按钮 */}
+          {/* Upload button */}
           <div className="flex flex-col w-fit space-y-2">
             <input
               ref={fileInputRef}
@@ -480,7 +480,7 @@ export default function SettingsView({
               PNG, JPG, JPEG, GIF, WebP • Max 1MB
             </p>
 
-            {/* 错误提示 */}
+            {/* Error message */}
             {uploadError && (
               <div className="text-xs text-red-600 dark:text-red-400 text-center">
                 {uploadError}

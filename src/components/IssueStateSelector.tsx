@@ -28,28 +28,28 @@ export default function IssueStateSelector({
     try {
       setCurrentState(newState);
 
-      // 立即调用回调更新前端状态，提供即时反馈
+      // Immediately call callback to update frontend state, provide instant feedback
       if (onStateChange) {
         onStateChange(issueId, newState);
       }
 
-      // 只有在不是创建模式时才调用更新状态接口
+      // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
         await updateIssueStateAction(issueId, newState);
         console.log("State updated successfully:", newState);
       }
     } catch (error) {
       console.error("Error updating state:", error);
-      // 出错时回滚状态
+      // Rollback state on error
       setCurrentState(initialState);
-      // 如果有回调，也需要回滚前端状态
+      // If there's a callback, also need to rollback frontend state
       if (onStateChange && initialState !== null) {
         onStateChange(issueId, initialState);
       }
     }
   };
 
-  // 获取所有可用状态
+  // Get all available states
   const allStates = [
     IssueState.Backlog,
     IssueState.Todo,

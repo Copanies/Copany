@@ -5,22 +5,22 @@ import { cookies } from "next/headers";
 export async function createSupabaseClient() {
   const cookieStore = await cookies();
 
-  // 调试日志：检查环境变量
+  // Debug logs: Check environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // 检查必需的环境变量
+  // Check required environment variables
   if (!supabaseUrl) {
-    console.error("❌ NEXT_PUBLIC_SUPABASE_URL 未设置");
+    console.error("❌ NEXT_PUBLIC_SUPABASE_URL not set");
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL 环境变量未设置。请检查你的 .env.local 文件。"
+      "NEXT_PUBLIC_SUPABASE_URL environment variable is not set. Please check your .env.local file."
     );
   }
 
   if (!supabaseAnonKey) {
-    console.error("❌ NEXT_PUBLIC_SUPABASE_ANON_KEY 未设置");
+    console.error("❌ NEXT_PUBLIC_SUPABASE_ANON_KEY not set");
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY 环境变量未设置。请检查你的 .env.local 文件。"
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable is not set. Please check your .env.local file."
     );
   }
 
@@ -40,16 +40,19 @@ export async function createSupabaseClient() {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
-            console.warn("⚠️ 服务器组件调用 setAll, 可忽略", error);
+            console.warn(
+              "⚠️ Server component called setAll, can be ignored",
+              error
+            );
           }
         },
       },
     });
 
-    console.log("✅ Supabase 服务器端客户端创建成功");
+    console.log("✅ Supabase server client created successfully");
     return client;
   } catch (error) {
-    console.error("❌ Supabase 服务器端客户端创建失败:", error);
+    console.error("❌ Failed to create Supabase server client:", error);
     throw error;
   }
 }
@@ -59,16 +62,16 @@ export async function createAdminSupabaseClient() {
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl) {
-    console.error("❌ NEXT_PUBLIC_SUPABASE_URL 未设置");
+    console.error("❌ NEXT_PUBLIC_SUPABASE_URL not set");
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL 环境变量未设置。请检查你的 .env.local 文件。"
+      "NEXT_PUBLIC_SUPABASE_URL environment variable is not set. Please check your .env.local file."
     );
   }
 
   if (!supabaseServiceRoleKey) {
-    console.error("❌ SUPABASE_SERVICE_ROLE_KEY 未设置");
+    console.error("❌ SUPABASE_SERVICE_ROLE_KEY not set");
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY 环境变量未设置。请检查你的 .env.local 文件。"
+      "SUPABASE_SERVICE_ROLE_KEY environment variable is not set. Please check your .env.local file."
     );
   }
 

@@ -76,10 +76,10 @@ export default function ContributionPieChart({
 }: ContributionPieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 使用自定义 hook 检测 dark mode
+  // Use custom hook to detect dark mode
   const isDarkMode = useDarkMode();
 
-  // 使用 visx 的 useTooltip hook
+  // Use visx's useTooltip hook
   const {
     tooltipOpen,
     tooltipLeft,
@@ -170,7 +170,7 @@ export default function ContributionPieChart({
       levelCounts: data.levelCounts,
     };
 
-    // 计算 tooltip 位置，确保在窗口范围内
+    // Calculate tooltip position, ensuring it stays within window bounds
     const tooltipWidth = 280;
     const tooltipHeight = 200;
     const viewportWidth = window.innerWidth;
@@ -179,7 +179,7 @@ export default function ContributionPieChart({
     let tooltipLeft = event.clientX;
     let tooltipTop = event.clientY - tooltipHeight - 10;
 
-    // 水平边界检测
+    // Horizontal boundary detection
     if (tooltipLeft + tooltipWidth > viewportWidth) {
       tooltipLeft = event.clientX - tooltipWidth;
     }
@@ -187,7 +187,7 @@ export default function ContributionPieChart({
       tooltipLeft = 10;
     }
 
-    // 垂直边界检测
+    // Vertical boundary detection
     if (tooltipTop < 0) {
       tooltipTop = event.clientY + 10;
     }

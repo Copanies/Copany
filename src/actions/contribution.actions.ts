@@ -3,41 +3,41 @@ import { IssueService } from "@/services/issue.service";
 import { Contribution, IssueState } from "@/types/database.types";
 
 /**
- * 从已完成的 Issues 生成 Contribution 数据
+ * Generate Contribution data from completed Issues
  */
 export async function generateContributionsFromIssuesAction(
   copanyId: string
 ): Promise<Contribution[]> {
   try {
-    // 获取该 copany 的所有 issues
+    // Get all issues for this copany
     const issues = await IssueService.getIssues(copanyId);
 
-    // 过滤出已完成的 Issues
+    // Filter for completed Issues
     const completedIssues = issues.filter(
       (issue) =>
         issue.state === IssueState.Done && issue.assignee && issue.closed_at
     );
 
-    // 生成 contribution 数据
+    // Generate contribution data
     const contributions = completedIssues.map((issue) => {
       const closedDate = new Date(issue.closed_at!);
 
       return {
-        id: `${issue.id}-contribution`, // 生成临时 ID
+        id: `${issue.id}-contribution`, // Generate temporary ID
         user_id: issue.assignee!,
         copany_id: copanyId,
         issue_id: issue.id,
-        issue_title: issue.title || "未命名 Issue",
+        issue_title: issue.title || "Untitled Issue",
         issue_level: issue.level || 0,
         year: closedDate.getFullYear(),
-        month: closedDate.getMonth() + 1, // JavaScript 月份从 0 开始
+        month: closedDate.getMonth() + 1, // JavaScript months start from 0
         day: closedDate.getDate(),
       } as Contribution;
     });
 
     return contributions;
   } catch (error) {
-    console.error("❌ 生成贡献记录失败:", error);
-    throw new Error("生成贡献记录失败");
+    console.error("❌ Failed to generate contribution records:", error);
+    throw new Error("Failed to generate contribution records");
   }
 }

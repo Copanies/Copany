@@ -28,28 +28,28 @@ export default function IssueLevelSelector({
     try {
       setCurrentLevel(newLevel);
 
-      // 立即调用回调更新前端状态，提供即时反馈
+      // Immediately call callback to update frontend state, provide instant feedback
       if (onLevelChange) {
         onLevelChange(issueId, newLevel);
       }
 
-      // 只有在不是创建模式时才调用更新等级接口
+      // Only call the update level API when not in creation mode
       if (!disableServerUpdate) {
         await updateIssueLevelAction(issueId, newLevel);
         console.log("Level updated successfully:", newLevel);
       }
     } catch (error) {
       console.error("Error updating level:", error);
-      // 出错时回滚状态
+      // Rollback state on error
       setCurrentLevel(initialLevel);
-      // 如果有回调，也需要回滚前端状态
+      // If there's a callback, also need to rollback frontend state
       if (onLevelChange && initialLevel !== null) {
         onLevelChange(issueId, initialLevel);
       }
     }
   };
 
-  // 获取所有可用等级
+  // Get all available levels
   const allLevels = [
     IssueLevel.level_None,
     IssueLevel.level_C,

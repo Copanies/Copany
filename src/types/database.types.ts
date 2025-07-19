@@ -39,7 +39,7 @@ export interface IssueWithAssignee extends Issue {
   assignee_user: AssigneeUser | null;
 }
 
-// Issue 状态枚举
+// Issue status enum
 export enum IssueState {
   Backlog = 1,
   Todo = 2,
@@ -49,7 +49,7 @@ export enum IssueState {
   Duplicate = 6,
 }
 
-// Issue 优先级枚举
+// Issue priority enum
 export enum IssuePriority {
   None = 0,
   Urgent = 1,
@@ -58,7 +58,7 @@ export enum IssuePriority {
   Low = 4,
 }
 
-// Issue 等级枚举
+// Issue level enum
 export enum IssueLevel {
   level_None = 0,
   level_C = 1,
@@ -98,7 +98,7 @@ export interface Contribution {
   day: number;
 }
 
-// 等级分数配置
+// Level score configuration
 export const LEVEL_SCORES: Record<IssueLevel, number> = {
   [IssueLevel.level_C]: 5,
   [IssueLevel.level_B]: 20,

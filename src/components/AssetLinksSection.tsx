@@ -29,7 +29,7 @@ export default function AssetLinksSection({
     setMounted(true);
   }, []);
 
-  // 在客户端挂载前使用亮色主题图标
+  // Use light theme icons before client-side mounting
   const currentGithubIcon = mounted && isDarkMode ? GithubDarkIcon : GithubIcon;
   const currentDiscordIcon =
     mounted && isDarkMode ? DiscordDarkIcon : DiscordIcon;
