@@ -394,7 +394,7 @@ function UserChart({
       issues: monthIssues,
     };
 
-    // Calculate tooltip position, ensure it's within window bounds
+    // Calculate tooltip position, ensuring it stays within window bounds with 12px safety margin
     const tooltipHeight = Math.min(200 + monthIssues.length * 24, 400); // Dynamic height
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -412,20 +412,20 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
-    // Horizontal boundary detection - if right side space is insufficient, display on left
-    if (tooltipLeft + tooltipWidth > viewportWidth) {
+    // Horizontal boundary detection with 12px safety margin
+    if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
       tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
     }
-    if (tooltipLeft < 2) {
-      tooltipLeft = 2; // Ensure minimum left margin
+    if (tooltipLeft < 12) {
+      tooltipLeft = 12; // Ensure 12px left margin
     }
 
     // Vertical boundary detection
-    if (tooltipTop < 2) {
+    if (tooltipTop < 12) {
       tooltipTop = event.clientY + 10; // Display below mouse if top space is insufficient
     }
-    if (tooltipTop + tooltipHeight > viewportHeight) {
-      tooltipTop = viewportHeight - tooltipHeight - 2; // Ensure it doesn't exceed bottom boundary
+    if (tooltipTop + tooltipHeight > viewportHeight - 12) {
+      tooltipTop = viewportHeight - tooltipHeight - 12; // Ensure 12px bottom margin
     }
 
     showTooltip({
@@ -463,7 +463,7 @@ function UserChart({
       issues: monthIssues,
     };
 
-    // Calculate tooltip position, ensure it's within window bounds
+    // Calculate tooltip position, ensuring it stays within window bounds with 12px safety margin
     const tooltipHeight = Math.min(150 + monthIssues.length * 24, 400); // Dynamic height
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -479,20 +479,20 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
-    // Horizontal boundary detection - if right side space is insufficient, display on left
-    if (tooltipLeft + tooltipWidth > viewportWidth) {
+    // Horizontal boundary detection with 12px safety margin
+    if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
       tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
     }
-    if (tooltipLeft < 2) {
-      tooltipLeft = 2;
+    if (tooltipLeft < 12) {
+      tooltipLeft = 12; // Ensure 12px left margin
     }
 
     // Vertical boundary detection
-    if (tooltipTop < 0) {
-      tooltipTop = event.clientY + 10;
+    if (tooltipTop < 12) {
+      tooltipTop = event.clientY + 10; // Display below mouse if top space is insufficient
     }
-    if (tooltipTop + tooltipHeight > viewportHeight) {
-      tooltipTop = viewportHeight - tooltipHeight - 10;
+    if (tooltipTop + tooltipHeight > viewportHeight - 12) {
+      tooltipTop = viewportHeight - tooltipHeight - 12; // Ensure 12px bottom margin
     }
 
     showTooltip({
