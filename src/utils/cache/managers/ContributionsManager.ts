@@ -53,86 +53,20 @@ class ContributionsDataManager extends GenericDataManager<Contribution[]> {
   }
 }
 
-// Create internal data manager instance
 const contributionsDataManager = new ContributionsDataManager();
 
-/**
- * Contribution data manager
- * Provides unified contribution data cache management
- */
 export class ContributionsManager {
-  /**
-   * Get contribution data for specified Copany, prioritize cache
-   */
   async getContributions(
     copanyId: string,
     fetchFn: () => Promise<Contribution[]>
   ): Promise<Contribution[]> {
     return contributionsDataManager.getData(copanyId, fetchFn);
   }
-
-  /**
-   * Force refresh contribution data
-   */
   async refreshContributions(
     copanyId: string,
     fetchFn: () => Promise<Contribution[]>
   ): Promise<Contribution[]> {
     return contributionsDataManager.getData(copanyId, fetchFn, true);
   }
-
-  /**
-   * Clear contribution cache for specified Copany
-   */
-  clearContributions(copanyId: string): void {
-    contributionsDataManager.clearCache(copanyId);
-  }
-
-  /**
-   * Clear all contribution cache
-   */
-  clearAllContributions(): void {
-    contributionsDataManager.clearCache();
-  }
-
-  /**
-   * Manually set contribution cache
-   */
-  setContributions(copanyId: string, contributions: Contribution[]): void {
-    contributionsDataManager.setData(copanyId, contributions);
-  }
-
-  /**
-   * Get cached contribution data (won't trigger network request)
-   */
-  getCachedContributions(copanyId: string): Contribution[] | null {
-    return contributionsDataManager.getCachedData(copanyId);
-  }
-
-  /**
-   * Check if contributions for specified Copany are cached
-   */
-  hasContributions(copanyId: string): boolean {
-    return contributionsDataManager.hasData(copanyId);
-  }
-
-  /**
-   * Preload cache
-   */
-  async preloadContributions(
-    copanyId: string,
-    fetchFn: () => Promise<Contribution[]>
-  ): Promise<void> {
-    return contributionsDataManager.preloadData(copanyId, fetchFn);
-  }
-
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): { count: number; totalSize: number } {
-    return contributionsDataManager.getCacheStats();
-  }
 }
-
-// Export singleton instance
 export const contributionsManager = new ContributionsManager();
