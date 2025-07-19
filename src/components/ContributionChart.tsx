@@ -412,6 +412,9 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
+    // Calculate max tooltip width: min(viewportWidth - 24px, 420px)
+    const maxTooltipWidth = Math.min(viewportWidth - 24, 420);
+
     // Horizontal boundary detection with 12px safety margin
     if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
       tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
@@ -479,6 +482,9 @@ function UserChart({
     );
     const tooltipWidth = getTooltipWidth(tooltipContent);
 
+    // Calculate max tooltip width: min(viewportWidth - 24px, 420px)
+    const maxTooltipWidth = Math.min(viewportWidth - 24, 420);
+
     // Horizontal boundary detection with 12px safety margin
     if (tooltipLeft + tooltipWidth > viewportWidth - 12) {
       tooltipLeft = event.clientX - tooltipWidth - 2; // Use actual width, leave 2px spacing on left
@@ -506,7 +512,7 @@ function UserChart({
   const getTooltipWidth = (content: string): number => {
     const tempTooltip = document.createElement("div");
     tempTooltip.className =
-      "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm max-h-96 overflow-y-auto min-w-48 max-w-sm";
+      "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm max-h-96 overflow-y-auto min-w-48";
     tempTooltip.style.position = "fixed";
     tempTooltip.style.left = "-9999px"; // Place outside viewport
     tempTooltip.style.visibility = "hidden";
@@ -850,8 +856,9 @@ function UserChart({
             top: tooltipTop,
             zIndex: 1000,
             pointerEvents: "none",
+            maxWidth: Math.min(window.innerWidth - 24, 420),
           }}
-          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm min-w-48 max-w-sm"
+          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm min-w-48"
         >
           <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {tooltipData.month} {tooltipData.year}
@@ -887,7 +894,7 @@ function UserChart({
                   </div>
                 </div>
 
-                {/* Issues 列表 */}
+                {/* Issues List */}
                 {tooltipData.issues && tooltipData.issues.length > 0 && (
                   <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
                     <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -897,7 +904,7 @@ function UserChart({
                       {tooltipData.issues.map((issue) => (
                         <div
                           key={issue.id}
-                          className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                          className="text-xs text-gray-600 dark:text-gray-400 break-words"
                           title={issue.title}
                         >
                           • {issue.title}
@@ -948,7 +955,7 @@ function UserChart({
                       {tooltipData.issues.map((issue) => (
                         <div
                           key={issue.id}
-                          className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                          className="text-xs text-gray-600 dark:text-gray-400 break-words"
                           title={issue.title}
                         >
                           • {issue.title}
