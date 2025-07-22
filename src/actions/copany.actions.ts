@@ -6,6 +6,7 @@ import { getGithubAccessToken } from "@/services/github.service";
 import { Octokit } from "@octokit/rest";
 import { Copany } from "@/types/database.types";
 import { RestEndpointMethodTypes } from "@octokit/rest";
+import { CopanyContributorService } from "@/services/copanyContributor.service";
 
 /**
  * Create new company - Server Action
@@ -35,6 +36,11 @@ export async function createCopanyAction(
       ...copanyData,
       created_by: user.id,
     });
+
+    await CopanyContributorService.createCopanyContributor(
+      newCopany.id,
+      user.id
+    );
 
     console.log(
       "✅ Company created successfully:",
