@@ -34,10 +34,10 @@ interface ContributionPieChartProps {
 
 // Color configuration - now with light/dark mode support
 const lightColors = [
-  "#8b5cf6", // violet
-  "#06b6d4", // cyan
-  "#10b981", // emerald
-  "#f59e0b", // amber
+  "#FFE372", // yellow (level S)
+  "#FFA5CB", // pink (level A)、
+  "#E697FF", // purple (level B)
+  "#7987FF", // blue (level C)
   "#ef4444", // red
   "#3b82f6", // blue
   "#8b5cf6", // violet (repeat)
@@ -47,10 +47,10 @@ const lightColors = [
 ];
 
 const darkColors = [
-  "#A78BFA", // violet-400 - more vibrant
-  "#22D3EE", // cyan-400 - more vibrant
-  "#34D399", // emerald-400 - more vibrant
-  "#FBBF24", // amber-400 - more vibrant
+  "#FBBF24", // yellow-400 (level S)
+  "#F472B6", // pink-400 (level A)
+  "#A78BFA", // purple-400 (level B)
+  "#60A5FA", // blue-400 (level C)
   "#F87171", // red-400 - more vibrant
   "#60A5FA", // blue-400 - more vibrant
   "#C084FC", // violet-300 - even more vibrant for repeat
@@ -67,6 +67,14 @@ const levelColors: Record<IssueLevel, { light: string; dark: string }> = {
   [IssueLevel.level_S]: { light: "#FFE372", dark: "#FBBF24" }, // yellow - more vibrant
   [IssueLevel.level_None]: { light: "#E5E7EB", dark: "#6B7280" }, // gray - lighter in dark mode
 };
+
+// Level stroke colors for the highest level in each user's contributions
+const levelStrokeColors = {
+  [IssueLevel.level_S]: { light: "#E6B800", dark: "#F59E0B" }, // yellow - brighter stroke
+  [IssueLevel.level_A]: { light: "#F765A3", dark: "#EC4899" }, // pink - brighter stroke
+  [IssueLevel.level_B]: { light: "#A155B9", dark: "#8B5CF6" }, // purple - brighter stroke
+  [IssueLevel.level_C]: { light: "#165BAA", dark: "#3B82F6" }, // blue - brighter stroke
+} as const;
 
 // Note: levelLabels removed as it was unused
 
@@ -258,6 +266,8 @@ export default function ContributionPieChart({
                 pieValue={(d) => d.totalScore}
                 outerRadius={radius}
                 innerRadius={radius * 0.4} // Donut chart
+                cornerRadius={4} // Add corner radius
+                padAngle={0.04} // Increase gap between segments
               >
                 {(pie) => {
                   return pie.arcs.map((arc) => {
@@ -271,8 +281,24 @@ export default function ContributionPieChart({
                         <path
                           d={arcPath}
                           fill={colorScale(arc.data.user.id)}
-                          stroke={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker stroke for better contrast
-                          strokeWidth={isDarkMode ? 3 : 2} // thicker stroke in dark mode
+                          stroke={
+                            arc.data.levelCounts[IssueLevel.level_S] > 0
+                              ? isDarkMode
+                                ? levelStrokeColors[IssueLevel.level_S].dark
+                                : levelStrokeColors[IssueLevel.level_S].light
+                              : arc.data.levelCounts[IssueLevel.level_A] > 0
+                              ? isDarkMode
+                                ? levelStrokeColors[IssueLevel.level_A].dark
+                                : levelStrokeColors[IssueLevel.level_A].light
+                              : arc.data.levelCounts[IssueLevel.level_B] > 0
+                              ? isDarkMode
+                                ? levelStrokeColors[IssueLevel.level_B].dark
+                                : levelStrokeColors[IssueLevel.level_B].light
+                              : isDarkMode
+                              ? levelStrokeColors[IssueLevel.level_C].dark
+                              : levelStrokeColors[IssueLevel.level_C].light
+                          }
+                          strokeWidth={2}
                           style={{ cursor: "pointer" }}
                           onMouseEnter={(event) =>
                             handleArcMouseEnter(event, arc.data)
@@ -284,7 +310,7 @@ export default function ContributionPieChart({
                             x={centroidX}
                             y={centroidY}
                             dy="0.33em"
-                            fontSize={12}
+                            fontSize={14}
                             textAnchor="middle"
                             fill={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker text for better contrast
                             fontWeight="bold"

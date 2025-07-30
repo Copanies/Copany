@@ -2,10 +2,8 @@
 
 import { getCurrentUser } from "@/actions/auth.actions";
 import { CopanyService } from "@/services/copany.service";
-import { getGithubAccessToken } from "@/services/github.service";
-import { Octokit } from "@octokit/rest";
 import { Copany } from "@/types/database.types";
-import { RestEndpointMethodTypes } from "@octokit/rest";
+
 import { CopanyContributorService } from "@/services/copanyContributor.service";
 
 /**
@@ -22,13 +20,6 @@ export async function createCopanyAction(
     if (!user) {
       console.error("❌ User not logged in");
       throw new Error("User not logged in");
-    }
-
-    const accessToken = await getGithubAccessToken();
-
-    if (!accessToken) {
-      console.error("❌ Failed to get GitHub access token");
-      throw new Error("Failed to get GitHub access token");
     }
 
     // Create company
@@ -55,67 +46,6 @@ export async function createCopanyAction(
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
-  }
-}
-
-/**
- * Get current user's public repositories
- */
-async function getUserPublicRepos(): Promise<
-  RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"]
-> {
-  console.log("📋 Starting to fetch user's public repositories");
-
-  try {
-    const accessToken = await getGithubAccessToken();
-    if (!accessToken) {
-      throw new Error("Failed to get GitHub access token");
-    }
-
-    const octokit = new Octokit({
-      auth: accessToken,
-    });
-
-    const response = await octokit.rest.repos.listForAuthenticatedUser({
-      visibility: "public",
-      sort: "updated",
-      per_page: 100,
-    });
-
-    console.log(
-      `✅ Successfully fetched ${response.data.length} user public repositories`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("❌ Failed to fetch user's public repositories:", error);
-    throw error;
-  }
-}
-
-/**
- * Get user's GitHub organizations and repositories - Server Action
- */
-export async function getOrgAndReposAction(): Promise<{
-  success: boolean;
-  data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
-  error?: string;
-}> {
-  console.log("📋 Starting to fetch GitHub repositories");
-
-  try {
-    // Only get all public repositories the user has access to (including personal and organization repos)
-    const repos = await getUserPublicRepos();
-
-    console.log("✅ Successfully fetched GitHub data");
-    return {
-      success: true,
-      data: repos,
-    };
-  } catch (error) {
-    console.error("❌ Failed to fetch GitHub data:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    return { success: false, error: errorMessage };
   }
 }
 
