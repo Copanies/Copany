@@ -5,6 +5,7 @@ import { CopanyService } from "@/services/copany.service";
 import { Copany } from "@/types/database.types";
 
 import { CopanyContributorService } from "@/services/copanyContributor.service";
+import { createAdminSupabaseClient } from "@/utils/supabase/server";
 
 /**
  * Create new company - Server Action
@@ -12,8 +13,6 @@ import { CopanyContributorService } from "@/services/copanyContributor.service";
 export async function createCopanyAction(
   copanyData: Omit<Copany, "id" | "created_at" | "updated_at" | "created_by">
 ) {
-  console.log("🏢 Starting to create copany:", copanyData);
-
   try {
     // Get current user
     const user = await getCurrentUser();
@@ -22,10 +21,26 @@ export async function createCopanyAction(
       throw new Error("User not logged in");
     }
 
+    // Check if GitHub repository is connected to Copany Bot
+    let isConnectedGithub = false;
+    if (copanyData.github_repository_id) {
+      const supabase = await createAdminSupabaseClient();
+      const { data: botInstallation } = await supabase
+        .from("copany_bot_installation")
+        .select("*")
+        .filter("repository_ids", "cs", `{${copanyData.github_repository_id}}`)
+        .maybeSingle();
+
+      if (botInstallation) {
+        isConnectedGithub = true;
+      }
+    }
+
     // Create company
     const newCopany = await CopanyService.createCopany({
       ...copanyData,
       created_by: user.id,
+      is_connected_github: isConnectedGithub,
     });
 
     await CopanyContributorService.createCopanyContributor(
@@ -33,12 +48,6 @@ export async function createCopanyAction(
       user.id
     );
 
-    console.log(
-      "✅ Company created successfully:",
-      newCopany.id,
-      "Logo URL:",
-      newCopany.logo_url
-    );
     return { success: true, copany: newCopany };
   } catch (error) {
     console.error("❌ Failed to create company:", error);
