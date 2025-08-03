@@ -14,6 +14,7 @@ import ContributionView from "./subviews/ContributionView";
 import SettingsView from "./subviews/settings/SettingsView";
 import { User } from "@supabase/supabase-js";
 import AssetLinksSection from "@/components/AssetLinksSection";
+import LicenseBadge from "@/components/commons/LicenseBadge";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -107,8 +108,14 @@ export default function CopanyDetailClient({
       content: <ReadmeView githubUrl={copany.github_url} />,
     },
     {
-      label: "LICENSE",
-      content: <LicenseView githubUrl={copany.github_url} />,
+      label: "License",
+      content: (
+        <LicenseView
+          githubUrl={copany.github_url}
+          copany={copany}
+          onCopanyUpdate={setCopany}
+        />
+      ),
     },
     {
       label: "Cooperate",
@@ -143,6 +150,7 @@ export default function CopanyDetailClient({
               className="rounded-md"
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
+            {copany.license && <LicenseBadge license={copany.license} />}
           </div>
           <AssetLinksSection copany={copany} />
         </div>

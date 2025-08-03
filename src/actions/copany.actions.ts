@@ -102,3 +102,10 @@ export async function deleteCopanyAction(copanyId: string) {
     throw error;
   }
 }
+
+export async function updateCopanyLicenseAction(
+  copanyId: string,
+  license: string | null
+) {
+  await CopanyService.updateCopanyLicense(copanyId, license);
+}

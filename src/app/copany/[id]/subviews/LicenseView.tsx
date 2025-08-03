@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { currentUserManager, licenseManager } from "@/utils/cache";
-import { getRepoLicenseAction } from "@/actions/github.action";
+import {
+  getRepoLicenseAction,
+  getRepoLicenseTypeAction,
+} from "@/actions/github.action";
+import { updateCopanyLicenseAction } from "@/actions/copany.actions";
 import LoadingView from "@/components/commons/LoadingView";
 import { ScaleIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import { Copany } from "@/types/database.types";
 
 interface LicenseViewProps {
   githubUrl?: string | null;
+  copany: Copany;
+  onCopanyUpdate?: (copany: Copany) => void;
 }
 
 const decodeGitHubContent = (base64String: string): string => {
@@ -47,8 +54,13 @@ const generateNewLicenseUrl = (githubUrl: string): string | null => {
   }
 };
 
-export default function LicenseView({ githubUrl }: LicenseViewProps) {
+export default function LicenseView({
+  githubUrl,
+  copany,
+  onCopanyUpdate,
+}: LicenseViewProps) {
   const [licenseContent, setLicenseContent] = useState<string>("");
+  const [licenseType, setLicenseType] = useState<string | null>(copany.license);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -94,6 +106,29 @@ export default function LicenseView({ githubUrl }: LicenseViewProps) {
               ) {
                 return "No License";
               }
+
+              // Get and update license type
+              const type = await getRepoLicenseTypeAction(githubUrl);
+              if (type !== licenseType) {
+                console.log(
+                  `📝 License type changed: ${licenseType} -> ${type}`
+                );
+                setLicenseType(type);
+                // Update server and local state
+                console.log(
+                  `💾 Updating license in database for Copany ${copany.id}...`
+                );
+                await updateCopanyLicenseAction(copany.id, type);
+                console.log("✅ Database update completed");
+                onCopanyUpdate?.({
+                  ...copany,
+                  license: type,
+                });
+                console.log("✨ Local state updated");
+              } else {
+                console.log("ℹ️ License type unchanged");
+              }
+
               return decodeGitHubContent(license.content);
             })
             .then((freshContent) => {
@@ -126,6 +161,29 @@ export default function LicenseView({ githubUrl }: LicenseViewProps) {
                 ) {
                   return "No License";
                 }
+
+                // Get and update license type
+                const type = await getRepoLicenseTypeAction(githubUrl);
+                if (type !== licenseType) {
+                  console.log(
+                    `📝 License type changed: ${licenseType} -> ${type}`
+                  );
+                  setLicenseType(type);
+                  // Update server and local state
+                  console.log(
+                    `💾 Updating license in database for Copany ${copany.id}...`
+                  );
+                  await updateCopanyLicenseAction(copany.id, type);
+                  console.log("✅ Database update completed");
+                  onCopanyUpdate?.({
+                    ...copany,
+                    license: type,
+                  });
+                  console.log("✨ Local state updated");
+                } else {
+                  console.log("ℹ️ License type unchanged");
+                }
+
                 return decodeGitHubContent(license.content);
               }
             );
@@ -150,7 +208,7 @@ export default function LicenseView({ githubUrl }: LicenseViewProps) {
     };
 
     fetchLicense();
-  }, [githubUrl]);
+  }, [githubUrl, copany, onCopanyUpdate, licenseType]);
 
   if (loading) {
     return (
@@ -199,8 +257,10 @@ export default function LicenseView({ githubUrl }: LicenseViewProps) {
   }
 
   return (
-    <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-      {licenseContent}
-    </pre>
+    <div className="space-y-4">
+      <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
+        {licenseContent}
+      </pre>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ export interface Copany {
   created_by: string;
   github_repository_id: string | null;
   is_connected_github: boolean;
+  license: string | null;
 }
 
 export interface CopanyWithUser extends Copany {
