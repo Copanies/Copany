@@ -22,7 +22,7 @@ export default function EmptyPlaceholderView({
 }: EmptyPlaceholderViewProps) {
   return (
     <div
-      className={`py-8 text-center mx-auto ${
+      className={`py-8 px-4 text-center mx-auto ${
         size === "md" ? "max-w-md" : "max-w-xl"
       }`}
     >

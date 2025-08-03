@@ -14,6 +14,8 @@ export interface Copany {
   created_at: string;
   updated_at: string;
   created_by: string;
+  github_repository_id: string | null;
+  is_connected_github: boolean;
 }
 
 export interface CopanyWithUser extends Copany {

@@ -3,6 +3,7 @@ import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/AssetLinksSection";
+import ContributorAvatarStack from "@/components/ContributorAvatarStack";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -37,6 +38,7 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 )}
                 <div className="font-semibold text-base">{copany.name}</div>
                 <AssetLinksSection copany={copany} size="sm" />
+                <ContributorAvatarStack copany={copany} className="ml-auto" />
               </div>
               <div className="">{copany.description || "No description"}</div>
             </div>

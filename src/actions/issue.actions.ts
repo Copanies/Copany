@@ -24,10 +24,17 @@ export async function createIssueAction(
   if (!user) {
     throw new Error("User not found");
   }
-  return await IssueService.createIssue({
+  const newIssue = await IssueService.createIssue({
     ...issue,
     created_by: user.id,
   });
+  if (newIssue.state === IssueState.Done && newIssue.copany_id) {
+    await CopanyContributorService.createCopanyContributor(
+      newIssue.copany_id,
+      user.id
+    );
+  }
+  return newIssue;
 }
 
 export async function getIssueAction(issueId: string) {

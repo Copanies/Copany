@@ -2,10 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import {
-  createCopanyAction,
-  getOrgAndReposAction,
-} from "@/actions/copany.actions";
+import { createCopanyAction } from "@/actions/copany.actions";
+import { getOrgAndReposAction } from "@/actions/github.action";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import Button from "./commons/Button";
 import LoadingView from "./commons/LoadingView";
@@ -258,6 +256,8 @@ export default function CreateCopanyButton() {
         website_url: null,
         apple_app_store_url: null,
         google_play_store_url: null,
+        github_repository_id: repo.id.toString(),
+        is_connected_github: false,
       });
       if (result.success && result.copany) {
         // 将新创建的 copany 添加到缓存中
@@ -443,7 +443,7 @@ export default function CreateCopanyButton() {
                     alt={`${repo.owner.login} Avatar`}
                     width={24}
                     height={24}
-                    className="w-6 h-6"
+                    className="w-6 h-6 rounded-sm"
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">

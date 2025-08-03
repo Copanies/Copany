@@ -18,6 +18,7 @@ interface UserContributionData {
   totalScore: number;
   percentage: number;
   levelCounts: Record<IssueLevel, number>;
+  mergedUsers?: UserContributionData[]; // Optional array for merged users
 }
 
 interface TooltipData {
@@ -25,6 +26,7 @@ interface TooltipData {
   totalScore: number;
   percentage: number;
   levelCounts: Record<IssueLevel, number>;
+  mergedUsers?: UserContributionData[]; // Optional array for merged users
 }
 
 interface ContributionPieChartProps {
@@ -32,40 +34,77 @@ interface ContributionPieChartProps {
   users: AssigneeUser[];
 }
 
-// Color configuration - now with light/dark mode support
+// Light mode colors
 const lightColors = [
-  "#8b5cf6", // violet
-  "#06b6d4", // cyan
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#3b82f6", // blue
-  "#8b5cf6", // violet (repeat)
-  "#f97316", // orange
-  "#84cc16", // lime
-  "#ec4899", // pink
+  "#FFE372", // Yellow (S level base)
+  "#FFA5CB", // Pink (A level base)
+  "#E697FF", // Purple (B level base)
+  "#7987FF", // Blue (C level base)
+  "#FFD591", // Light orange (S level extension)
+  "#FFB7B7", // Light red (A level extension)
+  "#DCA5FF", // Light purple (B level extension)
+  "#9EAFFF", // Light blue (C level extension)
+  "#FFE0A1", // Apricot (S level extension)
+  "#FFC4D8", // Light pink (A level extension)
+  "#D3B4FF", // Pale purple (B level extension)
+  "#A7C8FF", // Sky blue (C level extension)
 ];
 
+// Dark mode colors
 const darkColors = [
-  "#A78BFA", // violet-400 - more vibrant
-  "#22D3EE", // cyan-400 - more vibrant
-  "#34D399", // emerald-400 - more vibrant
-  "#FBBF24", // amber-400 - more vibrant
-  "#F87171", // red-400 - more vibrant
-  "#60A5FA", // blue-400 - more vibrant
-  "#C084FC", // violet-300 - even more vibrant for repeat
-  "#FB923C", // orange-400 - more vibrant
-  "#A3E635", // lime-400 - more vibrant
-  "#F472B6", // pink-400 - more vibrant
+  "#FCD34D", // Yellow (S level base) - 300
+  "#F9A8D4", // Pink (A level base) - 300
+  "#C4B5FD", // Purple (B level base) - 300
+  "#93C5FD", // Blue (C level base) - 300
+  "#FDE68A", // Light orange (S level extension) - 200
+  "#FBCFE8", // Light red (A level extension) - 200
+  "#DDD6FE", // Light purple (B level extension) - 200
+  "#BFDBFE", // Light blue (C level extension) - 200
+  "#FCE7AA", // Apricot (S level extension) - 200+
+  "#FCE7F3", // Light pink (A level extension) - 100
+  "#EDE9FE", // Pale purple (B level extension) - 100
+  "#DBEAFE", // Sky blue (C level extension) - 100
 ];
 
-// Level colors (same as ContributionChart) - now with light/dark mode support
+// Stroke colors
+const strokeColors = {
+  light: [
+    "#E6B800", // Yellow stroke (S level base)
+    "#F765A3", // Pink stroke (A level base)
+    "#A155B9", // Purple stroke (B level base)
+    "#165BAA", // Blue stroke (C level base)
+    "#E6A23C", // Light orange stroke (S level extension)
+    "#E57373", // Light red stroke (A level extension)
+    "#BA68C8", // Light purple stroke (B level extension)
+    "#64B5F6", // Light blue stroke (C level extension)
+    "#E6BA3C", // Apricot stroke (S level extension)
+    "#F48FB1", // Light pink stroke (A level extension)
+    "#B39DDB", // Pale purple stroke (B level extension)
+    "#81D4FA", // Sky blue stroke (C level extension)
+  ],
+  dark: [
+    "#F59E0B", // Yellow stroke (S level base) - 400
+    "#F472B6", // Pink stroke (A level base) - 400
+    "#A78BFA", // Purple stroke (B level base) - 400
+    "#60A5FA", // Blue stroke (C level base) - 400
+    "#FBBF24", // Light orange stroke (S level extension) - 400
+    "#FB7185", // Light red stroke (A level extension) - 400
+    "#C084FC", // Light purple stroke (B level extension) - 400
+    "#7DD3FC", // Light blue stroke (C level extension) - 400
+    "#FBBF24", // Apricot stroke (S level extension) - 400
+    "#FB7185", // Light pink stroke (A level extension) - 400
+    "#C084FC", // Pale purple stroke (B level extension) - 400
+    "#7DD3FC", // Sky blue stroke (C level extension) - 400
+  ],
+};
+
+// Level colors (same as ContributionChart)
 const levelColors: Record<IssueLevel, { light: string; dark: string }> = {
-  [IssueLevel.level_C]: { light: "#7987FF", dark: "#60A5FA" }, // blue - more vibrant in dark
-  [IssueLevel.level_B]: { light: "#E697FF", dark: "#A78BFA" }, // purple - more vibrant
-  [IssueLevel.level_A]: { light: "#FFA5CB", dark: "#F472B6" }, // pink - more vibrant
-  [IssueLevel.level_S]: { light: "#FFE372", dark: "#FBBF24" }, // yellow - more vibrant
-  [IssueLevel.level_None]: { light: "#E5E7EB", dark: "#6B7280" }, // gray - lighter in dark mode
+  [IssueLevel.level_S]: { light: "#FFE372", dark: "#FCD34D" }, // Yellow
+  [IssueLevel.level_A]: { light: "#FFA5CB", dark: "#F9A8D4" }, // Pink
+  [IssueLevel.level_B]: { light: "#E697FF", dark: "#C4B5FD" }, // Purple
+  [IssueLevel.level_C]: { light: "#7987FF", dark: "#93C5FD" }, // Blue
+  [IssueLevel.level_None]: { light: "#E5E7EB", dark: "#4B5563" }, // Gray
 };
 
 // Note: levelLabels removed as it was unused
@@ -145,9 +184,59 @@ export default function ContributionPieChart({
     return data;
   }, [contributions, users]);
 
-  // Color scale - choose colors based on theme
+  // 在 userContributionData 计算后，添加数据处理逻辑
+  const processedData = useMemo(() => {
+    const threshold = 5; // 5% 阈值
+    const mainContributions = userContributionData.filter(
+      (item) => item.percentage >= threshold
+    );
+
+    const smallContributions = userContributionData.filter(
+      (item) => item.percentage < threshold
+    );
+
+    if (smallContributions.length === 0) {
+      return userContributionData;
+    }
+
+    // 计算小贡献的总和
+    const totalSmallScore = smallContributions.reduce(
+      (sum, item) => sum + item.totalScore,
+      0
+    );
+    const totalSmallPercentage = smallContributions.reduce(
+      (sum, item) => sum + item.percentage,
+      0
+    );
+
+    // 创建"其他"类别
+    const othersData = {
+      user: {
+        id: "others",
+        name: `Others (${smallContributions.length})`,
+        email: `Combined ${smallContributions.length} contributions below 5%`,
+        avatar_url: "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      totalScore: totalSmallScore,
+      percentage: totalSmallPercentage,
+      levelCounts: smallContributions.reduce((acc, curr) => {
+        Object.entries(curr.levelCounts).forEach(([level, count]) => {
+          const issueLevel = level as unknown as IssueLevel;
+          acc[issueLevel] = (acc[issueLevel] || 0) + count;
+        });
+        return acc;
+      }, {} as Record<IssueLevel, number>),
+      mergedUsers: smallContributions, // 保存被合并的用户信息
+    };
+
+    return [...mainContributions, othersData];
+  }, [userContributionData]);
+
+  // 修改颜色比例尺的数据源
   const colorScale = scaleOrdinal<string, string>({
-    domain: userContributionData.map((d) => d.user.id),
+    domain: processedData.map((d) => d.user.id),
     range: isDarkMode ? darkColors : lightColors,
   });
 
@@ -254,10 +343,12 @@ export default function ContributionPieChart({
           <svg width={width} height={height}>
             <Group top={height / 2} left={width / 2}>
               <Pie
-                data={userContributionData}
+                data={processedData}
                 pieValue={(d) => d.totalScore}
                 outerRadius={radius}
                 innerRadius={radius * 0.4} // Donut chart
+                cornerRadius={4} // Add corner radius
+                padAngle={0.04} // Increase gap between segments
               >
                 {(pie) => {
                   return pie.arcs.map((arc) => {
@@ -271,8 +362,20 @@ export default function ContributionPieChart({
                         <path
                           d={arcPath}
                           fill={colorScale(arc.data.user.id)}
-                          stroke={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker stroke for better contrast
-                          strokeWidth={isDarkMode ? 3 : 2} // thicker stroke in dark mode
+                          stroke={
+                            isDarkMode
+                              ? strokeColors.dark[
+                                  processedData.findIndex(
+                                    (d) => d.user.id === arc.data.user.id
+                                  ) % strokeColors.dark.length
+                                ]
+                              : strokeColors.light[
+                                  processedData.findIndex(
+                                    (d) => d.user.id === arc.data.user.id
+                                  ) % strokeColors.light.length
+                                ]
+                          }
+                          strokeWidth={2}
                           style={{ cursor: "pointer" }}
                           onMouseEnter={(event) =>
                             handleArcMouseEnter(event, arc.data)
@@ -280,18 +383,46 @@ export default function ContributionPieChart({
                           onMouseLeave={handleMouseLeave}
                         />
                         {hasSpaceForLabel && (
-                          <text
-                            x={centroidX}
-                            y={centroidY}
-                            dy="0.33em"
-                            fontSize={12}
-                            textAnchor="middle"
-                            fill={isDarkMode ? "#111827" : "white"} // gray-900 : white - darker text for better contrast
-                            fontWeight="bold"
-                            style={{ pointerEvents: "none" }}
-                          >
-                            {arc.data.percentage.toFixed(1)}%
-                          </text>
+                          <g>
+                            <text
+                              x={centroidX}
+                              y={centroidY - 8} // 向上偏移给排名留出空间
+                              dy="0.33em"
+                              fontSize={12}
+                              textAnchor="middle"
+                              fill="#111827"
+                              fontWeight="600"
+                              style={{
+                                pointerEvents: "none",
+                                fontFamily:
+                                  "-apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif",
+                              }}
+                            >
+                              {arc.data.user.id === "others"
+                                ? "Others"
+                                : `#${
+                                    processedData.findIndex(
+                                      (d) => d.user.id === arc.data.user.id
+                                    ) + 1
+                                  }`}
+                            </text>
+                            <text
+                              x={centroidX}
+                              y={centroidY + 8} // 向下偏移给排名留出空间
+                              dy="0.33em"
+                              fontSize={14}
+                              textAnchor="middle"
+                              fill="#111827"
+                              fontWeight="600"
+                              style={{
+                                pointerEvents: "none",
+                                fontFamily:
+                                  "-apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif",
+                              }}
+                            >
+                              {Math.round(arc.data.percentage)}%
+                            </text>
+                          </g>
                         )}
                       </Group>
                     );
@@ -304,7 +435,7 @@ export default function ContributionPieChart({
 
         {/* Legend */}
         <div className="flex flex-col gap-2 min-w-0 flex-1">
-          {userContributionData.map((data) => (
+          {processedData.map((data) => (
             <div key={data.user.id} className="flex items-center gap-3 min-w-0">
               {/* Color block */}
               <div
@@ -314,19 +445,27 @@ export default function ContributionPieChart({
 
               {/* User information */}
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Image
-                  src={data.user.avatar_url}
-                  alt={data.user.name}
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded-full flex-shrink-0"
-                />
+                {data.user.id === "others" ? (
+                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {data.mergedUsers?.length}
+                    </span>
+                  </div>
+                ) : (
+                  <Image
+                    src={data.user.avatar_url}
+                    alt={data.user.name}
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-full flex-shrink-0"
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-sm truncate text-gray-900 dark:text-gray-100">
                     {data.user.name}
                   </div>
                   <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {data.totalScore} P - {data.percentage.toFixed(1)}%
+                    {data.totalScore} P - {Math.round(data.percentage)}%
                   </div>
                 </div>
               </div>
@@ -349,22 +488,52 @@ export default function ContributionPieChart({
         >
           {/* User info */}
           <div className="flex items-center gap-2 mb-3">
-            <Image
-              src={tooltipData.user.avatar_url}
-              alt={tooltipData.user.name}
-              width={24}
-              height={24}
-              className="w-6 h-6 rounded-full"
-            />
+            {tooltipData.user.id === "others" ? (
+              <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  {tooltipData.mergedUsers?.length}
+                </span>
+              </div>
+            ) : (
+              <Image
+                src={tooltipData.user.avatar_url}
+                alt={tooltipData.user.name}
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full"
+              />
+            )}
             <div className="flex flex-col gap-0">
               <div className="font-semibold text-gray-900 dark:text-gray-100">
                 {tooltipData.user.name}
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">
-                {tooltipData.user.email}
+                {tooltipData.user.id === "others"
+                  ? `Combined ${tooltipData.mergedUsers?.length} contributions below 5%`
+                  : tooltipData.user.email}
               </div>
             </div>
           </div>
+
+          {/* 如果是合并的数据，显示被合并的用户列表 */}
+          {tooltipData.user.id === "others" && tooltipData.mergedUsers && (
+            <div className="mb-3 max-h-32 overflow-y-auto">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Included Contributors:
+              </div>
+              {tooltipData.mergedUsers.map((user) => (
+                <div
+                  key={user.user.id}
+                  className="flex items-center gap-2 py-1 text-xs text-gray-600 dark:text-gray-400"
+                >
+                  <span>• {user.user.name}</span>
+                  <span className="text-gray-500">
+                    ({user.totalScore}P - {Math.round(user.percentage)}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Total contribution */}
           <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
@@ -372,7 +541,7 @@ export default function ContributionPieChart({
               {tooltipData.totalScore} Points
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {tooltipData.percentage.toFixed(1)}% of total contributions
+              {Math.round(tooltipData.percentage)}% of total contributions
             </div>
           </div>
 

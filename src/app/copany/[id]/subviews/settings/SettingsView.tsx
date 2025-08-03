@@ -22,11 +22,16 @@ import WebsiteIcon from "@/assets/website_logo.svg";
 import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  PencilIcon,
+  TrashIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/solid";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
 import { CopanyManager } from "@/utils/cache";
+import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -68,7 +73,7 @@ export default function SettingsView({
   // Create a memoized CopanyManager instance with callback for real-time updates
   const copanyManager = useMemo(() => {
     return new CopanyManager((key, updatedData) => {
-      console.log(`[SettingsView] 后台数据更新: ${key}`, updatedData);
+      console.log(`[SettingsView] data updated: ${key}`, updatedData);
       // Update the copany data when background refresh occurs
       onCopanyUpdate(updatedData);
     });
@@ -315,7 +320,11 @@ export default function SettingsView({
         <div className="flex flex-col gap-2">{assetLinksSection()}</div>
       </div>
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Danger Zone</h1>
+        <h1 className="text-2xl font-bold">Connected accounts</h1>
+        <div className="flex flex-col gap-2">{connectSection()}</div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-2xl font-bold text-red-500">Danger Zone</h1>
         <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
       </div>
 
@@ -418,7 +427,7 @@ export default function SettingsView({
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="border border-gray-300 dark:border-gray-700 max-w-lg rounded-md px-2 py-1"
+          className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
         />
         <Button
           onClick={updateDescription}
@@ -509,7 +518,7 @@ export default function SettingsView({
             return (
               <div className="flex flex-col gap-2" key={link.id}>
                 <div className="flex flex-row gap-3 items-center" key={link.id}>
-                  <div className="flex flex-row gap-1 items-center">
+                  <div className="flex flex-row gap-2 items-center">
                     <Image
                       src={isDarkMode ? link.darkIcon : link.icon}
                       alt={link.label || ""}
@@ -540,7 +549,7 @@ export default function SettingsView({
                   href={link.value}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline inline-block break-all max-w-full"
+                  className="hover:underline inline-block break-all max-w-full w-fit text-sm text-gray-500 dark:text-gray-400"
                 >
                   {link.value}
                 </a>
@@ -580,18 +589,70 @@ export default function SettingsView({
     );
   }
 
+  function connectSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-screen-sm">
+        <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-md w-full justify-between border border-gray-200 dark:border-gray-800">
+          <div className="flex flex-row gap-2 items-center">
+            <Image
+              src={isDarkMode ? GithubDarkIcon : GithubIcon}
+              alt="GitHub"
+              className="w-8 h-8 rounded-md p-2 bg-gray-100 dark:bg-gray-900"
+            />
+            <div className="flex flex-col gap-0">
+              <p className="text-sm font-medium">GitHub</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Link pull requests to your copany
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="w-fit"
+            variant="ghost"
+            onClick={() => {
+              const stateObj = {
+                copany_id: copany.id,
+                copany_name: copany.name,
+              };
+              const state = encodeURIComponent(btoa(JSON.stringify(stateObj)));
+              window.open(
+                `https://github.com/apps/copany-bot/installations/new?state=${state}`,
+                "_blank"
+              );
+            }}
+          >
+            <div className="flex flex-row gap-2 items-center">
+              {copany.is_connected_github && (
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              )}
+              <p className="text-sm font-medium">
+                {copany.is_connected_github ? "Connected" : "Connect"}
+              </p>
+              {copany.is_connected_github ? (
+                <Cog6ToothIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <ArrowUpRightIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              )}
+            </div>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   function deleteCopanySection() {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-red-500">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold">Delete Copany</label>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <label className="text-sm font-semibold ">Delete Copany</label>
+          <p className="text-sm">
             Once you delete a copany, there is no going back. Please be certain.
           </p>
         </div>
 
         <Button
-          className="w-fit"
+          className="w-fit h-fit text-sm"
           onClick={() => setIsDeleteModalOpen(true)}
           size="sm"
         >
