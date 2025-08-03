@@ -150,9 +150,18 @@ export default function CopanyDetailClient({
               className="rounded-md"
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
-            {copany.license && <LicenseBadge license={copany.license} />}
+            <div className="hidden sm:block">
+              {copany.license && <LicenseBadge license={copany.license} />}
+            </div>
           </div>
-          <AssetLinksSection copany={copany} />
+          <div className="flex flex-row justify-between flex-wrap items-center gap-3">
+            {copany.license && (
+              <div className="block sm:hidden">
+                <LicenseBadge license={copany.license} />
+              </div>
+            )}
+            <AssetLinksSection copany={copany} />
+          </div>
         </div>
         <p className="">{copany.description}</p>
       </div>

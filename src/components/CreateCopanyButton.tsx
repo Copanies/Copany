@@ -249,15 +249,7 @@ export default function CreateCopanyButton() {
         description: copanyDescription,
         logo_url: logoUrl,
         github_url: repo.html_url,
-        telegram_url: null,
-        discord_url: null,
-        figma_url: null,
-        notion_url: null,
-        website_url: null,
-        apple_app_store_url: null,
-        google_play_store_url: null,
         github_repository_id: repo.id.toString(),
-        is_connected_github: false,
       });
       if (result.success && result.copany) {
         // 将新创建的 copany 添加到缓存中

@@ -39,10 +39,19 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 )}
                 <div className="font-semibold text-base">{copany.name}</div>
                 <AssetLinksSection copany={copany} size="sm" />
-                {copany.license && <LicenseBadge license={copany.license} />}
+                {copany.license && (
+                  <div className="hidden sm:block">
+                    <LicenseBadge license={copany.license} />
+                  </div>
+                )}
                 <ContributorAvatarStack copany={copany} className="ml-auto" />
               </div>
               <div className="">{copany.description || "No description"}</div>
+              {copany.license && (
+                <div className="block sm:hidden">
+                  <LicenseBadge license={copany.license} />
+                </div>
+              )}
             </div>
             {index !== copanies.length - 1 && (
               <div className="w-full h-px bg-gray-200 dark:bg-gray-800" />

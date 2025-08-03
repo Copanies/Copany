@@ -11,7 +11,11 @@ import { createAdminSupabaseClient } from "@/utils/supabase/server";
  * Create new company - Server Action
  */
 export async function createCopanyAction(
-  copanyData: Omit<Copany, "id" | "created_at" | "updated_at" | "created_by">
+  copanyData: {
+    name: string; // name 是必需的
+  } & Partial<
+    Omit<Copany, "id" | "created_at" | "updated_at" | "created_by" | "name">
+  >
 ) {
   try {
     // Get current user
@@ -21,14 +25,36 @@ export async function createCopanyAction(
       throw new Error("User not logged in");
     }
 
+    // 设置默认值，确保所有可选字段都有默认值
+    const defaultCopanyData = {
+      description: "",
+      github_url: null,
+      figma_url: null,
+      notion_url: null,
+      telegram_url: null,
+      discord_url: null,
+      logo_url: null,
+      website_url: null,
+      apple_app_store_url: null,
+      google_play_store_url: null,
+      github_repository_id: null,
+      is_connected_github: false,
+      license: null,
+      ...copanyData, // 用户提供的数据会覆盖默认值
+    };
+
     // Check if GitHub repository is connected to Copany Bot
     let isConnectedGithub = false;
-    if (copanyData.github_repository_id) {
+    if (defaultCopanyData.github_repository_id) {
       const supabase = await createAdminSupabaseClient();
       const { data: botInstallation } = await supabase
         .from("copany_bot_installation")
         .select("*")
-        .filter("repository_ids", "cs", `{${copanyData.github_repository_id}}`)
+        .filter(
+          "repository_ids",
+          "cs",
+          `{${defaultCopanyData.github_repository_id}}`
+        )
         .maybeSingle();
 
       if (botInstallation) {
@@ -38,7 +64,7 @@ export async function createCopanyAction(
 
     // Create company
     const newCopany = await CopanyService.createCopany({
-      ...copanyData,
+      ...defaultCopanyData,
       created_by: user.id,
       is_connected_github: isConnectedGithub,
     });
