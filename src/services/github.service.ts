@@ -199,3 +199,89 @@ export async function getRepoReadme(
     return await getPublicRepoReadme(repo);
   }
 }
+
+/**
+ * Get repository License without authentication
+ * @param repo Repository path, in the format "owner/repo"
+ * @returns Repository License content, or null if it doesn't exist
+ */
+export async function getPublicRepoLicense(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null
+> {
+  const octokit = new Octokit(); // No auth parameter, using anonymous request
+
+  try {
+    const response = await octokit.rest.repos.getContent({
+      owner: repo.split("/")[0],
+      repo: repo.split("/")[1],
+      path: "LICENSE",
+    });
+    return response.data;
+  } catch (error: unknown) {
+    // If it's a 404 error (License doesn't exist), return null instead of throwing an error
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 404
+    ) {
+      console.log(`ℹ️ Repository ${repo} does not have a License file`);
+      return null;
+    }
+    // Other errors are thrown directly
+    throw error;
+  }
+}
+
+/**
+ * Get repository License from GitHub
+ * @param repo Repository name in the format "owner/repo"
+ * @returns Repository License content
+ *
+ * API: GET https://api.github.com/repos/{owner}/{repo}/license
+ */
+export async function getRepoLicense(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null
+> {
+  const accessToken = await getGithubAccessToken();
+
+  // If we have an access token, use authenticated request (can access private repository License)
+  if (accessToken) {
+    console.log("Using authenticated request to get License");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
+
+    try {
+      const response = await octokit.rest.repos.getContent({
+        owner: repo.split("/")[0],
+        repo: repo.split("/")[1],
+        path: "LICENSE",
+      });
+      return response.data;
+    } catch (error: unknown) {
+      // If it's a 404 error (License doesn't exist), return null instead of throwing an error
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.log(`ℹ️ Repository ${repo} does not have a License file`);
+        return null;
+      }
+      // Other errors are thrown directly
+      throw error;
+    }
+  } else {
+    // If we don't have an access token, try to get public repository License without authentication
+    console.log(
+      "No access token, trying to get public repository License anonymously"
+    );
+    return await getPublicRepoLicense(repo);
+  }
+}

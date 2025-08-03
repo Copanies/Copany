@@ -19,3 +19,4 @@ export {
 export { CopanyManager, copanyManager } from "./managers/CopanyManager";
 export { IssuesManager, issuesManager } from "./managers/IssuesManager";
 export { ReadmeManager, readmeManager } from "./managers/ReadmeManager";
+export { licenseManager } from "./managers/LicenseManager";

@@ -3,12 +3,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import {
-  currentUserManager,
-  CopanyManager,
-} from "@/utils/cache";
+import { currentUserManager, CopanyManager } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
+import LicenseView from "./subviews/LicenseView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
@@ -107,6 +105,10 @@ export default function CopanyDetailClient({
     {
       label: "README",
       content: <ReadmeView githubUrl={copany.github_url} />,
+    },
+    {
+      label: "LICENSE",
+      content: <LicenseView githubUrl={copany.github_url} />,
     },
     {
       label: "Cooperate",
