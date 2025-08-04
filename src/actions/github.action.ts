@@ -1,5 +1,9 @@
 "use server";
-import { getRepoReadme } from "@/services/github.service";
+import {
+  getRepoReadme,
+  getRepoLicense,
+  getRepoLicenseType,
+} from "@/services/github.service";
 import { getGithubAccessToken } from "@/services/github.service";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Octokit } from "@octokit/rest";
@@ -113,4 +117,27 @@ export async function getOrgAndReposAction(): Promise<{
       error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: errorMessage };
   }
+}
+
+export async function getRepoLicenseAction(
+  githubUrl: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null
+> {
+  const repoPath = extractRepoPathFromUrl(githubUrl);
+  if (!repoPath) {
+    throw new Error("Invalid GitHub URL");
+  }
+  const license = await getRepoLicense(repoPath);
+  return license;
+}
+
+export async function getRepoLicenseTypeAction(
+  githubUrl: string
+): Promise<string | null> {
+  const repoPath = extractRepoPathFromUrl(githubUrl);
+  if (!repoPath) {
+    throw new Error("Invalid GitHub URL");
+  }
+  return getRepoLicenseType(repoPath);
 }

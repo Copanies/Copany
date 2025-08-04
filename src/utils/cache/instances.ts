@@ -82,3 +82,17 @@ export const readmeCache = new CacheManager<string, string>(
     githubUrl.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9]/g, "_"),
   (content: string) => ({ contentLength: content.length }) // Log info generator
 );
+
+// License cache instance
+export const licenseCache = new CacheManager<string, string>(
+  {
+    keyPrefix: "license_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
+    loggerName: "LicenseCache",
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+  },
+  // Custom key generator: handle GitHub URL
+  (githubUrl: string) =>
+    githubUrl.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9]/g, "_"),
+  (content: string) => ({ contentLength: content.length }) // Log info generator
+);

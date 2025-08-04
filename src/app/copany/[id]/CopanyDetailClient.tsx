@@ -3,12 +3,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import {
-  currentUserManager,
-  CopanyManager,
-} from "@/utils/cache";
+import { currentUserManager, CopanyManager } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
+import LicenseView from "./subviews/LicenseView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
@@ -16,6 +14,7 @@ import ContributionView from "./subviews/ContributionView";
 import SettingsView from "./subviews/settings/SettingsView";
 import { User } from "@supabase/supabase-js";
 import AssetLinksSection from "@/components/AssetLinksSection";
+import LicenseBadge from "@/components/commons/LicenseBadge";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -109,6 +108,16 @@ export default function CopanyDetailClient({
       content: <ReadmeView githubUrl={copany.github_url} />,
     },
     {
+      label: "License",
+      content: (
+        <LicenseView
+          githubUrl={copany.github_url}
+          copany={copany}
+          onCopanyUpdate={setCopany}
+        />
+      ),
+    },
+    {
       label: "Cooperate",
       content: <CooperateView copanyId={copanyId} />,
     },
@@ -141,8 +150,18 @@ export default function CopanyDetailClient({
               className="rounded-md"
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
+            <div className="hidden sm:block">
+              {copany.license && <LicenseBadge license={copany.license} />}
+            </div>
           </div>
-          <AssetLinksSection copany={copany} />
+          <div className="flex flex-row justify-between flex-wrap items-center gap-3">
+            {copany.license && (
+              <div className="block sm:hidden">
+                <LicenseBadge license={copany.license} />
+              </div>
+            )}
+            <AssetLinksSection copany={copany} />
+          </div>
         </div>
         <p className="">{copany.description}</p>
       </div>

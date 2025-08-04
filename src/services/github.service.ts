@@ -199,3 +199,190 @@ export async function getRepoReadme(
     return await getPublicRepoReadme(repo);
   }
 }
+
+/**
+ * Get repository License without authentication
+ * @param repo Repository path, in the format "owner/repo"
+ * @returns Repository License content, or null if it doesn't exist
+ */
+export async function getPublicRepoLicense(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null
+> {
+  const octokit = new Octokit(); // No auth parameter, using anonymous request
+
+  try {
+    const response = await octokit.rest.repos.getContent({
+      owner: repo.split("/")[0],
+      repo: repo.split("/")[1],
+      path: "LICENSE",
+    });
+    return response.data;
+  } catch (error: unknown) {
+    // If it's a 404 error (License doesn't exist), return null instead of throwing an error
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      error.status === 404
+    ) {
+      console.log(`ℹ️ Repository ${repo} does not have a License file`);
+      return null;
+    }
+    // Other errors are thrown directly
+    throw error;
+  }
+}
+
+/**
+ * Get repository License from GitHub
+ * @param repo Repository name in the format "owner/repo"
+ * @returns Repository License content
+ *
+ * API: GET https://api.github.com/repos/{owner}/{repo}/license
+ */
+export async function getRepoLicense(
+  repo: string
+): Promise<
+  RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null
+> {
+  const accessToken = await getGithubAccessToken();
+
+  // If we have an access token, use authenticated request (can access private repository License)
+  if (accessToken) {
+    console.log("Using authenticated request to get License");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
+
+    try {
+      const response = await octokit.rest.repos.getContent({
+        owner: repo.split("/")[0],
+        repo: repo.split("/")[1],
+        path: "LICENSE",
+      });
+      return response.data;
+    } catch (error: unknown) {
+      // If it's a 404 error (License doesn't exist), return null instead of throwing an error
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.log(`ℹ️ Repository ${repo} does not have a License file`);
+        return null;
+      }
+      // Other errors are thrown directly
+      throw error;
+    }
+  } else {
+    // If we don't have an access token, try to get public repository License without authentication
+    console.log(
+      "No access token, trying to get public repository License anonymously"
+    );
+    return await getPublicRepoLicense(repo);
+  }
+}
+
+/**
+ * Detect if content is COSL License by checking its unique characteristics
+ * @param content License content
+ * @returns boolean indicating if it's a COSL License
+ */
+function detectCOSLLicense(content: string): boolean {
+  console.log("🔍 Starting COSL License detection...");
+
+  // Normalize content for comparison
+  const normalizedContent = content
+    .replace(/\r\n/g, "\n") // Normalize line endings
+    .trim();
+
+  // Key unique characteristics of COSL
+  const coslCharacteristics = [
+    // Title and version
+    /Copany Open Source License \(COSL\)/i,
+
+    // Unique sections
+    /Contribution Tracking/,
+    /Contribution Points \(CP\)/,
+    /Revenue Sharing/,
+
+    // Unique obligations
+    /Distribute profits proportionally to contributors based on CP/,
+    /Publish revenue and distribution records/,
+
+    // Unique terms
+    /Downstream License/,
+    /must remain under COSL/,
+  ];
+
+  // Check if all characteristics are present
+  const isCosl = coslCharacteristics.every((pattern) =>
+    pattern.test(normalizedContent)
+  );
+  console.log(`✨ COSL License detection result: ${isCosl}`);
+  return isCosl;
+}
+
+/**
+ * Get repository license type using GitHub API
+ * @param repo Repository name in the format "owner/repo"
+ * @returns License type string or null
+ */
+export async function getRepoLicenseType(repo: string): Promise<string | null> {
+  try {
+    console.log(`📋 Starting license detection for repo: ${repo}`);
+
+    const [owner, repoName] = repo.split("/");
+    const accessToken = await getGithubAccessToken();
+    const octokit = new Octokit({
+      auth: accessToken || undefined,
+    });
+
+    // First get the license content to check for COSL
+    console.log("📥 Fetching license content...");
+    const license = await getRepoLicense(repo);
+    if (!license || Array.isArray(license) || !("content" in license)) {
+      console.log("❌ No license content found");
+      return null;
+    }
+
+    const content = atob(license.content);
+    console.log("✅ License content fetched successfully");
+
+    // Check for COSL first
+    if (detectCOSLLicense(content)) {
+      console.log("🎯 COSL License detected!");
+      return "COSL";
+    }
+
+    // If not COSL, use GitHub API to get license info
+    console.log("🔄 Not COSL, checking GitHub API for license type...");
+    try {
+      const { data } = await octokit.rest.licenses.getForRepo({
+        owner,
+        repo: repoName,
+      });
+
+      const licenseType = data.license?.spdx_id || null;
+      console.log(`✨ GitHub API returned license type: ${licenseType}`);
+      return licenseType;
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.log("⚠️ GitHub API returned 404 for license");
+        return null;
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error("❌ Failed to detect license type:", error);
+    return null;
+  }
+}

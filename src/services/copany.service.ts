@@ -100,4 +100,26 @@ export class CopanyService {
       throw new Error(`Failed to delete copany: ${error.message}`);
     }
   }
+
+  /**
+   * Update Copany license
+   * @param copanyId Copany ID
+   * @param license License type
+   */
+  static async updateCopanyLicense(copanyId: string, license: string | null) {
+    try {
+      const supabase = await createSupabaseClient();
+      const { error } = await supabase
+        .from("copany")
+        .update({ license })
+        .eq("id", copanyId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Failed to update Copany license:", error);
+      throw error;
+    }
+  }
 }
