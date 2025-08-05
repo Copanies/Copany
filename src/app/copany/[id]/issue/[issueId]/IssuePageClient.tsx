@@ -271,8 +271,8 @@ export default function IssuePageClient({
   }
 
   return (
-    <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto gap-2">
-      <div className="md:hidden px-3 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
+    <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto">
+      <div className="md:hidden mx-3 mb-2 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
         <IssueStateSelector
           issueId={issueData.id}
           initialState={issueData.state}
@@ -303,7 +303,7 @@ export default function IssuePageClient({
         />
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 mb-100 md:w-2/3 md:pr-2">
         <IssueEditorView
           issueData={issueData}
           onTitleChange={handleTitleChange}

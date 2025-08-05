@@ -213,7 +213,7 @@ export default function IssueEditorView({
 
   return (
     <div className="w-full">
-      <div className="space-y-2">
+      <div className="space-y-0">
         {/* Title */}
         <div className="relative">
           <input
