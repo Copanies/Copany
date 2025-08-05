@@ -303,7 +303,7 @@ export default function IssuePageClient({
         />
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 mb-20 max-w-screen-lg mx-auto">
         <IssueEditorView
           issueData={issueData}
           onTitleChange={handleTitleChange}
