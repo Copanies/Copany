@@ -66,4 +66,10 @@ export async function getUsersByIdsAction(userIds: string[]): Promise<Record<str
     console.error(`Error fetching users info:`, error);
     return users;
   }
+}
+
+export async function getUsersByIdsWithCacheAction(userIds: string[]): Promise<Record<string, UserInfo>> {
+  // 这个函数将在客户端使用缓存管理器，所以这里保持原有的实现
+  // 客户端会直接调用 userInfoManager.getMultipleUserInfo()
+  return getUsersByIdsAction(userIds);
 } 

@@ -1,7 +1,9 @@
 export default function LoadingView({
   type = "page",
+  label = "Loading",
 }: {
   type?: "page" | "label";
+  label?: string;
 }) {
   return (
     <div

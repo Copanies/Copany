@@ -8,7 +8,9 @@ import {
   updateIssueCommentAction,
   deleteIssueCommentAction,
 } from "@/actions/issueComment.actions";
-import { getUsersByIdsAction, UserInfo } from "@/actions/user.actions";
+import { UserInfo } from "@/actions/user.actions";
+import { getCurrentUser } from "@/actions/auth.actions";
+import { userInfoManager } from "@/utils/cache";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import MilkdownView from "@/components/MilkdownView";
 import { ArrowUpIcon, ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";
@@ -16,6 +18,7 @@ import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import EllipsisHorizontalIcon from "@heroicons/react/24/outline/EllipsisHorizontalIcon";
+import LoadingView from "./commons/LoadingView";
 
 interface IssueCommentViewProps {
   issueId: string;
@@ -34,6 +37,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
     null
   );
   const [replyContent, setReplyContent] = useState("");
+  const [randomKey, setRandomKey] = useState(Math.random());
 
   // 格式化相对时间
   const formatRelativeTime = (dateString: string): string => {
@@ -91,13 +95,40 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
       const commentsData = await getIssueCommentsAction(issueId);
       setComments(commentsData);
 
+      // 获取当前用户信息
+      const currentUser = await getCurrentUser();
+
       // 获取所有评论创建者的用户信息
       const userIds = [
         ...new Set(commentsData.map((comment) => comment.created_by)),
       ];
+
+      // 初始化用户信息映射，包含当前用户
+      let initialUserInfoMap: Record<string, UserInfo> = {};
+
+      // 如果当前用户存在，添加到映射中
+      if (currentUser) {
+        const currentUserInfo: UserInfo = {
+          id: currentUser.id,
+          name:
+            currentUser.user_metadata?.name ||
+            currentUser.email ||
+            "Unknown User",
+          email: currentUser.email || "",
+          avatar_url: currentUser.user_metadata?.avatar_url || "",
+        };
+        initialUserInfoMap[currentUser.id] = currentUserInfo;
+        // 将当前用户信息添加到缓存
+        userInfoManager.setUserInfo(currentUser.id, currentUserInfo);
+      }
+
+      // 获取其他评论创建者的用户信息（使用缓存）
       if (userIds.length > 0) {
-        const users = await getUsersByIdsAction(userIds);
-        setUserInfoMap(users);
+        const users = await userInfoManager.getMultipleUserInfo(userIds);
+        // 合并用户信息，当前用户信息优先
+        setUserInfoMap({ ...initialUserInfoMap, ...users });
+      } else {
+        setUserInfoMap(initialUserInfoMap);
       }
     } catch (error) {
       console.error("Error loading comments:", error);
@@ -122,6 +153,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
       );
       setComments((prev) => [...prev, newComment]);
       setNewCommentContent("");
+      setRandomKey(Math.random());
     } catch (error) {
       console.error("Error creating comment:", error);
     } finally {
@@ -265,7 +297,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading comments...</div>;
+    return <LoadingView label="Loading activity" type="label" />;
   }
 
   const { rootComments, allReplies } = buildCommentTree(comments);
@@ -295,7 +327,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
           return (
             <div
               key={comment.id}
-              className="flex flex-col gap-0 border border-gray-200 dark:border-gray-700 rounded-lg"
+              className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg"
             >
               {/* Root comment content */}
               <div
@@ -388,7 +420,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
 
               {/* Render replies */}
               {commentReplies.length > 0 && (
-                <div className="border-t pb-2 border-gray-200 dark:border-gray-700">
+                <div className="border-t pb-2 border-gray-200 dark:border-gray-800">
                   <div className="space-y-0">
                     {commentReplies.map((reply) => (
                       <div
@@ -403,25 +435,30 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
                           setHoveredCommentId(null);
                         }}
                       >
-                        <div className="flex justify-between items-start px-4 pt-3">
-                          <div className="flex items-center space-x-2">
-                            {renderUserInfo(reply.created_by)}
-
-                            {reply.parent_id &&
-                              reply.parent_id !== comment.id && (
-                                <div className="flex items-center space-x-1">
-                                  <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                                  <div className="text-sm font-medium">
-                                    @
-                                    {userInfoMap[
-                                      commentReplies.find(
-                                        (r) => r.id === reply.parent_id
-                                      )?.created_by ?? ""
-                                    ]?.name || "Unknown User"}
-                                  </div>
-                                </div>
-                              )}
-                            <div className="text-sm text-gray-500 text-center">
+                        <div className="flex justify-between items-start space-x-1 px-4 pt-3">
+                          <div className="flex items-center space-x-1 pr-1">
+                            <div className="flex items-center space-x-1">
+                              {renderUserInfo(reply.created_by)}
+                              <div className="hidden md:block">
+                                {reply.parent_id &&
+                                  reply.parent_id !== comment.id && (
+                                    <div className="flex items-center space-x-1">
+                                      <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                        reply to
+                                      </p>
+                                      <div className="text-sm font-medium whitespace-nowrap">
+                                        @
+                                        {userInfoMap[
+                                          commentReplies.find(
+                                            (r) => r.id === reply.parent_id
+                                          )?.created_by ?? ""
+                                        ]?.name || "Unknown User"}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                            <div className="flex flex-row gap-1 text-sm text-gray-500">
                               {formatRelativeTime(reply.created_at)}
                               {reply.is_edited && " (edited)"}
                             </div>
@@ -460,6 +497,25 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
                               size="md"
                             />
                           </div>
+                        </div>
+
+                        <div className="block md:hidden">
+                          {reply.parent_id &&
+                            reply.parent_id !== comment.id && (
+                              <div className="flex items-center space-x-1 pl-10">
+                                <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                  reply to
+                                </p>
+                                <div className="text-sm font-medium whitespace-nowrap">
+                                  @
+                                  {userInfoMap[
+                                    commentReplies.find(
+                                      (r) => r.id === reply.parent_id
+                                    )?.created_by ?? ""
+                                  ]?.name || "Unknown User"}
+                                </div>
+                              </div>
+                            )}
                         </div>
 
                         {editingCommentId === reply.id ? (
@@ -507,7 +563,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
                 commentReplies
                   .map((reply) => reply.id)
                   .includes(replyingToCommentId ?? "")) && (
-                <div className="border-t border-gray-200 dark:border-gray-700">
+                <div className="border-t border-gray-200 dark:border-gray-800">
                   <div className="h-fit p-1">
                     <MilkdownEditor
                       key={replyingToCommentId} // 添加 key 来强制重新渲染
@@ -553,9 +609,10 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
       </div>
 
       {/* New comment input */}
-      <div className="border rounded-lg border-gray-200 dark:border-gray-700 flex flex-col h-fit">
+      <div className="border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
         <div className="h-fit p-1">
           <MilkdownEditor
+            key={randomKey}
             onContentChange={setNewCommentContent}
             initialContent=""
             isFullScreen={false}
