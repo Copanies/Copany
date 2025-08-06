@@ -13,6 +13,7 @@ import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
+import IssueCommentView from "@/components/IssueCommentView";
 import {
   currentUserManager,
   contributorsManager,
@@ -309,6 +310,11 @@ export default function IssuePageClient({
           onTitleChange={handleTitleChange}
           onDescriptionChange={handleDescriptionChange}
         />
+
+        {/* Comments section */}
+        <div className="mt-8">
+          <IssueCommentView issueId={issueData.id} />
+        </div>
       </div>
 
       {/* Show state and priority selectors on larger screens */}

@@ -22,7 +22,7 @@ We believe that open source is not just about code sharing, but should be **valu
 
 ## 🧑‍💻 How to Contribute
 
-1. **Setup Local Development**: Follow our [Local Development Setup Guide](local-development-setup.md) to get your development environment ready;
+1. **Setup Local Development**: Follow our [Local Development Setup Guide](https://github.com/Copanies/Copany/blob/main/local-development-setup.md) to get your development environment ready;
 2. Open the [Issues](https://copany-app-229305319236.asia-east1.run.app/copany/5?tab=Cooperate) page and pick a task you want to complete;
 3. Read the task description and leave a comment to claim it;
 4. Fork the project and submit a PR;
