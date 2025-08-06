@@ -310,9 +310,11 @@ export default function IssuePageClient({
           onTitleChange={handleTitleChange}
           onDescriptionChange={handleDescriptionChange}
         />
-
-        {/* Comments section */}
-        <div className="mt-8">
+        <div className="flex flex-col gap-2 pt-8">
+          <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
+            Activity
+          </p>
+          {/* Comments section */}
           <IssueCommentView issueId={issueData.id} />
         </div>
       </div>
