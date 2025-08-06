@@ -12,7 +12,7 @@ export default function LoadingView({
       } flex justify-center items-center`}
     >
       <div className="text-gray-500 dark:text-gray-400">
-        Loading
+        {label}
         <span className="inline-block">
           <span className="animate-pulse">.</span>
           <span className="animate-pulse" style={{ animationDelay: "0.2s" }}>

@@ -104,7 +104,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
       ];
 
       // 初始化用户信息映射，包含当前用户
-      let initialUserInfoMap: Record<string, UserInfo> = {};
+      const initialUserInfoMap: Record<string, UserInfo> = {};
 
       // 如果当前用户存在，添加到映射中
       if (currentUser) {

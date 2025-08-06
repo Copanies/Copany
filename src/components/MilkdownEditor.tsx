@@ -512,7 +512,7 @@ export default function MilkdownEditor({
     } finally {
       isInitializingRef.current = false;
     }
-  }, [initialContent, isFullScreen]);
+  }, [initialContent, isFullScreen, placeholder]);
 
   useEffect(() => {
     // Create the editor
