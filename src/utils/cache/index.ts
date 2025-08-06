@@ -24,3 +24,7 @@ export {
   UserInfoManager,
   userInfoManager,
 } from "./managers/UserInfoManager";
+export {
+  IssueCommentsManager,
+  issueCommentsManager,
+} from "./managers/IssueCommentsManager";

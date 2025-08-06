@@ -10,7 +10,7 @@ import {
 } from "@/actions/issueComment.actions";
 import { UserInfo } from "@/actions/user.actions";
 import { getCurrentUser } from "@/actions/auth.actions";
-import { userInfoManager } from "@/utils/cache";
+import { userInfoManager, issueCommentsManager } from "@/utils/cache";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import MilkdownView from "@/components/MilkdownView";
 import { ArrowUpIcon, ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";
@@ -92,7 +92,9 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
   const loadComments = useCallback(async () => {
     try {
       setIsLoading(true);
-      const commentsData = await getIssueCommentsAction(issueId);
+      const commentsData = await issueCommentsManager.getComments(issueId, () =>
+        getIssueCommentsAction(issueId)
+      );
       setComments(commentsData);
 
       // 获取当前用户信息
@@ -100,7 +102,9 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
 
       // 获取所有评论创建者的用户信息
       const userIds = [
-        ...new Set(commentsData.map((comment) => comment.created_by)),
+        ...new Set(
+          commentsData.map((comment: IssueComment) => comment.created_by)
+        ),
       ];
 
       // 初始化用户信息映射，包含当前用户
@@ -151,6 +155,8 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
         issueId,
         newCommentContent
       );
+      // Add to cache
+      issueCommentsManager.addComment(issueId, newComment);
       setComments((prev) => [...prev, newComment]);
       setNewCommentContent("");
       setRandomKey(Math.random());
@@ -183,6 +189,11 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
         editingCommentId,
         editingContent
       );
+      // Update cache
+      issueCommentsManager.updateComment(
+        updatedComment.issue_id,
+        updatedComment
+      );
       setComments((prev) =>
         prev.map((comment) =>
           comment.id === editingCommentId ? updatedComment : comment
@@ -198,14 +209,21 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
   }, [editingCommentId, editingContent]);
 
   // Delete comment
-  const handleDeleteComment = useCallback(async (commentId: string) => {
-    try {
-      await deleteIssueCommentAction(commentId);
-      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-    }
-  }, []);
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      try {
+        await deleteIssueCommentAction(commentId);
+        // Remove from cache
+        issueCommentsManager.removeComment(issueId, commentId);
+        setComments((prev) =>
+          prev.filter((comment) => comment.id !== commentId)
+        );
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+      }
+    },
+    [issueId]
+  );
 
   // Start replying to comment
   const handleStartReply = useCallback((commentId: string) => {
@@ -230,6 +248,8 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
         replyContent,
         replyingToCommentId
       );
+      // Add to cache
+      issueCommentsManager.addComment(issueId, newReply);
       setComments((prev) => [...prev, newReply]);
       setReplyingToCommentId(null);
       setReplyContent("");

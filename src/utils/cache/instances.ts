@@ -4,6 +4,7 @@ import {
   IssueWithAssignee,
   CopanyContributor,
   Contribution,
+  IssueComment,
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import { UserInfo } from "@/actions/user.actions";
@@ -108,4 +109,16 @@ export const userInfoCache = new CacheManager<UserInfo, string>(
   },
   undefined, // Use default key generator (userId)
   (data: UserInfo) => ({ userId: data.id, userName: data.name }) // Log info generator
+);
+
+// Issue comments cache instance
+export const issueCommentsCache = new CacheManager<IssueComment[], string>(
+  {
+    keyPrefix: "issue_comments_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
+    loggerName: "IssueCommentsCache",
+    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+  },
+  undefined, // Use default key generator (issueId)
+  (data: IssueComment[]) => ({ commentCount: data.length }) // Log info generator
 );
