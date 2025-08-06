@@ -24,9 +24,8 @@ const nordThemeStyles = `
     --crepe-color-hover: #eceef4;
     --crepe-color-selected: #e1e2e8;
     --crepe-color-inline-area: #d8dae0;
-
-      --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
-      --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
+    --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
+    --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
     --crepe-font-code: 'JetBrains Mono', Menlo, Monaco, 'Courier New', Courier, monospace;
 
     --crepe-shadow-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
@@ -421,10 +420,14 @@ export default function MilkdownEditor({
   onContentChange,
   initialContent = "",
   isFullScreen = false,
+  placeholder = "Add description...",
+  className = "",
 }: {
   onContentChange: (content: string) => void;
   initialContent?: string;
   isFullScreen: boolean;
+  placeholder?: string;
+  className?: string;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
@@ -465,7 +468,7 @@ export default function MilkdownEditor({
         },
         featureConfigs: {
           [Crepe.Feature.Placeholder]: {
-            text: "Add description...",
+            text: placeholder,
           },
         },
       });
@@ -530,7 +533,7 @@ export default function MilkdownEditor({
       <style>{nordThemeStyles}</style>
       <div
         ref={divRef}
-        className="milkdown-editor milkdown min-h-[200px] prose prose-sm max-w-none"
+        className={`milkdown-editor milkdown prose prose-sm max-w-none ${className}`}
       />
     </>
   );
