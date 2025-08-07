@@ -14,15 +14,10 @@ export default function LoadingView({
   delay = 1000,
 }: LoadingViewProps) {
   const [shouldShow, setShouldShow] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShouldShow(true);
-      // 添加一个小延迟来触发淡入动画
-      setTimeout(() => {
-        setIsVisible(true);
-      }, 50);
     }, delay);
 
     return () => clearTimeout(timer);
@@ -37,7 +32,7 @@ export default function LoadingView({
       className={`${
         type === "page" ? "h-screen" : "h-full"
       } flex justify-center items-center transition-opacity duration-300 ease-in-out ${
-        isVisible ? "opacity-100" : "opacity-0"
+        shouldShow ? "opacity-100" : "opacity-0"
       }`}
     >
       <div className="text-gray-500 dark:text-gray-400">

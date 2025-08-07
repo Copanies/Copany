@@ -316,317 +316,319 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
     );
   };
 
-  if (isLoading) {
-    return <LoadingView label="Loading activity" type="label" />;
-  }
-
   const { rootComments, allReplies } = buildCommentTree(comments);
 
   return (
     <div className="space-y-4 px-3">
       {/* Comments list */}
-      <div className="space-y-4">
-        {rootComments.map((comment) => {
-          const commentReplies = allReplies.filter((reply) => {
-            // 检查回复是否属于这个根评论（包括间接回复）
-            let currentParentId = reply.parent_id;
-            while (currentParentId) {
-              if (currentParentId === comment.id) {
-                return true;
+      {isLoading ? (
+        <LoadingView label="Loading activity" type="label" />
+      ) : (
+        <div className="space-y-4">
+          {rootComments.map((comment) => {
+            const commentReplies = allReplies.filter((reply) => {
+              // 检查回复是否属于这个根评论（包括间接回复）
+              let currentParentId = reply.parent_id;
+              while (currentParentId) {
+                if (currentParentId === comment.id) {
+                  return true;
+                }
+                // 找到当前回复的父评论
+                const parentReply = allReplies.find(
+                  (r) => r.id === currentParentId
+                );
+                if (!parentReply) break;
+                currentParentId = parentReply.parent_id;
               }
-              // 找到当前回复的父评论
-              const parentReply = allReplies.find(
-                (r) => r.id === currentParentId
-              );
-              if (!parentReply) break;
-              currentParentId = parentReply.parent_id;
-            }
-            return false;
-          });
+              return false;
+            });
 
-          return (
-            <div
-              key={comment.id}
-              className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg"
-            >
-              {/* Root comment content */}
+            return (
               <div
-                className="flex flex-col gap-0 group"
-                onMouseEnter={(e) => {
-                  e.stopPropagation();
-                  setHoveredCommentId(comment.id);
-                }}
-                onMouseLeave={(e) => {
-                  e.stopPropagation();
-                  setHoveredCommentId(null);
-                }}
+                key={comment.id}
+                className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg"
               >
-                <div className="flex justify-between items-start px-4 pt-3 ">
-                  <div className="flex items-center space-x-2">
-                    {renderUserInfo(comment.created_by)}
-                    <div className="text-sm text-gray-500 text-center">
-                      {formatRelativeTime(comment.created_at)}
-                      {comment.is_edited && " (edited)"}
+                {/* Root comment content */}
+                <div
+                  className="flex flex-col gap-0 group"
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    setHoveredCommentId(comment.id);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    setHoveredCommentId(null);
+                  }}
+                >
+                  <div className="flex justify-between items-start px-4 pt-3 ">
+                    <div className="flex items-center space-x-2">
+                      {renderUserInfo(comment.created_by)}
+                      <div className="text-sm text-gray-500 text-center">
+                        {formatRelativeTime(comment.created_at)}
+                        {comment.is_edited && " (edited)"}
+                      </div>
                     </div>
-                  </div>
-                  <div
-                    className={`flex flex-row gap-2 transition-opacity duration-200 ${
-                      hoveredCommentId === comment.id
-                        ? "opacity-100"
-                        : "opacity-0"
-                    }`}
-                  >
-                    <Button
-                      onClick={() => handleStartReply(comment.id)}
-                      variant="ghost"
-                      size="sm"
-                      shape="square"
-                      className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    <div
+                      className={`flex flex-row gap-2 transition-opacity duration-200 ${
+                        hoveredCommentId === comment.id
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
                     >
-                      <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                    </Button>
-
-                    <Dropdown
-                      trigger={
-                        <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
-                          <EllipsisHorizontalIcon className="w-5 h-5" />
-                        </div>
-                      }
-                      options={[
-                        { value: 1, label: "Edit" },
-                        { value: 2, label: "Delete" },
-                      ]}
-                      selectedValue={null}
-                      onSelect={(value) => handleCommentAction(comment, value)}
-                      showBackground={false}
-                      size="md"
-                    />
-                  </div>
-                </div>
-                {editingCommentId === comment.id ? (
-                  <div>
-                    <div className="">
-                      <MilkdownEditor
-                        onContentChange={setEditingContent}
-                        initialContent={comment.content}
-                        isFullScreen={false}
-                      />
-                    </div>
-                    <div className="flex space-x-2 justify-end px-4 pb-3">
                       <Button
-                        onClick={handleCancelEdit}
-                        className=""
+                        onClick={() => handleStartReply(comment.id)}
                         variant="ghost"
                         size="sm"
+                        shape="square"
+                        className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
-                        Cancel
+                        <ArrowTurnUpLeftIcon className="w-4 h-4" />
                       </Button>
-                      <Button
-                        onClick={handleSaveEdit}
-                        disabled={isSubmitting}
-                        className=""
-                        size="sm"
-                      >
-                        Save
-                      </Button>
+
+                      <Dropdown
+                        trigger={
+                          <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
+                            <EllipsisHorizontalIcon className="w-5 h-5" />
+                          </div>
+                        }
+                        options={[
+                          { value: 1, label: "Edit" },
+                          { value: 2, label: "Delete" },
+                        ]}
+                        selectedValue={null}
+                        onSelect={(value) =>
+                          handleCommentAction(comment, value)
+                        }
+                        showBackground={false}
+                        size="md"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="prose prose-sm px-1 -mb-1 -mt-2">
-                    <MilkdownView content={comment.content} />
+                  {editingCommentId === comment.id ? (
+                    <div>
+                      <div className="">
+                        <MilkdownEditor
+                          onContentChange={setEditingContent}
+                          initialContent={comment.content}
+                          isFullScreen={false}
+                        />
+                      </div>
+                      <div className="flex space-x-2 justify-end px-4 pb-3">
+                        <Button
+                          onClick={handleCancelEdit}
+                          className=""
+                          variant="ghost"
+                          size="sm"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSaveEdit}
+                          disabled={isSubmitting}
+                          className=""
+                          size="sm"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm px-1 -mb-1 -mt-2">
+                      <MilkdownView content={comment.content} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Render replies */}
+                {commentReplies.length > 0 && (
+                  <div className="border-t pb-2 border-gray-200 dark:border-gray-800">
+                    <div className="space-y-0">
+                      {commentReplies.map((reply) => (
+                        <div
+                          key={reply.id}
+                          className="group"
+                          onMouseEnter={(e) => {
+                            e.stopPropagation();
+                            setHoveredCommentId(reply.id);
+                          }}
+                          onMouseLeave={(e) => {
+                            e.stopPropagation();
+                            setHoveredCommentId(null);
+                          }}
+                        >
+                          <div className="flex justify-between items-start space-x-1 px-4 pt-3">
+                            <div className="flex items-center space-x-1 pr-1">
+                              <div className="flex items-center space-x-1">
+                                {renderUserInfo(reply.created_by)}
+                                <div className="hidden md:block">
+                                  {reply.parent_id &&
+                                    reply.parent_id !== comment.id && (
+                                      <div className="flex items-center space-x-1">
+                                        <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                          reply to
+                                        </p>
+                                        <div className="text-sm font-medium whitespace-nowrap">
+                                          @
+                                          {userInfoMap[
+                                            commentReplies.find(
+                                              (r) => r.id === reply.parent_id
+                                            )?.created_by ?? ""
+                                          ]?.name || "Unknown User"}
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
+                              </div>
+                              <div className="flex flex-row gap-1 text-sm text-gray-500">
+                                {formatRelativeTime(reply.created_at)}
+                                {reply.is_edited && " (edited)"}
+                              </div>
+                            </div>
+                            <div
+                              className={`flex flex-row gap-2 transition-opacity duration-200 ${
+                                hoveredCommentId === reply.id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            >
+                              <Button
+                                onClick={() => handleStartReply(reply.id)}
+                                variant="ghost"
+                                size="sm"
+                                shape="square"
+                                className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                              >
+                                <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                              </Button>
+                              <Dropdown
+                                trigger={
+                                  <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
+                                    <EllipsisHorizontalIcon className="w-5 h-5" />
+                                  </div>
+                                }
+                                options={[
+                                  { value: 1, label: "Edit" },
+                                  { value: 2, label: "Delete" },
+                                ]}
+                                selectedValue={null}
+                                onSelect={(value) =>
+                                  handleCommentAction(reply, value)
+                                }
+                                showBackground={false}
+                                size="md"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="block md:hidden">
+                            {reply.parent_id &&
+                              reply.parent_id !== comment.id && (
+                                <div className="flex items-center space-x-1 pl-10">
+                                  <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                    reply to
+                                  </p>
+                                  <div className="text-sm font-medium whitespace-nowrap">
+                                    @
+                                    {userInfoMap[
+                                      commentReplies.find(
+                                        (r) => r.id === reply.parent_id
+                                      )?.created_by ?? ""
+                                    ]?.name || "Unknown User"}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+
+                          {editingCommentId === reply.id ? (
+                            <div>
+                              <div className="pl-7 -mb-1 -mt-2">
+                                <MilkdownEditor
+                                  onContentChange={setEditingContent}
+                                  initialContent={reply.content}
+                                  isFullScreen={false}
+                                  placeholder=""
+                                />
+                              </div>
+                              <div className="flex space-x-2 justify-end px-3 pb-3">
+                                <Button
+                                  onClick={handleCancelEdit}
+                                  className=""
+                                  variant="ghost"
+                                  size="sm"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={handleSaveEdit}
+                                  disabled={isSubmitting}
+                                  className=""
+                                  size="sm"
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="prose prose-sm pl-7 -mb-1 -mt-2">
+                              <MilkdownView content={reply.content} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Reply input */}
+                {(replyingToCommentId === comment.id ||
+                  commentReplies
+                    .map((reply) => reply.id)
+                    .includes(replyingToCommentId ?? "")) && (
+                  <div className="border-t border-gray-200 dark:border-gray-800">
+                    <div className="h-fit p-1">
+                      <MilkdownEditor
+                        key={replyingToCommentId} // 添加 key 来强制重新渲染
+                        onContentChange={setReplyContent}
+                        initialContent=""
+                        isFullScreen={false}
+                        placeholder={
+                          replyingToCommentId === comment.id
+                            ? "Write a reply..."
+                            : `Reply to @${
+                                userInfoMap[
+                                  commentReplies.find(
+                                    (r) => r.id === replyingToCommentId
+                                  )?.created_by ?? ""
+                                ]?.name || "Unknown User"
+                              }...`
+                        }
+                      />
+                      <div className="flex space-x-2 justify-end p-2">
+                        <Button
+                          onClick={handleCancelReply}
+                          className=""
+                          variant="ghost"
+                          size="sm"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSubmitReply}
+                          disabled={isSubmitting || !replyContent.trim()}
+                          className=""
+                          size="sm"
+                        >
+                          Reply
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* Render replies */}
-              {commentReplies.length > 0 && (
-                <div className="border-t pb-2 border-gray-200 dark:border-gray-800">
-                  <div className="space-y-0">
-                    {commentReplies.map((reply) => (
-                      <div
-                        key={reply.id}
-                        className="group"
-                        onMouseEnter={(e) => {
-                          e.stopPropagation();
-                          setHoveredCommentId(reply.id);
-                        }}
-                        onMouseLeave={(e) => {
-                          e.stopPropagation();
-                          setHoveredCommentId(null);
-                        }}
-                      >
-                        <div className="flex justify-between items-start space-x-1 px-4 pt-3">
-                          <div className="flex items-center space-x-1 pr-1">
-                            <div className="flex items-center space-x-1">
-                              {renderUserInfo(reply.created_by)}
-                              <div className="hidden md:block">
-                                {reply.parent_id &&
-                                  reply.parent_id !== comment.id && (
-                                    <div className="flex items-center space-x-1">
-                                      <p className="text-sm font-medium whitespace-nowrap text-gray-500">
-                                        reply to
-                                      </p>
-                                      <div className="text-sm font-medium whitespace-nowrap">
-                                        @
-                                        {userInfoMap[
-                                          commentReplies.find(
-                                            (r) => r.id === reply.parent_id
-                                          )?.created_by ?? ""
-                                        ]?.name || "Unknown User"}
-                                      </div>
-                                    </div>
-                                  )}
-                              </div>
-                            </div>
-                            <div className="flex flex-row gap-1 text-sm text-gray-500">
-                              {formatRelativeTime(reply.created_at)}
-                              {reply.is_edited && " (edited)"}
-                            </div>
-                          </div>
-                          <div
-                            className={`flex flex-row gap-2 transition-opacity duration-200 ${
-                              hoveredCommentId === reply.id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          >
-                            <Button
-                              onClick={() => handleStartReply(reply.id)}
-                              variant="ghost"
-                              size="sm"
-                              shape="square"
-                              className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                            </Button>
-                            <Dropdown
-                              trigger={
-                                <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
-                                  <EllipsisHorizontalIcon className="w-5 h-5" />
-                                </div>
-                              }
-                              options={[
-                                { value: 1, label: "Edit" },
-                                { value: 2, label: "Delete" },
-                              ]}
-                              selectedValue={null}
-                              onSelect={(value) =>
-                                handleCommentAction(reply, value)
-                              }
-                              showBackground={false}
-                              size="md"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="block md:hidden">
-                          {reply.parent_id &&
-                            reply.parent_id !== comment.id && (
-                              <div className="flex items-center space-x-1 pl-10">
-                                <p className="text-sm font-medium whitespace-nowrap text-gray-500">
-                                  reply to
-                                </p>
-                                <div className="text-sm font-medium whitespace-nowrap">
-                                  @
-                                  {userInfoMap[
-                                    commentReplies.find(
-                                      (r) => r.id === reply.parent_id
-                                    )?.created_by ?? ""
-                                  ]?.name || "Unknown User"}
-                                </div>
-                              </div>
-                            )}
-                        </div>
-
-                        {editingCommentId === reply.id ? (
-                          <div>
-                            <div className="pl-7 -mb-1 -mt-2">
-                              <MilkdownEditor
-                                onContentChange={setEditingContent}
-                                initialContent={reply.content}
-                                isFullScreen={false}
-                                placeholder=""
-                              />
-                            </div>
-                            <div className="flex space-x-2 justify-end px-3 pb-3">
-                              <Button
-                                onClick={handleCancelEdit}
-                                className=""
-                                variant="ghost"
-                                size="sm"
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={handleSaveEdit}
-                                disabled={isSubmitting}
-                                className=""
-                                size="sm"
-                              >
-                                Save
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="prose prose-sm pl-7 -mb-1 -mt-2">
-                            <MilkdownView content={reply.content} />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Reply input */}
-              {(replyingToCommentId === comment.id ||
-                commentReplies
-                  .map((reply) => reply.id)
-                  .includes(replyingToCommentId ?? "")) && (
-                <div className="border-t border-gray-200 dark:border-gray-800">
-                  <div className="h-fit p-1">
-                    <MilkdownEditor
-                      key={replyingToCommentId} // 添加 key 来强制重新渲染
-                      onContentChange={setReplyContent}
-                      initialContent=""
-                      isFullScreen={false}
-                      placeholder={
-                        replyingToCommentId === comment.id
-                          ? "Write a reply..."
-                          : `Reply to @${
-                              userInfoMap[
-                                commentReplies.find(
-                                  (r) => r.id === replyingToCommentId
-                                )?.created_by ?? ""
-                              ]?.name || "Unknown User"
-                            }...`
-                      }
-                    />
-                    <div className="flex space-x-2 justify-end p-2">
-                      <Button
-                        onClick={handleCancelReply}
-                        className=""
-                        variant="ghost"
-                        size="sm"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSubmitReply}
-                        disabled={isSubmitting || !replyContent.trim()}
-                        className=""
-                        size="sm"
-                      >
-                        Reply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* New comment input */}
       <div className="border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">

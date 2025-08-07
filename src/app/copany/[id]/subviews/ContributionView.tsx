@@ -8,10 +8,7 @@ import {
   CopanyContributor,
   LEVEL_SCORES,
 } from "@/types/database.types";
-import {
-  contributorsManager,
-  ContributionsManager,
-} from "@/utils/cache";
+import { contributorsManager, ContributionsManager } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
