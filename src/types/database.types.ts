@@ -1,3 +1,5 @@
+// Table: copany
+
 export interface Copany {
   id: string;
   name: string;
@@ -19,10 +21,7 @@ export interface Copany {
   license: string | null;
 }
 
-export interface CopanyWithUser extends Copany {
-  created_by_name: string;
-}
-
+// Table: issue
 export interface Issue {
   id: string;
   created_at: string;
@@ -36,6 +35,35 @@ export interface Issue {
   updated_at: string | null;
   closed_at: string | null;
   assignee: string | null;
+}
+
+// Table: copany_contributor
+export interface CopanyContributor {
+  id: string;
+  copany_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  email: string;
+  avatar_url: string;
+  contribution: number;
+}
+
+// Table: issue_comment
+export interface IssueComment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  issue_id: string;
+  content: string;
+  created_by: string;
+  is_edited: boolean;
+  parent_id: string | null;
+}
+
+export interface CopanyWithUser extends Copany {
+  created_by_name: string;
 }
 
 export interface IssueWithAssignee extends Issue {
@@ -68,18 +96,6 @@ export enum IssueLevel {
   level_B = 2,
   level_A = 3,
   level_S = 4,
-}
-
-export interface CopanyContributor {
-  id: string;
-  copany_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  name: string;
-  email: string;
-  avatar_url: string;
-  contribution: number;
 }
 
 export interface AssigneeUser {

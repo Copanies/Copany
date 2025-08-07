@@ -275,4 +275,6 @@ export class IssueService {
 
     return issuesWithAssignee[0];
   }
+
+
 }

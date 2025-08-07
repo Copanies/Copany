@@ -45,7 +45,7 @@ export default function EmptyPlaceholderView({
           </p>
         </div>
         {buttonTitle && buttonAction && (
-          <Button variant="primary" size="sm" onClick={buttonAction}>
+          <Button variant="primary" size="md" onClick={buttonAction}>
             <div className="flex items-center gap-2">
               {buttonIcon}
               <p>{buttonTitle}</p>

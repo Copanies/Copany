@@ -101,7 +101,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Create IssuesManager instance with data update callback
   const issuesManagerWithCallback = useMemo(() => {
     return new IssuesManager((key, updatedData) => {
-      console.log(`[IssuesView] Background refresh completed, data updated: ${key}`, updatedData);
+      console.log(
+        `[IssuesView] Background refresh completed, data updated: ${key}`,
+        updatedData
+      );
       setIssues(updatedData); // 自动更新 UI
     });
   }, []);
@@ -343,11 +346,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   return (
     <div className="min-h-screen flex flex-col gap-3">
       <div className="flex items-center justify-between md:px-4 px-0">
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="w-[100px]"
-          size="sm"
-        >
+        <Button onClick={() => setIsModalOpen(true)} className="" size="md">
           New Issue
         </Button>
       </div>

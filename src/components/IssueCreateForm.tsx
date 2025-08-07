@@ -138,6 +138,7 @@ export default function IssueCreateForm({
             <MilkdownEditor
               onContentChange={handleContentChange}
               isFullScreen={false}
+              className="min-h-[200px]"
             />
           </div>
         </div>

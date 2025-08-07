@@ -30,7 +30,7 @@ export default function Button({
   };
 
   const sizeClasses = {
-    sm: "px-2 py-1 text-base",
+    sm: "px-2 py-1 text-sm",
     md: "px-2 py-1 text-base",
     lg: "px-4 py-2 text-base",
   };
