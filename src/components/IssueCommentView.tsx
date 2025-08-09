@@ -441,7 +441,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
 
                 {/* Render replies */}
                 {commentReplies.length > 0 && (
-                  <div className="border-t pb-2 border-gray-200 dark:border-gray-800">
+                  <div className="border-t pb-3 border-gray-200 dark:border-gray-800">
                     <div className="space-y-0">
                       {commentReplies.map((reply) => (
                         <div
