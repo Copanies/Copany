@@ -16,6 +16,7 @@ interface DropdownProps {
   className?: string;
   header?: ReactNode; // 新增可选头部容器
   size?: "sm" | "md" | "lg";
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function Dropdown({
@@ -27,6 +28,7 @@ export default function Dropdown({
   size = "md",
   className = "",
   header,
+  onOpenChange,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -167,6 +169,13 @@ export default function Dropdown({
       setShouldShowDropdown(false);
     }
   }, [isOpen, calculateDropdownPosition]);
+
+  // 通知外部打开/关闭状态变化
+  useEffect(() => {
+    if (typeof onOpenChange === "function") {
+      onOpenChange(isOpen);
+    }
+  }, [isOpen, onOpenChange]);
 
   const handleSelect = async (value: number) => {
     try {

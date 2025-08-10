@@ -5,6 +5,7 @@ import {
   CopanyContributor,
   Contribution,
   IssueComment,
+  Notification,
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import { UserInfo } from "@/actions/user.actions";
@@ -121,4 +122,16 @@ export const issueCommentsCache = new CacheManager<IssueComment[], string>(
   },
   undefined, // Use default key generator (issueId)
   (data: IssueComment[]) => ({ commentCount: data.length }) // Log info generator
+);
+
+// Notifications cache (single list; use a single key like "inbox")
+export const notificationsCache = new CacheManager<Notification[], string>(
+  {
+    keyPrefix: "notifications_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
+    loggerName: "NotificationsCache",
+    backgroundRefreshInterval: 30 * 1000, // refresh frequently for near-real-time
+  },
+  undefined,
+  (data: Notification[]) => ({ count: data.length })
 );

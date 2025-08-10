@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { formatRelativeTime } from "@/utils/time";
 import { IssueComment } from "@/types/database.types";
 import {
   getIssueCommentsAction,
@@ -39,31 +40,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
   const [replyContent, setReplyContent] = useState("");
   const [randomKey, setRandomKey] = useState(Math.random());
 
-  // 格式化相对时间
-  const formatRelativeTime = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return "just now";
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} min ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hr ago`;
-    } else if (diffInSeconds < 2592000) {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day ago`;
-    } else if (diffInSeconds < 31536000) {
-      const months = Math.floor(diffInSeconds / 2592000);
-      return `${months} mo ago`;
-    } else {
-      const years = Math.floor(diffInSeconds / 31536000);
-      return `${years} yr ago`;
-    }
-  };
+  // 格式化相对时间（公用）
 
   // 构建评论树结构 - 所有子评论平铺显示
   const buildCommentTree = (comments: IssueComment[]) => {
@@ -441,7 +418,7 @@ export default function IssueCommentView({ issueId }: IssueCommentViewProps) {
 
                 {/* Render replies */}
                 {commentReplies.length > 0 && (
-                  <div className="border-t pb-2 border-gray-200 dark:border-gray-800">
+                  <div className="border-t pb-3 border-gray-200 dark:border-gray-800">
                     <div className="space-y-0">
                       {commentReplies.map((reply) => (
                         <div
