@@ -6,7 +6,7 @@ export class NotificationService {
     const supabase = await createSupabaseClient();
     let q = supabase
       .from("notification")
-      .select("*")
+      .select("*, issue:issue_id(title)")
       .order("is_read", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -26,12 +26,12 @@ export class NotificationService {
     return count || 0;
   }
 
-  static async markRead(ids: (string | number)[]) {
+  static async markRead(ids: string[]) {
     const supabase = await createSupabaseClient();
     const { error } = await supabase
       .from("notification")
       .update({ read_at: new Date().toISOString() })
-      .in("id", ids as any);
+      .in("id", ids);
     if (error) throw new Error(error.message);
   }
 

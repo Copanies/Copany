@@ -28,3 +28,7 @@ export {
   IssueCommentsManager,
   issueCommentsManager,
 } from "./managers/IssueCommentsManager";
+export {
+  NotificationsManager,
+  notificationsManager,
+} from "./managers/NotificationsManager";

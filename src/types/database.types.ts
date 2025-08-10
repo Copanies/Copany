@@ -126,6 +126,22 @@ export const LEVEL_SCORES: Record<IssueLevel, number> = {
   [IssueLevel.level_None]: 0,
 };
 
+// Notification payload schema (fields are optional and may vary by type)
+export interface NotificationPayload {
+  from_user_name?: string;
+  to_user_name?: string;
+  from_state?: number | null;
+  to_state?: number | null;
+  from_priority?: number | null;
+  to_priority?: number | null;
+  from_level?: number | null;
+  to_level?: number | null;
+  issue_title?: string | null;
+  preview?: string | null;
+  // Allow forward-compat fields without using `any`
+  [key: string]: unknown;
+}
+
 // Notification
 export type NotificationType =
   | "comment_reply"
@@ -147,7 +163,7 @@ export interface Notification {
   issue_id: string | null;
   comment_id: string | null;
   type: NotificationType;
-  payload: Record<string, any>;
+  payload: NotificationPayload;
   read_at: string | null;
   is_read: boolean;
 }
