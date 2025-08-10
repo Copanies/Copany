@@ -130,6 +130,7 @@ export const LEVEL_SCORES: Record<IssueLevel, number> = {
 export type NotificationType =
   | "comment_reply"
   | "new_comment"
+  | "new_issue"
   | "issue_assigned"
   | "issue_state_changed"
   | "issue_priority_changed"
