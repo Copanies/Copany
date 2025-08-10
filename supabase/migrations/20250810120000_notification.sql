@@ -1,6 +1,6 @@
--- Notification table, RLS and triggers
+-- Combined Notification migration: schema, policies, and triggers
 
--- 1) Enum for notification types
+-- 1) Enum for notification types (base) and ensure 'new_issue'
 do $$ begin
   create type public.notification_type as enum (
     'comment_reply',
@@ -12,6 +12,12 @@ do $$ begin
     'issue_closed',
     'mention'
   );
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  alter type public.notification_type add value if not exists 'new_issue';
 exception
   when duplicate_object then null;
 end $$;
@@ -93,9 +99,9 @@ with check (user_id = auth.uid());
 revoke insert on public.notification from authenticated, anon;
 grant insert on public.notification to service_role;
 
--- 7) Trigger functions
+-- 7) Trigger functions (enriched payloads)
 
--- Function: notify on issue_comment insert
+-- Function: notify on issue_comment insert (enriched with issue_title + preview)
 create or replace function public.fn_notify_on_issue_comment()
 returns trigger
 language plpgsql
@@ -107,11 +113,12 @@ declare
   v_issue_creator uuid;
   v_issue_assignee uuid;
   v_issue_copany bigint;
+  v_issue_title text;
   v_actor uuid := auth.uid();
 begin
   -- load issue context
-  select created_by, assignee, copany_id
-    into v_issue_creator, v_issue_assignee, v_issue_copany
+  select created_by, assignee, copany_id, title
+    into v_issue_creator, v_issue_assignee, v_issue_copany, v_issue_title
   from public.issue where id = new.issue_id;
 
   -- reply -> notify parent comment author
@@ -126,7 +133,10 @@ begin
         new.issue_id,
         new.id,
         'comment_reply',
-        jsonb_build_object('preview', left(coalesce(new.content, ''), 120))
+        jsonb_build_object(
+          'issue_title', coalesce(v_issue_title, ''),
+          'preview', left(coalesce(new.content, ''), 120)
+        )
       );
     end if;
   else
@@ -140,7 +150,10 @@ begin
         new.issue_id,
         new.id,
         'new_comment',
-        jsonb_build_object('preview', left(coalesce(new.content, ''), 120))
+        jsonb_build_object(
+          'issue_title', coalesce(v_issue_title, ''),
+          'preview', left(coalesce(new.content, ''), 120)
+        )
       );
     end if;
 
@@ -153,7 +166,10 @@ begin
         new.issue_id,
         new.id,
         'new_comment',
-        jsonb_build_object('preview', left(coalesce(new.content, ''), 120))
+        jsonb_build_object(
+          'issue_title', coalesce(v_issue_title, ''),
+          'preview', left(coalesce(new.content, ''), 120)
+        )
       );
     end if;
   end if;
@@ -168,7 +184,7 @@ for each row
 execute function public.fn_notify_on_issue_comment();
 
 
--- Function: notify on issue updates
+-- Function: notify on issue updates (enriched names/title)
 create or replace function public.fn_notify_on_issue_update()
 returns trigger
 language plpgsql
@@ -177,10 +193,29 @@ set search_path = public
 as $$
 declare
   v_actor uuid := auth.uid();
+  v_from_name text;
+  v_to_name text;
 begin
   -- assignment change
-  if new.assignee is distinct from old.assignee and new.assignee is not null then
-    if new.assignee <> v_actor then
+  if new.assignee is distinct from old.assignee then
+    -- Resolve user names (may be null)
+    if old.assignee is not null then
+      select coalesce(u.raw_user_meta_data->>'name', u.email, u.id::text)
+        into v_from_name
+      from auth.users u where u.id = old.assignee;
+    else
+      v_from_name := 'Unassigned';
+    end if;
+
+    if new.assignee is not null then
+      select coalesce(u.raw_user_meta_data->>'name', u.email, u.id::text)
+        into v_to_name
+      from auth.users u where u.id = new.assignee;
+    else
+      v_to_name := 'Unassigned';
+    end if;
+
+    if new.assignee is not null and new.assignee <> v_actor then
       insert into public.notification(user_id, actor_id, copany_id, issue_id, type, payload)
       values (
         new.assignee,
@@ -188,7 +223,13 @@ begin
         new.copany_id,
         new.id,
         'issue_assigned',
-        jsonb_build_object('title', coalesce(new.title, ''), 'from', old.assignee, 'to', new.assignee)
+        jsonb_build_object(
+          'issue_title', coalesce(new.title, ''),
+          'from_user_id', old.assignee,
+          'to_user_id', new.assignee,
+          'from_user_name', v_from_name,
+          'to_user_name', v_to_name
+        )
       );
     end if;
   end if;
@@ -203,7 +244,11 @@ begin
         new.copany_id,
         new.id,
         'issue_state_changed',
-        jsonb_build_object('from', old.state, 'to', new.state)
+        jsonb_build_object(
+          'issue_title', coalesce(new.title, ''),
+          'from_state', old.state,
+          'to_state', new.state
+        )
       );
     end if;
     if new.assignee is not null and new.assignee <> v_actor and new.assignee <> new.created_by then
@@ -214,7 +259,11 @@ begin
         new.copany_id,
         new.id,
         'issue_state_changed',
-        jsonb_build_object('from', old.state, 'to', new.state)
+        jsonb_build_object(
+          'issue_title', coalesce(new.title, ''),
+          'from_state', old.state,
+          'to_state', new.state
+        )
       );
     end if;
   end if;
@@ -229,7 +278,11 @@ begin
         new.copany_id,
         new.id,
         'issue_priority_changed',
-        jsonb_build_object('from', old.priority, 'to', new.priority)
+        jsonb_build_object(
+          'issue_title', coalesce(new.title, ''),
+          'from_priority', old.priority,
+          'to_priority', new.priority
+        )
       );
     end if;
   end if;
@@ -244,7 +297,11 @@ begin
         new.copany_id,
         new.id,
         'issue_level_changed',
-        jsonb_build_object('from', old.level, 'to', new.level)
+        jsonb_build_object(
+          'issue_title', coalesce(new.title, ''),
+          'from_level', old.level,
+          'to_level', new.level
+        )
       );
     end if;
   end if;
@@ -259,7 +316,7 @@ begin
         new.copany_id,
         new.id,
         'issue_closed',
-        jsonb_build_object('title', coalesce(new.title, ''))
+        jsonb_build_object('issue_title', coalesce(new.title, ''))
       );
     end if;
     if new.assignee is not null and new.assignee <> v_actor and new.assignee <> new.created_by then
@@ -270,7 +327,7 @@ begin
         new.copany_id,
         new.id,
         'issue_closed',
-        jsonb_build_object('title', coalesce(new.title, ''))
+        jsonb_build_object('issue_title', coalesce(new.title, ''))
       );
     end if;
   end if;
@@ -283,4 +340,38 @@ create trigger trg_notify_on_issue_update
 after update of state, priority, level, assignee, closed_at on public.issue
 for each row
 execute function public.fn_notify_on_issue_update();
+
+
+-- Function: notify copany contributors on issue create
+create or replace function public.fn_notify_on_issue_create()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+begin
+  if new.copany_id is not null then
+    insert into public.notification(user_id, actor_id, copany_id, issue_id, type, payload)
+    select
+      c.user_id,
+      v_actor,
+      new.copany_id,
+      new.id,
+      'new_issue',
+      jsonb_build_object('issue_title', coalesce(new.title, ''))
+    from public.copany_contributor c
+    where c.copany_id = new.copany_id
+      and (v_actor is null or c.user_id <> v_actor);
+  end if;
+
+  return new;
+end $$;
+
+drop trigger if exists trg_notify_on_issue_create on public.issue;
+create trigger trg_notify_on_issue_create
+after insert on public.issue
+for each row
+execute function public.fn_notify_on_issue_create();
 
