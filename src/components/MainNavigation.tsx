@@ -10,6 +10,7 @@ import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
 import CreateCopanyButton from "./CreateCopanyButton";
+import NotificationBell from "./NotificationBell";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubIconDark from "@/assets/github_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -184,9 +185,9 @@ export default function MainNavigation() {
         height={32}
         onClick={() => router.push("/")}
       />
-      <div className="flex flex-row items-center gap-2">
-        {/* 只在用户已登录时显示 CreateCopanyButton */}
+      <div className="flex flex-row items-center gap-3">
         {user && <CreateCopanyButton />}
+        {user && <NotificationBell />}
         {renderUserSection()}
       </div>
     </div>

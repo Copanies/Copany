@@ -125,3 +125,28 @@ export const LEVEL_SCORES: Record<IssueLevel, number> = {
   [IssueLevel.level_S]: 200,
   [IssueLevel.level_None]: 0,
 };
+
+// Notification
+export type NotificationType =
+  | "comment_reply"
+  | "new_comment"
+  | "issue_assigned"
+  | "issue_state_changed"
+  | "issue_priority_changed"
+  | "issue_level_changed"
+  | "issue_closed"
+  | "mention";
+
+export interface Notification {
+  id: string;
+  created_at: string;
+  user_id: string;
+  actor_id: string | null;
+  copany_id: string | null;
+  issue_id: string | null;
+  comment_id: string | null;
+  type: NotificationType;
+  payload: Record<string, any>;
+  read_at: string | null;
+  is_read: boolean;
+}

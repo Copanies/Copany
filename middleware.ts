@@ -7,6 +7,7 @@ const refreshThrottleSeconds = 60; // 可按需调整（例如 60~120）
 const lastRefreshCookieName = "sb-last-refresh";
 
 export async function middleware(req: NextRequest) {
+  console.log("middleware");
   const res = NextResponse.next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -50,6 +51,7 @@ export async function middleware(req: NextRequest) {
   });
 
   try {
+    console.log("middleware supabase.auth.getSession");
     await supabase.auth.getSession();
   } catch {
     // 不影响页面继续执行，静默跳过
