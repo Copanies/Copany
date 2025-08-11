@@ -292,12 +292,12 @@ const nordThemeStyles = `
   /* ===== List styles ===== */
   .milkdown-editor.milkdown .ProseMirror ul,
   .milkdown-editor.milkdown .ProseMirror ol {
-    padding-left: 24px;
-    margin: 8px 0;
+    padding-left: 0px;
+    margin: 0px 0;
   }
 
   .milkdown-editor.milkdown .ProseMirror li {
-    margin: 4px 0;
+    margin: 0px 0;
   }
 
   /* ===== Placeholder styles ===== */
