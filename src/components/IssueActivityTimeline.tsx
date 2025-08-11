@@ -11,7 +11,11 @@ import {
   IssueActivityPayload,
 } from "@/types/database.types";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
-import { issueActivityManager, userInfoManager } from "@/utils/cache";
+import {
+  issueActivityManager,
+  userInfoManager,
+  currentUserManager,
+} from "@/utils/cache";
 import { formatRelativeTime } from "@/utils/time";
 import { renderLevelLabel } from "@/components/IssueLevelSelector";
 import { renderPriorityLabel } from "@/components/IssuePrioritySelector";
@@ -72,6 +76,16 @@ export default function IssueActivityTimeline({
       }
       for (const c of allComments) {
         if (c.created_by) idSet.add(String(c.created_by));
+      }
+      // Ensure current logged-in user is present in userInfos by default
+      try {
+        const me = await currentUserManager.getCurrentUser();
+        if (me?.id) {
+          idSet.add(String(me.id));
+        }
+      } catch (e) {
+        // ignore if unauthenticated
+        console.error(e);
       }
       const ids = Array.from(idSet);
       if (ids.length > 0) {
@@ -227,8 +241,6 @@ export default function IssueActivityTimeline({
       c,
     })),
   ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
-
-  if (merged.length === 0) return null;
 
   const renderLeft = (entry: (typeof merged)[number]) => {
     if (entry.kind === "activity") {
