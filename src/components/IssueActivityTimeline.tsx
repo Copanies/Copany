@@ -8,6 +8,7 @@ import {
   IssueState,
   IssuePriority,
   IssueLevel,
+  IssueActivityPayload,
 } from "@/types/database.types";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { issueActivityManager, userInfoManager } from "@/utils/cache";
@@ -15,11 +16,6 @@ import { formatRelativeTime } from "@/utils/time";
 import { renderLevelLabel } from "@/components/IssueLevelSelector";
 import { renderPriorityLabel } from "@/components/IssuePrioritySelector";
 import { renderStateLabel } from "@/components/IssueStateSelector";
-import {
-  renderUserLabelSm,
-  renderUnassignedLabelSm,
-} from "@/components/IssueAssigneeSelector";
-import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import type { IssueComment } from "@/types/database.types";
 import {
   getIssueCommentsAction,
@@ -42,7 +38,6 @@ export default function IssueActivityTimeline({
 }: IssueActivityTimelineProps) {
   const [items, setItems] = useState<IssueActivity[]>([]);
   const [comments, setComments] = useState<IssueComment[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
@@ -59,7 +54,6 @@ export default function IssueActivityTimeline({
 
   useEffect(() => {
     const load = async () => {
-      setIsLoading(true);
       const data = await issueActivityManager.getActivities(issueId, () =>
         listIssueActivityAction(issueId, 200)
       );
@@ -72,7 +66,7 @@ export default function IssueActivityTimeline({
       const idSet = new Set<string>();
       for (const a of data) {
         if (a.actor_id) idSet.add(String(a.actor_id));
-        const p = (a.payload || {}) as any;
+        const p = (a.payload ?? {}) as IssueActivityPayload;
         if (p.from_user_id) idSet.add(String(p.from_user_id));
         if (p.to_user_id) idSet.add(String(p.to_user_id));
       }
@@ -95,7 +89,6 @@ export default function IssueActivityTimeline({
         }
         setUserInfos(map);
       }
-      setIsLoading(false);
     };
     load();
   }, [issueId]);
@@ -158,13 +151,15 @@ export default function IssueActivityTimeline({
 
   const renderHeaderText = (item: IssueActivity): string => {
     const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
-    const p = (item.payload || {}) as any;
+    const p = (item.payload ?? {}) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
       case "issue_created":
         return `${who} created ${title}`;
       case "title_changed":
-        return `${who} updated the title`;
+        return `${who} updated the title from "${p.from_title || ""}" to "${
+          p.to_title || ""
+        }"`;
       case "state_changed":
         return `${who} changed state from ${getStateName(
           p.from_state
@@ -177,8 +172,15 @@ export default function IssueActivityTimeline({
         return `${who} changed level from ${getLevelName(
           p.from_level
         )} to ${getLevelName(p.to_level)}`;
-      case "assignee_changed":
-        return `${who} changed the assignee`;
+      case "assignee_changed": {
+        const fromInfo = p.from_user_id
+          ? userInfos[String(p.from_user_id)]
+          : null;
+        const toInfo = p.to_user_id ? userInfos[String(p.to_user_id)] : null;
+        const fromLabel = fromInfo?.name ? `@${fromInfo.name}` : "Unassigned";
+        const toLabel = toInfo?.name ? `@${toInfo.name}` : "Unassigned";
+        return `${who} changed the assignee from ${fromLabel} to ${toLabel}`;
+      }
       case "issue_closed":
         return `${who} closed ${title}`;
       default:
@@ -187,45 +189,17 @@ export default function IssueActivityTimeline({
   };
 
   const renderDiffLine = (item: IssueActivity) => {
-    const p = (item.payload || {}) as any;
     switch (item.type as IssueActivityType) {
       case "title_changed":
-        return (
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            “{p.from_title || ""}” → “{p.to_title || ""}”
-          </span>
-        );
+        return null; // use header text only
       case "state_changed":
         return null; // use header text only
       case "priority_changed":
         return null; // use header text only
       case "level_changed":
         return null; // use header text only
-      case "assignee_changed": {
-        const fromInfo = p.from_user_id
-          ? userInfos[String(p.from_user_id)]
-          : null;
-        const toInfo = p.to_user_id ? userInfos[String(p.to_user_id)] : null;
-        return (
-          <div className="flex items-center gap-2">
-            {p.from_user_id
-              ? renderUserLabelSm(
-                  fromInfo?.name || p.from_user_name || "",
-                  fromInfo?.avatar_url || null,
-                  true
-                )
-              : renderUnassignedLabelSm(true)}
-            <ArrowRightIcon className="w-4 h-4 text-gray-400" />
-            {p.to_user_id
-              ? renderUserLabelSm(
-                  toInfo?.name || p.to_user_name || "",
-                  toInfo?.avatar_url || null,
-                  true
-                )
-              : renderUnassignedLabelSm(true)}
-          </div>
-        );
-      }
+      case "assignee_changed":
+        return null; // use header text only
       default:
         return null;
     }
@@ -260,14 +234,20 @@ export default function IssueActivityTimeline({
     if (entry.kind === "activity") {
       const item = entry.a;
       if (item.type === "state_changed")
-        return renderStateLabel((item.payload as any)?.to_state ?? null, false);
+        return renderStateLabel(
+          (item.payload as IssueActivityPayload)?.to_state ?? null,
+          false
+        );
       if (item.type === "priority_changed")
         return renderPriorityLabel(
-          (item.payload as any)?.to_priority ?? null,
+          (item.payload as IssueActivityPayload)?.to_priority ?? null,
           false
         );
       if (item.type === "level_changed")
-        return renderLevelLabel((item.payload as any)?.to_level ?? null, false);
+        return renderLevelLabel(
+          (item.payload as IssueActivityPayload)?.to_level ?? null,
+          false
+        );
       if (item.actor_id && userInfos[item.actor_id]?.avatar_url)
         return (
           <Image
@@ -315,7 +295,7 @@ export default function IssueActivityTimeline({
       const item = entry.a;
       return (
         <div className="flex-1">
-          <div className="flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center gap-2 flex-wrap">
             <span className="text-sm text-gray-600 dark:text-gray-400 ">
               {renderHeaderText(item)}
             </span>
@@ -430,11 +410,16 @@ export default function IssueActivityTimeline({
           key={
             entry.kind === "activity" ? `a-${entry.a.id}` : `c-${entry.c.id}`
           }
-          className="flex flex-col items-stretch w-full"
+          className="flex flex-col items-stretch w-full gap-0"
         >
-          <div className="flex items-start gap-2 w-full">
-            <div className="w-5 flex items-center justify-center">
+          <div className="flex items-stretch gap-2 w-full">
+            <div className="w-5 flex flex-col self-stretch items-center justify-start">
               {renderLeft(entry)}
+              {entry.kind === "activity" && (
+                <div className="flex w-5 flex-1 items-center justify-center">
+                  <div className="mt-1 -mb-1 w-px h-full bg-gray-300 dark:bg-gray-700" />
+                </div>
+              )}
             </div>
             {renderRight(entry)}
           </div>

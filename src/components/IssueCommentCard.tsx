@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import MilkdownView from "@/components/MilkdownView";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
@@ -59,19 +60,24 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
   } = props;
 
   const author = comment.created_by ? userInfos[comment.created_by]?.name : "";
+  const [openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
+    null
+  );
 
   return (
     <div className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg">
       {/* Root header */}
       <div
-        className="flex justify-between items-start px-3 pt-2 group"
+        className="flex justify-between items-start px-3 pt-3 group"
         onMouseEnter={(e) => {
           e.stopPropagation();
           setHoveredCommentId(String(comment.id));
         }}
         onMouseLeave={(e) => {
           e.stopPropagation();
-          setHoveredCommentId(null);
+          if (openMenuCommentId !== String(comment.id)) {
+            setHoveredCommentId(null);
+          }
         }}
       >
         <div className="flex items-center space-x-2">
@@ -105,7 +111,8 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
         {/* actions */}
         <div
           className={`flex flex-row gap-2 transition-opacity duration-200 ${
-            hoveredCommentId === String(comment.id)
+            hoveredCommentId === String(comment.id) ||
+            openMenuCommentId === String(comment.id)
               ? "opacity-100"
               : "opacity-0"
           }`}
@@ -140,6 +147,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             }}
             showBackground={false}
             size="md"
+            onOpenChange={(open) => {
+              setOpenMenuCommentId(open ? String(comment.id) : null);
+              if (open) setHoveredCommentId(String(comment.id));
+            }}
           />
         </div>
       </div>
@@ -154,7 +165,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               placeholder=""
             />
           </div>
-          <div className="flex space-x-2 justify-end px-2 pb-2">
+          <div className="flex space-x-2 justify-end px-2 pb-3">
             <Button
               onClick={() => {
                 setEditingCommentId(null);
@@ -188,7 +199,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
       {/* Replies */}
       {replies.length > 0 && (
         <div className="border-t pb-0 border-gray-200 dark:border-gray-800">
-          <div className="space-y-0">
+          <div className="space-y-0 pb-1">
             {replies.map((reply) => {
               const u = reply.created_by
                 ? userInfos[reply.created_by]
@@ -203,10 +214,12 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   }}
                   onMouseLeave={(e) => {
                     e.stopPropagation();
-                    setHoveredCommentId(null);
+                    if (openMenuCommentId !== String(reply.id)) {
+                      setHoveredCommentId(null);
+                    }
                   }}
                 >
-                  <div className="flex justify-between items-start space-x-1 px-3 pt-2">
+                  <div className="flex justify-between items-start space-x-1 px-3 pt-3">
                     <div className="flex items-center space-x-1 pr-1">
                       <div className="flex items-center space-x-1">
                         {u?.avatar_url ? (
@@ -222,6 +235,29 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             {u?.name?.[0]?.toUpperCase() || "U"}
                           </div>
                         )}
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                          {u?.name}
+                        </span>
+                      </div>
+                      {/* reply to label on md+ screens when replying to a sub-reply */}
+                      <div className="hidden md:block">
+                        {reply.parent_id &&
+                          String(reply.parent_id) !== String(comment.id) && (
+                            <div className="flex items-center space-x-1">
+                              <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                reply to
+                              </p>
+                              <div className="text-sm font-medium whitespace-nowrap text-gray-500">
+                                @
+                                {userInfos[
+                                  replies.find(
+                                    (r) =>
+                                      String(r.id) === String(reply.parent_id)
+                                  )?.created_by ?? ""
+                                ]?.name || "Unknown User"}
+                              </div>
+                            </div>
+                          )}
                       </div>
                       <div className="flex flex-row gap-1 text-sm text-gray-500">
                         {formatRelativeTime(reply.created_at)}
@@ -229,7 +265,8 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                     </div>
                     <div
                       className={`flex flex-row gap-2 transition-opacity duration-200 ${
-                        hoveredCommentId === String(reply.id)
+                        hoveredCommentId === String(reply.id) ||
+                        openMenuCommentId === String(reply.id)
                           ? "opacity-100"
                           : "opacity-0"
                       }`}
@@ -264,8 +301,32 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         }}
                         showBackground={false}
                         size="md"
+                        onOpenChange={(open) => {
+                          setOpenMenuCommentId(open ? String(reply.id) : null);
+                          if (open) setHoveredCommentId(String(reply.id));
+                        }}
                       />
                     </div>
+                  </div>
+
+                  {/* reply to label on small screens */}
+                  <div className="block md:hidden">
+                    {reply.parent_id &&
+                      String(reply.parent_id) !== String(comment.id) && (
+                        <div className="flex items-center space-x-1 pl-10">
+                          <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                            reply to
+                          </p>
+                          <div className="text-sm font-medium whitespace-nowrap text-gray-500">
+                            @
+                            {userInfos[
+                              replies.find(
+                                (r) => String(r.id) === String(reply.parent_id)
+                              )?.created_by ?? ""
+                            ]?.name || "Unknown User"}
+                          </div>
+                        </div>
+                      )}
                   </div>
                   {editingCommentId === String(reply.id) ? (
                     <div>
@@ -277,7 +338,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                           placeholder=""
                         />
                       </div>
-                      <div className="flex space-x-2 justify-end px-2 pb-2">
+                      <div className="flex space-x-2 justify-end px-2 pb-3">
                         <Button
                           onClick={() => {
                             setEditingCommentId(null);
@@ -329,7 +390,13 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               placeholder={
                 replyingToCommentId === String(comment.id)
                   ? "Write a reply..."
-                  : "Write a reply..."
+                  : `Reply to @${
+                      userInfos[
+                        replies.find(
+                          (r) => String(r.id) === String(replyingToCommentId)
+                        )?.created_by ?? ""
+                      ]?.name || "Unknown User"
+                    }...`
               }
             />
             <div className="flex space-x-2 justify-end p-2">

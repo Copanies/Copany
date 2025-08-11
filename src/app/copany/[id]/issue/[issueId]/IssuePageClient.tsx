@@ -310,7 +310,7 @@ export default function IssuePageClient({
           onTitleChange={handleTitleChange}
           onDescriptionChange={handleDescriptionChange}
         />
-        <div className="flex flex-col gap-2 pt-8">
+        <div className="flex flex-col gap-3 pt-8">
           <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
             Activity
           </p>
