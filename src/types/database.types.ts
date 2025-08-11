@@ -167,3 +167,40 @@ export interface Notification {
   read_at: string | null;
   is_read: boolean;
 }
+
+// Issue Activity
+export type IssueActivityType =
+  | "issue_created"
+  | "title_changed"
+  | "state_changed"
+  | "priority_changed"
+  | "level_changed"
+  | "assignee_changed"
+  | "issue_closed";
+
+export interface IssueActivityPayload {
+  issue_title?: string | null;
+  from_title?: string | null;
+  to_title?: string | null;
+  from_state?: number | null;
+  to_state?: number | null;
+  from_priority?: number | null;
+  to_priority?: number | null;
+  from_level?: number | null;
+  to_level?: number | null;
+  from_user_id?: string | null;
+  to_user_id?: string | null;
+  from_user_name?: string | null;
+  to_user_name?: string | null;
+  [key: string]: unknown;
+}
+
+export interface IssueActivity {
+  id: string;
+  created_at: string;
+  copany_id: string | null;
+  issue_id: string;
+  actor_id: string | null;
+  type: IssueActivityType;
+  payload: IssueActivityPayload;
+}

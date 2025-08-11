@@ -32,3 +32,7 @@ export {
   NotificationsManager,
   notificationsManager,
 } from "./managers/NotificationsManager";
+export {
+  IssueActivityManager,
+  issueActivityManager,
+} from "./managers/IssueActivityManager";

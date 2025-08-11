@@ -11,7 +11,7 @@ interface LoadingViewProps {
 export default function LoadingView({
   type = "page",
   label = "Loading",
-  delay = 1000,
+  delay = 2000,
 }: LoadingViewProps) {
   const [shouldShow, setShouldShow] = useState(false);
 

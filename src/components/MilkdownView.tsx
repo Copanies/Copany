@@ -335,7 +335,7 @@ export default function MilkdownView({ content }: { content: string }) {
         <div
           className="ProseMirror"
           style={{
-            padding: "8px 12px",
+            padding: "4px 8px",
             outline: "none",
             pointerEvents: "auto",
           }}
