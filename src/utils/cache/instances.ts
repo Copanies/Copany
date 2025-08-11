@@ -6,6 +6,7 @@ import {
   Contribution,
   IssueComment,
   Notification,
+  IssueActivity,
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import { UserInfo } from "@/actions/user.actions";
@@ -134,4 +135,16 @@ export const notificationsCache = new CacheManager<Notification[], string>(
   },
   undefined,
   (data: Notification[]) => ({ count: data.length })
+);
+
+// Issue activity cache instance
+export const issueActivityCache = new CacheManager<IssueActivity[], string>(
+  {
+    keyPrefix: "issue_activity_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000,
+    loggerName: "IssueActivityCache",
+    backgroundRefreshInterval: 60 * 1000,
+  },
+  undefined,
+  (data: IssueActivity[]) => ({ count: data.length })
 );

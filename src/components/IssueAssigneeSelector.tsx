@@ -216,7 +216,7 @@ export default function IssueAssigneeSelector({
   );
 }
 
-function renderUserLabel(
+export function renderUserLabel(
   name: string,
   avatarUrl: string | null,
   showText: boolean
@@ -245,12 +245,53 @@ function renderUserLabel(
   );
 }
 
-function renderUnassignedLabel(showText: boolean) {
+export function renderUnassignedLabel(showText: boolean) {
   return (
     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 -my-[1px]">
       <UserIconSolid className="w-[22px] h-[22px] p-[4px] text-gray-600 dark:text-gray-400 rounded-full border border-gray-300 dark:border-gray-600 border-dashed" />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
+          No assignee
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Small version for compact places like Activity timeline (20px avatar)
+export function renderUserLabelSm(
+  name: string,
+  avatarUrl: string | null,
+  showText: boolean
+) {
+  return (
+    <div className="flex items-center gap-1 -my-[1px]">
+      {avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt={name}
+          width={20}
+          height={20}
+          className="w-5 h-5 rounded-full"
+        />
+      ) : (
+        <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300">
+          {name}
+        </div>
+      )}
+      {showText && (
+        <span className="text-sm text-gray-900 dark:text-gray-100">{name}</span>
+      )}
+    </div>
+  );
+}
+
+export function renderUnassignedLabelSm(showText: boolean) {
+  return (
+    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-500 -my-[1px]">
+      <UserIconSolid className="w-5 h-5 p-[2px] text-gray-600 dark:text-gray-400 rounded-full border border-gray-300 dark:border-gray-600 border-dashed" />
+      {showText && (
+        <span className="text-sm text-gray-900 dark:text-gray-100">
           No assignee
         </span>
       )}
