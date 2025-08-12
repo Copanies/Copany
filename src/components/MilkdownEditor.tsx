@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Crepe } from "@milkdown/crepe";
-// Only import common styles, don't use preset themes
 import "@milkdown/crepe/theme/common/style.css";
 
 // Custom style implementation based entirely on original Nord theme
@@ -24,6 +23,9 @@ const nordThemeStyles = `
     --crepe-color-hover: #eceef4;
     --crepe-color-selected: #e1e2e8;
     --crepe-color-inline-area: #d8dae0;
+    /* Icon colors */
+    --crepe-icon-accent: #3258c0; /* light mode accent */
+    --crepe-icon-muted: #d9d9d9;  /* light mode muted */
     --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
     --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
     --crepe-font-code: 'JetBrains Mono', Menlo, Monaco, 'Courier New', Courier, monospace;
@@ -51,6 +53,9 @@ const nordThemeStyles = `
     --crepe-color-hover: #1d2024;
     --crepe-color-selected: #32353a;
     --crepe-color-inline-area: #111418;
+    /* Icon colors */
+    --crepe-icon-accent: #7799f8; /* dark mode accent */
+    --crepe-icon-muted: #797979;  /* dark mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -70,7 +75,7 @@ const nordThemeStyles = `
       --crepe-color-on-surface: #191c20;
       --crepe-color-on-surface-variant: #43474e;
       --crepe-color-outline: #73777f;
-      --crepe-color-primary: #37618e;
+      --crepe-color-primary: #3258c0;
       --crepe-color-secondary: #d7e3f8;
       --crepe-color-on-secondary: #101c2b;
       --crepe-color-inverse: #2e3135;
@@ -80,6 +85,9 @@ const nordThemeStyles = `
       --crepe-color-hover: #eceef4;
       --crepe-color-selected: #e1e2e8;
       --crepe-color-inline-area: #d8dae0;
+      /* Icon colors */
+      --crepe-icon-accent: #3258c0; /* light mode accent */
+      --crepe-icon-muted: #d9d9d9;  /* light mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -99,7 +107,7 @@ const nordThemeStyles = `
       --crepe-color-on-surface: #e1e2e8;
       --crepe-color-on-surface-variant: #c3c6cf;
       --crepe-color-outline: #8d9199;
-      --crepe-color-primary: #a1c9fd;
+      --crepe-color-primary: #7799f8;
       --crepe-color-secondary: #3c4858;
       --crepe-color-on-secondary: #d7e3f8;
       --crepe-color-inverse: #e1e2e8;
@@ -109,6 +117,9 @@ const nordThemeStyles = `
       --crepe-color-hover: #1d2024;
       --crepe-color-selected: #32353a;
       --crepe-color-inline-area: #111418;
+      /* Icon colors */
+      --crepe-icon-accent: #7799f8; /* dark mode accent */
+      --crepe-icon-muted: #797979;  /* dark mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -442,6 +453,31 @@ const nordThemeStyles = `
   }
 `;
 
+const bulletIcon = `<svg width="5" height="14" viewBox="0 0 5 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+</svg>`;
+
+const checkBoxCheckedIcon = `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<path d="M12 3H14L20 11H18L12 3Z" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<path d="M20 3H18L12 11H14L20 3Z" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+</svg>`;
+
+const checkBoxUncheckedIcon = `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+</svg>`;
 // Crepe editor component
 export default function MilkdownEditor({
   onContentChange,
@@ -492,36 +528,16 @@ export default function MilkdownEditor({
           [Crepe.Feature.Toolbar]: true,
           [Crepe.Feature.LinkTooltip]: true,
           [Crepe.Feature.Placeholder]: true,
-          [Crepe.Feature.ImageBlock]: false,
+          [Crepe.Feature.ImageBlock]: true,
         },
         featureConfigs: {
           [Crepe.Feature.Placeholder]: {
             text: placeholder,
           },
           [Crepe.Feature.ListItem]: {
-            bulletIcon: `<svg width="5" height="14" viewBox="0 0 5 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
-</svg>`,
-            checkBoxCheckedIcon: `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
-<rect x="8" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="22" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="8" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="20" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="8" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="20" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<path d="M12 3H14L20 11H18L12 3Z" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<path d="M20 3H18L12 11H14L20 3Z" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-</svg>`,
-            checkBoxUncheckedIcon: `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
-<rect x="8" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="22" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="8" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="20" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="8" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-<rect x="20" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
-</svg>`,
+            bulletIcon: bulletIcon,
+            checkBoxCheckedIcon: checkBoxCheckedIcon,
+            checkBoxUncheckedIcon: checkBoxUncheckedIcon,
           },
         },
       });
