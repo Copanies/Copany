@@ -22,6 +22,7 @@ interface IssueAssigneeSelectorProps {
   contributors?: CopanyContributor[];
   showText?: boolean;
   disableServerUpdate?: boolean;
+  readOnly?: boolean;
 }
 
 export default function IssueAssigneeSelector({
@@ -34,12 +35,14 @@ export default function IssueAssigneeSelector({
   contributors,
   showText = true,
   disableServerUpdate = false,
+  readOnly = false,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
+      if (readOnly) return;
       try {
         const assigneeValue = newAssignee === "unassigned" ? null : newAssignee;
         setCurrentAssignee(assigneeValue);
@@ -212,6 +215,7 @@ export default function IssueAssigneeSelector({
       selectedValue={selectedValue}
       onSelect={handleAssigneeChange}
       showBackground={showBackground}
+      disabled={readOnly}
     />
   );
 }

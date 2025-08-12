@@ -416,7 +416,7 @@ export default function IssueActivityTimeline({
   };
 
   return (
-    <div className="flex flex-col gap-1 px-[26px] w-full">
+    <div className="flex flex-col gap-1 pl-[26px] w-full">
       {merged.map((entry) => (
         <div
           key={
@@ -443,7 +443,7 @@ export default function IssueActivityTimeline({
 
       {/* New root comment composer */}
       <div className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
-        <div className="h-fit">
+        <div className="h-fit px-1">
           <MilkdownEditor
             key={newCommentKey}
             onContentChange={setNewCommentContent}

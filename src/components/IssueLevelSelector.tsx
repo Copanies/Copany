@@ -12,6 +12,7 @@ interface IssueLevelSelectorProps {
   showBackground?: boolean;
   onLevelChange?: (issueId: string, newLevel: number) => void;
   disableServerUpdate?: boolean;
+  readOnly?: boolean;
 }
 
 export default function IssueLevelSelector({
@@ -21,10 +22,12 @@ export default function IssueLevelSelector({
   showBackground = false,
   onLevelChange,
   disableServerUpdate = false,
+  readOnly = false,
 }: IssueLevelSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
 
   const handleLevelChange = async (newLevel: number) => {
+    if (readOnly) return;
     try {
       setCurrentLevel(newLevel);
 
@@ -70,6 +73,7 @@ export default function IssueLevelSelector({
       selectedValue={currentLevel}
       onSelect={handleLevelChange}
       showBackground={showBackground}
+      disabled={readOnly}
     />
   );
 }

@@ -1,5 +1,4 @@
 import MainNavigation from "@/components/MainNavigation";
-import IssueNavigation from "./IssueNavigation";
 import IssuePageClient from "./IssuePageClient";
 
 export default async function CopanyIssueView({
@@ -13,7 +12,6 @@ export default async function CopanyIssueView({
     <main className="">
       <MainNavigation />
       <div className="px-2">
-        <IssueNavigation />
         <IssuePageClient
           copanyId={resolvedParams.id}
           issueId={resolvedParams.issueId}

@@ -386,7 +386,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           .map((r) => String(r.id))
           .includes(replyingToCommentId ?? "")) && (
         <div className="border-t border-gray-200 dark:border-gray-800">
-          <div className="h-fit">
+          <div className="h-fit px-1">
             <MilkdownEditor
               key={replyingToCommentId || "reply"}
               onContentChange={setReplyContent}
