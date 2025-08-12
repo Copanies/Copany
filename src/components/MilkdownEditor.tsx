@@ -300,6 +300,33 @@ const nordThemeStyles = `
     margin: 0px 0;
   }
 
+  /* ===== Bullet icon styles ===== */
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) {
+    width: 4px;
+    min-width: 4px;
+    max-width: 4px;
+    flex: 0 0 4px;         
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;      
+  }
+    
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) .milkdown-icon.label.bullet {
+    width: 4px !important;
+    min-width: 4px;
+    max-width: 4px;
+  }
+
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) .milkdown-icon.label.bullet svg {
+    width: 4px !important;
+    height: auto;
+  }
+
+  .milkdown-editor.milkdown .milkdown-icon.label.bullet {
+    width: 4px;
+  }
+
   /* ===== Placeholder styles ===== */
   .milkdown-editor.milkdown .crepe-placeholder::before {
     position: absolute;
@@ -461,9 +488,10 @@ export default function MilkdownEditor({
         defaultValue: initialContent,
         features: {
           [Crepe.Feature.CodeMirror]: true,
-          [Crepe.Feature.BlockEdit]: isFullScreen,
-          [Crepe.Feature.Cursor]: isFullScreen,
-          [Crepe.Feature.Toolbar]: isFullScreen,
+          [Crepe.Feature.ListItem]: true,
+          [Crepe.Feature.BlockEdit]: false,
+          [Crepe.Feature.Cursor]: true,
+          [Crepe.Feature.Toolbar]: true,
           [Crepe.Feature.LinkTooltip]: true,
           [Crepe.Feature.Placeholder]: true,
           [Crepe.Feature.ImageBlock]: false,
@@ -471,6 +499,31 @@ export default function MilkdownEditor({
         featureConfigs: {
           [Crepe.Feature.Placeholder]: {
             text: placeholder,
+          },
+          [Crepe.Feature.ListItem]: {
+            bulletIcon: `<svg width="5" height="14" viewBox="0 0 5 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
+</svg>`,
+            checkBoxCheckedIcon: `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<path d="M12 3H14L20 11H18L12 3Z" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<path d="M20 3H18L12 11H14L20 3Z" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+</svg>`,
+            checkBoxUncheckedIcon: `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="#D9D9D9" style="fill:#D9D9D9;fill:color(display-p3 0.8510 0.8510 0.8510);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="#3258C0" style="fill:#3258C0;fill:color(display-p3 0.1978 0.3460 0.7534);fill-opacity:1;"/>
+</svg>`,
           },
         },
       });

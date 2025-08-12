@@ -334,7 +334,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   </div>
                   {editingCommentId === String(reply.id) ? (
                     <div>
-                      <div className="pl-8 -mb-1 -mt-2">
+                      <div className="pl-6 -mb-1 -mt-2">
                         <MilkdownEditor
                           onContentChange={setEditingContent}
                           initialContent={reply.content || ""}
@@ -368,7 +368,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="pl-8 -mb-1 -mt-2">
+                    <div className="pl-6 -mb-1 -mt-2">
                       <MilkdownEditor
                         initialContent={reply.content || ""}
                         isFullScreen={false}
