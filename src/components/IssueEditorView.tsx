@@ -244,7 +244,6 @@ export default function IssueEditorView({
             <MilkdownEditor
               onContentChange={handleContentChange}
               initialContent={initialContent}
-              isFullScreen={true}
             />
           </div>
         </div>

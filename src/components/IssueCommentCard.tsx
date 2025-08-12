@@ -160,7 +160,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             <MilkdownEditor
               onContentChange={setEditingContent}
               initialContent={comment.content || ""}
-              isFullScreen={false}
               placeholder=""
             />
           </div>
@@ -193,7 +192,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
         <div className="px-1 -mb-1 -mt-2">
           <MilkdownEditor
             initialContent={comment.content || ""}
-            isFullScreen={false}
             isReadonly={true}
             placeholder=""
           />
@@ -338,7 +336,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         <MilkdownEditor
                           onContentChange={setEditingContent}
                           initialContent={reply.content || ""}
-                          isFullScreen={false}
                           placeholder=""
                         />
                       </div>
@@ -371,7 +368,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                     <div className="pl-6 -mb-1 -mt-2">
                       <MilkdownEditor
                         initialContent={reply.content || ""}
-                        isFullScreen={false}
                         isReadonly={true}
                         placeholder=""
                       />
@@ -395,7 +391,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               key={replyingToCommentId || "reply"}
               onContentChange={setReplyContent}
               initialContent=""
-              isFullScreen={false}
               placeholder={
                 replyingToCommentId === String(comment.id)
                   ? "Write a reply..."

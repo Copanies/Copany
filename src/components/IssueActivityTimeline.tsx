@@ -448,7 +448,6 @@ export default function IssueActivityTimeline({
             key={newCommentKey}
             onContentChange={setNewCommentContent}
             initialContent=""
-            isFullScreen={false}
             placeholder="Leave a comment..."
           />
         </div>

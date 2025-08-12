@@ -446,14 +446,12 @@ const nordThemeStyles = `
 export default function MilkdownEditor({
   onContentChange,
   initialContent = "",
-  isFullScreen = false,
   isReadonly = false,
   placeholder = "Add description...",
   className = "",
 }: {
   onContentChange?: (content: string) => void;
   initialContent?: string;
-  isFullScreen: boolean;
   isReadonly?: boolean;
   placeholder?: string;
   className?: string;
@@ -569,7 +567,7 @@ export default function MilkdownEditor({
     } finally {
       isInitializingRef.current = false;
     }
-  }, [initialContent, isFullScreen, isReadonly, placeholder]);
+  }, [initialContent, isReadonly, placeholder]);
 
   useEffect(() => {
     // Create the editor
