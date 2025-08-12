@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import MilkdownView from "@/components/MilkdownView";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
@@ -191,8 +190,13 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           </div>
         </div>
       ) : (
-        <div className="prose prose-sm max-w-none px-1 -mb-1 -mt-2">
-          <MilkdownView content={comment.content || ""} />
+        <div className="px-1 -mb-1 -mt-2">
+          <MilkdownEditor
+            initialContent={comment.content || ""}
+            isFullScreen={false}
+            isReadonly={true}
+            placeholder=""
+          />
         </div>
       )}
 
@@ -364,8 +368,13 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="prose prose-sm max-w-none pl-8 -mb-1 -mt-2">
-                      <MilkdownView content={reply.content || ""} />
+                    <div className="pl-8 -mb-1 -mt-2">
+                      <MilkdownEditor
+                        initialContent={reply.content || ""}
+                        isFullScreen={false}
+                        isReadonly={true}
+                        placeholder=""
+                      />
                     </div>
                   )}
                 </div>

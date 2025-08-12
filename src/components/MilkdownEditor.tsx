@@ -420,23 +420,25 @@ export default function MilkdownEditor({
   onContentChange,
   initialContent = "",
   isFullScreen = false,
+  isReadonly = false,
   placeholder = "Add description...",
   className = "",
 }: {
-  onContentChange: (content: string) => void;
+  onContentChange?: (content: string) => void;
   initialContent?: string;
   isFullScreen: boolean;
+  isReadonly?: boolean;
   placeholder?: string;
   className?: string;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
-  const onContentChangeRef = useRef(onContentChange);
+  const onContentChangeRef = useRef(onContentChange ?? (() => {}));
   const isInitializingRef = useRef(false);
 
   // Keep the latest reference to onContentChange
   useEffect(() => {
-    onContentChangeRef.current = onContentChange;
+    onContentChangeRef.current = onContentChange ?? (() => {});
   }, [onContentChange]);
 
   // Function to create the editor
@@ -476,6 +478,8 @@ export default function MilkdownEditor({
       // Wait for the editor to be fully created
       await crepe.create();
 
+      crepe.setReadonly(isReadonly);
+
       // Validate if the editor was successfully created
       if (!divRef.current) {
         await crepe.destroy();
@@ -512,7 +516,7 @@ export default function MilkdownEditor({
     } finally {
       isInitializingRef.current = false;
     }
-  }, [initialContent, isFullScreen, placeholder]);
+  }, [initialContent, isFullScreen, isReadonly, placeholder]);
 
   useEffect(() => {
     // Create the editor
@@ -527,6 +531,17 @@ export default function MilkdownEditor({
       }
     };
   }, [createEditor]);
+
+  // React to readonly prop changes after editor is created
+  useEffect(() => {
+    if (crepeRef.current) {
+      try {
+        crepeRef.current.setReadonly(isReadonly);
+      } catch (error) {
+        console.error("Failed to toggle readonly state:", error);
+      }
+    }
+  }, [isReadonly]);
 
   return (
     <>
