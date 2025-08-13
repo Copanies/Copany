@@ -42,6 +42,8 @@ export default function IssuePageClient({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
   const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [isPermissionResolved, setIsPermissionResolved] =
+    useState<boolean>(false);
   const [readOnlyTooltip, setReadOnlyTooltip] = useState<string>("");
   const router = useRouter();
   const params = useParams();
@@ -179,12 +181,15 @@ export default function IssuePageClient({
           setReadOnlyTooltip("");
         }
 
+        setIsPermissionResolved(true);
+
         // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
         }
       } catch (error) {
         console.error("Error loading issue data:", error);
+        setIsPermissionResolved(true);
       } finally {
         setIsLoading(false);
       }
@@ -334,7 +339,7 @@ export default function IssuePageClient({
         <Button variant="primary" size="md" shape="square" onClick={handleBack}>
           <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
-        {!canEdit && (
+        {isPermissionResolved && !canEdit && (
           <div className="relative group">
             <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px]">
               <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
