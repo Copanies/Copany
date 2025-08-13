@@ -79,6 +79,7 @@ export default function IssueEditorView({
   // Use ref to get latest state values
   const titleRef = useRef(title);
   const editingContentRef = useRef(editingContent);
+  const isReadonlyRef = useRef(isReadonly);
 
   useEffect(() => {
     titleRef.current = title;
@@ -87,6 +88,11 @@ export default function IssueEditorView({
   useEffect(() => {
     editingContentRef.current = editingContent;
   }, [editingContent]);
+
+  // Keep latest isReadonly in a ref to avoid re-registering unmount effect
+  useEffect(() => {
+    isReadonlyRef.current = isReadonly;
+  }, [isReadonly]);
 
   // Mark if there are unsaved changes
   const hasUnsavedChangesRef = useRef(false);
@@ -149,6 +155,7 @@ export default function IssueEditorView({
     issueData.level,
     issueData.assignee,
     issueData.copany_id,
+    isReadonly,
   ]);
 
   // Auto-save logic
@@ -189,14 +196,14 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [isSaving, title, editingContent]);
+  }, [isSaving, title, editingContent, isReadonly]);
 
   // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       // If there are unsaved changes, save immediately
       if (
-        !isReadonly &&
+        !isReadonlyRef.current &&
         hasUnsavedChangesRef.current &&
         saveToServerRef.current
       ) {

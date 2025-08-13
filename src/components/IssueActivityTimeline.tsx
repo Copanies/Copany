@@ -177,8 +177,8 @@ export default function IssueActivityTimeline({
       case "title_changed":
         return (
           <>
-            <span className="font-medium">{who}</span> updated the title to "
-            {p.to_title || ""}"
+            <span className="font-medium">{who}</span> updated the title to
+            &quot;{p.to_title || ""}&quot;
           </>
         );
       case "state_changed":
@@ -224,23 +224,6 @@ export default function IssueActivityTimeline({
             <span className="font-medium">{who}</span> updated {title}
           </>
         );
-    }
-  };
-
-  const renderDiffLine = (item: IssueActivity) => {
-    switch (item.type as IssueActivityType) {
-      case "title_changed":
-        return null; // use header text only
-      case "state_changed":
-        return null; // use header text only
-      case "priority_changed":
-        return null; // use header text only
-      case "level_changed":
-        return null; // use header text only
-      case "assignee_changed":
-        return null; // use header text only
-      default:
-        return null;
     }
   };
 

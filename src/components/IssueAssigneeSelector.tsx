@@ -105,6 +105,7 @@ export default function IssueAssigneeSelector({
       initialAssignee,
       assigneeUser,
       disableServerUpdate,
+      readOnly,
     ]
   );
 
