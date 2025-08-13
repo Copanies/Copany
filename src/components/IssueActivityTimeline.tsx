@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   IssueActivity,
@@ -163,42 +163,67 @@ export default function IssueActivityTimeline({
     }
   };
 
-  const renderHeaderText = (item: IssueActivity): string => {
+  const renderHeaderCompact = (item: IssueActivity): ReactNode => {
     const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
     const p = (item.payload ?? {}) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
       case "issue_created":
-        return `${who} created ${title}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> created {title}
+          </>
+        );
       case "title_changed":
-        return `${who} updated the title from "${p.from_title || ""}" to "${
-          p.to_title || ""
-        }"`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> updated the title to "
+            {p.to_title || ""}"
+          </>
+        );
       case "state_changed":
-        return `${who} changed state from ${getStateName(
-          p.from_state
-        )} to ${getStateName(p.to_state)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed state to{" "}
+            {getStateName(p.to_state)}
+          </>
+        );
       case "priority_changed":
-        return `${who} changed priority from ${getPriorityName(
-          p.from_priority
-        )} to ${getPriorityName(p.to_priority)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed priority to{" "}
+            {getPriorityName(p.to_priority)}
+          </>
+        );
       case "level_changed":
-        return `${who} changed level from ${getLevelName(
-          p.from_level
-        )} to ${getLevelName(p.to_level)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed level to{" "}
+            {getLevelName(p.to_level)}
+          </>
+        );
       case "assignee_changed": {
-        const fromInfo = p.from_user_id
-          ? userInfos[String(p.from_user_id)]
-          : null;
         const toInfo = p.to_user_id ? userInfos[String(p.to_user_id)] : null;
-        const fromLabel = fromInfo?.name ? `@${fromInfo.name}` : "Unassigned";
         const toLabel = toInfo?.name ? `@${toInfo.name}` : "Unassigned";
-        return `${who} changed the assignee from ${fromLabel} to ${toLabel}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed the assignee to{" "}
+            {toLabel}
+          </>
+        );
       }
       case "issue_closed":
-        return `${who} closed ${title}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> closed {title}
+          </>
+        );
       default:
-        return `${who} updated ${title}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> updated {title}
+          </>
+        );
     }
   };
 
@@ -307,13 +332,12 @@ export default function IssueActivityTimeline({
       const item = entry.a;
       return (
         <div className="flex-1">
-          <div className="flex flex-row items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600 dark:text-gray-400 ">
-              {renderHeaderText(item)}
-            </span>
-            {renderDiffLine(item)}
-            <span className="text-sm text-gray-500">
-              {formatRelativeTime(item.created_at)}
+          <div className="flex flex-row items-center">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {renderHeaderCompact(item)}
+              <span className="pl-2 text-sm text-gray-500 whitespace-nowrap">
+                {formatRelativeTime(item.created_at)}
+              </span>
             </span>
           </div>
         </div>

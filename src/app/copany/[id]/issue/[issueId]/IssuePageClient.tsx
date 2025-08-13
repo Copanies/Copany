@@ -394,7 +394,7 @@ export default function IssuePageClient({
             onDescriptionChange={handleDescriptionChange}
             isReadonly={!canEdit}
           />
-          <div className="flex flex-col gap-3 pt-8">
+          <div className="flex flex-col gap-3 pt-8 pr-3 md:pr-0">
             <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
               Activity
             </p>
@@ -413,12 +413,6 @@ export default function IssuePageClient({
         {/* Show state and priority selectors on larger screens */}
         <div className="hidden md:block md:w-1/3 ">
           <div className="flex flex-col gap-4">
-            {/* {!canEdit && (
-            <div className="flex flex-row items-center w-fit gap-1 px-2 py-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md">
-              <EyeIcon className="w-4 h-4" />
-              <span>Read only</span>
-            </div>
-          )} */}
             <div className="flex flex-col gap-2">
               <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 State
