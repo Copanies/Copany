@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Crepe } from "@milkdown/crepe";
-// Only import common styles, don't use preset themes
 import "@milkdown/crepe/theme/common/style.css";
 
 // Custom style implementation based entirely on original Nord theme
@@ -24,6 +23,9 @@ const nordThemeStyles = `
     --crepe-color-hover: #eceef4;
     --crepe-color-selected: #e1e2e8;
     --crepe-color-inline-area: #d8dae0;
+    /* Icon colors */
+    --crepe-icon-accent: #3258c0; /* light mode accent */
+    --crepe-icon-muted: #d9d9d9;  /* light mode muted */
     --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
     --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
     --crepe-font-code: 'JetBrains Mono', Menlo, Monaco, 'Courier New', Courier, monospace;
@@ -51,6 +53,9 @@ const nordThemeStyles = `
     --crepe-color-hover: #1d2024;
     --crepe-color-selected: #32353a;
     --crepe-color-inline-area: #111418;
+    /* Icon colors */
+    --crepe-icon-accent: #7799f8; /* dark mode accent */
+    --crepe-icon-muted: #797979;  /* dark mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -70,7 +75,7 @@ const nordThemeStyles = `
       --crepe-color-on-surface: #191c20;
       --crepe-color-on-surface-variant: #43474e;
       --crepe-color-outline: #73777f;
-      --crepe-color-primary: #37618e;
+      --crepe-color-primary: #3258c0;
       --crepe-color-secondary: #d7e3f8;
       --crepe-color-on-secondary: #101c2b;
       --crepe-color-inverse: #2e3135;
@@ -80,6 +85,9 @@ const nordThemeStyles = `
       --crepe-color-hover: #eceef4;
       --crepe-color-selected: #e1e2e8;
       --crepe-color-inline-area: #d8dae0;
+      /* Icon colors */
+      --crepe-icon-accent: #3258c0; /* light mode accent */
+      --crepe-icon-muted: #d9d9d9;  /* light mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -99,7 +107,7 @@ const nordThemeStyles = `
       --crepe-color-on-surface: #e1e2e8;
       --crepe-color-on-surface-variant: #c3c6cf;
       --crepe-color-outline: #8d9199;
-      --crepe-color-primary: #a1c9fd;
+      --crepe-color-primary: #7799f8;
       --crepe-color-secondary: #3c4858;
       --crepe-color-on-secondary: #d7e3f8;
       --crepe-color-inverse: #e1e2e8;
@@ -109,6 +117,9 @@ const nordThemeStyles = `
       --crepe-color-hover: #1d2024;
       --crepe-color-selected: #32353a;
       --crepe-color-inline-area: #111418;
+      /* Icon colors */
+      --crepe-icon-accent: #7799f8; /* dark mode accent */
+      --crepe-icon-muted: #797979;  /* dark mode muted */
 
       --crepe-font-title: Helvetica, Rubik, Cambria, 'Times New Roman', Times, serif;
       --crepe-font-default: sans-serif, Inter, Arial, Helvetica;
@@ -292,12 +303,39 @@ const nordThemeStyles = `
   /* ===== List styles ===== */
   .milkdown-editor.milkdown .ProseMirror ul,
   .milkdown-editor.milkdown .ProseMirror ol {
-    padding-left: 24px;
-    margin: 8px 0;
+    padding-left: 0px;
+    margin: 0px 0;
   }
 
   .milkdown-editor.milkdown .ProseMirror li {
-    margin: 4px 0;
+    margin: 0px 0;
+  }
+
+  /* ===== Bullet icon styles ===== */
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) {
+    width: 4px;
+    min-width: 4px;
+    max-width: 4px;
+    flex: 0 0 4px;         
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;      
+  }
+    
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) .milkdown-icon.label.bullet {
+    width: 4px !important;
+    min-width: 4px;
+    max-width: 4px;
+  }
+
+  .milkdown-editor.milkdown .label-wrapper:has(> .milkdown-icon.label.bullet) .milkdown-icon.label.bullet svg {
+    width: 4px !important;
+    height: auto;
+  }
+
+  .milkdown-editor.milkdown .milkdown-icon.label.bullet {
+    width: 4px;
   }
 
   /* ===== Placeholder styles ===== */
@@ -415,28 +453,53 @@ const nordThemeStyles = `
   }
 `;
 
+const bulletIcon = `<svg width="5" height="14" viewBox="0 0 5 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+</svg>`;
+
+const checkBoxCheckedIcon = `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<path d="M12 3H14L20 11H18L12 3Z" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<path d="M20 3H18L12 11H14L20 3Z" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+</svg>`;
+
+const checkBoxUncheckedIcon = `<svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="6" width="5" height="2" fill="var(--crepe-icon-muted)" style="fill:var(--crepe-icon-muted);fill-opacity:1;"/>
+<rect x="8" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="22" width="2" height="14" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="8" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+<rect x="20" y="12" width="4" height="2" fill="var(--crepe-icon-accent)" style="fill:var(--crepe-icon-accent);fill-opacity:1;"/>
+</svg>`;
 // Crepe editor component
 export default function MilkdownEditor({
   onContentChange,
   initialContent = "",
-  isFullScreen = false,
+  isReadonly = false,
   placeholder = "Add description...",
   className = "",
 }: {
-  onContentChange: (content: string) => void;
+  onContentChange?: (content: string) => void;
   initialContent?: string;
-  isFullScreen: boolean;
+  isReadonly?: boolean;
   placeholder?: string;
   className?: string;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
-  const onContentChangeRef = useRef(onContentChange);
+  const onContentChangeRef = useRef(onContentChange ?? (() => {}));
   const isInitializingRef = useRef(false);
 
   // Keep the latest reference to onContentChange
   useEffect(() => {
-    onContentChangeRef.current = onContentChange;
+    onContentChangeRef.current = onContentChange ?? (() => {});
   }, [onContentChange]);
 
   // Function to create the editor
@@ -459,22 +522,30 @@ export default function MilkdownEditor({
         defaultValue: initialContent,
         features: {
           [Crepe.Feature.CodeMirror]: true,
-          [Crepe.Feature.BlockEdit]: isFullScreen,
-          [Crepe.Feature.Cursor]: isFullScreen,
-          [Crepe.Feature.Toolbar]: isFullScreen,
+          [Crepe.Feature.ListItem]: true,
+          [Crepe.Feature.BlockEdit]: false,
+          [Crepe.Feature.Cursor]: true,
+          [Crepe.Feature.Toolbar]: true,
           [Crepe.Feature.LinkTooltip]: true,
           [Crepe.Feature.Placeholder]: true,
-          [Crepe.Feature.ImageBlock]: false,
+          [Crepe.Feature.ImageBlock]: true,
         },
         featureConfigs: {
           [Crepe.Feature.Placeholder]: {
             text: placeholder,
+          },
+          [Crepe.Feature.ListItem]: {
+            bulletIcon: bulletIcon,
+            checkBoxCheckedIcon: checkBoxCheckedIcon,
+            checkBoxUncheckedIcon: checkBoxUncheckedIcon,
           },
         },
       });
 
       // Wait for the editor to be fully created
       await crepe.create();
+
+      crepe.setReadonly(isReadonly);
 
       // Validate if the editor was successfully created
       if (!divRef.current) {
@@ -512,7 +583,7 @@ export default function MilkdownEditor({
     } finally {
       isInitializingRef.current = false;
     }
-  }, [initialContent, isFullScreen, placeholder]);
+  }, [initialContent, isReadonly, placeholder]);
 
   useEffect(() => {
     // Create the editor
@@ -527,6 +598,17 @@ export default function MilkdownEditor({
       }
     };
   }, [createEditor]);
+
+  // React to readonly prop changes after editor is created
+  useEffect(() => {
+    if (crepeRef.current) {
+      try {
+        crepeRef.current.setReadonly(isReadonly);
+      } catch (error) {
+        console.error("Failed to toggle readonly state:", error);
+      }
+    }
+  }, [isReadonly]);
 
   return (
     <>

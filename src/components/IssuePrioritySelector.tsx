@@ -12,6 +12,7 @@ interface IssuePrioritySelectorProps {
   showBackground?: boolean;
   onPriorityChange?: (issueId: string, newPriority: number) => void;
   disableServerUpdate?: boolean;
+  readOnly?: boolean;
 }
 
 export default function IssuePrioritySelector({
@@ -21,10 +22,12 @@ export default function IssuePrioritySelector({
   showBackground = false,
   onPriorityChange,
   disableServerUpdate = false,
+  readOnly = false,
 }: IssuePrioritySelectorProps) {
   const [currentPriority, setCurrentPriority] = useState(initialPriority);
 
   const handlePriorityChange = async (newPriority: number) => {
+    if (readOnly) return;
     try {
       setCurrentPriority(newPriority);
 
@@ -70,6 +73,7 @@ export default function IssuePrioritySelector({
       selectedValue={currentPriority}
       onSelect={handlePriorityChange}
       showBackground={showBackground}
+      disabled={readOnly}
     />
   );
 }

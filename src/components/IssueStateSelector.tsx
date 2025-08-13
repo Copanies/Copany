@@ -12,6 +12,7 @@ interface IssueStateSelectorProps {
   showBackground?: boolean;
   onStateChange?: (issueId: string, newState: number) => void;
   disableServerUpdate?: boolean;
+  readOnly?: boolean;
 }
 
 export default function IssueStateSelector({
@@ -21,10 +22,12 @@ export default function IssueStateSelector({
   showBackground = false,
   onStateChange,
   disableServerUpdate = false,
+  readOnly = false,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
 
   const handleStateChange = async (newState: number) => {
+    if (readOnly) return;
     try {
       setCurrentState(newState);
 
@@ -71,6 +74,7 @@ export default function IssueStateSelector({
       selectedValue={currentState}
       onSelect={handleStateChange}
       showBackground={showBackground}
+      disabled={readOnly}
     />
   );
 }

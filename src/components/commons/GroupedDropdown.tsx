@@ -19,6 +19,7 @@ interface GroupedDropdownProps {
   onSelect: (value: string) => void;
   showBackground?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function GroupedDropdown({
@@ -28,6 +29,7 @@ export default function GroupedDropdown({
   onSelect,
   showBackground = false,
   className = "",
+  disabled = false,
 }: GroupedDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -176,6 +178,7 @@ export default function GroupedDropdown({
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
+    if (disabled) return;
     setIsOpen(!isOpen);
   };
 
@@ -237,7 +240,10 @@ export default function GroupedDropdown({
         ref={buttonRef}
         type="button"
         onClick={toggleDropdown}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
+        disabled={disabled}
+        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+          disabled ? "" : "hover:opacity-80 cursor-pointer"
+        } ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
             : "bg-transparent dark:bg-transparent -mx-2"
@@ -246,7 +252,7 @@ export default function GroupedDropdown({
         {trigger}
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <>
           {/* 隐藏的DOM元素用于计算高度 */}
           <div

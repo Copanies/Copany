@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import MilkdownView from "@/components/MilkdownView";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
@@ -161,7 +160,6 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             <MilkdownEditor
               onContentChange={setEditingContent}
               initialContent={comment.content || ""}
-              isFullScreen={false}
               placeholder=""
             />
           </div>
@@ -191,8 +189,12 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           </div>
         </div>
       ) : (
-        <div className="prose prose-sm max-w-none px-1 -mb-1 -mt-2">
-          <MilkdownView content={comment.content || ""} />
+        <div className="px-1 -mb-1 -mt-2">
+          <MilkdownEditor
+            initialContent={comment.content || ""}
+            isReadonly={true}
+            placeholder=""
+          />
         </div>
       )}
 
@@ -330,11 +332,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   </div>
                   {editingCommentId === String(reply.id) ? (
                     <div>
-                      <div className="pl-8 -mb-1 -mt-2">
+                      <div className="pl-6 -mb-1 -mt-2">
                         <MilkdownEditor
                           onContentChange={setEditingContent}
                           initialContent={reply.content || ""}
-                          isFullScreen={false}
                           placeholder=""
                         />
                       </div>
@@ -364,8 +365,12 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="prose prose-sm max-w-none pl-8 -mb-1 -mt-2">
-                      <MilkdownView content={reply.content || ""} />
+                    <div className="pl-6 -mb-1 -mt-2">
+                      <MilkdownEditor
+                        initialContent={reply.content || ""}
+                        isReadonly={true}
+                        placeholder=""
+                      />
                     </div>
                   )}
                 </div>
@@ -381,12 +386,11 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           .map((r) => String(r.id))
           .includes(replyingToCommentId ?? "")) && (
         <div className="border-t border-gray-200 dark:border-gray-800">
-          <div className="h-fit">
+          <div className="h-fit px-1">
             <MilkdownEditor
               key={replyingToCommentId || "reply"}
               onContentChange={setReplyContent}
               initialContent=""
-              isFullScreen={false}
               placeholder={
                 replyingToCommentId === String(comment.id)
                   ? "Write a reply..."

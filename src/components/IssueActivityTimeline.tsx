@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   IssueActivity,
@@ -11,7 +11,11 @@ import {
   IssueActivityPayload,
 } from "@/types/database.types";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
-import { issueActivityManager, userInfoManager } from "@/utils/cache";
+import {
+  issueActivityManager,
+  userInfoManager,
+  currentUserManager,
+} from "@/utils/cache";
 import { formatRelativeTime } from "@/utils/time";
 import { renderLevelLabel } from "@/components/IssueLevelSelector";
 import { renderPriorityLabel } from "@/components/IssuePrioritySelector";
@@ -72,6 +76,16 @@ export default function IssueActivityTimeline({
       }
       for (const c of allComments) {
         if (c.created_by) idSet.add(String(c.created_by));
+      }
+      // Ensure current logged-in user is present in userInfos by default
+      try {
+        const me = await currentUserManager.getCurrentUser();
+        if (me?.id) {
+          idSet.add(String(me.id));
+        }
+      } catch (e) {
+        // ignore if unauthenticated
+        console.error(e);
       }
       const ids = Array.from(idSet);
       if (ids.length > 0) {
@@ -149,59 +163,67 @@ export default function IssueActivityTimeline({
     }
   };
 
-  const renderHeaderText = (item: IssueActivity): string => {
+  const renderHeaderCompact = (item: IssueActivity): ReactNode => {
     const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
     const p = (item.payload ?? {}) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
       case "issue_created":
-        return `${who} created ${title}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> created {title}
+          </>
+        );
       case "title_changed":
-        return `${who} updated the title from "${p.from_title || ""}" to "${
-          p.to_title || ""
-        }"`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> updated the title to
+            &quot;{p.to_title || ""}&quot;
+          </>
+        );
       case "state_changed":
-        return `${who} changed state from ${getStateName(
-          p.from_state
-        )} to ${getStateName(p.to_state)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed state to{" "}
+            {getStateName(p.to_state)}
+          </>
+        );
       case "priority_changed":
-        return `${who} changed priority from ${getPriorityName(
-          p.from_priority
-        )} to ${getPriorityName(p.to_priority)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed priority to{" "}
+            {getPriorityName(p.to_priority)}
+          </>
+        );
       case "level_changed":
-        return `${who} changed level from ${getLevelName(
-          p.from_level
-        )} to ${getLevelName(p.to_level)}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed level to{" "}
+            {getLevelName(p.to_level)}
+          </>
+        );
       case "assignee_changed": {
-        const fromInfo = p.from_user_id
-          ? userInfos[String(p.from_user_id)]
-          : null;
         const toInfo = p.to_user_id ? userInfos[String(p.to_user_id)] : null;
-        const fromLabel = fromInfo?.name ? `@${fromInfo.name}` : "Unassigned";
         const toLabel = toInfo?.name ? `@${toInfo.name}` : "Unassigned";
-        return `${who} changed the assignee from ${fromLabel} to ${toLabel}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> changed the assignee to{" "}
+            {toLabel}
+          </>
+        );
       }
       case "issue_closed":
-        return `${who} closed ${title}`;
+        return (
+          <>
+            <span className="font-medium">{who}</span> closed {title}
+          </>
+        );
       default:
-        return `${who} updated ${title}`;
-    }
-  };
-
-  const renderDiffLine = (item: IssueActivity) => {
-    switch (item.type as IssueActivityType) {
-      case "title_changed":
-        return null; // use header text only
-      case "state_changed":
-        return null; // use header text only
-      case "priority_changed":
-        return null; // use header text only
-      case "level_changed":
-        return null; // use header text only
-      case "assignee_changed":
-        return null; // use header text only
-      default:
-        return null;
+        return (
+          <>
+            <span className="font-medium">{who}</span> updated {title}
+          </>
+        );
     }
   };
 
@@ -227,8 +249,6 @@ export default function IssueActivityTimeline({
       c,
     })),
   ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
-
-  if (merged.length === 0) return null;
 
   const renderLeft = (entry: (typeof merged)[number]) => {
     if (entry.kind === "activity") {
@@ -295,13 +315,12 @@ export default function IssueActivityTimeline({
       const item = entry.a;
       return (
         <div className="flex-1">
-          <div className="flex flex-row items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600 dark:text-gray-400 ">
-              {renderHeaderText(item)}
-            </span>
-            {renderDiffLine(item)}
-            <span className="text-sm text-gray-500">
-              {formatRelativeTime(item.created_at)}
+          <div className="flex flex-row items-center">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {renderHeaderCompact(item)}
+              <span className="pl-2 text-sm text-gray-500 whitespace-nowrap">
+                {formatRelativeTime(item.created_at)}
+              </span>
             </span>
           </div>
         </div>
@@ -404,7 +423,7 @@ export default function IssueActivityTimeline({
   };
 
   return (
-    <div className="flex flex-col gap-1 px-[26px] w-full">
+    <div className="flex flex-col gap-1 pl-[26px] w-full">
       {merged.map((entry) => (
         <div
           key={
@@ -431,12 +450,11 @@ export default function IssueActivityTimeline({
 
       {/* New root comment composer */}
       <div className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
-        <div className="h-fit">
+        <div className="h-fit px-1">
           <MilkdownEditor
             key={newCommentKey}
             onContentChange={setNewCommentContent}
             initialContent=""
-            isFullScreen={false}
             placeholder="Leave a comment..."
           />
         </div>

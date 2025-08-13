@@ -17,6 +17,7 @@ interface DropdownProps {
   header?: ReactNode; // 新增可选头部容器
   size?: "sm" | "md" | "lg";
   onOpenChange?: (open: boolean) => void;
+  disabled?: boolean;
 }
 
 export default function Dropdown({
@@ -29,6 +30,7 @@ export default function Dropdown({
   className = "",
   header,
   onOpenChange,
+  disabled = false,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -189,6 +191,7 @@ export default function Dropdown({
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
+    if (disabled) return;
     setIsOpen(!isOpen);
   };
 
@@ -201,7 +204,10 @@ export default function Dropdown({
         ref={buttonRef}
         type="button"
         onClick={toggleDropdown}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-80 cursor-pointer ${
+        disabled={disabled}
+        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+          disabled ? "" : "hover:opacity-80 cursor-pointer"
+        } ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
             : "bg-transparent dark:bg-transparent -mx-2"
@@ -210,7 +216,7 @@ export default function Dropdown({
         {trigger}
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <>
           {/* 隐藏的DOM元素用于计算高度 */}
           <div

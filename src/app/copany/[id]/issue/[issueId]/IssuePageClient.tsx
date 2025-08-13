@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { getIssueAction } from "@/actions/issue.actions";
+import { getCopanyByIdAction } from "@/actions/copany.actions";
 import {
   IssueWithAssignee,
   IssueState,
@@ -22,6 +24,9 @@ import {
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import Button from "@/components/commons/Button";
+import { EyeIcon } from "@heroicons/react/24/outline";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -36,6 +41,23 @@ export default function IssuePageClient({
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [isPermissionResolved, setIsPermissionResolved] =
+    useState<boolean>(false);
+  const [readOnlyTooltip, setReadOnlyTooltip] = useState<string>("");
+  const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
+
+  const handleBack = () => {
+    // Build return URL, keep tab and subtab parameters
+    const copanyId = params.id;
+    const tab = searchParams.get("tab") || "Cooperate";
+    const subtab = searchParams.get("subtab") || "Issue";
+
+    const backUrl = `/copany/${copanyId}?tab=${tab}&subtab=${subtab}`;
+    router.push(backUrl);
+  };
 
   // For tracking unsaved changes
   const hasUnsavedChangesRef = useRef(false);
@@ -90,9 +112,10 @@ export default function IssuePageClient({
         setIsLoading(true);
 
         // Load user and contributor data
-        const [user, contributorList] = await Promise.all([
+        const [user, contributorList, copany] = await Promise.all([
           currentUserManager.getCurrentUser(),
           contributorsManager.getContributors(copanyId),
+          getCopanyByIdAction(copanyId),
         ]);
 
         setCurrentUser(user);
@@ -122,12 +145,51 @@ export default function IssuePageClient({
         );
         setIssueData(freshIssueData);
 
+        // Compute edit permission
+        const uid = user?.id;
+        const isCreator = !!(
+          uid &&
+          freshIssueData &&
+          freshIssueData.created_by === uid
+        );
+        const isAssignee = !!(
+          uid &&
+          freshIssueData &&
+          freshIssueData.assignee === uid
+        );
+        const isOwner = !!(uid && copany && copany.created_by === uid);
+
+        const allowed = !!(
+          uid &&
+          freshIssueData &&
+          (isCreator || isAssignee || isOwner)
+        );
+        setCanEdit(allowed);
+
+        if (!allowed) {
+          if (!uid) {
+            setReadOnlyTooltip(
+              "Unlogged users do not have edit permissions. Please log in and try again."
+            );
+          } else {
+            const reasonLines = [
+              "You currently do not have edit permissions. Only the Copany creator, Issue creator, or current assignee can edit.",
+            ];
+            setReadOnlyTooltip(reasonLines.join("\n"));
+          }
+        } else {
+          setReadOnlyTooltip("");
+        }
+
+        setIsPermissionResolved(true);
+
         // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
         }
       } catch (error) {
         console.error("Error loading issue data:", error);
+        setIsPermissionResolved(true);
       } finally {
         setIsLoading(false);
       }
@@ -272,103 +334,142 @@ export default function IssuePageClient({
   }
 
   return (
-    <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto">
-      <div className="md:hidden mx-3 mb-2 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
-        <IssueStateSelector
-          issueId={issueData.id}
-          initialState={issueData.state}
-          showText={true}
-          onStateChange={(_, newState) => handleStateChange(newState)}
-        />
-        <IssuePrioritySelector
-          issueId={issueData.id}
-          initialPriority={issueData.priority}
-          showText={true}
-          onPriorityChange={(_, newPriority) =>
-            handlePriorityChange(newPriority)
-          }
-        />
-        <IssueLevelSelector
-          issueId={issueData.id}
-          initialLevel={issueData.level}
-          showText={true}
-          onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
-        />
-        <IssueAssigneeSelector
-          issueId={issueData.id}
-          initialAssignee={issueData.assignee}
-          assigneeUser={issueData.assignee_user}
-          currentUser={currentUser}
-          contributors={contributors}
-          onAssigneeChange={handleAssigneeChange}
-        />
+    <div>
+      <div className="max-w-screen-lg mx-auto flex flex-row items-center p-3 gap-2">
+        <Button variant="primary" size="md" shape="square" onClick={handleBack}>
+          <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
+        </Button>
+        {isPermissionResolved && !canEdit && (
+          <div className="relative group">
+            <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px]">
+              <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                Read only
+              </span>
+            </div>
+            <div className="pointer-events-none absolute left-0 top-full mt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              <div className="w-80 md:w-96 whitespace-pre-line break-words px-3 py-2 rounded-md text-xs text-gray-100 bg-gray-900/90 shadow-lg border border-gray-700">
+                {readOnlyTooltip ||
+                  "Only Copany owner, Issue creator or current assignee can edit."}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      <div className="flex-1 mb-100 md:w-2/3 md:pr-2">
-        <IssueEditorView
-          issueData={issueData}
-          onTitleChange={handleTitleChange}
-          onDescriptionChange={handleDescriptionChange}
-        />
-        <div className="flex flex-col gap-3 pt-8">
-          <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
-            Activity
-          </p>
-          {/* Issue activity timeline (includes comments) */}
-          <IssueActivityTimeline issueId={issueData.id} />
+      <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto md:gap-6">
+        <div className="md:hidden mx-3 mb-2 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
+          <IssueStateSelector
+            issueId={issueData.id}
+            initialState={issueData.state}
+            showText={true}
+            onStateChange={(_, newState) => handleStateChange(newState)}
+            readOnly={!canEdit}
+          />
+          <IssuePrioritySelector
+            issueId={issueData.id}
+            initialPriority={issueData.priority}
+            showText={true}
+            onPriorityChange={(_, newPriority) =>
+              handlePriorityChange(newPriority)
+            }
+            readOnly={!canEdit}
+          />
+          <IssueLevelSelector
+            issueId={issueData.id}
+            initialLevel={issueData.level}
+            showText={true}
+            onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
+            readOnly={!canEdit}
+          />
+          <IssueAssigneeSelector
+            issueId={issueData.id}
+            initialAssignee={issueData.assignee}
+            assigneeUser={issueData.assignee_user}
+            currentUser={currentUser}
+            contributors={contributors}
+            onAssigneeChange={handleAssigneeChange}
+            readOnly={!canEdit}
+          />
         </div>
-      </div>
 
-      {/* Show state and priority selectors on larger screens */}
-      <div className="hidden md:block md:w-1/3">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              State
-            </div>
-            <IssueStateSelector
-              issueId={issueData.id}
-              initialState={issueData.state}
-              showText={true}
-              onStateChange={(_, newState) => handleStateChange(newState)}
+        <div className="flex-1 mb-100 md:w-2/3">
+          <IssueEditorView
+            issueData={issueData}
+            onTitleChange={handleTitleChange}
+            onDescriptionChange={handleDescriptionChange}
+            isReadonly={!canEdit}
+          />
+          <div className="flex flex-col gap-3 pt-8 pr-3 md:pr-0">
+            <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
+              Activity
+            </p>
+            {/* Issue activity timeline (includes comments) */}
+            <IssueActivityTimeline issueId={issueData.id} />
+          </div>
+        </div>
+        <div className="hidden md:flex flex-col">
+          <div className="flex-1 flex">
+            <div
+              className="w-px bg-gray-200 dark:bg-gray-800 h-full"
+              style={{ minHeight: "100%" }}
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Priority
+        </div>
+        {/* Show state and priority selectors on larger screens */}
+        <div className="hidden md:block md:w-1/3 ">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                State
+              </div>
+              <IssueStateSelector
+                issueId={issueData.id}
+                initialState={issueData.state}
+                showText={true}
+                onStateChange={(_, newState) => handleStateChange(newState)}
+                readOnly={!canEdit}
+              />
             </div>
-            <IssuePrioritySelector
-              issueId={issueData.id}
-              initialPriority={issueData.priority}
-              showText={true}
-              onPriorityChange={(_, newPriority) =>
-                handlePriorityChange(newPriority)
-              }
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Level
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Priority
+              </div>
+              <IssuePrioritySelector
+                issueId={issueData.id}
+                initialPriority={issueData.priority}
+                showText={true}
+                onPriorityChange={(_, newPriority) =>
+                  handlePriorityChange(newPriority)
+                }
+                readOnly={!canEdit}
+              />
             </div>
-            <IssueLevelSelector
-              issueId={issueData.id}
-              initialLevel={issueData.level}
-              showText={true}
-              onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Assignee
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Level
+              </div>
+              <IssueLevelSelector
+                issueId={issueData.id}
+                initialLevel={issueData.level}
+                showText={true}
+                onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
+                readOnly={!canEdit}
+              />
             </div>
-            <IssueAssigneeSelector
-              issueId={issueData.id}
-              initialAssignee={issueData.assignee}
-              assigneeUser={issueData.assignee_user}
-              currentUser={currentUser}
-              contributors={contributors}
-              onAssigneeChange={handleAssigneeChange}
-            />
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Assignee
+              </div>
+              <IssueAssigneeSelector
+                issueId={issueData.id}
+                initialAssignee={issueData.assignee}
+                assigneeUser={issueData.assignee_user}
+                currentUser={currentUser}
+                contributors={contributors}
+                onAssigneeChange={handleAssigneeChange}
+                readOnly={!canEdit}
+              />
+            </div>
           </div>
         </div>
       </div>

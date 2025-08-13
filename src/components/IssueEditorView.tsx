@@ -11,12 +11,14 @@ interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
   onTitleChange?: (issueId: string, newTitle: string) => void;
   onDescriptionChange?: (issueId: string, newDescription: string) => void;
+  isReadonly?: boolean;
 }
 
 export default function IssueEditorView({
   issueData,
   onTitleChange,
   onDescriptionChange,
+  isReadonly = false,
 }: IssueEditorViewProps) {
   const [title, setTitle] = useState(issueData.title || "");
   const [editingContent, setEditingContent] = useState(
@@ -31,6 +33,7 @@ export default function IssueEditorView({
   // Handle content changes - add debounce processing
   const handleContentChange = useCallback(
     (content: string) => {
+      if (isReadonly) return;
       console.log("📝 Content changed, length:", content.length);
       setEditingContent(content);
       setSaveError(null);
@@ -51,12 +54,13 @@ export default function IssueEditorView({
       // Mark unsaved changes, but don't trigger save immediately
       hasUnsavedChangesRef.current = true;
     },
-    [issueData.id, onDescriptionChange]
+    [issueData.id, onDescriptionChange, isReadonly]
   );
 
   // Handle title changes
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isReadonly) return;
       const newTitle = e.target.value;
       console.log("📝 Title changed:", newTitle);
       setTitle(newTitle);
@@ -69,12 +73,13 @@ export default function IssueEditorView({
       // Mark unsaved changes, but don't trigger save immediately
       hasUnsavedChangesRef.current = true;
     },
-    [issueData.id, onTitleChange]
+    [issueData.id, onTitleChange, isReadonly]
   );
 
   // Use ref to get latest state values
   const titleRef = useRef(title);
   const editingContentRef = useRef(editingContent);
+  const isReadonlyRef = useRef(isReadonly);
 
   useEffect(() => {
     titleRef.current = title;
@@ -83,6 +88,11 @@ export default function IssueEditorView({
   useEffect(() => {
     editingContentRef.current = editingContent;
   }, [editingContent]);
+
+  // Keep latest isReadonly in a ref to avoid re-registering unmount effect
+  useEffect(() => {
+    isReadonlyRef.current = isReadonly;
+  }, [isReadonly]);
 
   // Mark if there are unsaved changes
   const hasUnsavedChangesRef = useRef(false);
@@ -145,12 +155,13 @@ export default function IssueEditorView({
     issueData.level,
     issueData.assignee,
     issueData.copany_id,
+    isReadonly,
   ]);
 
   // Auto-save logic
   useEffect(() => {
     // Check if there are changes that need saving
-    if (!hasUnsavedChangesRef.current || isSaving) {
+    if (isReadonly || !hasUnsavedChangesRef.current || isSaving) {
       return;
     }
 
@@ -163,7 +174,7 @@ export default function IssueEditorView({
 
     // Set new save timer (execute after 3 seconds)
     saveTimeoutRef.current = setTimeout(async () => {
-      if (!hasUnsavedChangesRef.current || isSaving) {
+      if (isReadonly || !hasUnsavedChangesRef.current || isSaving) {
         return;
       }
 
@@ -185,13 +196,17 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [isSaving, title, editingContent]);
+  }, [isSaving, title, editingContent, isReadonly]);
 
   // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       // If there are unsaved changes, save immediately
-      if (hasUnsavedChangesRef.current && saveToServerRef.current) {
+      if (
+        !isReadonlyRef.current &&
+        hasUnsavedChangesRef.current &&
+        saveToServerRef.current
+      ) {
         console.log("💾 Saving changes before unmount");
         saveToServerRef.current().catch((error) => {
           console.error("❌ Final save failed:", error);
@@ -222,6 +237,7 @@ export default function IssueEditorView({
             onChange={handleTitleChange}
             className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
             placeholder="Issue title"
+            disabled={isReadonly}
           />
           {/* Save status indicator */}
           {isSaving && (
@@ -244,7 +260,7 @@ export default function IssueEditorView({
             <MilkdownEditor
               onContentChange={handleContentChange}
               initialContent={initialContent}
-              isFullScreen={true}
+              isReadonly={isReadonly}
             />
           </div>
         </div>
