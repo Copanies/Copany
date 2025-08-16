@@ -398,7 +398,11 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   return (
     <div className="min-h-screen flex flex-col gap-3">
       <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
-        <Button onClick={() => setIsModalOpen(true)} className="" size="md">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="min-w-24"
+          size="md"
+        >
           New Issue
         </Button>
         <input
@@ -418,7 +422,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             router.replace(qs ? `?${qs}` : "?");
           }}
           placeholder="Search issues"
-          className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 bg-transparent dark:text-gray-100 text-base"
+          className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
         />
       </div>
       <div className="relative">
