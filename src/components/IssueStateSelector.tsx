@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { IssueState } from "@/types/database.types";
+import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
 
@@ -13,6 +13,7 @@ interface IssueStateSelectorProps {
   onStateChange?: (issueId: string, newState: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  onServerUpdated?: (updatedIssue: IssueWithAssignee) => void;
 }
 
 export default function IssueStateSelector({
@@ -23,6 +24,7 @@ export default function IssueStateSelector({
   onStateChange,
   disableServerUpdate = false,
   readOnly = false,
+  onServerUpdated,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
 
@@ -38,7 +40,11 @@ export default function IssueStateSelector({
 
       // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssueStateAction(issueId, newState);
+        const updatedIssue = await updateIssueStateAction(issueId, newState);
+        // Notify server-updated result so parent can overwrite cache/state with authoritative data
+        if (onServerUpdated) {
+          onServerUpdated(updatedIssue);
+        }
         console.log("State updated successfully:", newState);
       }
     } catch (error) {

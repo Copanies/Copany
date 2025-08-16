@@ -10,6 +10,7 @@ import {
   IssuePriority,
   CopanyContributor,
   AssigneeUser,
+  Copany,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
@@ -130,12 +131,18 @@ export default function IssuePageClient({
             `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
           );
           setIssueData(cachedData);
-          setIsLoading(false);
         } else {
           console.log(
             `[IssuePageClient] 🚫 No cache available, loading from server...`
           );
         }
+
+        // Compute edit permission
+        if (issueData) {
+          computeEditPermission(issueData, user, copany);
+        }
+
+        setIsLoading(false);
 
         // Then get latest data from server
         const freshIssueData = await getIssueAction(issueId);
@@ -144,45 +151,7 @@ export default function IssuePageClient({
           freshIssueData?.title
         );
         setIssueData(freshIssueData);
-
-        // Compute edit permission
-        const uid = user?.id;
-        const isCreator = !!(
-          uid &&
-          freshIssueData &&
-          freshIssueData.created_by === uid
-        );
-        const isAssignee = !!(
-          uid &&
-          freshIssueData &&
-          freshIssueData.assignee === uid
-        );
-        const isOwner = !!(uid && copany && copany.created_by === uid);
-
-        const allowed = !!(
-          uid &&
-          freshIssueData &&
-          (isCreator || isAssignee || isOwner)
-        );
-        setCanEdit(allowed);
-
-        if (!allowed) {
-          if (!uid) {
-            setReadOnlyTooltip(
-              "Unlogged users do not have edit permissions. Please log in and try again."
-            );
-          } else {
-            const reasonLines = [
-              "You currently do not have edit permissions. Only the Copany creator, Issue creator, or current assignee can edit.",
-            ];
-            setReadOnlyTooltip(reasonLines.join("\n"));
-          }
-        } else {
-          setReadOnlyTooltip("");
-        }
-
-        setIsPermissionResolved(true);
-
+        computeEditPermission(freshIssueData, user, copany);
         // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
@@ -198,17 +167,51 @@ export default function IssuePageClient({
     loadData();
   }, [copanyId, issueId]);
 
+  function computeEditPermission(
+    issueData: IssueWithAssignee,
+    user: User | null,
+    copany: Copany | null
+  ) {
+    // Compute edit permission
+    const uid = user?.id;
+    const isCreator = !!(uid && issueData && issueData.created_by === uid);
+    const isAssignee = !!(uid && issueData && issueData.assignee === uid);
+    const isOwner = !!(uid && copany && copany.created_by === uid);
+
+    const allowed = !!(
+      uid &&
+      issueData &&
+      (isCreator || isAssignee || isOwner)
+    );
+    setCanEdit(allowed);
+
+    if (!allowed) {
+      if (!uid) {
+        setReadOnlyTooltip(
+          "Unlogged users do not have edit permissions. Please log in and try again."
+        );
+      } else {
+        const reasonLines = [
+          "You currently do not have edit permissions. Only the Copany creator, Issue creator, or current assignee can edit.",
+        ];
+        setReadOnlyTooltip(reasonLines.join("\n"));
+      }
+    } else {
+      setReadOnlyTooltip("");
+    }
+
+    setIsPermissionResolved(true);
+  }
+
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
       if (!issueData) return;
 
       try {
-        const updated = {
-          ...issueData,
-          state: newState,
-        };
-        setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        // Optimistically update state only; closed_at handled by cache and corrected by server
+        const optimistic = { ...issueData, state: newState };
+        setIssueData(optimistic);
+        issuesManager.updateIssue(copanyId, optimistic);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
@@ -363,6 +366,10 @@ export default function IssuePageClient({
             initialState={issueData.state}
             showText={true}
             onStateChange={(_, newState) => handleStateChange(newState)}
+            onServerUpdated={(serverIssue) => {
+              setIssueData(serverIssue);
+              issuesManager.updateIssue(copanyId, serverIssue);
+            }}
             readOnly={!canEdit}
           />
           <IssuePrioritySelector
@@ -427,6 +434,10 @@ export default function IssuePageClient({
                 initialState={issueData.state}
                 showText={true}
                 onStateChange={(_, newState) => handleStateChange(newState)}
+                onServerUpdated={(serverIssue) => {
+                  setIssueData(serverIssue);
+                  issuesManager.updateIssue(copanyId, serverIssue);
+                }}
                 readOnly={!canEdit}
               />
             </div>

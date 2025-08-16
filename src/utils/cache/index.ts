@@ -36,3 +36,7 @@ export {
   IssueActivityManager,
   issueActivityManager,
 } from "./managers/IssueActivityManager";
+export {
+  IssuesUiStateManager,
+  issuesUiStateManager,
+} from "./managers/IssuesUiStateManager";

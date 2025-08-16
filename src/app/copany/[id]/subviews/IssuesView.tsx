@@ -23,6 +23,7 @@ import {
   currentUserManager,
   contributorsManager,
   IssuesManager,
+  issuesUiStateManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
@@ -61,6 +62,13 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     return priorityOrder[aPriority] - priorityOrder[bPriority];
   };
 
+  // For Done / Canceled (including Duplicate merged) groups, sort by closed_at desc
+  const sortByClosedAtDesc = (a: IssueWithAssignee, b: IssueWithAssignee) => {
+    const aTime = a.closed_at ? new Date(a.closed_at).getTime() : 0;
+    const bTime = b.closed_at ? new Date(b.closed_at).getTime() : 0;
+    return bTime - aTime;
+  };
+
   // Sort by state order
   const stateOrder = [
     IssueState.InProgress,
@@ -75,7 +83,10 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     .map((state) => ({
       state,
       label: renderStateLabel(state, true, true),
-      issues: grouped[state].sort(sortByPriority), // Sort by priority within each state group
+      issues:
+        state === IssueState.Done || state === IssueState.Canceled
+          ? grouped[state].slice().sort(sortByClosedAtDesc)
+          : grouped[state].slice().sort(sortByPriority),
     }));
 }
 
@@ -97,6 +108,38 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
+
+  // Search query state synced with URL ?q=
+  const [searchQuery, setSearchQuery] = useState<string>(
+    searchParams.get("q") ?? ""
+  );
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  // Collapsible group states via cache manager
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<number, boolean>
+  >(() => issuesUiStateManager.getCollapsedGroups(copanyId));
+
+  const toggleGroupCollapse = useCallback(
+    (state: number) => {
+      setCollapsedGroups((prev) => {
+        const next = { ...prev, [state]: !prev[state] } as Record<
+          number,
+          boolean
+        >;
+        issuesUiStateManager.setCollapsedGroups(copanyId, next);
+        return next;
+      });
+    },
+    [copanyId]
+  );
+
+  // When copanyId changes, reload UI state from cache (CSR only)
+  useEffect(() => {
+    setCollapsedGroups(issuesUiStateManager.getCollapsedGroups(copanyId));
+  }, [copanyId]);
 
   // Create IssuesManager instance with data update callback
   const issuesManagerWithCallback = useMemo(() => {
@@ -152,6 +195,17 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     loadUserData();
   }, [loadIssues, loadUserData]);
 
+  // Filtered issues by search query
+  const filteredIssues = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return issues;
+    return issues.filter((issue) => {
+      const title = (issue.title || "").toLowerCase();
+      const idStr = String(issue.id || "");
+      return title.includes(q) || idStr.includes(q);
+    });
+  }, [issues, searchQuery]);
+
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
@@ -171,10 +225,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              state: newState,
-            };
+            // Optimistically update state only; closed_at handled centrally by cache layer and then corrected by server response
+            const updatedIssue = { ...issue, state: newState };
             // Update single issue cache
             issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
@@ -345,16 +397,42 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between md:px-4 px-0">
-        <Button onClick={() => setIsModalOpen(true)} className="" size="md">
+      <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="min-w-24"
+          size="md"
+        >
           New Issue
         </Button>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchQuery(value);
+            const params = new URLSearchParams(searchParams.toString());
+            if (value.trim()) {
+              params.set("q", value);
+            } else {
+              params.delete("q");
+            }
+            const qs = params.toString();
+            // Keep on the same path and update only query string
+            router.replace(qs ? `?${qs}` : "?");
+          }}
+          placeholder="Search issues"
+          className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
+        />
       </div>
       <div className="relative">
-        {groupIssuesByState(issues).map((group) => (
+        {groupIssuesByState(filteredIssues).map((group) => (
           <div key={group.state} className="">
-            {/* Group title */}
-            <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
+            {/* Group title (click to toggle collapse) */}
+            <div
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+              onClick={() => toggleGroupCollapse(group.state)}
+            >
               <div className="flex flex-row items-center gap-2">
                 {group.label}
                 <span className="text-base text-gray-600 dark:text-gray-400">
@@ -363,52 +441,68 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               </div>
             </div>
 
-            {/* Issues in this state */}
-            {group.issues.map((issue) => (
-              <div
-                className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-                key={issue.id}
-                onClick={() => {
-                  // Keep current URL parameters
-                  const params = new URLSearchParams(searchParams.toString());
-                  router.push(
-                    `/copany/${copanyId}/issue/${issue.id}?${params.toString()}`
-                  );
-                }}
-                onContextMenu={(e) => handleContextMenu(e, issue.id)}
-              >
-                <IssueStateSelector
-                  issueId={issue.id}
-                  initialState={issue.state}
-                  showText={false}
-                  onStateChange={handleIssueStateUpdated}
-                />
-                <IssuePrioritySelector
-                  issueId={issue.id}
-                  initialPriority={issue.priority}
-                  showText={false}
-                  onPriorityChange={handleIssuePriorityUpdated}
-                />
-                <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
-                  {issue.title || "No title"}
+            {/* Issues in this state (hidden when collapsed) */}
+            {!collapsedGroups[group.state] &&
+              group.issues.map((issue) => (
+                <div
+                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                  key={issue.id}
+                  onClick={() => {
+                    // Keep current URL parameters
+                    const params = new URLSearchParams(searchParams.toString());
+                    router.push(
+                      `/copany/${copanyId}/issue/${
+                        issue.id
+                      }?${params.toString()}`
+                    );
+                  }}
+                  onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                >
+                  <IssueStateSelector
+                    issueId={issue.id}
+                    initialState={issue.state}
+                    showText={false}
+                    onStateChange={handleIssueStateUpdated}
+                    onServerUpdated={(serverIssue) => {
+                      setIssues((prev) => {
+                        const updated = prev.map((it) =>
+                          it.id === serverIssue.id ? serverIssue : it
+                        );
+                        issuesManagerWithCallback.updateIssue(
+                          copanyId,
+                          serverIssue
+                        );
+                        issuesManagerWithCallback.setIssues(copanyId, updated);
+                        return updated;
+                      });
+                    }}
+                  />
+                  <IssuePrioritySelector
+                    issueId={issue.id}
+                    initialPriority={issue.priority}
+                    showText={false}
+                    onPriorityChange={handleIssuePriorityUpdated}
+                  />
+                  <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
+                    {issue.title || "No title"}
+                  </div>
+                  <IssueLevelSelector
+                    issueId={issue.id}
+                    initialLevel={issue.level}
+                    showText={false}
+                    onLevelChange={handleIssueLevelUpdated}
+                  />
+                  <IssueAssigneeSelector
+                    issueId={issue.id}
+                    initialAssignee={issue.assignee}
+                    assigneeUser={issue.assignee_user}
+                    currentUser={currentUser}
+                    contributors={contributors}
+                    showText={false}
+                    onAssigneeChange={handleIssueAssigneeUpdated}
+                  />
                 </div>
-                <IssueLevelSelector
-                  issueId={issue.id}
-                  initialLevel={issue.level}
-                  showText={false}
-                  onLevelChange={handleIssueLevelUpdated}
-                />
-                <IssueAssigneeSelector
-                  issueId={issue.id}
-                  initialAssignee={issue.assignee}
-                  assigneeUser={issue.assignee_user}
-                  currentUser={currentUser}
-                  contributors={contributors}
-                  showText={false}
-                  onAssigneeChange={handleIssueAssigneeUpdated}
-                />
-              </div>
-            ))}
+              ))}
           </div>
         ))}
 
