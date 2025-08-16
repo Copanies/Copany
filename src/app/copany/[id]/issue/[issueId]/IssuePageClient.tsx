@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { getIssueAction } from "@/actions/issue.actions";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
 import {
   IssueWithAssignee,
   IssueState,
@@ -21,6 +20,7 @@ import {
   currentUserManager,
   contributorsManager,
   issuesManager,
+  copanyManager,
 } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
@@ -28,6 +28,7 @@ import IssueLevelSelector from "@/components/IssueLevelSelector";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
+import { getCopanyByIdAction } from "@/actions/copany.actions";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -116,7 +117,11 @@ export default function IssuePageClient({
         const [user, contributorList, copany] = await Promise.all([
           currentUserManager.getCurrentUser(),
           contributorsManager.getContributors(copanyId),
-          getCopanyByIdAction(copanyId),
+          copanyManager.getCopany(copanyId, async () => {
+            const result = await getCopanyByIdAction(copanyId);
+            if (!result) throw new Error("Copany not found");
+            return result as Copany;
+          }),
         ]);
 
         setCurrentUser(user);
@@ -138,8 +143,8 @@ export default function IssuePageClient({
         }
 
         // Compute edit permission
-        if (issueData) {
-          computeEditPermission(issueData, user, copany);
+        if (cachedData) {
+          computeEditPermission(cachedData, user, copany);
         }
 
         setIsLoading(false);
