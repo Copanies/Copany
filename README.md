@@ -1,4 +1,4 @@
-# Copany
+# Copany Test
 
 > At Copany, we're building a world where people don't need to join a company to build something great together. Just show up, contribute, and be part of the future.
 
