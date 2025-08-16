@@ -208,12 +208,10 @@ export default function IssuePageClient({
       if (!issueData) return;
 
       try {
-        const updated = {
-          ...issueData,
-          state: newState,
-        };
-        setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        // Optimistically update state only; closed_at handled by cache and corrected by server
+        const optimistic = { ...issueData, state: newState };
+        setIssueData(optimistic);
+        issuesManager.updateIssue(copanyId, optimistic);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
@@ -368,6 +366,10 @@ export default function IssuePageClient({
             initialState={issueData.state}
             showText={true}
             onStateChange={(_, newState) => handleStateChange(newState)}
+            onServerUpdated={(serverIssue) => {
+              setIssueData(serverIssue);
+              issuesManager.updateIssue(copanyId, serverIssue);
+            }}
             readOnly={!canEdit}
           />
           <IssuePrioritySelector
@@ -432,6 +434,10 @@ export default function IssuePageClient({
                 initialState={issueData.state}
                 showText={true}
                 onStateChange={(_, newState) => handleStateChange(newState)}
+                onServerUpdated={(serverIssue) => {
+                  setIssueData(serverIssue);
+                  issuesManager.updateIssue(copanyId, serverIssue);
+                }}
                 readOnly={!canEdit}
               />
             </div>

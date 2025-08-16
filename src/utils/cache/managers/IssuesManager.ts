@@ -35,7 +35,23 @@ const issueItemOperations: DataItemOperations<
     const index = issues.findIndex((issue) => issue.id === updatedIssue.id);
     if (index !== -1) {
       const newIssues = [...issues];
-      newIssues[index] = updatedIssue;
+      const originalIssue = issues[index];
+      
+      // Only update closed_at when state changes to Done, Canceled, or Duplicate
+      let processedIssue = { ...updatedIssue };
+      if (updatedIssue.state !== originalIssue.state) {
+        processedIssue = {
+          ...updatedIssue,
+          closed_at:
+            updatedIssue.state === IssueState.Done ||
+            updatedIssue.state === IssueState.Canceled ||
+            updatedIssue.state === IssueState.Duplicate
+              ? new Date().toISOString()
+              : null,
+        };
+      }
+      
+      newIssues[index] = processedIssue;
       return newIssues;
     }
     return issues;
@@ -47,7 +63,21 @@ const issueItemOperations: DataItemOperations<
     if (exists) {
       return issues;
     }
-    return [newIssue, ...issues]; // Add to beginning
+    
+    // Only set closed_at if it's not already set and state requires it
+    let processedIssue = { ...newIssue };
+    if (!newIssue.closed_at && (
+      newIssue.state === IssueState.Done ||
+      newIssue.state === IssueState.Canceled ||
+      newIssue.state === IssueState.Duplicate
+    )) {
+      processedIssue = {
+        ...newIssue,
+        closed_at: new Date().toISOString(),
+      };
+    }
+    
+    return [processedIssue, ...issues]; // Add to beginning
   },
 
   removeItem: (issues: IssueWithAssignee[], issueId: string) => {
