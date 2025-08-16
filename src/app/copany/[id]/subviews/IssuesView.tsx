@@ -109,6 +109,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
 
+  // Search query state synced with URL ?q=
+  const [searchQuery, setSearchQuery] = useState<string>(
+    searchParams.get("q") ?? ""
+  );
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
   // Collapsible group states via cache manager
   const [collapsedGroups, setCollapsedGroups] = useState<
     Record<number, boolean>
@@ -186,6 +194,17 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     loadIssues();
     loadUserData();
   }, [loadIssues, loadUserData]);
+
+  // Filtered issues by search query
+  const filteredIssues = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return issues;
+    return issues.filter((issue) => {
+      const title = (issue.title || "").toLowerCase();
+      const idStr = String(issue.id || "");
+      return title.includes(q) || idStr.includes(q);
+    });
+  }, [issues, searchQuery]);
 
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
@@ -378,13 +397,32 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between md:px-4 px-0">
+      <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
         <Button onClick={() => setIsModalOpen(true)} className="" size="md">
           New Issue
         </Button>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchQuery(value);
+            const params = new URLSearchParams(searchParams.toString());
+            if (value.trim()) {
+              params.set("q", value);
+            } else {
+              params.delete("q");
+            }
+            const qs = params.toString();
+            // Keep on the same path and update only query string
+            router.replace(qs ? `?${qs}` : "?");
+          }}
+          placeholder="Search issues"
+          className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 bg-transparent dark:text-gray-100 text-base"
+        />
       </div>
       <div className="relative">
-        {groupIssuesByState(issues).map((group) => (
+        {groupIssuesByState(filteredIssues).map((group) => (
           <div key={group.state} className="">
             {/* Group title (click to toggle collapse) */}
             <div
