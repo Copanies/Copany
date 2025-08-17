@@ -419,6 +419,7 @@ export default function IssuePageClient({
             <IssueActivityTimeline
               issueId={issueData.id}
               issueState={issueData.state}
+              issueLevel={issueData.level}
             />
           </div>
         </div>

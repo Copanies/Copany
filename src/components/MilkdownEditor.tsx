@@ -485,12 +485,14 @@ export default function MilkdownEditor({
   isReadonly = false,
   placeholder = "Add description...",
   className = "",
+  focusSignal,
 }: {
   onContentChange?: (content: string) => void;
   initialContent?: string;
   isReadonly?: boolean;
   placeholder?: string;
   className?: string;
+  focusSignal?: number;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
@@ -609,6 +611,37 @@ export default function MilkdownEditor({
       }
     }
   }, [isReadonly]);
+
+  // Focus editor when focusSignal changes
+  useEffect(() => {
+    if (focusSignal == null) return;
+    const tryFocus = () => {
+      const el = divRef.current?.querySelector(
+        ".ProseMirror"
+      ) as HTMLElement | null;
+      if (!el) return;
+      try {
+        el.focus();
+        const selection = window.getSelection?.();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    // focus after a tiny delay to ensure scroll finished and editor ready
+    const t1 = setTimeout(tryFocus, 50);
+    const t2 = setTimeout(tryFocus, 200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [focusSignal]);
 
   return (
     <>

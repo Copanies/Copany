@@ -37,11 +37,13 @@ import IssueReviewPanel from "@/components/IssueReviewPanel";
 interface IssueActivityTimelineProps {
   issueId: string;
   issueState?: number | null;
+  issueLevel?: number | null;
 }
 
 export default function IssueActivityTimeline({
   issueId,
   issueState,
+  issueLevel,
 }: IssueActivityTimelineProps) {
   const [items, setItems] = useState<IssueActivity[]>([]);
   const [comments, setComments] = useState<IssueComment[]>([]);
@@ -54,6 +56,7 @@ export default function IssueActivityTimeline({
   const [replyContent, setReplyContent] = useState<string>("");
   const [newCommentContent, setNewCommentContent] = useState<string>("");
   const [newCommentKey, setNewCommentKey] = useState<number>(Math.random());
+  const [newCommentFocusSignal, setNewCommentFocusSignal] = useState<number>(0);
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
   const [userInfos, setUserInfos] = useState<
     Record<string, { name: string; email: string; avatar_url: string }>
@@ -480,6 +483,8 @@ export default function IssueActivityTimeline({
       <IssueReviewPanel
         issueId={issueId}
         issueState={issueState ?? null}
+        issueLevel={issueLevel ?? null}
+        onFocusNewComment={() => setNewCommentFocusSignal((x) => x + 1)}
         onActivityChanged={async () => {
           const fresh = await listIssueActivityAction(issueId, 200);
           setItems(fresh);
@@ -487,13 +492,17 @@ export default function IssueActivityTimeline({
       />
 
       {/* New root comment composer */}
-      <div className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
+      <div
+        className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit"
+        id="new-comment-composer"
+      >
         <div className="h-fit px-1">
           <MilkdownEditor
             key={newCommentKey}
             onContentChange={setNewCommentContent}
             initialContent=""
             placeholder="Leave a comment..."
+            focusSignal={newCommentFocusSignal}
           />
         </div>
         <div className="flex justify-end p-2">

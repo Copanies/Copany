@@ -12,17 +12,22 @@ import {
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
+import { renderLevelLabel } from "./IssueLevelSelector";
 
 interface IssueReviewPanelProps {
   issueId: string;
   issueState: number | null;
+  issueLevel: number | null;
+  onFocusNewComment?: () => void;
   onActivityChanged?: () => void | Promise<void>;
 }
 
 export default function IssueReviewPanel({
   issueId,
   issueState,
+  issueLevel,
+  onFocusNewComment,
   onActivityChanged,
 }: IssueReviewPanelProps) {
   // Only render in In Review state
@@ -141,7 +146,7 @@ export default function IssueReviewPanel({
                     }`}
                   >
                     {isApproved ? (
-                      <CheckIcon className="w-5 h-5 text-[#058E00]" />
+                      <CheckIcon className="w-4 h-4 text-[#058E00]" />
                     ) : (
                       <div className="w-2 h-2 rounded-full bg-yellow-500" />
                     )}
@@ -176,51 +181,80 @@ export default function IssueReviewPanel({
           })}
         </div>
       </div>
-
-      <div className="flex flex-row gap-2 px-2 pb-2">
-        {hasAnyApproved ? (
-          <Button
-            onClick={async () => {
-              try {
-                setIsSubmitting(true);
-                await updateIssueStateAction(issueId, IssueState.Done);
-                if (onActivityChanged) await onActivityChanged();
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            disabled={isSubmitting}
-            size="sm"
-            variant="approve"
-          >
-            Set issue done
-          </Button>
-        ) : (
-          <Button
-            onClick={async () => {
-              try {
-                setIsSubmitting(true);
-                await approveMyReviewAction(issueId);
-                await load();
-                if (onActivityChanged) await onActivityChanged();
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            disabled={isSubmitting || !canApprove}
-            size="sm"
-            variant="approve"
-          >
-            Approve
-          </Button>
-        )}
-        {!hasAnyApproved && isReviewerMe && (
-          <Button size="sm">Leave a comment</Button>
-        )}
+      <div className="flex flex-col gap-3 px-3 pb-3">
+        <div className="flex flex-row items-center gap-2">
+          <span className="text-sm">Issue level: </span>
+          {renderLevelLabel(issueLevel, false)}
+        </div>
+        <div className="flex flex-row gap-2">
+          {hasAnyApproved ? (
+            <Button
+              onClick={async () => {
+                try {
+                  setIsSubmitting(true);
+                  await updateIssueStateAction(issueId, IssueState.Done);
+                  if (onActivityChanged) await onActivityChanged();
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+              size="sm"
+              variant="approve"
+            >
+              <div className="flex flex-row items-center gap-1">
+                <ArrowRightIcon className="w-4 h-4 text-white" />
+                <span>Mark as Done</span>
+              </div>
+            </Button>
+          ) : (
+            <Button
+              onClick={async () => {
+                try {
+                  setIsSubmitting(true);
+                  await approveMyReviewAction(issueId);
+                  await load();
+                  if (onActivityChanged) await onActivityChanged();
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting || !canApprove}
+              size="sm"
+              variant="approve"
+            >
+              <div className="flex flex-row items-center gap-1">
+                <CheckIcon className="w-4 h-4 text-white" />
+                <span>Approve</span>
+              </div>
+            </Button>
+          )}
+          {!hasAnyApproved && (
+            <Button
+              size="sm"
+              onClick={() => {
+                try {
+                  const el = document.getElementById("new-comment-composer");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }
+                  // trigger focus after scroll
+                  if (onFocusNewComment) {
+                    setTimeout(() => onFocusNewComment(), 220);
+                  }
+                } catch (e) {
+                  // ignore
+                }
+              }}
+            >
+              Leave a comment
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
