@@ -18,7 +18,7 @@ export const copanyCache = new CacheManager<Copany, string>(
     keyPrefix: "copany_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "CopanyCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined, // Use default key generator
   (data: Copany) => ({ copanyName: data.name }) // Log info generator
@@ -30,7 +30,7 @@ export const issuesCache = new CacheManager<IssueWithAssignee[], string>(
     keyPrefix: "issues_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "IssuesCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined, // Use default key generator
   (data: IssueWithAssignee[]) => ({ issueCount: data.length }) // Log info generator
@@ -54,7 +54,7 @@ export const contributorsCache = new CacheManager<CopanyContributor[], string>(
     keyPrefix: "contributors_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ContributorsCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined, // Use default key generator (copanyId)
   (data: CopanyContributor[]) => ({ contributorCount: data.length }) // Log info generator
@@ -66,7 +66,7 @@ export const contributionsCache = new CacheManager<Contribution[], string>(
     keyPrefix: "contributions_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ContributionsCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined, // Use default key generator (copanyId)
   (data: Contribution[]) => ({ contributionCount: data.length }) // Log info generator
@@ -80,7 +80,7 @@ export const readmeCache = new CacheManager<string, string>(
     keyPrefix: "readme_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "ReadmeCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   // Custom key generator: handle GitHub URL
   (githubUrl: string) =>
@@ -94,7 +94,7 @@ export const licenseCache = new CacheManager<string, string>(
     keyPrefix: "license_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "LicenseCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   // Custom key generator: handle GitHub URL
   (githubUrl: string) =>
@@ -120,7 +120,7 @@ export const issueCommentsCache = new CacheManager<IssueComment[], string>(
     keyPrefix: "issue_comments_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000, // 1 month
     loggerName: "IssueCommentsCache",
-    backgroundRefreshInterval: 1 * 60 * 1000, // 1 minute
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined, // Use default key generator (issueId)
   (data: IssueComment[]) => ({ commentCount: data.length }) // Log info generator
@@ -144,7 +144,7 @@ export const issueActivityCache = new CacheManager<IssueActivity[], string>(
     keyPrefix: "issue_activity_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000,
     loggerName: "IssueActivityCache",
-    backgroundRefreshInterval: 60 * 1000,
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined,
   (data: IssueActivity[]) => ({ count: data.length })
@@ -156,7 +156,7 @@ export const issueReviewersCache = new CacheManager<IssueReviewer[], string>(
     keyPrefix: "issue_reviewers_cache_",
     ttl: 30 * 24 * 60 * 60 * 1000,
     loggerName: "IssueReviewersCache",
-    backgroundRefreshInterval: 60 * 1000,
+    backgroundRefreshInterval: 10 * 1000, // 10 seconds
   },
   undefined,
   (data: IssueReviewer[]) => ({ count: data.length })
