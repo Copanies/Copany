@@ -6,8 +6,10 @@ import { updateIssueStateAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
+import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
 import { issueReviewersManager } from "@/utils/cache";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -275,13 +277,19 @@ function InReviewLabel({
   showText: boolean;
   colorful: boolean;
 }) {
+  const isDarkMode = useDarkMode();
   return (
     <div
       className={`flex flex-row items-center gap-2 ${
         colorful ? "text-indigo-600" : "text-gray-500 dark:text-gray-500"
       }`}
     >
-      <Image src={InreviewIcon} width={20} height={20} alt="In Review" />
+      <Image
+        src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
+        width={20}
+        height={20}
+        alt="In Review"
+      />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           In Review

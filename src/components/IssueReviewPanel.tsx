@@ -12,9 +12,11 @@ import {
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";
+import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface IssueReviewPanelProps {
   issueId: string;
@@ -35,6 +37,7 @@ export default function IssueReviewPanel({
   onFocusNewComment,
   onActivityChanged,
 }: IssueReviewPanelProps) {
+  const isDarkMode = useDarkMode();
   const [reviewers, setReviewers] = useState<IssueReviewer[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [userInfos, setUserInfos] = useState<
@@ -95,24 +98,28 @@ export default function IssueReviewPanel({
 
   return (
     <div
-      className={`-ml-3 mb-2 border rounded-lg border-[#7B00FF] flex flex-col gap-3 ${
-        hasAnyApproved ? "border-[#058E00]" : "border-[#7B00FF]"
+      className={`-ml-3 mb-2 border rounded-lg flex flex-col gap-3 ${
+        hasAnyApproved
+          ? "border-[#058E00] dark:border-[#058E00]"
+          : "border-[#7B00FF] dark:border-[#9029FF]"
       }`}
     >
       <div
         className={`p-3 flex flex-col gap-2 border-b border-gray-200 dark:border-gray-800 rounded-t-lg ${
-          hasAnyApproved ? "bg-[#058E00]/8" : "bg-[#7B00FF]/8"
+          hasAnyApproved
+            ? "bg-[#058E00]/8 dark:bg-[#058E00]/8"
+            : "bg-[#7B00FF]/8 dark:bg-[#9029FF]/8"
         }`}
       >
         <div className="flex flex-row items-center justify-between">
           <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex flex-row items-center gap-2">
             {/* Title prefix: In Review label or Approved check */}
             {hasAnyApproved ? (
-              <CheckIcon className="w-6 h-6 text-white bg-[#058E00] rounded-full p-1" />
+              <CheckIcon className="w-6 h-6 text-white bg-[#058E00] dark:bg-[#058E00] rounded-full p-1" />
             ) : (
               // In Review label icon-only
               <Image
-                src={InreviewIcon}
+                src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
                 alt="In Review"
                 width={20}
                 height={20}
@@ -146,9 +153,9 @@ export default function IssueReviewPanel({
                     }`}
                   >
                     {isApproved ? (
-                      <CheckIcon className="w-4 h-4 text-[#058E00]" />
+                      <CheckIcon className="w-4 h-4 text-[#058E00] dark:text-[#058E00]" />
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                      <div className="w-2 h-2 rounded-full bg-yellow-600" />
                     )}
                   </div>
                   <div className="flex flex-row items-center gap-1">

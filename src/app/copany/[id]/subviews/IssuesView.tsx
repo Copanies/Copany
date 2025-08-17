@@ -241,6 +241,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const renderReviewBadge = (issue: IssueWithAssignee) => {
     if (issue.state !== IssueState.InReview) return null;
     const list = reviewersByIssue[String(issue.id)] || [];
+    if (list.length === 0) return null;
     const meId = currentUser?.id ? String(currentUser.id) : null;
     const hasApproved = list.some((r) => r.status === "approved");
     const needsMyReview = !!(
@@ -260,22 +261,17 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       );
     } else if (needsMyReview) {
       return (
-        <div className="flex flex-row items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+        <div className="flex flex-row items-center gap-1">
+          <div className="w-4 h-4 flex items-center justify-center">
+            <div className="w-1 h-1 rounded-full bg-yellow-600" />
+          </div>
           <span className="text-gray-500 dark:text-gray-400 hidden md:block">
             needs your review
           </span>
         </div>
       );
     } else {
-      return (
-        <div className="flex flex-row items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
-            waiting for review
-          </span>
-        </div>
-      );
+      return null;
     }
   };
 
