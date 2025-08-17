@@ -59,7 +59,9 @@ export default function IssueActivityTimeline({
   const [replyContent, setReplyContent] = useState<string>("");
   const [newCommentContent, setNewCommentContent] = useState<string>("");
   const [newCommentKey, setNewCommentKey] = useState<number>(Math.random());
-  const [newCommentFocusSignal, setNewCommentFocusSignal] = useState<number>(0);
+  const [newCommentFocusSignal, setNewCommentFocusSignal] = useState<
+    number | undefined
+  >(undefined);
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
   const [userInfos, setUserInfos] = useState<
     Record<string, { name: string; email: string; avatar_url: string }>
@@ -493,7 +495,9 @@ export default function IssueActivityTimeline({
         issueLevel={issueLevel ?? null}
         meId={currentUser?.id ?? null}
         canEdit={canEdit}
-        onFocusNewComment={() => setNewCommentFocusSignal((x) => x + 1)}
+        onFocusNewComment={() =>
+          setNewCommentFocusSignal((x) => (x == null ? 1 : x + 1))
+        }
         onActivityChanged={async () => {
           const fresh = await listIssueActivityAction(issueId, 200);
           setItems(fresh);
