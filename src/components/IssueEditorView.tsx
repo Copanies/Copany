@@ -226,12 +226,7 @@ export default function IssueEditorView({
 
   // Focus description editor on mount (without scrolling)
   useEffect(() => {
-    const t1 = setTimeout(() => setFocusDescSignal((x) => x + 1), 150);
-    const t2 = setTimeout(() => setFocusDescSignal((x) => x + 1), 400);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    setFocusDescSignal((x) => x + 1);
   }, []);
 
   // The initial content is only set once when the component is mounted
