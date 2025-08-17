@@ -4,6 +4,8 @@ import { useState } from "react";
 import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
+import Image from "next/image";
+import InreviewIcon from "@/assets/in_review_state.svg";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -63,6 +65,7 @@ export default function IssueStateSelector({
     IssueState.Backlog,
     IssueState.Todo,
     IssueState.InProgress,
+    IssueState.InReview,
     IssueState.Done,
     IssueState.Canceled,
     IssueState.Duplicate,
@@ -97,6 +100,8 @@ export function renderStateLabel(
       return <TodoLabel showText={showText} colorful={colorful} />;
     case IssueState.InProgress:
       return <InProgressLabel showText={showText} colorful={colorful} />;
+    case IssueState.InReview:
+      return <InReviewLabel showText={showText} colorful={colorful} />;
     case IssueState.Done:
       return <DoneLabel showText={showText} colorful={colorful} />;
     case IssueState.Canceled:
@@ -202,6 +207,29 @@ function InProgressLabel({
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           In Progress
+        </span>
+      )}
+    </div>
+  );
+}
+
+function InReviewLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
+  return (
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful ? "text-indigo-600" : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
+      <Image src={InreviewIcon} width={20} height={20} alt="In Review" />
+      {showText && (
+        <span className="text-base text-gray-900 dark:text-gray-100">
+          In Review
         </span>
       )}
     </div>

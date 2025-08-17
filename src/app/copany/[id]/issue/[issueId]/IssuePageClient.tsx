@@ -416,7 +416,10 @@ export default function IssuePageClient({
               Activity
             </p>
             {/* Issue activity timeline (includes comments) */}
-            <IssueActivityTimeline issueId={issueData.id} />
+            <IssueActivityTimeline
+              issueId={issueData.id}
+              issueState={issueData.state}
+            />
           </div>
         </div>
         <div className="hidden md:flex flex-col">

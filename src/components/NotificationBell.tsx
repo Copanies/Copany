@@ -324,6 +324,8 @@ export default function NotificationBell() {
         return "Todo";
       case IssueState.InProgress:
         return "In Progress";
+      case IssueState.InReview:
+        return "In Review";
       case IssueState.Done:
         return "Done";
       case IssueState.Canceled:

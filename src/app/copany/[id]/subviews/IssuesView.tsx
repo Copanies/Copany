@@ -71,6 +71,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 
   // Sort by state order
   const stateOrder = [
+    IssueState.InReview,
     IssueState.InProgress,
     IssueState.Todo,
     IssueState.Backlog,

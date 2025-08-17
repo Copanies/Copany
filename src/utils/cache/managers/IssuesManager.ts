@@ -113,6 +113,7 @@ class IssuesDataManager extends GenericDataManager<
       IssueState.Backlog,
       IssueState.Todo,
       IssueState.InProgress,
+      IssueState.InReview,
     ];
     const openCount = data.filter(
       (issue) => issue.state !== null && openStates.includes(issue.state)

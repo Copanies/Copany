@@ -32,13 +32,16 @@ import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
 import IssueCommentCard from "@/components/IssueCommentCard";
+import IssueReviewPanel from "@/components/IssueReviewPanel";
 
 interface IssueActivityTimelineProps {
   issueId: string;
+  issueState?: number | null;
 }
 
 export default function IssueActivityTimeline({
   issueId,
+  issueState,
 }: IssueActivityTimelineProps) {
   const [items, setItems] = useState<IssueActivity[]>([]);
   const [comments, setComments] = useState<IssueComment[]>([]);
@@ -87,6 +90,7 @@ export default function IssueActivityTimeline({
         // ignore if unauthenticated
         console.error(e);
       }
+
       const ids = Array.from(idSet);
       if (ids.length > 0) {
         const users = await userInfoManager.getMultipleUserInfo(ids);
@@ -100,8 +104,8 @@ export default function IssueActivityTimeline({
             email: users[id].email,
             avatar_url: users[id].avatar_url || "",
           };
+          setUserInfos(map);
         }
-        setUserInfos(map);
       }
     };
     load();
@@ -116,6 +120,8 @@ export default function IssueActivityTimeline({
         return "Todo";
       case IssueState.InProgress:
         return "In Progress";
+      case IssueState.InReview:
+        return "In Review";
       case IssueState.Done:
         return "Done";
       case IssueState.Canceled:
@@ -209,6 +215,28 @@ export default function IssueActivityTimeline({
           <>
             <span className="font-medium">{who}</span> changed the assignee to{" "}
             {toLabel}
+          </>
+        );
+      }
+      case "review_requested": {
+        const name =
+          p.reviewer_name ||
+          (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{who}</span> requested review from{" "}
+            {name || "a reviewer"}
+          </>
+        );
+      }
+      case "review_approved": {
+        const name =
+          p.reviewer_name ||
+          (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{who}</span> approved the review (
+            {name || "reviewer"})
           </>
         );
       }
@@ -447,6 +475,16 @@ export default function IssueActivityTimeline({
           </div>
         </div>
       ))}
+
+      {/* Reviewer panel at the bottom, above new comment composer */}
+      <IssueReviewPanel
+        issueId={issueId}
+        issueState={issueState ?? null}
+        onActivityChanged={async () => {
+          const fresh = await listIssueActivityAction(issueId, 200);
+          setItems(fresh);
+        }}
+      />
 
       {/* New root comment composer */}
       <div className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
