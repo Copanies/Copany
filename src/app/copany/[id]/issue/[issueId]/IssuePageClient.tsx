@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { getIssueAction } from "@/actions/issue.actions";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
 import {
   IssueWithAssignee,
   IssueState,
   IssuePriority,
   CopanyContributor,
   AssigneeUser,
+  Copany,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
@@ -20,6 +20,8 @@ import {
   currentUserManager,
   contributorsManager,
   issuesManager,
+  copanyManager,
+  issuePermissionManager,
 } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
@@ -27,6 +29,8 @@ import IssueLevelSelector from "@/components/IssueLevelSelector";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
+import { getCopanyByIdAction } from "@/actions/copany.actions";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -106,16 +110,37 @@ export default function IssuePageClient({
     };
   }, [issueData, copanyId]);
 
+  const computeEditPermission = useCallback(
+    async (issueData: IssueWithAssignee) => {
+      const allowed = await issuePermissionManager.canEditIssue(
+        copanyId,
+        issueData
+      );
+      setCanEdit(allowed);
+      setReadOnlyTooltip(
+        allowed
+          ? ""
+          : "Only the Copany owner, Issue creator, or current assignee can edit."
+      );
+      setIsPermissionResolved(true);
+    },
+    [copanyId]
+  );
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
 
         // Load user and contributor data
-        const [user, contributorList, copany] = await Promise.all([
+        const [user, contributorList, _copany] = await Promise.all([
           currentUserManager.getCurrentUser(),
           contributorsManager.getContributors(copanyId),
-          getCopanyByIdAction(copanyId),
+          copanyManager.getCopany(copanyId, async () => {
+            const result = await getCopanyByIdAction(copanyId);
+            if (!result) throw new Error("Copany not found");
+            return result as Copany;
+          }),
         ]);
 
         setCurrentUser(user);
@@ -130,12 +155,18 @@ export default function IssuePageClient({
             `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
           );
           setIssueData(cachedData);
-          setIsLoading(false);
         } else {
           console.log(
             `[IssuePageClient] 🚫 No cache available, loading from server...`
           );
         }
+
+        // Compute edit permission
+        if (cachedData) {
+          await computeEditPermission(cachedData);
+        }
+
+        setIsLoading(false);
 
         // Then get latest data from server
         const freshIssueData = await getIssueAction(issueId);
@@ -144,45 +175,7 @@ export default function IssuePageClient({
           freshIssueData?.title
         );
         setIssueData(freshIssueData);
-
-        // Compute edit permission
-        const uid = user?.id;
-        const isCreator = !!(
-          uid &&
-          freshIssueData &&
-          freshIssueData.created_by === uid
-        );
-        const isAssignee = !!(
-          uid &&
-          freshIssueData &&
-          freshIssueData.assignee === uid
-        );
-        const isOwner = !!(uid && copany && copany.created_by === uid);
-
-        const allowed = !!(
-          uid &&
-          freshIssueData &&
-          (isCreator || isAssignee || isOwner)
-        );
-        setCanEdit(allowed);
-
-        if (!allowed) {
-          if (!uid) {
-            setReadOnlyTooltip(
-              "Unlogged users do not have edit permissions. Please log in and try again."
-            );
-          } else {
-            const reasonLines = [
-              "You currently do not have edit permissions. Only the Copany creator, Issue creator, or current assignee can edit.",
-            ];
-            setReadOnlyTooltip(reasonLines.join("\n"));
-          }
-        } else {
-          setReadOnlyTooltip("");
-        }
-
-        setIsPermissionResolved(true);
-
+        await computeEditPermission(freshIssueData);
         // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
@@ -196,19 +189,17 @@ export default function IssuePageClient({
     };
 
     loadData();
-  }, [copanyId, issueId]);
+  }, [copanyId, issueId, computeEditPermission]);
 
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
       if (!issueData) return;
 
       try {
-        const updated = {
-          ...issueData,
-          state: newState,
-        };
-        setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        // Optimistically update state only; closed_at handled by cache and corrected by server
+        const optimistic = { ...issueData, state: newState };
+        setIssueData(optimistic);
+        issuesManager.updateIssue(copanyId, optimistic);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
@@ -340,20 +331,29 @@ export default function IssuePageClient({
           <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
         {isPermissionResolved && !canEdit && (
-          <div className="relative group">
-            <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px]">
-              <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-gray-500 dark:text-gray-400 text-sm">
-                Read only
-              </span>
-            </div>
-            <div className="pointer-events-none absolute left-0 top-full mt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              <div className="w-80 md:w-96 whitespace-pre-line break-words px-3 py-2 rounded-md text-xs text-gray-100 bg-gray-900/90 shadow-lg border border-gray-700">
-                {readOnlyTooltip ||
-                  "Only Copany owner, Issue creator or current assignee can edit."}
-              </div>
-            </div>
-          </div>
+          <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px] cursor-default">
+                  <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">
+                    Read only
+                  </span>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="bottom"
+                  sideOffset={8}
+                  align="start"
+                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 w-80 md:w-96 whitespace-pre-line break-words"
+                >
+                  {readOnlyTooltip ||
+                    "Only the Copany owner, Issue creator, or current assignee can edit."}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         )}
       </div>
       <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto md:gap-6">
@@ -363,6 +363,10 @@ export default function IssuePageClient({
             initialState={issueData.state}
             showText={true}
             onStateChange={(_, newState) => handleStateChange(newState)}
+            onServerUpdated={(serverIssue) => {
+              setIssueData(serverIssue);
+              issuesManager.updateIssue(copanyId, serverIssue);
+            }}
             readOnly={!canEdit}
           />
           <IssuePrioritySelector
@@ -404,7 +408,12 @@ export default function IssuePageClient({
               Activity
             </p>
             {/* Issue activity timeline (includes comments) */}
-            <IssueActivityTimeline issueId={issueData.id} />
+            <IssueActivityTimeline
+              issueId={issueData.id}
+              canEdit={canEdit}
+              issueState={issueData.state}
+              issueLevel={issueData.level}
+            />
           </div>
         </div>
         <div className="hidden md:flex flex-col">
@@ -427,6 +436,10 @@ export default function IssuePageClient({
                 initialState={issueData.state}
                 showText={true}
                 onStateChange={(_, newState) => handleStateChange(newState)}
+                onServerUpdated={(serverIssue) => {
+                  setIssueData(serverIssue);
+                  issuesManager.updateIssue(copanyId, serverIssue);
+                }}
                 readOnly={!canEdit}
               />
             </div>

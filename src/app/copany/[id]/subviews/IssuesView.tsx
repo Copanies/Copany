@@ -23,10 +23,16 @@ import {
   currentUserManager,
   contributorsManager,
   IssuesManager,
+  issuesUiStateManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
+import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import type { IssueReviewer } from "@/types/database.types";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { issuePermissionManager, issueReviewersManager } from "@/utils/cache";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -61,8 +67,16 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     return priorityOrder[aPriority] - priorityOrder[bPriority];
   };
 
+  // For Done / Canceled (including Duplicate merged) groups, sort by closed_at desc
+  const sortByClosedAtDesc = (a: IssueWithAssignee, b: IssueWithAssignee) => {
+    const aTime = a.closed_at ? new Date(a.closed_at).getTime() : 0;
+    const bTime = b.closed_at ? new Date(b.closed_at).getTime() : 0;
+    return bTime - aTime;
+  };
+
   // Sort by state order
   const stateOrder = [
+    IssueState.InReview,
     IssueState.InProgress,
     IssueState.Todo,
     IssueState.Backlog,
@@ -75,7 +89,10 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
     .map((state) => ({
       state,
       label: renderStateLabel(state, true, true),
-      issues: grouped[state].sort(sortByPriority), // Sort by priority within each state group
+      issues:
+        state === IssueState.Done || state === IssueState.Canceled
+          ? grouped[state].slice().sort(sortByClosedAtDesc)
+          : grouped[state].slice().sort(sortByPriority),
     }));
 }
 
@@ -93,10 +110,50 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Add shared user and contributor status
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+  const [canEditByIssue, setCanEditByIssue] = useState<Record<string, boolean>>(
+    {}
+  );
+  // cache reviewers per issue for lightweight list indicators
+  const [reviewersByIssue, setReviewersByIssue] = useState<
+    Record<string, IssueReviewer[]>
+  >({});
+  const loadingReviewersRef = useRef<Set<string>>(new Set());
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasInitialLoadRef = useRef(false);
+
+  // Search query state synced with URL ?q=
+  const [searchQuery, setSearchQuery] = useState<string>(
+    searchParams.get("q") ?? ""
+  );
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  // Collapsible group states via cache manager
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<number, boolean>
+  >(() => issuesUiStateManager.getCollapsedGroups(copanyId));
+
+  const toggleGroupCollapse = useCallback(
+    (state: number) => {
+      setCollapsedGroups((prev) => {
+        const next = { ...prev, [state]: !prev[state] } as Record<
+          number,
+          boolean
+        >;
+        issuesUiStateManager.setCollapsedGroups(copanyId, next);
+        return next;
+      });
+    },
+    [copanyId]
+  );
+
+  // When copanyId changes, reload UI state from cache (CSR only)
+  useEffect(() => {
+    setCollapsedGroups(issuesUiStateManager.getCollapsedGroups(copanyId));
+  }, [copanyId]);
 
   // Create IssuesManager instance with data update callback
   const issuesManagerWithCallback = useMemo(() => {
@@ -152,6 +209,122 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     loadUserData();
   }, [loadIssues, loadUserData]);
 
+  // Compute per-issue permissions for current list
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          issues.map(async (it) => {
+            const allowed = await issuePermissionManager.canEditIssue(
+              copanyId,
+              it
+            );
+            return [String(it.id), !!allowed] as const;
+          })
+        );
+        if (cancelled) return;
+        const map: Record<string, boolean> = {};
+        for (const [id, allowed] of entries) map[id] = allowed;
+        setCanEditByIssue(map);
+      } catch (_) {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [issues, copanyId]);
+
+  // NOTE: lazy reviewers loading is defined below after filteredIssues
+
+  const renderReviewBadge = (issue: IssueWithAssignee) => {
+    if (issue.state !== IssueState.InReview) return null;
+    const list = reviewersByIssue[String(issue.id)] || [];
+    if (list.length === 0) return null;
+    const meId = currentUser?.id ? String(currentUser.id) : null;
+    const hasApproved = list.some((r) => r.status === "approved");
+    const needsMyReview = !!(
+      meId &&
+      list.some(
+        (r) => String(r.reviewer_id) === meId && r.status === "requested"
+      )
+    );
+    if (hasApproved) {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          <CheckIcon className="w-4 h-4 text-[#058E00]" />
+          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+            approved
+          </span>
+        </div>
+      );
+    } else if (needsMyReview) {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          <div className="w-4 h-4 flex items-center justify-center">
+            <div className="w-1 h-1 rounded-full bg-yellow-600" />
+          </div>
+          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+            needs your review
+          </span>
+        </div>
+      );
+    } else {
+      return null;
+    }
+  };
+
+  // Filtered issues by search query
+  const filteredIssues = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return issues;
+    return issues.filter((issue) => {
+      const title = (issue.title || "").toLowerCase();
+      const idStr = String(issue.id || "");
+      return title.includes(q) || idStr.includes(q);
+    });
+  }, [issues, searchQuery]);
+
+  // Lazy load reviewers for currently visible InReview issues
+  useEffect(() => {
+    const target = filteredIssues
+      .filter((it) => it.state === IssueState.InReview)
+      .map((it) => String(it.id));
+    const missing = target.filter(
+      (id) =>
+        reviewersByIssue[id] === undefined &&
+        !loadingReviewersRef.current.has(id)
+    );
+    if (missing.length === 0) return;
+    // mark loading to avoid duplicate requests
+    missing.forEach((id) => loadingReviewersRef.current.add(id));
+    (async () => {
+      try {
+        const results = await Promise.all(
+          missing.map(async (id) => {
+            try {
+              const rs = await issueReviewersManager.getReviewers(id, () =>
+                listIssueReviewersAction(id)
+              );
+              return [id, rs] as const;
+            } catch (e) {
+              console.error("Failed to load reviewers", { id, e });
+              return [id, [] as IssueReviewer[]] as const;
+            }
+          })
+        );
+        setReviewersByIssue((prev) => {
+          const next = { ...prev } as Record<string, IssueReviewer[]>;
+          for (const [id, rs] of results) next[id] = rs;
+          return next;
+        });
+      } finally {
+        missing.forEach((id) => loadingReviewersRef.current.delete(id));
+      }
+    })();
+  }, [filteredIssues, reviewersByIssue]);
+
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
@@ -171,10 +344,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       setIssues((prevIssues) => {
         const updatedIssues = prevIssues.map((issue) => {
           if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              state: newState,
-            };
+            // Optimistically update state only; closed_at handled centrally by cache layer and then corrected by server response
+            const updatedIssue = { ...issue, state: newState };
             // Update single issue cache
             issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
             return updatedIssue;
@@ -337,24 +508,79 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           buttonIcon={<PlusIcon className="w-4 h-4" />}
           buttonTitle="New Issue"
           buttonAction={() => setIsModalOpen(true)}
+          buttonDisabled={!currentUser}
+          buttonTooltip="Sign in to create an issue"
         />
         {createIssueModal()}
       </div>
     );
   }
 
+  const newIssueButton = (disabled: boolean) => {
+    return (
+      <Button
+        onClick={() => setIsModalOpen(true)}
+        className="min-w-24"
+        size="md"
+        disabled={disabled}
+      >
+        New Issue
+      </Button>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between md:px-4 px-0">
-        <Button onClick={() => setIsModalOpen(true)} className="" size="md">
-          New Issue
-        </Button>
+      <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
+        {!currentUser ? (
+          <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="inline-block">{newIssueButton(true)}</div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="bottom"
+                  sideOffset={8}
+                  align="start"
+                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                >
+                  Sign in to create an issue
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        ) : (
+          newIssueButton(false)
+        )}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchQuery(value);
+            const params = new URLSearchParams(searchParams.toString());
+            if (value.trim()) {
+              params.set("q", value);
+            } else {
+              params.delete("q");
+            }
+            const qs = params.toString();
+            // Keep on the same path and update only query string
+            router.replace(qs ? `?${qs}` : "?");
+          }}
+          placeholder="Search issues"
+          className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
+        />
       </div>
       <div className="relative">
-        {groupIssuesByState(issues).map((group) => (
+        {groupIssuesByState(filteredIssues).map((group) => (
           <div key={group.state} className="">
-            {/* Group title */}
-            <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
+            {/* Group title (click to toggle collapse) */}
+            <div
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+              onClick={() => toggleGroupCollapse(group.state)}
+            >
               <div className="flex flex-row items-center gap-2">
                 {group.label}
                 <span className="text-base text-gray-600 dark:text-gray-400">
@@ -363,52 +589,81 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               </div>
             </div>
 
-            {/* Issues in this state */}
-            {group.issues.map((issue) => (
-              <div
-                className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
-                key={issue.id}
-                onClick={() => {
-                  // Keep current URL parameters
-                  const params = new URLSearchParams(searchParams.toString());
-                  router.push(
-                    `/copany/${copanyId}/issue/${issue.id}?${params.toString()}`
-                  );
-                }}
-                onContextMenu={(e) => handleContextMenu(e, issue.id)}
-              >
-                <IssueStateSelector
-                  issueId={issue.id}
-                  initialState={issue.state}
-                  showText={false}
-                  onStateChange={handleIssueStateUpdated}
-                />
-                <IssuePrioritySelector
-                  issueId={issue.id}
-                  initialPriority={issue.priority}
-                  showText={false}
-                  onPriorityChange={handleIssuePriorityUpdated}
-                />
-                <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
-                  {issue.title || "No title"}
-                </div>
-                <IssueLevelSelector
-                  issueId={issue.id}
-                  initialLevel={issue.level}
-                  showText={false}
-                  onLevelChange={handleIssueLevelUpdated}
-                />
-                <IssueAssigneeSelector
-                  issueId={issue.id}
-                  initialAssignee={issue.assignee}
-                  assigneeUser={issue.assignee_user}
-                  currentUser={currentUser}
-                  contributors={contributors}
-                  showText={false}
-                  onAssigneeChange={handleIssueAssigneeUpdated}
-                />
-              </div>
-            ))}
+            {/* Issues in this state (hidden when collapsed) */}
+            {!collapsedGroups[group.state] &&
+              group.issues.map((issue) => {
+                const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
+                return (
+                  <div
+                    className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                    key={issue.id}
+                    onClick={() => {
+                      // Keep current URL parameters
+                      const params = new URLSearchParams(
+                        searchParams.toString()
+                      );
+                      router.push(
+                        `/copany/${copanyId}/issue/${
+                          issue.id
+                        }?${params.toString()}`
+                      );
+                    }}
+                    onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                  >
+                    <IssueStateSelector
+                      issueId={issue.id}
+                      initialState={issue.state}
+                      showText={false}
+                      readOnly={readOnly}
+                      onStateChange={handleIssueStateUpdated}
+                      onServerUpdated={(serverIssue) => {
+                        setIssues((prev) => {
+                          const updated = prev.map((it) =>
+                            it.id === serverIssue.id ? serverIssue : it
+                          );
+                          issuesManagerWithCallback.updateIssue(
+                            copanyId,
+                            serverIssue
+                          );
+                          issuesManagerWithCallback.setIssues(
+                            copanyId,
+                            updated
+                          );
+                          return updated;
+                        });
+                      }}
+                    />
+                    <IssuePrioritySelector
+                      issueId={issue.id}
+                      initialPriority={issue.priority}
+                      showText={false}
+                      onPriorityChange={handleIssuePriorityUpdated}
+                      readOnly={readOnly}
+                    />
+                    <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full flex items-center gap-2">
+                      <span>{issue.title || "No title"}</span>
+                      {renderReviewBadge(issue)}
+                    </div>
+                    <IssueLevelSelector
+                      issueId={issue.id}
+                      initialLevel={issue.level}
+                      showText={false}
+                      onLevelChange={handleIssueLevelUpdated}
+                      readOnly={readOnly}
+                    />
+                    <IssueAssigneeSelector
+                      issueId={issue.id}
+                      initialAssignee={issue.assignee}
+                      assigneeUser={issue.assignee_user}
+                      currentUser={currentUser}
+                      contributors={contributors}
+                      showText={false}
+                      onAssigneeChange={handleIssueAssigneeUpdated}
+                      readOnly={readOnly}
+                    />
+                  </div>
+                );
+              })}
           </div>
         ))}
 

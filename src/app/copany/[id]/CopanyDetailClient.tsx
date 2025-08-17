@@ -138,7 +138,7 @@ export default function CopanyDetailClient({
   ];
 
   return (
-    <div className="p-8 max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
+    <div className="p-6 max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">

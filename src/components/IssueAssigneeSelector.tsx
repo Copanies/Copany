@@ -120,6 +120,8 @@ export default function IssueAssigneeSelector({
         {
           value: "unassigned",
           label: renderUnassignedLabel(true),
+          disabled: readOnly,
+          tooltip: readOnly ? "No permission to edit" : undefined,
         },
       ],
     });
@@ -136,6 +138,8 @@ export default function IssueAssigneeSelector({
               currentUser.user_metadata?.avatar_url || null,
               true
             ),
+            disabled: readOnly,
+            tooltip: readOnly ? "No permission to edit" : undefined,
           },
         ],
       });
@@ -157,6 +161,8 @@ export default function IssueAssigneeSelector({
             contributor.avatar_url,
             true
           ),
+          disabled: readOnly,
+          tooltip: readOnly ? "No permission to edit" : undefined,
         })),
       });
     }
@@ -216,7 +222,7 @@ export default function IssueAssigneeSelector({
       selectedValue={selectedValue}
       onSelect={handleAssigneeChange}
       showBackground={showBackground}
-      disabled={readOnly}
+      disabled={false}
     />
   );
 }
@@ -237,7 +243,7 @@ export function renderUserLabel(
           className="w-[22px] h-[22px] rounded-full"
         />
       ) : (
-        <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300">
+        <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
           {name}
         </div>
       )}

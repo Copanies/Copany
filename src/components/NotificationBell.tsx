@@ -324,6 +324,8 @@ export default function NotificationBell() {
         return "Todo";
       case IssueState.InProgress:
         return "In Progress";
+      case IssueState.InReview:
+        return "In Review";
       case IssueState.Done:
         return "Done";
       case IssueState.Canceled:
@@ -468,7 +470,7 @@ export default function NotificationBell() {
                 ? actorUsers[n.actor_id].name
                 : "System"}
             </span>
-            <span className="ml-auto text-xs text-gray-400 md:hidden">
+            <span className="ml-auto text-sm text-gray-400 md:hidden">
               {formatRelativeTime(n.created_at)}
             </span>
           </div>
@@ -476,7 +478,7 @@ export default function NotificationBell() {
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {simpleText(n)}
             </span>
-            <span className="hidden md:inline md:ml-auto text-xs text-gray-400">
+            <span className="hidden md:inline md:ml-auto text-sm text-gray-400">
               {formatRelativeTime(n.created_at)}
             </span>
           </div>

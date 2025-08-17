@@ -64,6 +64,8 @@ export default function IssueLevelSelector({
   const levelOptions = allLevels.map((level) => ({
     value: level,
     label: renderLevelLabel(level, true),
+    disabled: readOnly,
+    tooltip: readOnly ? "No permission to edit" : undefined,
   }));
 
   return (
@@ -73,7 +75,7 @@ export default function IssueLevelSelector({
       selectedValue={currentLevel}
       onSelect={handleLevelChange}
       showBackground={showBackground}
-      disabled={readOnly}
+      disabled={false}
     />
   );
 }
@@ -100,7 +102,7 @@ export function renderLevelLabel(level: number | null, showText: boolean) {
 
   return (
     <div className="flex flex-row items-center gap-2">
-      <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-full px-[6px] py-[1px] min-w-[24px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
+      <div className="border border-gray-300 dark:border-gray-600 rounded-full px-[6px] py-[1px] min-w-[24px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
         <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center">
           {symbol}
         </span>

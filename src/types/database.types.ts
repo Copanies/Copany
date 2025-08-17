@@ -75,6 +75,7 @@ export enum IssueState {
   Backlog = 1,
   Todo = 2,
   InProgress = 3,
+  InReview = 7,
   Done = 4,
   Canceled = 5,
   Duplicate = 6,
@@ -176,7 +177,9 @@ export type IssueActivityType =
   | "priority_changed"
   | "level_changed"
   | "assignee_changed"
-  | "issue_closed";
+  | "issue_closed"
+  | "review_requested"
+  | "review_approved";
 
 export interface IssueActivityPayload {
   issue_title?: string | null;
@@ -192,6 +195,8 @@ export interface IssueActivityPayload {
   to_user_id?: string | null;
   from_user_name?: string | null;
   to_user_name?: string | null;
+  reviewer_id?: string | null;
+  reviewer_name?: string | null;
   [key: string]: unknown;
 }
 
@@ -203,4 +208,16 @@ export interface IssueActivity {
   actor_id: string | null;
   type: IssueActivityType;
   payload: IssueActivityPayload;
+}
+
+// Issue Reviewer
+export type ReviewerStatus = "requested" | "approved";
+
+export interface IssueReviewer {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  issue_id: string;
+  reviewer_id: string;
+  status: ReviewerStatus;
 }

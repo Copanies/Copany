@@ -28,6 +28,7 @@ export async function createIssueAction(
     ...issue,
     created_by: user.id,
   });
+  // Note: activities for initial properties are logged by DB trigger on insert.
   if (newIssue.state === IssueState.Done && newIssue.copany_id) {
     await CopanyContributorService.createCopanyContributor(
       newIssue.copany_id,

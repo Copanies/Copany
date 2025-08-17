@@ -1,7 +1,7 @@
 import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "approve";
   size?: "sm" | "md" | "lg";
   children: React.ReactNode;
   shape?: "rectangle" | "square";
@@ -27,6 +27,8 @@ export default function Button({
       "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent dark:border-transparent text-gray-700 dark:text-gray-300",
     danger:
       "bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300",
+    approve:
+      "bg-[#058E00] hover:bg-[#058E00]/80 dark:bg-[#058E00] dark:hover:bg-[#058E00]/80 text-white dark:text-white border-transparent",
   };
 
   const sizeClasses = {

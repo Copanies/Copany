@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { IssueState } from "@/types/database.types";
+import { useEffect, useMemo, useState } from "react";
+import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
+import Image from "next/image";
+import InreviewIcon from "@/assets/in_review_state.svg";
+import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
+import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import { issueReviewersManager } from "@/utils/cache";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -13,6 +19,7 @@ interface IssueStateSelectorProps {
   onStateChange?: (issueId: string, newState: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  onServerUpdated?: (updatedIssue: IssueWithAssignee) => void;
 }
 
 export default function IssueStateSelector({
@@ -23,8 +30,38 @@ export default function IssueStateSelector({
   onStateChange,
   disableServerUpdate = false,
   readOnly = false,
+  onServerUpdated,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
+  const [hasApprovedReview, setHasApprovedReview] = useState<boolean>(false);
+  const [isLoadingReviewers, setIsLoadingReviewers] = useState<boolean>(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (currentState !== IssueState.InReview) {
+        if (mounted) setHasApprovedReview(false);
+        return;
+      }
+      try {
+        setIsLoadingReviewers(true);
+        const reviewers = await issueReviewersManager.getReviewers(
+          issueId,
+          () => listIssueReviewersAction(issueId)
+        );
+        if (!mounted) return;
+        setHasApprovedReview(reviewers.some((r) => r.status === "approved"));
+      } catch (_) {
+        if (mounted) setHasApprovedReview(false);
+      } finally {
+        if (mounted) setIsLoadingReviewers(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [issueId, currentState]);
 
   const handleStateChange = async (newState: number) => {
     if (readOnly) return;
@@ -38,7 +75,11 @@ export default function IssueStateSelector({
 
       // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssueStateAction(issueId, newState);
+        const updatedIssue = await updateIssueStateAction(issueId, newState);
+        // Notify server-updated result so parent can overwrite cache/state with authoritative data
+        if (onServerUpdated) {
+          onServerUpdated(updatedIssue);
+        }
         console.log("State updated successfully:", newState);
       }
     } catch (error) {
@@ -52,20 +93,45 @@ export default function IssueStateSelector({
     }
   };
 
-  // Get all available states
-  const allStates = [
-    IssueState.Backlog,
-    IssueState.Todo,
-    IssueState.InProgress,
-    IssueState.Done,
-    IssueState.Canceled,
-    IssueState.Duplicate,
-  ];
-
-  const stateOptions = allStates.map((state) => ({
-    value: state,
-    label: renderStateLabel(state, true),
-  }));
+  // Build state options with conditional disabling for Done
+  const stateOptions = useMemo(() => {
+    const allStates = [
+      IssueState.Backlog,
+      IssueState.Todo,
+      IssueState.InProgress,
+      IssueState.InReview,
+      IssueState.Done,
+      IssueState.Canceled,
+      IssueState.Duplicate,
+    ];
+    const allowDone =
+      currentState === IssueState.InReview && hasApprovedReview === true;
+    const doneTooltip = (() => {
+      if (allowDone) return undefined;
+      if (currentState !== IssueState.InReview)
+        return "Only allowed after review";
+      if (!hasApprovedReview) return "Requires at least one approval";
+      return undefined;
+    })();
+    const base = allStates.map((state) => ({
+      value: state,
+      label: renderStateLabel(state, true),
+      disabled:
+        state === IssueState.Done &&
+        !allowDone &&
+        !isLoadingReviewers &&
+        !readOnly,
+      tooltip: state === IssueState.Done ? doneTooltip : undefined,
+    }));
+    if (readOnly) {
+      return base.map((opt) => ({
+        ...opt,
+        disabled: true,
+        tooltip: "No permission to edit",
+      }));
+    }
+    return base;
+  }, [currentState, hasApprovedReview, isLoadingReviewers, readOnly]);
 
   return (
     <Dropdown
@@ -74,7 +140,7 @@ export default function IssueStateSelector({
       selectedValue={currentState}
       onSelect={handleStateChange}
       showBackground={showBackground}
-      disabled={readOnly}
+      disabled={false}
     />
   );
 }
@@ -91,6 +157,8 @@ export function renderStateLabel(
       return <TodoLabel showText={showText} colorful={colorful} />;
     case IssueState.InProgress:
       return <InProgressLabel showText={showText} colorful={colorful} />;
+    case IssueState.InReview:
+      return <InReviewLabel showText={showText} colorful={colorful} />;
     case IssueState.Done:
       return <DoneLabel showText={showText} colorful={colorful} />;
     case IssueState.Canceled:
@@ -196,6 +264,35 @@ function InProgressLabel({
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           In Progress
+        </span>
+      )}
+    </div>
+  );
+}
+
+function InReviewLabel({
+  showText,
+  colorful,
+}: {
+  showText: boolean;
+  colorful: boolean;
+}) {
+  const isDarkMode = useDarkMode();
+  return (
+    <div
+      className={`flex flex-row items-center gap-2 ${
+        colorful ? "text-indigo-600" : "text-gray-500 dark:text-gray-500"
+      }`}
+    >
+      <Image
+        src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
+        width={20}
+        height={20}
+        alt="In Review"
+      />
+      {showText && (
+        <span className="text-base text-gray-900 dark:text-gray-100">
+          In Review
         </span>
       )}
     </div>

@@ -9,7 +9,9 @@ import {
   IssuePriority,
   IssueState,
   IssueLevel,
+  type IssueReviewer,
 } from "@/types/database.types";
+import { IssueReviewerService } from "./issueReviewer.service";
 
 export class IssueService {
   static async getIssues(copanyId: string): Promise<IssueWithAssignee[]> {
@@ -175,6 +177,19 @@ export class IssueService {
     issueId: string,
     state: IssueState
   ): Promise<IssueWithAssignee> {
+    // Enforce rule: Only allow moving to Done when InReview and has at least one approval
+    if (state === IssueState.Done) {
+      const current = await this.getIssue(issueId);
+      if (current.state !== IssueState.InReview) {
+        throw new Error("Only allowed after review");
+      }
+      const reviewers: IssueReviewer[] = await IssueReviewerService.list(issueId);
+      const hasApproved = reviewers.some((r) => r.status === "approved");
+      if (!hasApproved) {
+        throw new Error("Requires at least one approval");
+      }
+    }
+
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")

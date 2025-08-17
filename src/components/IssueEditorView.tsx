@@ -25,6 +25,7 @@ export default function IssueEditorView({
     issueData.description || ""
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [focusDescSignal, setFocusDescSignal] = useState<number>(0);
   const [saveError, setSaveError] = useState<string | null>(null);
   const editorDivRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -223,6 +224,11 @@ export default function IssueEditorView({
     };
   }, []);
 
+  // Focus description editor on mount (without scrolling)
+  useEffect(() => {
+    setFocusDescSignal((x) => x + 1);
+  }, []);
+
   // The initial content is only set once when the component is mounted
   const [initialContent] = useState(issueData.description || "");
 
@@ -261,6 +267,7 @@ export default function IssueEditorView({
               onContentChange={handleContentChange}
               initialContent={initialContent}
               isReadonly={isReadonly}
+              focusSignal={focusDescSignal}
             />
           </div>
         </div>

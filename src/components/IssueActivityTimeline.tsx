@@ -31,14 +31,22 @@ import { issueCommentsManager } from "@/utils/cache";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import IssueCommentCard from "@/components/IssueCommentCard";
+import IssueReviewPanel from "@/components/IssueReviewPanel";
 
 interface IssueActivityTimelineProps {
   issueId: string;
+  canEdit: boolean;
+  issueState?: number | null;
+  issueLevel?: number | null;
 }
 
 export default function IssueActivityTimeline({
   issueId,
+  canEdit,
+  issueState,
+  issueLevel,
 }: IssueActivityTimelineProps) {
   const [items, setItems] = useState<IssueActivity[]>([]);
   const [comments, setComments] = useState<IssueComment[]>([]);
@@ -51,10 +59,14 @@ export default function IssueActivityTimeline({
   const [replyContent, setReplyContent] = useState<string>("");
   const [newCommentContent, setNewCommentContent] = useState<string>("");
   const [newCommentKey, setNewCommentKey] = useState<number>(Math.random());
+  const [newCommentFocusSignal, setNewCommentFocusSignal] = useState<
+    number | undefined
+  >(undefined);
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
   const [userInfos, setUserInfos] = useState<
     Record<string, { name: string; email: string; avatar_url: string }>
   >({});
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -82,11 +94,14 @@ export default function IssueActivityTimeline({
         const me = await currentUserManager.getCurrentUser();
         if (me?.id) {
           idSet.add(String(me.id));
+          console.log("currentUserManager me", me);
+          setCurrentUser({ id: String(me.id) });
         }
       } catch (e) {
         // ignore if unauthenticated
         console.error(e);
       }
+
       const ids = Array.from(idSet);
       if (ids.length > 0) {
         const users = await userInfoManager.getMultipleUserInfo(ids);
@@ -100,8 +115,8 @@ export default function IssueActivityTimeline({
             email: users[id].email,
             avatar_url: users[id].avatar_url || "",
           };
+          setUserInfos(map);
         }
-        setUserInfos(map);
       }
     };
     load();
@@ -116,6 +131,8 @@ export default function IssueActivityTimeline({
         return "Todo";
       case IssueState.InProgress:
         return "In Progress";
+      case IssueState.InReview:
+        return "In Review";
       case IssueState.Done:
         return "Done";
       case IssueState.Canceled:
@@ -209,6 +226,28 @@ export default function IssueActivityTimeline({
           <>
             <span className="font-medium">{who}</span> changed the assignee to{" "}
             {toLabel}
+          </>
+        );
+      }
+      case "review_requested": {
+        const name =
+          p.reviewer_name ||
+          (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{who}</span> requested review from{" "}
+            {name || "a reviewer"}
+          </>
+        );
+      }
+      case "review_approved": {
+        const name =
+          p.reviewer_name ||
+          (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{who}</span> approved the review (
+            {name || "reviewer"})
           </>
         );
       }
@@ -417,6 +456,7 @@ export default function IssueActivityTimeline({
           onSaveEdit={handleSaveEdit}
           onDelete={handleDelete}
           isSubmitting={isSubmitting}
+          isLoggedIn={!!currentUser}
         />
       </div>
     );
@@ -448,43 +488,92 @@ export default function IssueActivityTimeline({
         </div>
       ))}
 
+      {/* Reviewer panel at the bottom, above new comment composer */}
+      <IssueReviewPanel
+        issueId={issueId}
+        issueState={issueState ?? null}
+        issueLevel={issueLevel ?? null}
+        meId={currentUser?.id ?? null}
+        canEdit={canEdit}
+        onFocusNewComment={() =>
+          setNewCommentFocusSignal((x) => (x == null ? 1 : x + 1))
+        }
+        onActivityChanged={async () => {
+          const fresh = await listIssueActivityAction(issueId, 200);
+          setItems(fresh);
+        }}
+      />
+
       {/* New root comment composer */}
-      <div className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
+      <div
+        className="-ml-3 border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit"
+        id="new-comment-composer"
+      >
         <div className="h-fit px-1">
           <MilkdownEditor
-            key={newCommentKey}
+            key={`${newCommentKey}-${currentUser ? "logged-in" : "logged-out"}`}
             onContentChange={setNewCommentContent}
             initialContent=""
-            placeholder="Leave a comment..."
+            placeholder={
+              currentUser
+                ? "Leave a comment..."
+                : "Sign in to join the discussion"
+            }
+            focusSignal={newCommentFocusSignal}
+            isReadonly={!currentUser}
           />
         </div>
         <div className="flex justify-end p-2">
-          <Button
-            onClick={async () => {
-              if (!newCommentContent.trim()) return;
-              try {
-                setIsSubmitting(true);
-                const newComment = await createIssueCommentAction(
-                  issueId,
-                  newCommentContent
-                );
-                issueCommentsManager.addComment(issueId, newComment);
-                setComments((prev) => [...prev, newComment]);
-                setNewCommentContent("");
-                setNewCommentKey(Math.random());
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            disabled={isSubmitting || !newCommentContent.trim()}
-            shape="square"
-            size="sm"
-            className="!p-1"
-          >
-            <ArrowUpIcon className="w-4 h-4" />
-          </Button>
+          {currentUser ? (
+            <Button
+              onClick={async () => {
+                if (!newCommentContent.trim()) return;
+                try {
+                  setIsSubmitting(true);
+                  const newComment = await createIssueCommentAction(
+                    issueId,
+                    newCommentContent
+                  );
+                  issueCommentsManager.addComment(issueId, newComment);
+                  setComments((prev) => [...prev, newComment]);
+                  setNewCommentContent("");
+                  setNewCommentKey(Math.random());
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting || !newCommentContent.trim()}
+              shape="square"
+              size="sm"
+              className="!p-1"
+            >
+              <ArrowUpIcon className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="inline-block">
+                    <Button disabled shape="square" size="sm" className="!p-1">
+                      <ArrowUpIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="top"
+                    sideOffset={8}
+                    align="end"
+                    className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                  >
+                    Sign in to join the discussion
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          )}
         </div>
       </div>
     </div>

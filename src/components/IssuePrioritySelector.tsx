@@ -64,6 +64,8 @@ export default function IssuePrioritySelector({
   const priorityOptions = allPriorities.map((priority) => ({
     value: priority,
     label: renderPriorityLabel(priority, true),
+    disabled: readOnly,
+    tooltip: readOnly ? "No permission to edit" : undefined,
   }));
 
   return (
@@ -73,7 +75,7 @@ export default function IssuePrioritySelector({
       selectedValue={currentPriority}
       onSelect={handlePriorityChange}
       showBackground={showBackground}
-      disabled={readOnly}
+      disabled={false}
     />
   );
 }

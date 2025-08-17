@@ -447,7 +447,7 @@ export default function ContributionPieChart({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {data.user.id === "others" ? (
                   <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       {data.mergedUsers?.length}
                     </span>
                   </div>
@@ -464,7 +464,7 @@ export default function ContributionPieChart({
                   <div className="font-semibold text-sm truncate text-gray-900 dark:text-gray-100">
                     {data.user.name}
                   </div>
-                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     {data.totalScore} P - {Math.round(data.percentage)}%
                   </div>
                 </div>
@@ -490,7 +490,7 @@ export default function ContributionPieChart({
           <div className="flex items-center gap-2 mb-3">
             {tooltipData.user.id === "others" ? (
               <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {tooltipData.mergedUsers?.length}
                 </span>
               </div>
@@ -507,7 +507,7 @@ export default function ContributionPieChart({
               <div className="font-semibold text-gray-900 dark:text-gray-100">
                 {tooltipData.user.name}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {tooltipData.user.id === "others"
                   ? `Combined ${tooltipData.mergedUsers?.length} contributions below 5%`
                   : tooltipData.user.email}
@@ -524,7 +524,7 @@ export default function ContributionPieChart({
               {tooltipData.mergedUsers.map((user) => (
                 <div
                   key={user.user.id}
-                  className="flex items-center gap-2 py-1 text-xs text-gray-600 dark:text-gray-400"
+                  className="flex items-center gap-2 py-1 text-sm text-gray-600 dark:text-gray-400"
                 >
                   <span>• {user.user.name}</span>
                   <span className="text-gray-500">

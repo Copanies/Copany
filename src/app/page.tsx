@@ -12,7 +12,7 @@ export default async function Home() {
   return (
     <main className="h-min-screen">
       <MainNavigation />
-      <div className="p-8 max-w-screen-lg mx-auto flex flex-col">
+      <div className="p-6 max-w-screen-lg mx-auto flex flex-col">
         <div className="flex flex-col gap-4 pt-2">
           <CopanyListView copanies={copanies} />
         </div>

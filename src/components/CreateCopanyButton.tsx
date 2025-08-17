@@ -537,13 +537,13 @@ export default function CreateCopanyButton() {
               : "Upload new picture"}
           </Button>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             PNG, JPG, JPEG, GIF, WebP • Max 1MB
           </p>
 
           {/* 错误提示 */}
           {uploadError && (
-            <div className="text-xs text-red-600 dark:text-red-400 text-center">
+            <div className="text-sm text-red-600 dark:text-red-400 text-center">
               {uploadError}
             </div>
           )}
