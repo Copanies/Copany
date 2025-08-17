@@ -621,7 +621,11 @@ export default function MilkdownEditor({
       ) as HTMLElement | null;
       if (!el) return;
       try {
-        el.focus();
+        // Prevent page from scrolling when focusing
+        (el as any).focus?.({ preventScroll: true });
+        if (document.activeElement !== el) {
+          el.focus();
+        }
         const selection = window.getSelection?.();
         if (selection) {
           const range = document.createRange();
