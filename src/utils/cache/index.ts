@@ -41,3 +41,7 @@ export {
   issuesUiStateManager,
 } from "./managers/IssuesUiStateManager";
 export { issuePermissionManager } from "./managers/IssuePermissionManager";
+export {
+  IssueReviewersManager,
+  issueReviewersManager,
+} from "./managers/IssueReviewersManager";

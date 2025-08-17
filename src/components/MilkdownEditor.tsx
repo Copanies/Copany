@@ -622,7 +622,7 @@ export default function MilkdownEditor({
       if (!el) return;
       try {
         // Prevent page from scrolling when focusing
-        (el as any).focus?.({ preventScroll: true });
+        el.focus?.({ preventScroll: true });
         if (document.activeElement !== el) {
           el.focus();
         }
@@ -634,7 +634,7 @@ export default function MilkdownEditor({
           selection.removeAllRanges();
           selection.addRange(range);
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
     };

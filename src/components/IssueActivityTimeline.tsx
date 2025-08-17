@@ -37,12 +37,14 @@ import IssueReviewPanel from "@/components/IssueReviewPanel";
 
 interface IssueActivityTimelineProps {
   issueId: string;
+  canEdit: boolean;
   issueState?: number | null;
   issueLevel?: number | null;
 }
 
 export default function IssueActivityTimeline({
   issueId,
+  canEdit,
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
@@ -489,7 +491,8 @@ export default function IssueActivityTimeline({
         issueId={issueId}
         issueState={issueState ?? null}
         issueLevel={issueLevel ?? null}
-        isLoggedIn={!!currentUser}
+        meId={currentUser?.id ?? null}
+        canEdit={canEdit}
         onFocusNewComment={() => setNewCommentFocusSignal((x) => x + 1)}
         onActivityChanged={async () => {
           const fresh = await listIssueActivityAction(issueId, 200);

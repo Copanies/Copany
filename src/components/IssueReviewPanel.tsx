@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
-import { currentUserManager, userInfoManager } from "@/utils/cache";
+import { userInfoManager, issueReviewersManager } from "@/utils/cache";
 import {
   listIssueReviewersAction,
   approveMyReviewAction,
@@ -20,7 +20,8 @@ interface IssueReviewPanelProps {
   issueId: string;
   issueState: number | null;
   issueLevel: number | null;
-  isLoggedIn: boolean;
+  meId: string | null;
+  canEdit: boolean;
   onFocusNewComment?: () => void;
   onActivityChanged?: () => void | Promise<void>;
 }
@@ -29,15 +30,13 @@ export default function IssueReviewPanel({
   issueId,
   issueState,
   issueLevel,
-  isLoggedIn,
+  meId,
+  canEdit,
   onFocusNewComment,
   onActivityChanged,
 }: IssueReviewPanelProps) {
-  // Only render in In Review state
-  if (issueState !== IssueState.InReview) return null;
   const [reviewers, setReviewers] = useState<IssueReviewer[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [meId, setMeId] = useState<string | null>(null);
   const [userInfos, setUserInfos] = useState<
     Record<string, { name: string; email: string; avatar_url: string }>
   >({});
@@ -59,18 +58,13 @@ export default function IssueReviewPanel({
     return reviewers.some((r) => String(r.reviewer_id) === String(meId));
   }, [reviewers, meId]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     // reviewers
-    const rs = await listIssueReviewersAction(issueId);
+    const rs = await issueReviewersManager.getReviewers(issueId, () =>
+      listIssueReviewersAction(issueId)
+    );
     setReviewers(rs);
-    // current user
-    try {
-      const me = await currentUserManager.getCurrentUser();
-      if (me?.id) setMeId(String(me.id));
-    } catch (e) {
-      // ignore
-      console.error(e);
-    }
+
     // user infos
     const ids = Array.from(new Set(rs.map((r) => String(r.reviewer_id))));
     if (ids.length > 0) {
@@ -90,11 +84,14 @@ export default function IssueReviewPanel({
     } else {
       setUserInfos({});
     }
-  };
+  }, [issueId]);
 
   useEffect(() => {
     load();
-  }, [issueId]);
+  }, [load]);
+
+  // Only render in In Review state (after hooks)
+  if (issueState !== IssueState.InReview) return null;
 
   return (
     <div
@@ -191,34 +188,68 @@ export default function IssueReviewPanel({
         </div>
         <div className="flex flex-row gap-2">
           {hasAnyApproved ? (
-            <Button
-              onClick={async () => {
-                try {
-                  setIsSubmitting(true);
-                  await updateIssueStateAction(issueId, IssueState.Done);
-                  if (onActivityChanged) await onActivityChanged();
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSubmitting(false);
-                }
-              }}
-              disabled={isSubmitting}
-              size="sm"
-              variant="approve"
-            >
-              <div className="flex flex-row items-center gap-1">
-                <ArrowRightIcon className="w-4 h-4 text-white" />
-                <span>Mark as Done</span>
-              </div>
-            </Button>
+            !canEdit ? (
+              <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <div className="inline-block">
+                      <Button disabled size="sm" variant="approve">
+                        <div className="flex flex-row items-center gap-1">
+                          <ArrowRightIcon className="w-4 h-4 text-white" />
+                          <span>Mark as Done</span>
+                        </div>
+                      </Button>
+                    </div>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      side="top"
+                      sideOffset={8}
+                      align="center"
+                      className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                    >
+                      No permission to edit
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+            ) : (
+              <Button
+                onClick={async () => {
+                  try {
+                    setIsSubmitting(true);
+                    await updateIssueStateAction(issueId, IssueState.Done);
+                    if (onActivityChanged) await onActivityChanged();
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                disabled={isSubmitting || !meId}
+                size="sm"
+                variant="approve"
+              >
+                <div className="flex flex-row items-center gap-1">
+                  <ArrowRightIcon className="w-4 h-4 text-white" />
+                  <span>Mark as Done</span>
+                </div>
+              </Button>
+            )
           ) : (
             <Button
               onClick={async () => {
                 try {
                   setIsSubmitting(true);
-                  await approveMyReviewAction(issueId);
-                  await load();
+                  const updated = await approveMyReviewAction(issueId);
+                  // 更新缓存中的 Reviewer 状态
+                  issueReviewersManager.updateReviewer(issueId, updated);
+                  // 从缓存读取最新 reviewers
+                  const rs = await issueReviewersManager.getReviewers(
+                    issueId,
+                    () => listIssueReviewersAction(issueId)
+                  );
+                  setReviewers(rs);
                   if (onActivityChanged) await onActivityChanged();
                 } catch (e) {
                   console.error(e);
@@ -226,7 +257,7 @@ export default function IssueReviewPanel({
                   setIsSubmitting(false);
                 }
               }}
-              disabled={isSubmitting || !canApprove}
+              disabled={isSubmitting || !meId || !canApprove}
               size="sm"
               variant="approve"
             >
@@ -236,7 +267,7 @@ export default function IssueReviewPanel({
               </div>
             </Button>
           )}
-          {!hasAnyApproved && isLoggedIn ? (
+          {!hasAnyApproved && meId ? (
             <Button
               size="sm"
               onClick={() => {
@@ -249,7 +280,7 @@ export default function IssueReviewPanel({
                   if (onFocusNewComment) {
                     setTimeout(() => onFocusNewComment(), 220);
                   }
-                } catch (e) {
+                } catch (_e) {
                   // ignore
                 }
               }}
@@ -270,7 +301,7 @@ export default function IssueReviewPanel({
                   <Tooltip.Content
                     side="top"
                     sideOffset={8}
-                    align="end"
+                    align="center"
                     className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
                   >
                     Sign in to join the discussion

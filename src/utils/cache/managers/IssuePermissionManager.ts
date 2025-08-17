@@ -1,4 +1,4 @@
-import type { Copany, IssueWithAssignee, AssigneeUser } from "@/types/database.types";
+import type { Copany, IssueWithAssignee } from "@/types/database.types";
 import { currentUserManager } from "./CurrentUserManager";
 import { copanyManager } from "./CopanyManager";
 import { getCopanyByIdAction } from "@/actions/copany.actions";

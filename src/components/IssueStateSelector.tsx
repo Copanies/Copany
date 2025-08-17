@@ -7,6 +7,7 @@ import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import { issueReviewersManager } from "@/utils/cache";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -42,7 +43,10 @@ export default function IssueStateSelector({
       }
       try {
         setIsLoadingReviewers(true);
-        const reviewers = await listIssueReviewersAction(issueId);
+        const reviewers = await issueReviewersManager.getReviewers(
+          issueId,
+          () => listIssueReviewersAction(issueId)
+        );
         if (!mounted) return;
         setHasApprovedReview(reviewers.some((r) => r.status === "approved"));
       } catch (_) {

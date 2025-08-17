@@ -1,12 +1,5 @@
 "use client";
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
@@ -38,7 +31,7 @@ import { User } from "@supabase/supabase-js";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import { issuePermissionManager } from "@/utils/cache";
+import { issuePermissionManager, issueReviewersManager } from "@/utils/cache";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Function to group issues by state
@@ -315,7 +308,9 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         const results = await Promise.all(
           missing.map(async (id) => {
             try {
-              const rs = await listIssueReviewersAction(id);
+              const rs = await issueReviewersManager.getReviewers(id, () =>
+                listIssueReviewersAction(id)
+              );
               return [id, rs] as const;
             } catch (e) {
               console.error("Failed to load reviewers", { id, e });

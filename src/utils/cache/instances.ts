@@ -7,6 +7,7 @@ import {
   IssueComment,
   Notification,
   IssueActivity,
+  IssueReviewer,
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import { UserInfo } from "@/actions/user.actions";
@@ -147,6 +148,18 @@ export const issueActivityCache = new CacheManager<IssueActivity[], string>(
   },
   undefined,
   (data: IssueActivity[]) => ({ count: data.length })
+);
+
+// Issue reviewers cache instance
+export const issueReviewersCache = new CacheManager<IssueReviewer[], string>(
+  {
+    keyPrefix: "issue_reviewers_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000,
+    loggerName: "IssueReviewersCache",
+    backgroundRefreshInterval: 60 * 1000,
+  },
+  undefined,
+  (data: IssueReviewer[]) => ({ count: data.length })
 );
 
 // Issues UI state cache (per copanyId)

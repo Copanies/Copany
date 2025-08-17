@@ -110,13 +110,30 @@ export default function IssuePageClient({
     };
   }, [issueData, copanyId]);
 
+  const computeEditPermission = useCallback(
+    async (issueData: IssueWithAssignee) => {
+      const allowed = await issuePermissionManager.canEditIssue(
+        copanyId,
+        issueData
+      );
+      setCanEdit(allowed);
+      setReadOnlyTooltip(
+        allowed
+          ? ""
+          : "Only the Copany owner, Issue creator, or current assignee can edit."
+      );
+      setIsPermissionResolved(true);
+    },
+    [copanyId]
+  );
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
 
         // Load user and contributor data
-        const [user, contributorList, copany] = await Promise.all([
+        const [user, contributorList, _copany] = await Promise.all([
           currentUserManager.getCurrentUser(),
           contributorsManager.getContributors(copanyId),
           copanyManager.getCopany(copanyId, async () => {
@@ -172,21 +189,7 @@ export default function IssuePageClient({
     };
 
     loadData();
-  }, [copanyId, issueId]);
-
-  async function computeEditPermission(issueData: IssueWithAssignee) {
-    const allowed = await issuePermissionManager.canEditIssue(
-      copanyId,
-      issueData
-    );
-    setCanEdit(allowed);
-    setReadOnlyTooltip(
-      allowed
-        ? ""
-        : "Only the Copany owner, Issue creator, or current assignee can edit."
-    );
-    setIsPermissionResolved(true);
-  }
+  }, [copanyId, issueId, computeEditPermission]);
 
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
@@ -407,6 +410,7 @@ export default function IssuePageClient({
             {/* Issue activity timeline (includes comments) */}
             <IssueActivityTimeline
               issueId={issueData.id}
+              canEdit={canEdit}
               issueState={issueData.state}
               issueLevel={issueData.level}
             />

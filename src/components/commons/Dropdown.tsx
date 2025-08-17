@@ -377,7 +377,6 @@ export default function Dropdown({
                               className="z-[9999] rounded bg-white text-gray-900 text-sm px-2 py-1 shadow-lg border border-gray-200"
                             >
                               {option.tooltip}
-                              <Tooltip.Arrow className="fill-white" />
                             </Tooltip.Content>
                           </Tooltip.Portal>
                         )}
