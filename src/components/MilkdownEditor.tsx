@@ -650,10 +650,17 @@ export default function MilkdownEditor({
   return (
     <>
       <style>{nordThemeStyles}</style>
-      <div
-        ref={divRef}
-        className={`milkdown-editor milkdown prose prose-sm max-w-none ${className}`}
-      />
+      <div className={`relative`}>
+        <div
+          ref={divRef}
+          className={`milkdown-editor milkdown prose prose-sm max-w-none ${className}`}
+        />
+        {isReadonly && !initialContent && (
+          <div className="absolute left-[12px] top-[12px] text-base pointer-events-none select-none text-gray-400 dark:text-gray-500">
+            {placeholder}
+          </div>
+        )}
+      </div>
     </>
   );
 }

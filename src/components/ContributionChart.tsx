@@ -569,7 +569,7 @@ function UserChart({
           monthIssues.length > 0
             ? `
           <div class="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-            <div class="text-xs font-medium text-gray-700 dark:text-gray-300">
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
               Related Issues${
                 type === "line" ? ` (${monthIssues.length})` : ""
               }:
@@ -578,7 +578,7 @@ function UserChart({
               ${monthIssues
                 .map(
                   (issue) => `
-                <div class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                <div class="text-sm text-gray-600 dark:text-gray-400 truncate">
                   • ${issue.title}
                 </div>
               `
@@ -898,7 +898,7 @@ function UserChart({
                       {tooltipData.issues.map((issue) => (
                         <div
                           key={issue.id}
-                          className="text-xs text-gray-600 dark:text-gray-400 break-words"
+                          className="text-sm text-gray-600 dark:text-gray-400 break-words"
                           title={issue.title}
                         >
                           • {issue.title}
@@ -949,7 +949,7 @@ function UserChart({
                       {tooltipData.issues.map((issue) => (
                         <div
                           key={issue.id}
-                          className="text-xs text-gray-600 dark:text-gray-400 break-words"
+                          className="text-sm text-gray-600 dark:text-gray-400 break-words"
                           title={issue.title}
                         >
                           • {issue.title}
@@ -964,7 +964,7 @@ function UserChart({
       )}
 
       {/* Legend */}
-      <div className="flex flex-row mt-2 gap-3 justify-between font-semibold text-xs">
+      <div className="flex flex-row mt-2 gap-3 justify-between font-semibold text-sm">
         <div className="flex gap-3 flex-wrap gap-y-1">
           {/* Issue Level Legend */}
           {displayLevels.map((level) => (

@@ -21,6 +21,7 @@ import {
   contributorsManager,
   issuesManager,
   copanyManager,
+  issuePermissionManager,
 } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
@@ -29,6 +30,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -144,7 +146,7 @@ export default function IssuePageClient({
 
         // Compute edit permission
         if (cachedData) {
-          computeEditPermission(cachedData, user, copany);
+          await computeEditPermission(cachedData);
         }
 
         setIsLoading(false);
@@ -156,7 +158,7 @@ export default function IssuePageClient({
           freshIssueData?.title
         );
         setIssueData(freshIssueData);
-        computeEditPermission(freshIssueData, user, copany);
+        await computeEditPermission(freshIssueData);
         // Update cache
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
@@ -172,39 +174,17 @@ export default function IssuePageClient({
     loadData();
   }, [copanyId, issueId]);
 
-  function computeEditPermission(
-    issueData: IssueWithAssignee,
-    user: User | null,
-    copany: Copany | null
-  ) {
-    // Compute edit permission
-    const uid = user?.id;
-    const isCreator = !!(uid && issueData && issueData.created_by === uid);
-    const isAssignee = !!(uid && issueData && issueData.assignee === uid);
-    const isOwner = !!(uid && copany && copany.created_by === uid);
-
-    const allowed = !!(
-      uid &&
-      issueData &&
-      (isCreator || isAssignee || isOwner)
+  async function computeEditPermission(issueData: IssueWithAssignee) {
+    const allowed = await issuePermissionManager.canEditIssue(
+      copanyId,
+      issueData
     );
     setCanEdit(allowed);
-
-    if (!allowed) {
-      if (!uid) {
-        setReadOnlyTooltip(
-          "Unlogged users do not have edit permissions. Please log in and try again."
-        );
-      } else {
-        const reasonLines = [
-          "You currently do not have edit permissions. Only the Copany creator, Issue creator, or current assignee can edit.",
-        ];
-        setReadOnlyTooltip(reasonLines.join("\n"));
-      }
-    } else {
-      setReadOnlyTooltip("");
-    }
-
+    setReadOnlyTooltip(
+      allowed
+        ? ""
+        : "Only the Copany owner, Issue creator, or current assignee can edit."
+    );
     setIsPermissionResolved(true);
   }
 
@@ -348,20 +328,29 @@ export default function IssuePageClient({
           <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
         {isPermissionResolved && !canEdit && (
-          <div className="relative group">
-            <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px]">
-              <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-gray-500 dark:text-gray-400 text-sm">
-                Read only
-              </span>
-            </div>
-            <div className="pointer-events-none absolute left-0 top-full mt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              <div className="w-80 md:w-96 whitespace-pre-line break-words px-3 py-2 rounded-md text-xs text-gray-100 bg-gray-900/90 shadow-lg border border-gray-700">
-                {readOnlyTooltip ||
-                  "Only Copany owner, Issue creator or current assignee can edit."}
-              </div>
-            </div>
-          </div>
+          <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="flex flex-row items-center w-fit gap-1 text-base bg-gray-100 dark:bg-gray-900 rounded-md px-2 py-[5px] cursor-default">
+                  <EyeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">
+                    Read only
+                  </span>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="bottom"
+                  sideOffset={8}
+                  align="start"
+                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 w-80 md:w-96 whitespace-pre-line break-words"
+                >
+                  {readOnlyTooltip ||
+                    "Only the Copany owner, Issue creator, or current assignee can edit."}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         )}
       </div>
       <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto md:gap-6">

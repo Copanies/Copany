@@ -31,6 +31,7 @@ import { issueCommentsManager } from "@/utils/cache";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import IssueCommentCard from "@/components/IssueCommentCard";
 import IssueReviewPanel from "@/components/IssueReviewPanel";
 
@@ -61,6 +62,7 @@ export default function IssueActivityTimeline({
   const [userInfos, setUserInfos] = useState<
     Record<string, { name: string; email: string; avatar_url: string }>
   >({});
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -88,6 +90,8 @@ export default function IssueActivityTimeline({
         const me = await currentUserManager.getCurrentUser();
         if (me?.id) {
           idSet.add(String(me.id));
+          console.log("currentUserManager me", me);
+          setCurrentUser({ id: String(me.id) });
         }
       } catch (e) {
         // ignore if unauthenticated
@@ -448,6 +452,7 @@ export default function IssueActivityTimeline({
           onSaveEdit={handleSaveEdit}
           onDelete={handleDelete}
           isSubmitting={isSubmitting}
+          isLoggedIn={!!currentUser}
         />
       </div>
     );
@@ -484,6 +489,7 @@ export default function IssueActivityTimeline({
         issueId={issueId}
         issueState={issueState ?? null}
         issueLevel={issueLevel ?? null}
+        isLoggedIn={!!currentUser}
         onFocusNewComment={() => setNewCommentFocusSignal((x) => x + 1)}
         onActivityChanged={async () => {
           const fresh = await listIssueActivityAction(issueId, 200);
@@ -498,40 +504,69 @@ export default function IssueActivityTimeline({
       >
         <div className="h-fit px-1">
           <MilkdownEditor
-            key={newCommentKey}
+            key={`${newCommentKey}-${currentUser ? "logged-in" : "logged-out"}`}
             onContentChange={setNewCommentContent}
             initialContent=""
-            placeholder="Leave a comment..."
+            placeholder={
+              currentUser
+                ? "Leave a comment..."
+                : "Sign in to join the discussion"
+            }
             focusSignal={newCommentFocusSignal}
+            isReadonly={!currentUser}
           />
         </div>
         <div className="flex justify-end p-2">
-          <Button
-            onClick={async () => {
-              if (!newCommentContent.trim()) return;
-              try {
-                setIsSubmitting(true);
-                const newComment = await createIssueCommentAction(
-                  issueId,
-                  newCommentContent
-                );
-                issueCommentsManager.addComment(issueId, newComment);
-                setComments((prev) => [...prev, newComment]);
-                setNewCommentContent("");
-                setNewCommentKey(Math.random());
-              } catch (e) {
-                console.error(e);
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            disabled={isSubmitting || !newCommentContent.trim()}
-            shape="square"
-            size="sm"
-            className="!p-1"
-          >
-            <ArrowUpIcon className="w-4 h-4" />
-          </Button>
+          {currentUser ? (
+            <Button
+              onClick={async () => {
+                if (!newCommentContent.trim()) return;
+                try {
+                  setIsSubmitting(true);
+                  const newComment = await createIssueCommentAction(
+                    issueId,
+                    newCommentContent
+                  );
+                  issueCommentsManager.addComment(issueId, newComment);
+                  setComments((prev) => [...prev, newComment]);
+                  setNewCommentContent("");
+                  setNewCommentKey(Math.random());
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting || !newCommentContent.trim()}
+              shape="square"
+              size="sm"
+              className="!p-1"
+            >
+              <ArrowUpIcon className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="inline-block">
+                    <Button disabled shape="square" size="sm" className="!p-1">
+                      <ArrowUpIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="top"
+                    sideOffset={8}
+                    align="end"
+                    className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                  >
+                    Sign in to join the discussion
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          )}
         </div>
       </div>
     </div>

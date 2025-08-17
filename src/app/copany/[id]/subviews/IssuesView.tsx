@@ -1,5 +1,12 @@
 "use client";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
@@ -28,6 +35,11 @@ import {
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
+import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import type { IssueReviewer } from "@/types/database.types";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { issuePermissionManager } from "@/utils/cache";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -105,6 +117,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Add shared user and contributor status
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+  const [canEditByIssue, setCanEditByIssue] = useState<Record<string, boolean>>(
+    {}
+  );
+  // cache reviewers per issue for lightweight list indicators
+  const [reviewersByIssue, setReviewersByIssue] = useState<
+    Record<string, IssueReviewer[]>
+  >({});
+  const loadingReviewersRef = useRef<Set<string>>(new Set());
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -196,6 +216,76 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     loadUserData();
   }, [loadIssues, loadUserData]);
 
+  // Compute per-issue permissions for current list
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          issues.map(async (it) => {
+            const allowed = await issuePermissionManager.canEditIssue(
+              copanyId,
+              it
+            );
+            return [String(it.id), !!allowed] as const;
+          })
+        );
+        if (cancelled) return;
+        const map: Record<string, boolean> = {};
+        for (const [id, allowed] of entries) map[id] = allowed;
+        setCanEditByIssue(map);
+      } catch (_) {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [issues, copanyId]);
+
+  // NOTE: lazy reviewers loading is defined below after filteredIssues
+
+  const renderReviewBadge = (issue: IssueWithAssignee) => {
+    if (issue.state !== IssueState.InReview) return null;
+    const list = reviewersByIssue[String(issue.id)] || [];
+    const meId = currentUser?.id ? String(currentUser.id) : null;
+    const hasApproved = list.some((r) => r.status === "approved");
+    const needsMyReview = !!(
+      meId &&
+      list.some(
+        (r) => String(r.reviewer_id) === meId && r.status === "requested"
+      )
+    );
+    if (hasApproved) {
+      return (
+        <div className="flex flex-row items-center gap-1">
+          <CheckIcon className="w-4 h-4 text-[#058E00]" />
+          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+            approved
+          </span>
+        </div>
+      );
+    } else if (needsMyReview) {
+      return (
+        <div className="flex flex-row items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+            needs your review
+          </span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex flex-row items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+            waiting for review
+          </span>
+        </div>
+      );
+    }
+  };
+
   // Filtered issues by search query
   const filteredIssues = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -206,6 +296,43 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       return title.includes(q) || idStr.includes(q);
     });
   }, [issues, searchQuery]);
+
+  // Lazy load reviewers for currently visible InReview issues
+  useEffect(() => {
+    const target = filteredIssues
+      .filter((it) => it.state === IssueState.InReview)
+      .map((it) => String(it.id));
+    const missing = target.filter(
+      (id) =>
+        reviewersByIssue[id] === undefined &&
+        !loadingReviewersRef.current.has(id)
+    );
+    if (missing.length === 0) return;
+    // mark loading to avoid duplicate requests
+    missing.forEach((id) => loadingReviewersRef.current.add(id));
+    (async () => {
+      try {
+        const results = await Promise.all(
+          missing.map(async (id) => {
+            try {
+              const rs = await listIssueReviewersAction(id);
+              return [id, rs] as const;
+            } catch (e) {
+              console.error("Failed to load reviewers", { id, e });
+              return [id, [] as IssueReviewer[]] as const;
+            }
+          })
+        );
+        setReviewersByIssue((prev) => {
+          const next = { ...prev } as Record<string, IssueReviewer[]>;
+          for (const [id, rs] of results) next[id] = rs;
+          return next;
+        });
+      } finally {
+        missing.forEach((id) => loadingReviewersRef.current.delete(id));
+      }
+    })();
+  }, [filteredIssues, reviewersByIssue]);
 
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
@@ -390,22 +517,51 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           buttonIcon={<PlusIcon className="w-4 h-4" />}
           buttonTitle="New Issue"
           buttonAction={() => setIsModalOpen(true)}
+          buttonDisabled={!currentUser}
+          buttonTooltip="Sign in to create an issue"
         />
         {createIssueModal()}
       </div>
     );
   }
 
+  const newIssueButton = (disabled: boolean) => {
+    return (
+      <Button
+        onClick={() => setIsModalOpen(true)}
+        className="min-w-24"
+        size="md"
+        disabled={disabled}
+      >
+        New Issue
+      </Button>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col gap-3">
       <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="min-w-24"
-          size="md"
-        >
-          New Issue
-        </Button>
+        {!currentUser ? (
+          <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className="inline-block">{newIssueButton(true)}</div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="bottom"
+                  sideOffset={8}
+                  align="start"
+                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                >
+                  Sign in to create an issue
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        ) : (
+          newIssueButton(false)
+        )}
         <input
           type="text"
           value={searchQuery}
@@ -444,66 +600,79 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
             {/* Issues in this state (hidden when collapsed) */}
             {!collapsedGroups[group.state] &&
-              group.issues.map((issue) => (
-                <div
-                  className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
-                  key={issue.id}
-                  onClick={() => {
-                    // Keep current URL parameters
-                    const params = new URLSearchParams(searchParams.toString());
-                    router.push(
-                      `/copany/${copanyId}/issue/${
-                        issue.id
-                      }?${params.toString()}`
-                    );
-                  }}
-                  onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                >
-                  <IssueStateSelector
-                    issueId={issue.id}
-                    initialState={issue.state}
-                    showText={false}
-                    onStateChange={handleIssueStateUpdated}
-                    onServerUpdated={(serverIssue) => {
-                      setIssues((prev) => {
-                        const updated = prev.map((it) =>
-                          it.id === serverIssue.id ? serverIssue : it
-                        );
-                        issuesManagerWithCallback.updateIssue(
-                          copanyId,
-                          serverIssue
-                        );
-                        issuesManagerWithCallback.setIssues(copanyId, updated);
-                        return updated;
-                      });
+              group.issues.map((issue) => {
+                const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
+                return (
+                  <div
+                    className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                    key={issue.id}
+                    onClick={() => {
+                      // Keep current URL parameters
+                      const params = new URLSearchParams(
+                        searchParams.toString()
+                      );
+                      router.push(
+                        `/copany/${copanyId}/issue/${
+                          issue.id
+                        }?${params.toString()}`
+                      );
                     }}
-                  />
-                  <IssuePrioritySelector
-                    issueId={issue.id}
-                    initialPriority={issue.priority}
-                    showText={false}
-                    onPriorityChange={handleIssuePriorityUpdated}
-                  />
-                  <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full">
-                    {issue.title || "No title"}
+                    onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                  >
+                    <IssueStateSelector
+                      issueId={issue.id}
+                      initialState={issue.state}
+                      showText={false}
+                      readOnly={readOnly}
+                      onStateChange={handleIssueStateUpdated}
+                      onServerUpdated={(serverIssue) => {
+                        setIssues((prev) => {
+                          const updated = prev.map((it) =>
+                            it.id === serverIssue.id ? serverIssue : it
+                          );
+                          issuesManagerWithCallback.updateIssue(
+                            copanyId,
+                            serverIssue
+                          );
+                          issuesManagerWithCallback.setIssues(
+                            copanyId,
+                            updated
+                          );
+                          return updated;
+                        });
+                      }}
+                    />
+                    <IssuePrioritySelector
+                      issueId={issue.id}
+                      initialPriority={issue.priority}
+                      showText={false}
+                      onPriorityChange={handleIssuePriorityUpdated}
+                      readOnly={readOnly}
+                    />
+                    <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full flex items-center gap-2">
+                      <span>{issue.title || "No title"}</span>
+                      {renderReviewBadge(issue)}
+                    </div>
+                    <IssueLevelSelector
+                      issueId={issue.id}
+                      initialLevel={issue.level}
+                      showText={false}
+                      onLevelChange={handleIssueLevelUpdated}
+                      readOnly={readOnly}
+                    />
+                    <IssueAssigneeSelector
+                      issueId={issue.id}
+                      initialAssignee={issue.assignee}
+                      assigneeUser={issue.assignee_user}
+                      currentUser={currentUser}
+                      contributors={contributors}
+                      showText={false}
+                      onAssigneeChange={handleIssueAssigneeUpdated}
+                      readOnly={readOnly}
+                    />
                   </div>
-                  <IssueLevelSelector
-                    issueId={issue.id}
-                    initialLevel={issue.level}
-                    showText={false}
-                    onLevelChange={handleIssueLevelUpdated}
-                  />
-                  <IssueAssigneeSelector
-                    issueId={issue.id}
-                    initialAssignee={issue.assignee}
-                    assigneeUser={issue.assignee_user}
-                    currentUser={currentUser}
-                    contributors={contributors}
-                    showText={false}
-                    onAssigneeChange={handleIssueAssigneeUpdated}
-                  />
-                </div>
-              ))}
+                );
+              })}
           </div>
         ))}
 

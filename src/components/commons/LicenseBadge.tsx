@@ -12,7 +12,7 @@ export default function LicenseBadge({ license }: { license: string }) {
   }
 
   return (
-    <div className="inline-flex items-center overflow-hidden text-xs font-medium">
+    <div className="inline-flex items-center overflow-hidden text-sm font-medium">
       <span className="px-2 py-[2px] rounded-l-sm text-white [text-shadow:_0_1px_0_rgb(0_0_0_/_20%)] bg-gradient-to-b from-gray-600 to-gray-700">
         license
       </span>

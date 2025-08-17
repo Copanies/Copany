@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import Button from "./Button";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface EmptyPlaceholderViewProps {
   icon: ReactElement;
@@ -9,6 +10,8 @@ interface EmptyPlaceholderViewProps {
   buttonTitle?: string;
   buttonAction?: () => void;
   size?: "md" | "lg";
+  buttonDisabled?: boolean;
+  buttonTooltip?: string;
 }
 
 export default function EmptyPlaceholderView({
@@ -19,6 +22,8 @@ export default function EmptyPlaceholderView({
   buttonTitle,
   buttonAction,
   size = "lg",
+  buttonDisabled = false,
+  buttonTooltip,
 }: EmptyPlaceholderViewProps) {
   return (
     <div
@@ -44,14 +49,48 @@ export default function EmptyPlaceholderView({
             {description}
           </p>
         </div>
-        {buttonTitle && buttonAction && (
-          <Button variant="primary" size="md" onClick={buttonAction}>
-            <div className="flex items-center gap-2">
-              {buttonIcon}
-              <p>{buttonTitle}</p>
-            </div>
-          </Button>
-        )}
+        {buttonTitle &&
+          buttonAction &&
+          (buttonDisabled ? (
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={buttonAction}
+                      disabled
+                    >
+                      <div className="flex items-center gap-2">
+                        {buttonIcon}
+                        <p>{buttonTitle}</p>
+                      </div>
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                {buttonTooltip ? (
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      side="bottom"
+                      sideOffset={8}
+                      align="center"
+                      className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 w-80 md:w-96 whitespace-pre-line break-words"
+                    >
+                      {buttonTooltip}
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                ) : null}
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          ) : (
+            <Button variant="primary" size="md" onClick={buttonAction}>
+              <div className="flex items-center gap-2">
+                {buttonIcon}
+                <p>{buttonTitle}</p>
+              </div>
+            </Button>
+          ))}
       </div>
     </div>
   );

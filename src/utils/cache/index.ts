@@ -40,3 +40,4 @@ export {
   IssuesUiStateManager,
   issuesUiStateManager,
 } from "./managers/IssuesUiStateManager";
+export { issuePermissionManager } from "./managers/IssuePermissionManager";

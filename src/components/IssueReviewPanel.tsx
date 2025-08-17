@@ -14,11 +14,13 @@ import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface IssueReviewPanelProps {
   issueId: string;
   issueState: number | null;
   issueLevel: number | null;
+  isLoggedIn: boolean;
   onFocusNewComment?: () => void;
   onActivityChanged?: () => void | Promise<void>;
 }
@@ -27,6 +29,7 @@ export default function IssueReviewPanel({
   issueId,
   issueState,
   issueLevel,
+  isLoggedIn,
   onFocusNewComment,
   onActivityChanged,
 }: IssueReviewPanelProps) {
@@ -233,7 +236,7 @@ export default function IssueReviewPanel({
               </div>
             </Button>
           )}
-          {!hasAnyApproved && (
+          {!hasAnyApproved && isLoggedIn ? (
             <Button
               size="sm"
               onClick={() => {
@@ -253,6 +256,28 @@ export default function IssueReviewPanel({
             >
               Leave a comment
             </Button>
+          ) : (
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="inline-block">
+                    <Button disabled size="sm">
+                      Leave a comment
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="top"
+                    sideOffset={8}
+                    align="end"
+                    className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                  >
+                    Sign in to join the discussion
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
           )}
         </div>
       </div>

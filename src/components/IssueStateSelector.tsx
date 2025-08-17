@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
+import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -29,6 +30,32 @@ export default function IssueStateSelector({
   onServerUpdated,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
+  const [hasApprovedReview, setHasApprovedReview] = useState<boolean>(false);
+  const [isLoadingReviewers, setIsLoadingReviewers] = useState<boolean>(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (currentState !== IssueState.InReview) {
+        if (mounted) setHasApprovedReview(false);
+        return;
+      }
+      try {
+        setIsLoadingReviewers(true);
+        const reviewers = await listIssueReviewersAction(issueId);
+        if (!mounted) return;
+        setHasApprovedReview(reviewers.some((r) => r.status === "approved"));
+      } catch (_) {
+        if (mounted) setHasApprovedReview(false);
+      } finally {
+        if (mounted) setIsLoadingReviewers(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [issueId, currentState]);
 
   const handleStateChange = async (newState: number) => {
     if (readOnly) return;
@@ -60,21 +87,45 @@ export default function IssueStateSelector({
     }
   };
 
-  // Get all available states
-  const allStates = [
-    IssueState.Backlog,
-    IssueState.Todo,
-    IssueState.InProgress,
-    IssueState.InReview,
-    IssueState.Done,
-    IssueState.Canceled,
-    IssueState.Duplicate,
-  ];
-
-  const stateOptions = allStates.map((state) => ({
-    value: state,
-    label: renderStateLabel(state, true),
-  }));
+  // Build state options with conditional disabling for Done
+  const stateOptions = useMemo(() => {
+    const allStates = [
+      IssueState.Backlog,
+      IssueState.Todo,
+      IssueState.InProgress,
+      IssueState.InReview,
+      IssueState.Done,
+      IssueState.Canceled,
+      IssueState.Duplicate,
+    ];
+    const allowDone =
+      currentState === IssueState.InReview && hasApprovedReview === true;
+    const doneTooltip = (() => {
+      if (allowDone) return undefined;
+      if (currentState !== IssueState.InReview)
+        return "Only allowed after review";
+      if (!hasApprovedReview) return "Requires at least one approval";
+      return undefined;
+    })();
+    const base = allStates.map((state) => ({
+      value: state,
+      label: renderStateLabel(state, true),
+      disabled:
+        state === IssueState.Done &&
+        !allowDone &&
+        !isLoadingReviewers &&
+        !readOnly,
+      tooltip: state === IssueState.Done ? doneTooltip : undefined,
+    }));
+    if (readOnly) {
+      return base.map((opt) => ({
+        ...opt,
+        disabled: true,
+        tooltip: "No permission to edit",
+      }));
+    }
+    return base;
+  }, [currentState, hasApprovedReview, isLoadingReviewers, readOnly]);
 
   return (
     <Dropdown
@@ -83,7 +134,7 @@ export default function IssueStateSelector({
       selectedValue={currentState}
       onSelect={handleStateChange}
       showBackground={showBackground}
-      disabled={readOnly}
+      disabled={false}
     />
   );
 }

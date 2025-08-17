@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import { ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";
 import EllipsisHorizontalIcon from "@heroicons/react/24/outline/EllipsisHorizontalIcon";
 import type { IssueComment } from "@/types/database.types";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface IssueCommentCardProps {
   comment: IssueComment;
@@ -34,6 +35,7 @@ interface IssueCommentCardProps {
   onSaveEdit: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   isSubmitting: boolean;
+  isLoggedIn?: boolean;
 }
 
 export default function IssueCommentCard(props: IssueCommentCardProps) {
@@ -57,11 +59,47 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
     onDelete,
     isSubmitting,
   } = props;
+  const isLoggedIn = props.isLoggedIn ?? true;
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const author = comment.created_by ? userInfos[comment.created_by]?.name : "";
   const [openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
     null
   );
+
+  // 获取当前用户ID，用于判断是否仅作者可以编辑/删除
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { currentUserManager } = await import(
+          "@/utils/cache/managers/CurrentUserManager"
+        );
+        const user = await currentUserManager.getCurrentUser();
+        if (!cancelled) setCurrentUserId(user?.id ?? null);
+      } catch (_) {
+        if (!cancelled) setCurrentUserId(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const pleaseSignInTooltipPortal = () => {
+    return (
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side="top"
+          sideOffset={8}
+          align="end"
+          className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+        >
+          Please sign in to reply
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg">
@@ -95,7 +133,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             </>
           ) : (
             <>
-              <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300">
+              <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 {author?.[0]?.toUpperCase() || "U"}
               </div>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
@@ -116,51 +154,79 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               : "opacity-0"
           }`}
         >
-          <Button
-            onClick={() => setReplyingToCommentId(String(comment.id))}
-            variant="ghost"
-            size="sm"
-            shape="square"
-            className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <ArrowTurnUpLeftIcon className="w-4 h-4" />
-          </Button>
-          <Dropdown
-            trigger={
-              <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
-                <EllipsisHorizontalIcon className="w-5 h-5" />
-              </div>
-            }
-            options={[
-              { value: 1, label: "Edit" },
-              { value: 2, label: "Delete" },
-            ]}
-            selectedValue={null}
-            onSelect={async (value) => {
-              if (value === 1) {
-                setEditingCommentId(String(comment.id));
-                setEditingContent(comment.content || "");
-              } else if (value === 2) {
-                await onDelete(String(comment.id));
-              }
-            }}
-            showBackground={false}
-            size="md"
-            onOpenChange={(open) => {
-              setOpenMenuCommentId(open ? String(comment.id) : null);
-              if (open) setHoveredCommentId(String(comment.id));
-            }}
-          />
+          {isLoggedIn ? (
+            <Button
+              onClick={() => setReplyingToCommentId(String(comment.id))}
+              variant="ghost"
+              size="sm"
+              shape="square"
+              className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <ArrowTurnUpLeftIcon className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      shape="square"
+                      className="!p-1 text-gray-400"
+                      disabled
+                    >
+                      <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                {pleaseSignInTooltipPortal()}
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          )}
+          {isLoggedIn &&
+            comment.created_by &&
+            String(comment.created_by) === String(currentUserId) && (
+              <Dropdown
+                trigger={
+                  <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
+                    <EllipsisHorizontalIcon className="w-5 h-5" />
+                  </div>
+                }
+                options={[
+                  { value: 1, label: "Edit" },
+                  { value: 2, label: "Delete" },
+                ]}
+                selectedValue={null}
+                onSelect={async (value) => {
+                  if (value === 1) {
+                    setEditingCommentId(String(comment.id));
+                    setEditingContent(comment.content || "");
+                  } else if (value === 2) {
+                    await onDelete(String(comment.id));
+                  }
+                }}
+                showBackground={false}
+                size="md"
+                onOpenChange={(open) => {
+                  setOpenMenuCommentId(open ? String(comment.id) : null);
+                  if (open) setHoveredCommentId(String(comment.id));
+                }}
+              />
+            )}
         </div>
       </div>
       {/* Root content or editor */}
-      {editingCommentId === String(comment.id) ? (
+      {editingCommentId === String(comment.id) &&
+      comment.created_by &&
+      String(comment.created_by) === String(currentUserId) ? (
         <div>
           <div className="px-1 -mb-1 -mt-2">
             <MilkdownEditor
               onContentChange={setEditingContent}
               initialContent={comment.content || ""}
-              placeholder=""
+              placeholder={isLoggedIn ? "" : "Please sign in to reply"}
+              isReadonly={!isLoggedIn}
             />
           </div>
           <div className="flex space-x-2 justify-end px-2 pb-3">
@@ -175,17 +241,32 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             >
               Cancel
             </Button>
-            <Button
-              onClick={async () => {
-                if (!editingContent.trim()) return;
-                await onSaveEdit(String(comment.id), editingContent);
-              }}
-              disabled={isSubmitting}
-              className=""
-              size="sm"
-            >
-              Save
-            </Button>
+            {isLoggedIn ? (
+              <Button
+                onClick={async () => {
+                  if (!editingContent.trim()) return;
+                  await onSaveEdit(String(comment.id), editingContent);
+                }}
+                disabled={isSubmitting}
+                className=""
+                size="sm"
+              >
+                Save
+              </Button>
+            ) : (
+              <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <div className="inline-block">
+                      <Button disabled className="" size="sm">
+                        Save
+                      </Button>
+                    </div>
+                  </Tooltip.Trigger>
+                  {pleaseSignInTooltipPortal()}
+                </Tooltip.Root>
+              </Tooltip.Provider>
+            )}
           </div>
         </div>
       ) : (
@@ -233,7 +314,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             className="w-5 h-5 rounded-full"
                           />
                         ) : (
-                          <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                          <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
                             {u?.name?.[0]?.toUpperCase() || "U"}
                           </div>
                         )}
@@ -273,41 +354,73 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                           : "opacity-0"
                       }`}
                     >
-                      <Button
-                        onClick={() => setReplyingToCommentId(String(reply.id))}
-                        variant="ghost"
-                        size="sm"
-                        shape="square"
-                        className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      >
-                        <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                      </Button>
-                      <Dropdown
-                        trigger={
-                          <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
-                            <EllipsisHorizontalIcon className="w-5 h-5" />
-                          </div>
-                        }
-                        options={[
-                          { value: 1, label: "Edit" },
-                          { value: 2, label: "Delete" },
-                        ]}
-                        selectedValue={null}
-                        onSelect={async (value) => {
-                          if (value === 1) {
-                            setEditingCommentId(String(reply.id));
-                            setEditingContent(reply.content || "");
-                          } else if (value === 2) {
-                            await onDelete(String(reply.id));
+                      {isLoggedIn ? (
+                        <Button
+                          onClick={() =>
+                            setReplyingToCommentId(String(reply.id))
                           }
-                        }}
-                        showBackground={false}
-                        size="md"
-                        onOpenChange={(open) => {
-                          setOpenMenuCommentId(open ? String(reply.id) : null);
-                          if (open) setHoveredCommentId(String(reply.id));
-                        }}
-                      />
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Tooltip.Provider
+                          delayDuration={150}
+                          skipDelayDuration={300}
+                        >
+                          <Tooltip.Root>
+                            <Tooltip.Trigger asChild>
+                              <div className="inline-block">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  shape="square"
+                                  className="!p-1 text-gray-400"
+                                  disabled
+                                >
+                                  <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </Tooltip.Trigger>
+                            {pleaseSignInTooltipPortal()}
+                          </Tooltip.Root>
+                        </Tooltip.Provider>
+                      )}
+                      {isLoggedIn &&
+                        reply.created_by &&
+                        String(reply.created_by) === String(currentUserId) && (
+                          <Dropdown
+                            trigger={
+                              <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
+                                <EllipsisHorizontalIcon className="w-5 h-5" />
+                              </div>
+                            }
+                            options={[
+                              { value: 1, label: "Edit" },
+                              { value: 2, label: "Delete" },
+                            ]}
+                            selectedValue={null}
+                            onSelect={async (value) => {
+                              if (value === 1) {
+                                setEditingCommentId(String(reply.id));
+                                setEditingContent(reply.content || "");
+                              } else if (value === 2) {
+                                await onDelete(String(reply.id));
+                              }
+                            }}
+                            showBackground={false}
+                            size="md"
+                            onOpenChange={(open) => {
+                              setOpenMenuCommentId(
+                                open ? String(reply.id) : null
+                              );
+                              if (open) setHoveredCommentId(String(reply.id));
+                            }}
+                          />
+                        )}
                     </div>
                   </div>
 
@@ -330,13 +443,18 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         </div>
                       )}
                   </div>
-                  {editingCommentId === String(reply.id) ? (
+                  {editingCommentId === String(reply.id) &&
+                  reply.created_by &&
+                  String(reply.created_by) === String(currentUserId) ? (
                     <div>
                       <div className="pl-6 -mb-1 -mt-2">
                         <MilkdownEditor
                           onContentChange={setEditingContent}
                           initialContent={reply.content || ""}
-                          placeholder=""
+                          placeholder={
+                            isLoggedIn ? "" : "Please sign in to reply"
+                          }
+                          isReadonly={!isLoggedIn}
                         />
                       </div>
                       <div className="flex space-x-2 justify-end px-2 pb-3">
@@ -351,17 +469,38 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         >
                           Cancel
                         </Button>
-                        <Button
-                          onClick={async () => {
-                            if (!editingContent.trim()) return;
-                            await onSaveEdit(String(reply.id), editingContent);
-                          }}
-                          disabled={isSubmitting}
-                          className=""
-                          size="sm"
-                        >
-                          Save
-                        </Button>
+                        {isLoggedIn ? (
+                          <Button
+                            onClick={async () => {
+                              if (!editingContent.trim()) return;
+                              await onSaveEdit(
+                                String(reply.id),
+                                editingContent
+                              );
+                            }}
+                            disabled={isSubmitting}
+                            className=""
+                            size="sm"
+                          >
+                            Save
+                          </Button>
+                        ) : (
+                          <Tooltip.Provider
+                            delayDuration={150}
+                            skipDelayDuration={300}
+                          >
+                            <Tooltip.Root>
+                              <Tooltip.Trigger asChild>
+                                <div className="inline-block">
+                                  <Button disabled className="" size="sm">
+                                    Save
+                                  </Button>
+                                </div>
+                              </Tooltip.Trigger>
+                              {pleaseSignInTooltipPortal()}
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -392,16 +531,19 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               onContentChange={setReplyContent}
               initialContent=""
               placeholder={
-                replyingToCommentId === String(comment.id)
-                  ? "Write a reply..."
-                  : `Reply to @${
-                      userInfos[
-                        replies.find(
-                          (r) => String(r.id) === String(replyingToCommentId)
-                        )?.created_by ?? ""
-                      ]?.name || "Unknown User"
-                    }...`
+                isLoggedIn
+                  ? replyingToCommentId === String(comment.id)
+                    ? "Write a reply..."
+                    : `Reply to @${
+                        userInfos[
+                          replies.find(
+                            (r) => String(r.id) === String(replyingToCommentId)
+                          )?.created_by ?? ""
+                        ]?.name || "Unknown User"
+                      }...`
+                  : "Please sign in to reply"
               }
+              isReadonly={!isLoggedIn}
             />
             <div className="flex space-x-2 justify-end p-2">
               <Button
@@ -415,17 +557,32 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               >
                 Cancel
               </Button>
-              <Button
-                onClick={async () => {
-                  if (!replyingToCommentId || !replyContent.trim()) return;
-                  await onSubmitReply(replyingToCommentId, replyContent);
-                }}
-                disabled={isSubmitting || !replyContent.trim()}
-                className=""
-                size="sm"
-              >
-                Reply
-              </Button>
+              {isLoggedIn ? (
+                <Button
+                  onClick={async () => {
+                    if (!replyingToCommentId || !replyContent.trim()) return;
+                    await onSubmitReply(replyingToCommentId, replyContent);
+                  }}
+                  disabled={isSubmitting || !replyContent.trim()}
+                  className=""
+                  size="sm"
+                >
+                  Reply
+                </Button>
+              ) : (
+                <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <div className="inline-block">
+                        <Button disabled className="" size="sm">
+                          Reply
+                        </Button>
+                      </div>
+                    </Tooltip.Trigger>
+                    {pleaseSignInTooltipPortal()}
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              )}
             </div>
           </div>
         </div>

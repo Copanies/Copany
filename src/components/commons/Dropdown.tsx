@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface DropdownOption {
   value: number;
   label: ReactNode;
+  disabled?: boolean;
+  tooltip?: ReactNode;
 }
 
 interface DropdownProps {
@@ -205,7 +208,7 @@ export default function Dropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+        className={`inline-flex items-center px-2 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground
@@ -236,9 +239,9 @@ export default function Dropdown({
                 <button
                   key={option.value}
                   type="button"
-                  className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                  className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
                     size === "sm"
-                      ? "text-xs"
+                      ? "text-sm"
                       : size === "md"
                       ? "text-sm"
                       : "text-base"
@@ -246,24 +249,52 @@ export default function Dropdown({
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
                       : ""
+                  } ${
+                    option.disabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
                   }`}
                 >
-                  {option.label}
-                  {option.value === selectedValue && (
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+                    <Tooltip.Root
+                      open={
+                        option.disabled && option.tooltip ? undefined : false
+                      }
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
+                      <Tooltip.Trigger asChild>
+                        <div className="flex-1 flex items-center justify-between">
+                          {option.label}
+                          {option.value === selectedValue && (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                      </Tooltip.Trigger>
+                      {option.disabled && option.tooltip && (
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            side="right"
+                            sideOffset={8}
+                            align="center"
+                            className="z-[9999] rounded bg-white text-gray-900 text-sm px-2 py-1 shadow-lg border border-gray-200"
+                          >
+                            {option.tooltip}
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      )}
+                    </Tooltip.Root>
+                  </Tooltip.Provider>
                 </button>
               ))}
             </div>
@@ -293,32 +324,65 @@ export default function Dropdown({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation(); // 阻止事件冒泡
+                      if (option.disabled) return;
                       handleSelect(option.value);
                     }}
-                    className={`flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md cursor-pointer ${
+                    className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
                       size === "sm"
-                        ? "text-xs"
+                        ? "text-sm"
                         : size === "md"
                         ? "text-sm"
                         : "text-base"
+                    } ${
+                      option.disabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer"
                     }`}
                   >
-                    {option.label}
-                    {option.value === selectedValue && (
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <Tooltip.Provider
+                      delayDuration={150}
+                      skipDelayDuration={300}
+                    >
+                      <Tooltip.Root
+                        open={
+                          option.disabled && option.tooltip ? undefined : false
+                        }
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
+                        <Tooltip.Trigger asChild>
+                          <div className="flex-1 flex items-center justify-between">
+                            {option.label}
+                            {option.value === selectedValue && (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </Tooltip.Trigger>
+                        {option.disabled && option.tooltip && (
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              side="right"
+                              sideOffset={8}
+                              align="center"
+                              className="z-[9999] rounded bg-white text-gray-900 text-sm px-2 py-1 shadow-lg border border-gray-200"
+                            >
+                              {option.tooltip}
+                              <Tooltip.Arrow className="fill-white" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        )}
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
                   </button>
                 ))}
               </div>

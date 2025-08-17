@@ -351,7 +351,7 @@ export default function SettingsView({
               />
             ) : (
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-xs">No Logo</span>
+                <span className="text-gray-400 text-sm">No Logo</span>
               </div>
             )}
             <div>
@@ -494,13 +494,13 @@ export default function SettingsView({
                 : "Upload new picture"}
             </Button>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 1MB
             </p>
 
             {/* Error message */}
             {uploadError && (
-              <div className="text-xs text-red-600 dark:text-red-400 text-center">
+              <div className="text-sm text-red-600 dark:text-red-400 text-center">
                 {uploadError}
               </div>
             )}
@@ -601,7 +601,7 @@ export default function SettingsView({
             />
             <div className="flex flex-col gap-0">
               <p className="text-sm font-medium">GitHub</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Link pull requests to your copany
               </p>
             </div>
