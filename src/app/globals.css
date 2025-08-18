@@ -55,3 +55,14 @@ pre[class*="language-"] {
     border-width: 0 !important;
   }
 }
+
+/* Reusable surface for tooltip/popover content */
+.tooltip-surface {
+  @apply rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200;
+  z-index: 9999;
+  max-width: 280px;
+}
+
+.dark .tooltip-surface {
+  @apply bg-gray-900 text-gray-100 border-gray-800;
+}

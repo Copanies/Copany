@@ -7,6 +7,7 @@ import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -136,7 +137,9 @@ export default function IssueAssigneeSelector({
             label: renderUserLabel(
               currentUser.user_metadata?.name || "Unknown",
               currentUser.user_metadata?.avatar_url || null,
-              true
+              true,
+              currentUser.email || null,
+              readOnly
             ),
             disabled: readOnly,
             tooltip: readOnly ? "No permission to edit" : undefined,
@@ -159,7 +162,9 @@ export default function IssueAssigneeSelector({
           label: renderUserLabel(
             contributor.name,
             contributor.avatar_url,
-            true
+            true,
+            contributor.email,
+            readOnly
           ),
           disabled: readOnly,
           tooltip: readOnly ? "No permission to edit" : undefined,
@@ -187,7 +192,8 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         currentAssigneeUser.name,
         currentAssigneeUser.avatar_url,
-        showText
+        showText,
+        currentAssigneeUser.email
       );
     }
 
@@ -196,7 +202,8 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         currentUser.user_metadata?.name || "Unknown",
         currentUser.user_metadata?.avatar_url || null,
-        showText
+        showText,
+        currentUser.email || null
       );
     }
 
@@ -207,12 +214,13 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         contributor.name,
         contributor.avatar_url,
-        showText
+        showText,
+        contributor.email
       );
     }
 
     // If not found, display a default user label
-    return renderUserLabel("Unknown User", null, showText);
+    return renderUserLabel("Unknown User", null, showText, null);
   })();
 
   return (
@@ -230,9 +238,11 @@ export default function IssueAssigneeSelector({
 export function renderUserLabel(
   name: string,
   avatarUrl: string | null,
-  showText: boolean
+  showText: boolean,
+  email?: string | null,
+  readOnly?: boolean | null
 ) {
-  return (
+  const labelContent = (
     <div className="flex items-center gap-2 -my-[1px]">
       {avatarUrl ? (
         <Image
@@ -251,6 +261,52 @@ export function renderUserLabel(
         <span className="text-base text-gray-900 dark:text-gray-100">
           {name}
         </span>
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      {readOnly ? (
+        labelContent
+      ) : (
+        <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>{labelContent}</Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="left"
+                sideOffset={8}
+                align="center"
+                className="tooltip-surface"
+              >
+                <div className="flex items-center gap-2">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt={name}
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                      {name}
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{name}</span>
+                    {email ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {email}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       )}
     </div>
   );

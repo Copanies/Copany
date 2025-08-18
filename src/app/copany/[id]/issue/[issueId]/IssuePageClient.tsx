@@ -14,6 +14,7 @@ import {
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
+import { renderUserLabel } from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
 import IssueActivityTimeline from "@/components/IssueActivityTimeline";
 import {
@@ -346,7 +347,7 @@ export default function IssuePageClient({
                   side="bottom"
                   sideOffset={8}
                   align="start"
-                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 w-80 md:w-96 whitespace-pre-line break-words"
+                  className="tooltip-surface"
                 >
                   {readOnlyTooltip ||
                     "Only the Copany owner, Issue creator, or current assignee can edit."}
@@ -482,6 +483,21 @@ export default function IssuePageClient({
                 onAssigneeChange={handleAssigneeChange}
                 readOnly={!canEdit}
               />
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Creator
+              </div>
+              <div className="hover:opacity-80 cursor-pointer">
+                {currentUser
+                  ? renderUserLabel(
+                      currentUser.user_metadata?.name || "Unknown",
+                      currentUser.user_metadata?.avatar_url || null,
+                      true,
+                      currentUser.email || null
+                    )
+                  : renderUserLabel("Unknown", null, true, null)}
+              </div>
             </div>
           </div>
         </div>

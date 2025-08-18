@@ -543,7 +543,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   side="bottom"
                   sideOffset={8}
                   align="start"
-                  className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                  className="tooltip-surface"
                 >
                   Sign in to create an issue
                 </Tooltip.Content>

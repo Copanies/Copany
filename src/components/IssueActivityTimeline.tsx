@@ -566,7 +566,7 @@ export default function IssueActivityTimeline({
                     side="top"
                     sideOffset={8}
                     align="end"
-                    className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+                    className="tooltip-surface"
                   >
                     Sign in to join the discussion
                   </Tooltip.Content>

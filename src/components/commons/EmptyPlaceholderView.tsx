@@ -75,7 +75,7 @@ export default function EmptyPlaceholderView({
                       side="bottom"
                       sideOffset={8}
                       align="center"
-                      className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 w-80 md:w-96 whitespace-pre-line break-words"
+                      className="tooltip-surface"
                     >
                       {buttonTooltip}
                     </Tooltip.Content>
