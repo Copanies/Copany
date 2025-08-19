@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
@@ -8,7 +8,12 @@ import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
+import {
+  requestAssignmentToEditorsAction,
+  listAssignmentRequestsAction,
+} from "@/actions/assignmentRequest.actions";
+import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import { assignmentRequestsManager } from "@/utils/cache";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -43,6 +48,61 @@ export default function IssueAssigneeSelector({
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
+  const [hasPendingByMe, setHasPendingByMe] = useState<boolean>(false);
+
+  // Check if current user already has an in-progress (requested batch) assignment request
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!currentUser) {
+          if (!cancelled) setHasPendingByMe(false);
+          return;
+        }
+        const list = await assignmentRequestsManager.getRequests(issueId, () =>
+          listAssignmentRequestsAction(issueId)
+        );
+        const byMe = list.filter(
+          (x) => String(x.requester_id) === String(currentUser.id)
+        );
+        if (byMe.length === 0) {
+          if (!cancelled) setHasPendingByMe(false);
+          return;
+        }
+        const sorted = [...byMe].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const lastTerminalAt = sorted
+          .filter(
+            (r) =>
+              r.status === "accepted" ||
+              r.status === "refused" ||
+              r.status === "skipped"
+          )
+          .reduce<string | null>((acc, r) => {
+            const t = r.updated_at || r.created_at;
+            if (!acc) return t;
+            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
+          }, null);
+        const currentBatch = sorted.filter((r) =>
+          lastTerminalAt
+            ? new Date(r.created_at).getTime() >
+              new Date(lastTerminalAt).getTime()
+            : true
+        );
+        const inProgress =
+          currentBatch.length > 0 &&
+          currentBatch.every((r) => r.status === "requested");
+        if (!cancelled) setHasPendingByMe(inProgress);
+      } catch (_) {
+        if (!cancelled) setHasPendingByMe(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [issueId, currentUser]);
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -50,6 +110,7 @@ export default function IssueAssigneeSelector({
       if (readOnly) {
         try {
           if (currentUser && newAssignee === currentUser.id) {
+            if (hasPendingByMe) return;
             if (onRequestAssignment) {
               onRequestAssignment();
             } else {
@@ -152,16 +213,27 @@ export default function IssueAssigneeSelector({
         options: [
           {
             value: currentUser.id,
-            label: renderUserLabel(
-              currentUser.user_metadata?.name || "Unknown",
-              currentUser.user_metadata?.avatar_url || null,
-              true,
-              currentUser.email || null,
-              readOnly
+            label: (
+              <div className="flex items-center gap-1">
+                {renderUserLabel(
+                  currentUser.user_metadata?.name || "Unknown",
+                  currentUser.user_metadata?.avatar_url || null,
+                  true,
+                  currentUser.email || null,
+                  readOnly
+                )}
+                {readOnly ? (
+                  <HandRaisedIcon className="w-4 h-4 -rotate-30" />
+                ) : null}
+              </div>
             ),
-            // allow clicking even in read-only to request assignment
-            disabled: false,
-            tooltip: readOnly ? "Request assignment" : undefined,
+            // allow clicking even in read-only to request assignment unless already sent
+            disabled: readOnly ? hasPendingByMe : false,
+            tooltip: readOnly
+              ? hasPendingByMe
+                ? "Request already sent"
+                : "Request assignment"
+              : undefined,
           },
         ],
       });

@@ -542,7 +542,8 @@ export default function IssuePageClient({
             onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
             readOnly={!canEdit}
           />
-          <IssueAssigneeSelector
+          <div className="flex flex-row items-center gap-2">
+            <IssueAssigneeSelector
               issueId={issueData.id}
               initialAssignee={issueData.assignee}
               assigneeUser={issueData.assignee_user}
@@ -552,6 +553,31 @@ export default function IssuePageClient({
               readOnly={!canEdit}
               onRequestAssignment={() => setIsRequestModalOpen(true)}
             />
+            {(() => {
+              const meId = currentUser?.id ? String(currentUser.id) : null;
+              const hasPendingByMe = !!(
+                meId &&
+                pendingRequestsByRequester[meId] &&
+                pendingRequestsByRequester[meId].length > 0
+              );
+              const canRequest = !canEdit && !!currentUser && !hasPendingByMe;
+              if (!currentUser || canEdit) return null;
+              if (canRequest) {
+                return (
+                  <Button
+                    size="xs"
+                    variant="primary"
+                    onClick={() => setIsRequestModalOpen(true)}
+                  >
+                    <div className="flex flex-row items-center gap-1">
+                      <HandRaisedIcon className="w-4 h-4 -rotate-30" />
+                      <p>Own this</p>
+                    </div>
+                  </Button>
+                );
+              }
+            })()}
+          </div>
 
           {(() => {
             const requesterIds = Object.keys(pendingRequestsByRequester);
@@ -674,16 +700,43 @@ export default function IssuePageClient({
               <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Assignee
               </div>
-              <IssueAssigneeSelector
-                issueId={issueData.id}
-                initialAssignee={issueData.assignee}
-                assigneeUser={issueData.assignee_user}
-                currentUser={currentUser}
-                contributors={contributors}
-                onAssigneeChange={handleAssigneeChange}
-                readOnly={!canEdit}
-                onRequestAssignment={() => setIsRequestModalOpen(true)}
-              />
+              <div className="flex flex-row items-center justify-between gap-2">
+                <IssueAssigneeSelector
+                  issueId={issueData.id}
+                  initialAssignee={issueData.assignee}
+                  assigneeUser={issueData.assignee_user}
+                  currentUser={currentUser}
+                  contributors={contributors}
+                  onAssigneeChange={handleAssigneeChange}
+                  readOnly={!canEdit}
+                  onRequestAssignment={() => setIsRequestModalOpen(true)}
+                />
+                {(() => {
+                  const meId = currentUser?.id ? String(currentUser.id) : null;
+                  const hasPendingByMe = !!(
+                    meId &&
+                    pendingRequestsByRequester[meId] &&
+                    pendingRequestsByRequester[meId].length > 0
+                  );
+                  const canRequest =
+                    !canEdit && !!currentUser && !hasPendingByMe;
+                  if (!currentUser || canEdit) return null;
+                  if (canRequest) {
+                    return (
+                      <Button
+                        size="xs"
+                        variant="primary"
+                        onClick={() => setIsRequestModalOpen(true)}
+                      >
+                        <div className="flex flex-row items-center gap-1">
+                          <HandRaisedIcon className="w-4 h-4 -rotate-30" />
+                          <p>Own this</p>
+                        </div>
+                      </Button>
+                    );
+                  }
+                })()}
+              </div>
               {assignmentRequestView}
             </div>
             <div className="flex flex-col gap-2">
