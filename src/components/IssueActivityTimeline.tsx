@@ -37,6 +37,7 @@ import IssueReviewPanel from "@/components/IssueReviewPanel";
 import AssignmentRequestPanel from "@/components/AssignmentRequestPanel";
 import { assignmentRequestsManager } from "@/utils/cache";
 import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
+import type { AssignmentRequest } from "@/types/database.types";
 
 interface IssueActivityTimelineProps {
   issueId: string;
@@ -127,7 +128,7 @@ export default function IssueActivityTimeline({
           panels.push({ requesterId, at });
         }
         setRequesterPanels(panels);
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
       // load comments (root only)
@@ -153,9 +154,8 @@ export default function IssueActivityTimeline({
           console.log("currentUserManager me", me);
           setCurrentUser({ id: String(me.id) });
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore if unauthenticated
-        console.error(e);
       }
 
       const ids = Array.from(idSet);
@@ -190,15 +190,15 @@ export default function IssueActivityTimeline({
           detail.manager === "IssueActivityManager" &&
           detail.key === issueId
         ) {
-          setItems(detail.data as any);
+          setItems(detail.data as IssueActivity[]);
         }
         if (
           detail.manager === "AssignmentRequestsManager" &&
           detail.key === issueId
         ) {
           // recompute panels when assignment requests cache updates
-          const reqs = detail.data as any[];
-          const byRequester = new Map<string, any[]>();
+          const reqs = detail.data as AssignmentRequest[];
+          const byRequester = new Map<string, AssignmentRequest[]>();
           for (const r of reqs) {
             const key = String(r.requester_id);
             const arr = byRequester.get(key) || [];
@@ -245,11 +245,14 @@ export default function IssueActivityTimeline({
       } catch (_) {}
     };
     if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as any);
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
     }
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("cache:updated", onCacheUpdated as any);
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
       }
     };
   }, [issueId]);

@@ -267,12 +267,12 @@ export default function NotificationBell() {
           detail.manager === "NotificationsManager" &&
           detail.key === "inbox"
         ) {
-          setNotifications(detail.data as any);
+          setNotifications(detail.data as Notification[]);
         }
       } catch (_) {}
     };
     if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as any);
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
     }
     const t1 = setInterval(fetchUnreadCount, 30000);
     const t2 = setInterval(fetchList, 30000);
@@ -281,7 +281,10 @@ export default function NotificationBell() {
       clearInterval(t2);
       console.log("[NotificationBell] unmounted");
       if (typeof window !== "undefined") {
-        window.removeEventListener("cache:updated", onCacheUpdated as any);
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
       }
     };
   }, [fetchUnreadCount, fetchList]);

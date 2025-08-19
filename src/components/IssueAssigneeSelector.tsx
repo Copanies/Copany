@@ -186,6 +186,7 @@ export default function IssueAssigneeSelector({
       disableServerUpdate,
       readOnly,
       onRequestAssignment,
+      hasPendingByMe,
     ]
   );
 

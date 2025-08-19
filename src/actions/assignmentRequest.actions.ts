@@ -4,7 +4,6 @@ import { AssignmentRequestService } from "@/services/assignmentRequest.service";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import type {
   AssignmentRequest,
-  AssignmentRequestStatus,
 } from "@/types/database.types";
 
 export async function listAssignmentRequestsAction(

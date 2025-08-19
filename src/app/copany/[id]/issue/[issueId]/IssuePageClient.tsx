@@ -253,18 +253,21 @@ export default function IssuePageClient({
         };
         if (!detail) return;
         if (detail.manager === "IssuesManager" && detail.key === copanyId) {
-          const list = detail.data as any[];
+          const list = detail.data as IssueWithAssignee[];
           const found = list.find((x) => String(x.id) === String(issueId));
           if (found) setIssueData(found);
         }
       } catch (_) {}
     };
     if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as any);
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
     }
     return () => {
       if (typeof window !== "undefined") {
-        window.removeEventListener("cache:updated", onCacheUpdated as any);
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
       }
     };
   }, [copanyId, issueId, computeEditPermission]);

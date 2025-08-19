@@ -74,7 +74,7 @@ export abstract class GenericDataManager<T, TItem = T> {
                 this.config.cacheManager.updateRefreshTimestamp(key);
               }
             }
-          } catch (e) {
+          } catch (_e) {
             // ignore
           }
         }, autoMs);
@@ -336,7 +336,7 @@ export abstract class GenericDataManager<T, TItem = T> {
             try {
               const entry = JSON.parse(stored);
               return entry.data || null;
-            } catch {
+            } catch (_e) {
               // Ignore parsing errors
             }
           }
@@ -344,8 +344,8 @@ export abstract class GenericDataManager<T, TItem = T> {
       }
 
       return null;
-    } catch (error) {
-      console.error(`[${this.config.managerName}] ❌ 获取过期缓存失败:`, error);
+    } catch (_error) {
+      console.error(`[${this.config.managerName}] ❌ 获取过期缓存失败:`);
       return null;
     }
   }
