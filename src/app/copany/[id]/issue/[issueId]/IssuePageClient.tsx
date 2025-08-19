@@ -543,15 +543,58 @@ export default function IssuePageClient({
             readOnly={!canEdit}
           />
           <IssueAssigneeSelector
-            issueId={issueData.id}
-            initialAssignee={issueData.assignee}
-            assigneeUser={issueData.assignee_user}
-            currentUser={currentUser}
-            contributors={contributors}
-            onAssigneeChange={handleAssigneeChange}
-            readOnly={!canEdit}
-            onRequestAssignment={() => setIsRequestModalOpen(true)}
-          />
+              issueId={issueData.id}
+              initialAssignee={issueData.assignee}
+              assigneeUser={issueData.assignee_user}
+              currentUser={currentUser}
+              contributors={contributors}
+              onAssigneeChange={handleAssigneeChange}
+              readOnly={!canEdit}
+              onRequestAssignment={() => setIsRequestModalOpen(true)}
+            />
+
+          {(() => {
+            const requesterIds = Object.keys(pendingRequestsByRequester);
+            if (requesterIds.length === 0) return null;
+            const max = 5;
+            const shown = requesterIds.slice(0, max);
+            const rest = requesterIds.length - shown.length;
+            return (
+              <div className="flex flex-row items-center gap-0 -ml-1">
+                <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
+                <div className="flex -space-x-1">
+                  {shown.map((id) => {
+                    const info = requestersInfo[id];
+                    const name = info?.name || id;
+                    const avatar = info?.avatar_url || "";
+                    return avatar ? (
+                      <Image
+                        key={id}
+                        src={avatar}
+                        alt={name}
+                        width={22}
+                        height={22}
+                        className="w-[22px] h-[22px] rounded-full border border-white dark:border-black"
+                      />
+                    ) : (
+                      <div
+                        key={id}
+                        className="w-[22px] h-[22px] rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-[9px] text-gray-600 dark:text-gray-300"
+                        title={name}
+                      >
+                        {name.slice(0, 1).toUpperCase()}
+                      </div>
+                    );
+                  })}
+                  {rest > 0 ? (
+                    <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
+                      +{rest}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="flex-1 mb-100 md:w-2/3">

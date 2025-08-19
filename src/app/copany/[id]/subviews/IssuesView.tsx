@@ -29,10 +29,20 @@ import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import { issuePermissionManager, issueReviewersManager } from "@/utils/cache";
+import {
+  issuePermissionManager,
+  issueReviewersManager,
+  assignmentRequestsManager,
+  userInfoManager,
+} from "@/utils/cache";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import type { AssignmentRequest } from "@/types/database.types";
+import type { UserInfo } from "@/actions/user.actions";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -118,6 +128,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     Record<string, IssueReviewer[]>
   >({});
   const loadingReviewersRef = useRef<Set<string>>(new Set());
+  // assignment requests (in-progress) per issue → requester ids
+  const [pendingRequestersByIssue, setPendingRequestersByIssue] = useState<
+    Record<string, string[]>
+  >({});
+  const loadingPendingRequestsRef = useRef<Set<string>>(new Set());
+  const [requestersInfo, setRequestersInfo] = useState<
+    Record<string, UserInfo>
+  >({});
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -324,6 +342,145 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       }
     })();
   }, [filteredIssues, reviewersByIssue]);
+
+  // Lazy load in-progress assignment request requesters for visible issues
+  useEffect(() => {
+    const targetIssueIds = filteredIssues.map((it) => String(it.id));
+    const missing = targetIssueIds.filter(
+      (id) =>
+        pendingRequestersByIssue[id] === undefined &&
+        !loadingPendingRequestsRef.current.has(id)
+    );
+    if (missing.length === 0) return;
+    missing.forEach((id) => loadingPendingRequestsRef.current.add(id));
+    (async () => {
+      try {
+        // fetch all missing issues' requests in parallel
+        const results = await Promise.all(
+          missing.map(async (issueId) => {
+            try {
+              const list = await assignmentRequestsManager.getRequests(
+                issueId,
+                () => listAssignmentRequestsAction(issueId)
+              );
+              return [issueId, list] as const;
+            } catch (e) {
+              console.error("Failed to load assignment requests", {
+                issueId,
+                e,
+              });
+              return [issueId, [] as AssignmentRequest[]] as const;
+            }
+          })
+        );
+        // compute in-progress requester ids and gather user ids
+        const nextPending: Record<string, string[]> = {};
+        const userIdSet = new Set<string>();
+        for (const [issueId, list] of results) {
+          // group by requester and compute current batch still in requested status
+          const byRequester = new Map<string, AssignmentRequest[]>();
+          const sorted = [...list].sort(
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
+          );
+          for (const it of sorted) {
+            const key = String(it.requester_id);
+            if (!byRequester.has(key)) byRequester.set(key, []);
+            byRequester.get(key)!.push(it);
+          }
+          const inProgress: string[] = [];
+          for (const [rid, items] of byRequester.entries()) {
+            const lastTerminalAt = items
+              .filter(
+                (r) =>
+                  r.status === "accepted" ||
+                  r.status === "refused" ||
+                  r.status === "skipped"
+              )
+              .reduce<string | null>((acc, r) => {
+                const t = r.updated_at || r.created_at;
+                if (!acc) return t;
+                return new Date(t).getTime() > new Date(acc).getTime()
+                  ? t
+                  : acc;
+              }, null);
+            const currentBatch = items.filter((r) =>
+              lastTerminalAt
+                ? new Date(r.created_at).getTime() >
+                  new Date(lastTerminalAt).getTime()
+                : true
+            );
+            if (
+              currentBatch.length > 0 &&
+              currentBatch.every((r) => r.status === "requested")
+            ) {
+              inProgress.push(rid);
+              userIdSet.add(rid);
+            }
+          }
+          nextPending[issueId] = inProgress;
+        }
+        // update state
+        setPendingRequestersByIssue((prev) => ({ ...prev, ...nextPending }));
+        if (userIdSet.size > 0) {
+          try {
+            const infos = await userInfoManager.getMultipleUserInfo(
+              Array.from(userIdSet)
+            );
+            setRequestersInfo((prev) => ({ ...prev, ...infos }));
+          } catch (e) {
+            console.error("Failed to load requester user infos", e);
+          }
+        }
+      } finally {
+        missing.forEach((id) => loadingPendingRequestsRef.current.delete(id));
+      }
+    })();
+  }, [filteredIssues, pendingRequestersByIssue]);
+
+  const renderAssignmentRequestBadge = (issueId: string) => {
+    const reqIds = pendingRequestersByIssue[String(issueId)] || [];
+    if (!reqIds || reqIds.length === 0) return null;
+    const max = 2;
+    const shown = reqIds.slice(0, max);
+    const rest = reqIds.length - shown.length;
+    return (
+      <div className="flex flex-row items-center gap-0 -ml-1">
+        <HandRaisedIcon className="w-[18px] h-[18px] -rotate-30 translate-y-0.5 translate-x-1" />
+        <div className="flex -space-x-2">
+          {shown.map((id) => {
+            const info = requestersInfo[id];
+            const name = info?.name || id;
+            const avatar = info?.avatar_url || "";
+            return avatar ? (
+              <Image
+                key={id}
+                src={avatar}
+                alt={name}
+                width={22}
+                height={22}
+                className="w-[22px] h-[22px] rounded-full border border-white dark:border-black"
+              />
+            ) : (
+              <div
+                key={id}
+                className="w-[22px] h-[22px] rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-[9px] text-gray-600 dark:text-gray-300"
+                title={name}
+              >
+                {name.slice(0, 1).toUpperCase()}
+              </div>
+            );
+          })}
+          {rest > 0 ? (
+            <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
+              +{rest}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  };
 
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
@@ -644,6 +801,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       <span>{issue.title || "No title"}</span>
                       {renderReviewBadge(issue)}
                     </div>
+                    {renderAssignmentRequestBadge(String(issue.id))}
                     <IssueLevelSelector
                       issueId={issue.id}
                       initialLevel={issue.level}
