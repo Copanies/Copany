@@ -25,6 +25,7 @@ interface IssueAssigneeSelectorProps {
   showText?: boolean;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  onRequestAssignment?: () => void; // 当只读并点击 Self 时，触发页面级弹窗
 }
 
 export default function IssueAssigneeSelector({
@@ -38,6 +39,7 @@ export default function IssueAssigneeSelector({
   showText = true,
   disableServerUpdate = false,
   readOnly = false,
+  onRequestAssignment,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
@@ -48,7 +50,11 @@ export default function IssueAssigneeSelector({
       if (readOnly) {
         try {
           if (currentUser && newAssignee === currentUser.id) {
-            await requestAssignmentToEditorsAction(issueId, null);
+            if (onRequestAssignment) {
+              onRequestAssignment();
+            } else {
+              await requestAssignmentToEditorsAction(issueId, null);
+            }
           }
         } catch (error) {
           console.error("Error requesting assignment:", error);
@@ -118,6 +124,7 @@ export default function IssueAssigneeSelector({
       assigneeUser,
       disableServerUpdate,
       readOnly,
+      onRequestAssignment,
     ]
   );
 

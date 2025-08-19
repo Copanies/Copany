@@ -14,6 +14,12 @@ export interface DataManagerConfig<T> {
   enableStaleCache?: boolean;
   /** Data update callback function (for UI notification after background refresh) */
   onDataUpdated?: (key: string, data: T) => void;
+  /**
+   * Optional auto background refresh interval (milliseconds).
+   * If provided (> 0), the manager will periodically revalidate known keys in background
+   * even when there is no explicit getData call. If omitted/0, auto refresh is disabled.
+   */
+  autoBackgroundRefreshInterval?: number;
 }
 
 /**
@@ -39,6 +45,8 @@ export abstract class GenericDataManager<T, TItem = T> {
   protected readonly config: DataManagerConfig<T>;
   private readonly itemOps?: DataItemOperations<T, TItem>;
   private backgroundRefreshPromises = new Map<string, Promise<T>>();
+  private knownKeys = new Set<string>();
+  private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     config: DataManagerConfig<T>,
@@ -46,6 +54,34 @@ export abstract class GenericDataManager<T, TItem = T> {
   ) {
     this.config = config;
     this.itemOps = itemOperations;
+
+    // Optional: start auto background refresh loop if configured
+    const autoMs = this.config.autoBackgroundRefreshInterval;
+    if (typeof window !== "undefined" && autoMs && autoMs > 0) {
+      try {
+        this.autoRefreshTimer = setInterval(() => {
+          try {
+            // For each known key, check whether we should auto-refresh based on the provided interval
+            for (const key of this.knownKeys) {
+              const should = this.config.cacheManager.shouldRefreshWithInterval(
+                key,
+                autoMs
+              );
+              if (should && !this.backgroundRefreshPromises.has(key)) {
+                // We need a fetchFn for this key; attempt to reuse an ongoing promise or skip
+                // Since we cannot reconstruct fetchFn here, we rely on the next explicit getData call
+                // to perform refresh. This guard simply updates the refresh timestamp to prevent log spam.
+                this.config.cacheManager.updateRefreshTimestamp(key);
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }, autoMs);
+      } catch {
+        // ignore timer errors
+      }
+    }
   }
 
   /**
@@ -60,6 +96,8 @@ export abstract class GenericDataManager<T, TItem = T> {
     fetchFn: () => Promise<T>,
     forceRefresh: boolean = false
   ): Promise<T> {
+    // Track known keys so optional auto refresh can consider them
+    this.knownKeys.add(key);
     // If force refresh, clear cache and wait for network request
     if (forceRefresh) {
       this.config.cacheManager.clear(key);

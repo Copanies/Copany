@@ -16,6 +16,7 @@ import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import { renderUserLabel } from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
+import Modal from "@/components/commons/Modal";
 import IssueActivityTimeline from "@/components/IssueActivityTimeline";
 import {
   currentUserManager,
@@ -28,11 +29,19 @@ import {
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
-import { ChevronLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronLeftIcon,
+  ArrowRightIcon,
+  HandRaisedIcon,
+} from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
+import Image from "next/image";
+import {
+  listAssignmentRequestsAction,
+  requestAssignmentToEditorsAction,
+} from "@/actions/assignmentRequest.actions";
 import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { userInfoManager } from "@/utils/cache";
@@ -61,6 +70,8 @@ export default function IssuePageClient({
   const [requestersInfo, setRequestersInfo] = useState<
     Record<string, UserInfo>
   >({});
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -258,6 +269,24 @@ export default function IssuePageClient({
     };
   }, [copanyId, issueId, computeEditPermission]);
 
+  const reloadPendingRequests = useCallback(async () => {
+    try {
+      const list = await assignmentRequestsManager.getRequests(issueId, () =>
+        listAssignmentRequestsAction(issueId)
+      );
+      const map: Record<string, AssignmentRequest[]> = {};
+      for (const it of list) {
+        if (it.status !== "requested") continue;
+        const key = String(it.requester_id);
+        if (!map[key]) map[key] = [];
+        map[key].push(it);
+      }
+      setPendingRequestsByRequester(map);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [issueId]);
+
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
       if (!issueData) return;
@@ -393,7 +422,9 @@ export default function IssuePageClient({
               key={requesterId}
               className="flex items-center justify-between"
             >
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2"> */}
+              <div className="flex flex-row items-center gap-0 -ml-2">
+                <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
                 <div className="hover:opacity-80 cursor-pointer">
                   {renderUserLabel(
                     reqs[0]?.requester_id &&
@@ -411,10 +442,11 @@ export default function IssuePageClient({
                       : requestersInfo[requesterId]?.email || null
                   )}
                 </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+              </div>
+              {/* <span className="text-sm text-gray-600 dark:text-gray-400">
                   wants to be assigned
                 </span>
-              </div>
+              </div> */}
               <Button
                 variant="primary"
                 size="xs"
@@ -518,6 +550,7 @@ export default function IssuePageClient({
             contributors={contributors}
             onAssigneeChange={handleAssigneeChange}
             readOnly={!canEdit}
+            onRequestAssignment={() => setIsRequestModalOpen(true)}
           />
         </div>
 
@@ -606,6 +639,7 @@ export default function IssuePageClient({
                 contributors={contributors}
                 onAssigneeChange={handleAssigneeChange}
                 readOnly={!canEdit}
+                onRequestAssignment={() => setIsRequestModalOpen(true)}
               />
               {assignmentRequestView}
             </div>
@@ -647,6 +681,94 @@ export default function IssuePageClient({
           </div>
         </div>
       </div>
+      {/* Assignment Request Modal */}
+      <Modal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        size="sm"
+      >
+        <div className="p-5">
+          <div className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="flex flex-row items-center gap-0 -ml-2">
+              <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
+              {currentUser?.user_metadata?.avatar_url ? (
+                <Image
+                  src={currentUser.user_metadata.avatar_url}
+                  alt={currentUser.user_metadata?.name || "User"}
+                  width={28}
+                  height={28}
+                  className="w-5 h-5 rounded-full"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">
+                  {(
+                    currentUser?.user_metadata?.name ||
+                    currentUser?.email ||
+                    "U"
+                  )
+                    .slice(0, 1)
+                    .toUpperCase()}
+                </div>
+              )}
+            </div>
+            <span>Request to be assigned</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold">Message (optional)</label>
+            <textarea
+              className="w-full min-h-[32px] rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 outline-none"
+              placeholder="Leave a message"
+              value={requestMessage}
+              onChange={(e) => setRequestMessage(e.target.value)}
+            />
+            <div className="flex flex-row flex-wrap gap-2 mt-1">
+              {[
+                "I can do this.",
+                "I will finish it.",
+                "I like this idea.",
+                "I want to fix it.",
+              ].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setRequestMessage(t)}
+                  className="px-2 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-900 hover:cursor-pointer"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-5">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setIsRequestModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={async () => {
+                try {
+                  await requestAssignmentToEditorsAction(
+                    issueId,
+                    requestMessage.trim() ? requestMessage.trim() : null
+                  );
+                  setIsRequestModalOpen(false);
+                  setRequestMessage("");
+                  await reloadPendingRequests();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

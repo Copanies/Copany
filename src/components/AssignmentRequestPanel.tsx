@@ -12,6 +12,7 @@ import {
 import type { AssignmentRequest } from "@/types/database.types";
 import Image from "next/image";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { HandRaisedIcon } from "@heroicons/react/24/outline";
 
 interface AssignmentRequestPanelProps {
   issueId: string;
@@ -37,7 +38,7 @@ export default function AssignmentRequestPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const requestsForRequester = useMemo(() => {
-    // 仅保留该 requester 的记录
+    // Only keep records for this requester
     const list = items
       .filter((x) => String(x.requester_id) === String(requesterId))
       .sort(
@@ -46,7 +47,7 @@ export default function AssignmentRequestPanel({
       );
     if (list.length === 0) return [] as AssignmentRequest[];
 
-    // 找到最近一次拒绝（refused）的时间点，作为分隔，用于识别当前批次
+    // Find the most recent refused (or accepted) time as a separator to identify the current batch
     const lastTerminalAt = list
       .filter((r) => r.status === "refused" || r.status === "accepted")
       .reduce<string | null>((acc, r) => {
@@ -55,19 +56,19 @@ export default function AssignmentRequestPanel({
         return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
       }, null);
 
-    // 当前批次：所有创建时间在 lastTerminalAt 之后的记录
+    // Current batch: all records created after lastTerminalAt
     const currentBatch = list.filter((r) =>
       lastTerminalAt
         ? new Date(r.created_at).getTime() > new Date(lastTerminalAt).getTime()
         : true
     );
 
-    // 若当前批次内存在任何非 requested 状态（accepted/refused/skipped），表示本次请求已结束，不渲染
+    // If any non-requested status (accepted/refused/skipped) exists in the current batch, the request has ended, do not render
     if (currentBatch.some((r) => r.status !== "requested")) {
       return [] as AssignmentRequest[];
     }
 
-    // 仅保留当前批次内仍为 requested 的记录
+    // Only keep records still in requested status in the current batch
     const activeRequested = currentBatch.filter(
       (r) => r.status === "requested"
     );
@@ -124,19 +125,22 @@ export default function AssignmentRequestPanel({
               className={`p-3 flex flex-col gap-2 border-b border-gray-200 dark:border-gray-800 rounded-t-lg bg-blue-600/8`}
             >
               <div className="flex items-center gap-2">
-                {requester?.avatar_url ? (
-                  <Image
-                    src={requester.avatar_url}
-                    alt={requesterName}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 rounded-full"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                    {requesterName?.[0]?.toUpperCase() || "U"}
-                  </div>
-                )}
+                <div className="flex flex-row items-center gap-0 -ml-2">
+                  <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
+                  {requester?.avatar_url ? (
+                    <Image
+                      src={requester.avatar_url}
+                      alt={requesterName}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
+                      {requesterName?.[0]?.toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
                 <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {requesterName} wants to be assigned
                 </div>
@@ -181,6 +185,11 @@ export default function AssignmentRequestPanel({
                 })}
               </div>
             </div>
+            {reqs[0]?.message ? (
+              <div className="px-3 pt-3 text-sm text-gray-800 dark:text-gray-200">
+                {reqs[0].message}
+              </div>
+            ) : null}
             <div className="flex flex-row gap-2 px-3 pb-3 pt-2">
               {meId ? (
                 <>

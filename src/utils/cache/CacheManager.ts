@@ -185,6 +185,24 @@ export class CacheManager<T, K = string> {
   }
 
   /**
+   * Check if should refresh with an explicit interval (used by optional auto background refresh)
+   */
+  shouldRefreshWithInterval(key: K, intervalMs: number): boolean {
+    try {
+      if (typeof window === "undefined") return false;
+      const cacheKey = this.config.keyPrefix + this.keyGenerator(key);
+      const stored = localStorage.getItem(cacheKey);
+      if (!stored) return false;
+      const entry: CacheEntry<T> = JSON.parse(stored);
+      const now = Date.now();
+      const last = entry.lastRefreshTime || 0;
+      return now - last > intervalMs;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Update background refresh timestamp
    */
   updateRefreshTimestamp(key: K): void {
