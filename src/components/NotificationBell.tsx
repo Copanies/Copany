@@ -81,6 +81,11 @@ export default function NotificationBell() {
       );
       console.log("[NotificationBell] fetchList → unique copanyIds", ids);
       setNotifications(data);
+      // 即时根据列表计算未读数，保证 UI 立刻更新（服务器轮询稍后会校准）
+      try {
+        const localUnread = data.filter((n) => !n.is_read && !n.read_at).length;
+        setUnreadCount(localUnread);
+      } catch (_) {}
       const last = data[data.length - 1] as { created_at?: string } | undefined;
       setNextCursor(last?.created_at ?? null);
     } catch (error) {
@@ -255,12 +260,49 @@ export default function NotificationBell() {
     fetchUnreadCount();
     fetchList();
     console.log("[NotificationBell] mounted");
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "NotificationsManager" &&
+          detail.key === "inbox"
+        ) {
+          const list = detail.data as Notification[];
+          setNotifications(list);
+          // 异步刷新完成后，重新计算光标与未读数，保证 UI 与最新数据同步
+          try {
+            const last = list[list.length - 1] as
+              | { created_at?: string }
+              | undefined;
+            setNextCursor(last?.created_at ?? null);
+            const localUnread = list.filter(
+              (n) => !n.is_read && !n.read_at
+            ).length;
+            setUnreadCount(localUnread);
+          } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
     const t1 = setInterval(fetchUnreadCount, 30000);
     const t2 = setInterval(fetchList, 30000);
     return () => {
       clearInterval(t1);
       clearInterval(t2);
       console.log("[NotificationBell] unmounted");
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
     };
   }, [fetchUnreadCount, fetchList]);
 
@@ -297,6 +339,16 @@ export default function NotificationBell() {
         return "closed the Issue";
       case "mention":
         return "mentioned you in the Issue";
+      case "assignment_request_received":
+        return "requested to be assigned";
+      case "assignment_request_accepted":
+        return "accepted your assignment";
+      case "assignment_request_refused":
+        return "refused your assignment";
+      case "review_requested":
+        return "requested you to review";
+      case "review_approved":
+        return "approved the review";
       default:
         return "Notification";
     }
@@ -420,6 +472,34 @@ export default function NotificationBell() {
         );
       case "issue_closed":
         return <span className="text-sm">{latestTitle || "Issue"}</span>;
+      case "assignment_request_received":
+        return (
+          <span className="text-sm">{latestTitle ? latestTitle : "Issue"}</span>
+        );
+      case "assignment_request_accepted":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `${latestTitle}: ` : ""}Your request was accepted
+          </span>
+        );
+      case "assignment_request_refused":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `${latestTitle}: ` : ""}Your request was refused
+          </span>
+        );
+      case "review_requested":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `${latestTitle}: ` : ""}You were requested to review
+          </span>
+        );
+      case "review_approved":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `${latestTitle}: ` : ""}Review approved
+          </span>
+        );
       default:
         return latestTitle || p.issue_title ? (
           <span className="text-sm">{latestTitle || p.issue_title}</span>

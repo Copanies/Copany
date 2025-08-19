@@ -177,4 +177,14 @@ export class IssuesManager {
 }
 
 // Default instance (no callback, for simple operations)
-export const issuesManager = new IssuesManager();
+export const issuesManager = new IssuesManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "IssuesManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});

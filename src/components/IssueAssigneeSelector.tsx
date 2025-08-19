@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import {
+  requestAssignmentToEditorsAction,
+  listAssignmentRequestsAction,
+} from "@/actions/assignmentRequest.actions";
+import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import { assignmentRequestsManager } from "@/utils/cache";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -23,6 +30,7 @@ interface IssueAssigneeSelectorProps {
   showText?: boolean;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  onRequestAssignment?: () => void; // 当只读并点击 Self 时，触发页面级弹窗
 }
 
 export default function IssueAssigneeSelector({
@@ -36,13 +44,84 @@ export default function IssueAssigneeSelector({
   showText = true,
   disableServerUpdate = false,
   readOnly = false,
+  onRequestAssignment,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
+  const [hasPendingByMe, setHasPendingByMe] = useState<boolean>(false);
+
+  // Check if current user already has an in-progress (requested batch) assignment request
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!currentUser) {
+          if (!cancelled) setHasPendingByMe(false);
+          return;
+        }
+        const list = await assignmentRequestsManager.getRequests(issueId, () =>
+          listAssignmentRequestsAction(issueId)
+        );
+        const byMe = list.filter(
+          (x) => String(x.requester_id) === String(currentUser.id)
+        );
+        if (byMe.length === 0) {
+          if (!cancelled) setHasPendingByMe(false);
+          return;
+        }
+        const sorted = [...byMe].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const lastTerminalAt = sorted
+          .filter(
+            (r) =>
+              r.status === "accepted" ||
+              r.status === "refused" ||
+              r.status === "skipped"
+          )
+          .reduce<string | null>((acc, r) => {
+            const t = r.updated_at || r.created_at;
+            if (!acc) return t;
+            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
+          }, null);
+        const currentBatch = sorted.filter((r) =>
+          lastTerminalAt
+            ? new Date(r.created_at).getTime() >
+              new Date(lastTerminalAt).getTime()
+            : true
+        );
+        const inProgress =
+          currentBatch.length > 0 &&
+          currentBatch.every((r) => r.status === "requested");
+        if (!cancelled) setHasPendingByMe(inProgress);
+      } catch (_) {
+        if (!cancelled) setHasPendingByMe(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [issueId, currentUser]);
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
-      if (readOnly) return;
+      // Read-only: selecting Self triggers an Assignment Request instead of updating
+      if (readOnly) {
+        try {
+          if (currentUser && newAssignee === currentUser.id) {
+            if (hasPendingByMe) return;
+            if (onRequestAssignment) {
+              onRequestAssignment();
+            } else {
+              await requestAssignmentToEditorsAction(issueId, null);
+            }
+          }
+        } catch (error) {
+          console.error("Error requesting assignment:", error);
+        }
+        return;
+      }
       try {
         const assigneeValue = newAssignee === "unassigned" ? null : newAssignee;
         setCurrentAssignee(assigneeValue);
@@ -106,6 +185,8 @@ export default function IssueAssigneeSelector({
       assigneeUser,
       disableServerUpdate,
       readOnly,
+      onRequestAssignment,
+      hasPendingByMe,
     ]
   );
 
@@ -133,13 +214,27 @@ export default function IssueAssigneeSelector({
         options: [
           {
             value: currentUser.id,
-            label: renderUserLabel(
-              currentUser.user_metadata?.name || "Unknown",
-              currentUser.user_metadata?.avatar_url || null,
-              true
+            label: (
+              <div className="flex items-center gap-1">
+                {renderUserLabel(
+                  currentUser.user_metadata?.name || "Unknown",
+                  currentUser.user_metadata?.avatar_url || null,
+                  true,
+                  currentUser.email || null,
+                  readOnly
+                )}
+                {readOnly ? (
+                  <HandRaisedIcon className="w-4 h-4 -rotate-30" />
+                ) : null}
+              </div>
             ),
-            disabled: readOnly,
-            tooltip: readOnly ? "No permission to edit" : undefined,
+            // allow clicking even in read-only to request assignment unless already sent
+            disabled: readOnly ? hasPendingByMe : false,
+            tooltip: readOnly
+              ? hasPendingByMe
+                ? "Request already sent"
+                : "Request assignment"
+              : undefined,
           },
         ],
       });
@@ -159,7 +254,9 @@ export default function IssueAssigneeSelector({
           label: renderUserLabel(
             contributor.name,
             contributor.avatar_url,
-            true
+            true,
+            contributor.email,
+            readOnly
           ),
           disabled: readOnly,
           tooltip: readOnly ? "No permission to edit" : undefined,
@@ -187,7 +284,8 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         currentAssigneeUser.name,
         currentAssigneeUser.avatar_url,
-        showText
+        showText,
+        currentAssigneeUser.email
       );
     }
 
@@ -196,7 +294,8 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         currentUser.user_metadata?.name || "Unknown",
         currentUser.user_metadata?.avatar_url || null,
-        showText
+        showText,
+        currentUser.email || null
       );
     }
 
@@ -207,12 +306,13 @@ export default function IssueAssigneeSelector({
       return renderUserLabel(
         contributor.name,
         contributor.avatar_url,
-        showText
+        showText,
+        contributor.email
       );
     }
 
     // If not found, display a default user label
-    return renderUserLabel("Unknown User", null, showText);
+    return renderUserLabel("Unknown User", null, showText, null);
   })();
 
   return (
@@ -230,9 +330,11 @@ export default function IssueAssigneeSelector({
 export function renderUserLabel(
   name: string,
   avatarUrl: string | null,
-  showText: boolean
+  showText: boolean,
+  email?: string | null,
+  readOnly?: boolean | null
 ) {
-  return (
+  const labelContent = (
     <div className="flex items-center gap-2 -my-[1px]">
       {avatarUrl ? (
         <Image
@@ -244,13 +346,59 @@ export function renderUserLabel(
         />
       ) : (
         <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {name}
+          {name.slice(0, 1).toUpperCase()}
         </div>
       )}
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           {name}
         </span>
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      {readOnly ? (
+        labelContent
+      ) : (
+        <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>{labelContent}</Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="left"
+                sideOffset={8}
+                align="center"
+                className="tooltip-surface"
+              >
+                <div className="flex items-center gap-2">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt={name}
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                      {name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{name}</span>
+                    {email ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {email}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       )}
     </div>
   );
@@ -287,7 +435,7 @@ export function renderUserLabelSm(
         />
       ) : (
         <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300">
-          {name}
+          {name.slice(0, 1).toUpperCase()}
         </div>
       )}
       {showText && (

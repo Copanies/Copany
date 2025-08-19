@@ -246,7 +246,7 @@ export default function GroupedDropdown({
                         side="right"
                         sideOffset={8}
                         align="center"
-                        className="z-[9999] rounded bg-white text-gray-900 text-sm px-2 py-1 shadow-lg border border-gray-200"
+                        className="tooltip-surface"
                       >
                         {option.tooltip}
                       </Tooltip.Content>

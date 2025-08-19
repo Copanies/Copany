@@ -8,6 +8,7 @@ import {
   Notification,
   IssueActivity,
   IssueReviewer,
+  AssignmentRequest,
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import { UserInfo } from "@/actions/user.actions";
@@ -160,6 +161,18 @@ export const issueReviewersCache = new CacheManager<IssueReviewer[], string>(
   },
   undefined,
   (data: IssueReviewer[]) => ({ count: data.length })
+);
+
+// Assignment requests cache instance
+export const assignmentRequestsCache = new CacheManager<AssignmentRequest[], string>(
+  {
+    keyPrefix: "assignment_requests_cache_",
+    ttl: 30 * 24 * 60 * 60 * 1000,
+    loggerName: "AssignmentRequestsCache",
+    backgroundRefreshInterval: 10 * 1000,
+  },
+  undefined,
+  (data: AssignmentRequest[]) => ({ count: data.length })
 );
 
 // Issues UI state cache (per copanyId)

@@ -93,7 +93,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           side="top"
           sideOffset={8}
           align="end"
-          className="z-[9999] rounded bg-white text-gray-900 text-sm px-3 py-2 shadow-lg border border-gray-200 whitespace-pre-line break-words"
+          className="tooltip-surface"
         >
           Please sign in to reply
         </Tooltip.Content>

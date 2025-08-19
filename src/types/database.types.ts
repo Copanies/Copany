@@ -153,7 +153,12 @@ export type NotificationType =
   | "issue_priority_changed"
   | "issue_level_changed"
   | "issue_closed"
-  | "mention";
+  | "mention"
+  | "assignment_request_received"
+  | "assignment_request_accepted"
+  | "assignment_request_refused"
+  | "review_requested"
+  | "review_approved";
 
 export interface Notification {
   id: string;
@@ -179,7 +184,10 @@ export type IssueActivityType =
   | "assignee_changed"
   | "issue_closed"
   | "review_requested"
-  | "review_approved";
+  | "review_approved"
+  | "assignment_requested"
+  | "assignment_request_accepted"
+  | "assignment_request_refused";
 
 export interface IssueActivityPayload {
   issue_title?: string | null;
@@ -197,6 +205,10 @@ export interface IssueActivityPayload {
   to_user_name?: string | null;
   reviewer_id?: string | null;
   reviewer_name?: string | null;
+  requester_id?: string | null;
+  requester_name?: string | null;
+  recipient_id?: string | null;
+  recipient_name?: string | null;
   [key: string]: unknown;
 }
 
@@ -220,4 +232,18 @@ export interface IssueReviewer {
   issue_id: string;
   reviewer_id: string;
   status: ReviewerStatus;
+}
+
+// Assignment Request
+export type AssignmentRequestStatus = "requested" | "accepted" | "refused" | "skipped";
+
+export interface AssignmentRequest {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  issue_id: string;
+  requester_id: string;
+  recipient_id: string;
+  message: string | null;
+  status: AssignmentRequestStatus;
 }
