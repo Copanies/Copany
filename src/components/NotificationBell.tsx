@@ -81,6 +81,11 @@ export default function NotificationBell() {
       );
       console.log("[NotificationBell] fetchList → unique copanyIds", ids);
       setNotifications(data);
+      // 即时根据列表计算未读数，保证 UI 立刻更新（服务器轮询稍后会校准）
+      try {
+        const localUnread = data.filter((n) => !n.is_read && !n.read_at).length;
+        setUnreadCount(localUnread);
+      } catch (_) {}
       const last = data[data.length - 1] as { created_at?: string } | undefined;
       setNextCursor(last?.created_at ?? null);
     } catch (error) {
@@ -267,7 +272,19 @@ export default function NotificationBell() {
           detail.manager === "NotificationsManager" &&
           detail.key === "inbox"
         ) {
-          setNotifications(detail.data as Notification[]);
+          const list = detail.data as Notification[];
+          setNotifications(list);
+          // 异步刷新完成后，重新计算光标与未读数，保证 UI 与最新数据同步
+          try {
+            const last = list[list.length - 1] as
+              | { created_at?: string }
+              | undefined;
+            setNextCursor(last?.created_at ?? null);
+            const localUnread = list.filter(
+              (n) => !n.is_read && !n.read_at
+            ).length;
+            setUnreadCount(localUnread);
+          } catch (_) {}
         }
       } catch (_) {}
     };
@@ -325,9 +342,9 @@ export default function NotificationBell() {
       case "assignment_request_received":
         return "requested to be assigned";
       case "assignment_request_accepted":
-        return "accepted your assignment request";
+        return "accepted your assignment";
       case "assignment_request_refused":
-        return "refused your assignment request";
+        return "refused your assignment";
       case "review_requested":
         return "requested you to review";
       case "review_approved":
@@ -457,33 +474,30 @@ export default function NotificationBell() {
         return <span className="text-sm">{latestTitle || "Issue"}</span>;
       case "assignment_request_received":
         return (
-          <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”` : "Issue"}
-          </span>
+          <span className="text-sm">{latestTitle ? latestTitle : "Issue"}</span>
         );
       case "assignment_request_accepted":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}Your request was accepted
+            {latestTitle ? `${latestTitle}: ` : ""}Your request was accepted
           </span>
         );
       case "assignment_request_refused":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}Your request was refused
+            {latestTitle ? `${latestTitle}: ` : ""}Your request was refused
           </span>
         );
       case "review_requested":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}You were requested to
-            review
+            {latestTitle ? `${latestTitle}: ` : ""}You were requested to review
           </span>
         );
       case "review_approved":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}Review approved
+            {latestTitle ? `${latestTitle}: ` : ""}Review approved
           </span>
         );
       default:

@@ -346,7 +346,7 @@ export function renderUserLabel(
         />
       ) : (
         <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {name}
+          {name.slice(0, 1).toUpperCase()}
         </div>
       )}
       {showText && (
@@ -383,7 +383,7 @@ export function renderUserLabel(
                     />
                   ) : (
                     <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                      {name}
+                      {name.slice(0, 1).toUpperCase()}
                     </div>
                   )}
                   <div className="flex flex-col">
@@ -435,7 +435,7 @@ export function renderUserLabelSm(
         />
       ) : (
         <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300">
-          {name}
+          {name.slice(0, 1).toUpperCase()}
         </div>
       )}
       {showText && (

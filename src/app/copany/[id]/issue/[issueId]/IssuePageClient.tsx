@@ -70,6 +70,7 @@ export default function IssuePageClient({
   const [requestersInfo, setRequestersInfo] = useState<
     Record<string, UserInfo>
   >({});
+  const [creatorInfo, setCreatorInfo] = useState<UserInfo | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const router = useRouter();
@@ -272,6 +273,26 @@ export default function IssuePageClient({
     };
   }, [copanyId, issueId, computeEditPermission]);
 
+  // Load creator user info via userInfoManager
+  useEffect(() => {
+    const fetchCreator = async () => {
+      try {
+        const creatorId = issueData?.created_by
+          ? String(issueData.created_by)
+          : null;
+        if (!creatorId) {
+          setCreatorInfo(null);
+          return;
+        }
+        const info = await userInfoManager.getUserInfo(creatorId);
+        setCreatorInfo(info);
+      } catch (_) {
+        setCreatorInfo(null);
+      }
+    };
+    fetchCreator();
+  }, [issueData?.created_by]);
+
   const reloadPendingRequests = useCallback(async () => {
     try {
       const list = await assignmentRequestsManager.getRequests(issueId, () =>
@@ -423,10 +444,10 @@ export default function IssuePageClient({
           ([requesterId, reqs]) => (
             <div
               key={requesterId}
-              className="flex items-center justify-between"
+              className="flex items-center justify-between gap-2"
             >
               {/* <div className="flex items-center gap-2"> */}
-              <div className="flex flex-row items-center gap-0 -ml-2">
+              <div className="flex flex-row items-center gap-0 -ml-1">
                 <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
                 <div className="hover:opacity-80 cursor-pointer">
                   {renderUserLabel(
@@ -517,113 +538,111 @@ export default function IssuePageClient({
         )}
       </div>
       <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto md:gap-6">
-        <div className="md:hidden mx-3 mb-2 flex flex-row flex-wrap gap-x-2 gap-y-2 pb-3 border-b border-gray-200 dark:border-gray-800">
-          <IssueStateSelector
-            issueId={issueData.id}
-            initialState={issueData.state}
-            showText={true}
-            onStateChange={(_, newState) => handleStateChange(newState)}
-            onServerUpdated={(serverIssue) => {
-              setIssueData(serverIssue);
-              issuesManager.updateIssue(copanyId, serverIssue);
-            }}
-            readOnly={!canEdit}
-          />
-          <IssuePrioritySelector
-            issueId={issueData.id}
-            initialPriority={issueData.priority}
-            showText={true}
-            onPriorityChange={(_, newPriority) =>
-              handlePriorityChange(newPriority)
-            }
-            readOnly={!canEdit}
-          />
-          <IssueLevelSelector
-            issueId={issueData.id}
-            initialLevel={issueData.level}
-            showText={true}
-            onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
-            readOnly={!canEdit}
-          />
-          <div className="flex flex-row items-center gap-2">
-            <IssueAssigneeSelector
+        <div className="md:hidden mx-3 mb-2 flex flex-col gap-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex flex-row items-center gap-2 h-6">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+              State
+            </div>
+            <IssueStateSelector
               issueId={issueData.id}
-              initialAssignee={issueData.assignee}
-              assigneeUser={issueData.assignee_user}
-              currentUser={currentUser}
-              contributors={contributors}
-              onAssigneeChange={handleAssigneeChange}
+              initialState={issueData.state}
+              showText={true}
+              onStateChange={(_, newState) => handleStateChange(newState)}
+              onServerUpdated={(serverIssue) => {
+                setIssueData(serverIssue);
+                issuesManager.updateIssue(copanyId, serverIssue);
+              }}
               readOnly={!canEdit}
-              onRequestAssignment={() => setIsRequestModalOpen(true)}
             />
-            {(() => {
-              const meId = currentUser?.id ? String(currentUser.id) : null;
-              const hasPendingByMe = !!(
-                meId &&
-                pendingRequestsByRequester[meId] &&
-                pendingRequestsByRequester[meId].length > 0
-              );
-              const canRequest = !canEdit && !!currentUser && !hasPendingByMe;
-              if (!currentUser || canEdit) return null;
-              if (canRequest) {
-                return (
-                  <Button
-                    size="xs"
-                    variant="primary"
-                    onClick={() => setIsRequestModalOpen(true)}
-                  >
-                    <div className="flex flex-row items-center gap-1">
-                      <HandRaisedIcon className="w-4 h-4 -rotate-30" />
-                      <p>Own this</p>
-                    </div>
-                  </Button>
-                );
-              }
-            })()}
           </div>
 
-          {(() => {
-            const requesterIds = Object.keys(pendingRequestsByRequester);
-            if (requesterIds.length === 0) return null;
-            const max = 5;
-            const shown = requesterIds.slice(0, max);
-            const rest = requesterIds.length - shown.length;
-            return (
-              <div className="flex flex-row items-center gap-0 -ml-1">
-                <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
-                <div className="flex -space-x-1">
-                  {shown.map((id) => {
-                    const info = requestersInfo[id];
-                    const name = info?.name || id;
-                    const avatar = info?.avatar_url || "";
-                    return avatar ? (
-                      <Image
-                        key={id}
-                        src={avatar}
-                        alt={name}
-                        width={22}
-                        height={22}
-                        className="w-[22px] h-[22px] rounded-full border border-white dark:border-black"
-                      />
-                    ) : (
-                      <div
-                        key={id}
-                        className="w-[22px] h-[22px] rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-[9px] text-gray-600 dark:text-gray-300"
-                        title={name}
+          <div className="flex flex-row items-center gap-2 h-6">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+              Priority
+            </div>
+            <IssuePrioritySelector
+              issueId={issueData.id}
+              initialPriority={issueData.priority}
+              showText={true}
+              onPriorityChange={(_, newPriority) =>
+                handlePriorityChange(newPriority)
+              }
+              readOnly={!canEdit}
+            />
+          </div>
+
+          <div className="flex flex-row items-center gap-2 h-6">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+              Level
+            </div>
+            <IssueLevelSelector
+              issueId={issueData.id}
+              initialLevel={issueData.level}
+              showText={true}
+              onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
+              readOnly={!canEdit}
+            />
+          </div>
+
+          <div className="flex flex-row items-top gap-2">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16 h-6">
+              Assignee
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-row items-center gap-2 h-6">
+                <IssueAssigneeSelector
+                  issueId={issueData.id}
+                  initialAssignee={issueData.assignee}
+                  assigneeUser={issueData.assignee_user}
+                  currentUser={currentUser}
+                  contributors={contributors}
+                  onAssigneeChange={handleAssigneeChange}
+                  readOnly={!canEdit}
+                  onRequestAssignment={() => setIsRequestModalOpen(true)}
+                />
+                {(() => {
+                  const meId = currentUser?.id ? String(currentUser.id) : null;
+                  const hasPendingByMe = !!(
+                    meId &&
+                    pendingRequestsByRequester[meId] &&
+                    pendingRequestsByRequester[meId].length > 0
+                  );
+                  const canRequest =
+                    !canEdit && !!currentUser && !hasPendingByMe;
+                  if (!currentUser || canEdit) return null;
+                  if (canRequest) {
+                    return (
+                      <Button
+                        size="xs"
+                        variant="primary"
+                        onClick={() => setIsRequestModalOpen(true)}
                       >
-                        {name.slice(0, 1).toUpperCase()}
-                      </div>
+                        <div className="flex flex-row items-center gap-1">
+                          <HandRaisedIcon className="w-4 h-4 -rotate-30" />
+                          <p>Own this</p>
+                        </div>
+                      </Button>
                     );
-                  })}
-                  {rest > 0 ? (
-                    <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
-                      +{rest}
-                    </div>
-                  ) : null}
-                </div>
+                  }
+                })()}
               </div>
-            );
-          })()}
+              {assignmentRequestView}
+            </div>
+          </div>
+
+          <div className="flex flex-row items-center gap-2 h-6">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+              Creator
+            </div>
+            <div className="hover:opacity-80 cursor-pointer">
+              {renderUserLabel(
+                creatorInfo?.name || "Unknown",
+                creatorInfo?.avatar_url || null,
+                true,
+                creatorInfo?.email || null
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex-1 mb-100 md:w-2/3">
@@ -747,34 +766,12 @@ export default function IssuePageClient({
                 Creator
               </div>
               <div className="hover:opacity-80 cursor-pointer">
-                {(() => {
-                  const creatorId = issueData.created_by
-                    ? String(issueData.created_by)
-                    : null;
-                  if (creatorId) {
-                    const creator = contributors.find(
-                      (c) => String(c.user_id) === creatorId
-                    );
-                    if (creator) {
-                      return renderUserLabel(
-                        creator.name,
-                        creator.avatar_url,
-                        true,
-                        creator.email
-                      );
-                    }
-                    // fallback to currentUser only if same as creatorId
-                    if (currentUser && String(currentUser.id) === creatorId) {
-                      return renderUserLabel(
-                        currentUser.user_metadata?.name || "Unknown",
-                        currentUser.user_metadata?.avatar_url || null,
-                        true,
-                        currentUser.email || null
-                      );
-                    }
-                  }
-                  return renderUserLabel("Unknown", null, true, null);
-                })()}
+                {renderUserLabel(
+                  creatorInfo?.name || "Unknown",
+                  creatorInfo?.avatar_url || null,
+                  true,
+                  creatorInfo?.email || null
+                )}
               </div>
             </div>
           </div>
