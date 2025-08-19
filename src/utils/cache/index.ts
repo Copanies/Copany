@@ -45,3 +45,7 @@ export {
   IssueReviewersManager,
   issueReviewersManager,
 } from "./managers/IssueReviewersManager";
+export {
+  AssignmentRequestsManager,
+  assignmentRequestsManager,
+} from "./managers/AssignmentRequestsManager";

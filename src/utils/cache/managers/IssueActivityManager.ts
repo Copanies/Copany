@@ -56,5 +56,15 @@ export class IssueActivityManager {
   }
 }
 
-export const issueActivityManager = new IssueActivityManager();
+export const issueActivityManager = new IssueActivityManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "IssueActivityManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});
 

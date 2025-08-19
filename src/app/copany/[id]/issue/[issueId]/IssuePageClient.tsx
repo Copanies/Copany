@@ -23,15 +23,20 @@ import {
   issuesManager,
   copanyManager,
   issuePermissionManager,
+  assignmentRequestsManager,
 } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
+import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
+import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { userInfoManager } from "@/utils/cache";
+import type { UserInfo } from "@/actions/user.actions";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -50,6 +55,12 @@ export default function IssuePageClient({
   const [isPermissionResolved, setIsPermissionResolved] =
     useState<boolean>(false);
   const [readOnlyTooltip, setReadOnlyTooltip] = useState<string>("");
+  const [pendingRequestsByRequester, setPendingRequestsByRequester] = useState<
+    Record<string, AssignmentRequest[]>
+  >({});
+  const [requestersInfo, setRequestersInfo] = useState<
+    Record<string, UserInfo>
+  >({});
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -181,6 +192,36 @@ export default function IssuePageClient({
         if (freshIssueData) {
           issuesManager.updateIssue(copanyId, freshIssueData);
         }
+
+        // Load pending assignment requests (requested only), grouped by requester
+        try {
+          const list = await assignmentRequestsManager.getRequests(
+            issueId,
+            () => listAssignmentRequestsAction(issueId)
+          );
+          const map: Record<string, AssignmentRequest[]> = {};
+          for (const it of list) {
+            if (it.status !== "requested") continue;
+            const key = String(it.requester_id);
+            if (!map[key]) map[key] = [];
+            map[key].push(it);
+          }
+          setPendingRequestsByRequester(map);
+          // 批量获取请求者用户信息
+          const requesterIds = Object.keys(map);
+          if (requesterIds.length > 0) {
+            try {
+              const infos = await userInfoManager.getMultipleUserInfo(
+                requesterIds
+              );
+              setRequestersInfo(infos);
+            } catch (e) {
+              console.error("Failed to load requester user infos", e);
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
       } catch (error) {
         console.error("Error loading issue data:", error);
         setIsPermissionResolved(true);
@@ -190,6 +231,31 @@ export default function IssuePageClient({
     };
 
     loadData();
+
+    // Listen cache updates to immediately reflect background refresh results
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (detail.manager === "IssuesManager" && detail.key === copanyId) {
+          const list = detail.data as any[];
+          const found = list.find((x) => String(x.id) === String(issueId));
+          if (found) setIssueData(found);
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as any);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("cache:updated", onCacheUpdated as any);
+      }
+    };
   }, [copanyId, issueId, computeEditPermission]);
 
   const handleStateChange = useCallback(
@@ -317,6 +383,64 @@ export default function IssuePageClient({
     [issueData, copanyId]
   );
 
+  const assignmentRequestView = (() => {
+    if (Object.keys(pendingRequestsByRequester).length === 0) return null;
+    return (
+      <div className="flex flex-col gap-3">
+        {Object.entries(pendingRequestsByRequester).map(
+          ([requesterId, reqs]) => (
+            <div
+              key={requesterId}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <div className="hover:opacity-80 cursor-pointer">
+                  {renderUserLabel(
+                    reqs[0]?.requester_id &&
+                      currentUser?.id === reqs[0].requester_id
+                      ? currentUser?.user_metadata?.name || "Unknown"
+                      : requestersInfo[requesterId]?.name || requesterId,
+                    reqs[0]?.requester_id &&
+                      currentUser?.id === reqs[0].requester_id
+                      ? currentUser?.user_metadata?.avatar_url || null
+                      : requestersInfo[requesterId]?.avatar_url || null,
+                    true,
+                    reqs[0]?.requester_id &&
+                      currentUser?.id === reqs[0].requester_id
+                      ? currentUser?.user_metadata?.email || null
+                      : requestersInfo[requesterId]?.email || null
+                  )}
+                </div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  wants to be assigned
+                </span>
+              </div>
+              <Button
+                variant="primary"
+                size="xs"
+                onClick={() => {
+                  const el = document.getElementById(
+                    `assignment-request-${requesterId}`
+                  );
+                  if (el)
+                    el.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                }}
+              >
+                <div className="flex flex-row gap-1 items-center">
+                  <ArrowRightIcon className="w-4 h-4" />
+                  <span>View</span>
+                </div>
+              </Button>
+            </div>
+          )
+        )}
+      </div>
+    );
+  })();
+
   if (isLoading) {
     return <LoadingView type="page" />;
   }
@@ -426,7 +550,7 @@ export default function IssuePageClient({
           </div>
         </div>
         {/* Show state and priority selectors on larger screens */}
-        <div className="hidden md:block md:w-1/3 ">
+        <div className="hidden md:block md:w-1/3 pr-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -483,20 +607,41 @@ export default function IssuePageClient({
                 onAssigneeChange={handleAssigneeChange}
                 readOnly={!canEdit}
               />
+              {assignmentRequestView}
             </div>
             <div className="flex flex-col gap-2">
               <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Creator
               </div>
               <div className="hover:opacity-80 cursor-pointer">
-                {currentUser
-                  ? renderUserLabel(
-                      currentUser.user_metadata?.name || "Unknown",
-                      currentUser.user_metadata?.avatar_url || null,
-                      true,
-                      currentUser.email || null
-                    )
-                  : renderUserLabel("Unknown", null, true, null)}
+                {(() => {
+                  const creatorId = issueData.created_by
+                    ? String(issueData.created_by)
+                    : null;
+                  if (creatorId) {
+                    const creator = contributors.find(
+                      (c) => String(c.user_id) === creatorId
+                    );
+                    if (creator) {
+                      return renderUserLabel(
+                        creator.name,
+                        creator.avatar_url,
+                        true,
+                        creator.email
+                      );
+                    }
+                    // fallback to currentUser only if same as creatorId
+                    if (currentUser && String(currentUser.id) === creatorId) {
+                      return renderUserLabel(
+                        currentUser.user_metadata?.name || "Unknown",
+                        currentUser.user_metadata?.avatar_url || null,
+                        true,
+                        currentUser.email || null
+                      );
+                    }
+                  }
+                  return renderUserLabel("Unknown", null, true, null);
+                })()}
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -43,7 +44,17 @@ export default function IssueAssigneeSelector({
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
-      if (readOnly) return;
+      // Read-only: selecting Self triggers an Assignment Request instead of updating
+      if (readOnly) {
+        try {
+          if (currentUser && newAssignee === currentUser.id) {
+            await requestAssignmentToEditorsAction(issueId, null);
+          }
+        } catch (error) {
+          console.error("Error requesting assignment:", error);
+        }
+        return;
+      }
       try {
         const assigneeValue = newAssignee === "unassigned" ? null : newAssignee;
         setCurrentAssignee(assigneeValue);
@@ -141,8 +152,9 @@ export default function IssueAssigneeSelector({
               currentUser.email || null,
               readOnly
             ),
-            disabled: readOnly,
-            tooltip: readOnly ? "No permission to edit" : undefined,
+            // allow clicking even in read-only to request assignment
+            disabled: false,
+            tooltip: readOnly ? "Request assignment" : undefined,
           },
         ],
       });

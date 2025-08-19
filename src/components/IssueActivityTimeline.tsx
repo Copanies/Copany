@@ -34,6 +34,9 @@ import { ArrowUpIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import IssueCommentCard from "@/components/IssueCommentCard";
 import IssueReviewPanel from "@/components/IssueReviewPanel";
+import AssignmentRequestPanel from "@/components/AssignmentRequestPanel";
+import { assignmentRequestsManager } from "@/utils/cache";
+import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
 
 interface IssueActivityTimelineProps {
   issueId: string;
@@ -67,6 +70,9 @@ export default function IssueActivityTimeline({
     Record<string, { name: string; email: string; avatar_url: string }>
   >({});
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  const [requesterPanels, setRequesterPanels] = useState<
+    { requesterId: string; at: string }[]
+  >([]);
 
   useEffect(() => {
     const load = async () => {
@@ -74,6 +80,56 @@ export default function IssueActivityTimeline({
         listIssueActivityAction(issueId, 200)
       );
       setItems(data);
+      // load assignment requests group heads (only requested) and compute earliest created_at per requester
+      // replaced with: load assignment requests panels: compute current batch per requester and hide if batch ended
+      try {
+        const reqs = await assignmentRequestsManager.getRequests(issueId, () =>
+          listAssignmentRequestsAction(issueId)
+        );
+        const byRequester = new Map<string, typeof reqs>();
+        for (const r of reqs) {
+          const key = String(r.requester_id);
+          const arr = byRequester.get(key) || [];
+          arr.push(r);
+          byRequester.set(key, arr);
+        }
+        const panels: { requesterId: string; at: string }[] = [];
+        for (const [requesterId, list] of byRequester.entries()) {
+          const sorted = list
+            .slice()
+            .sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime()
+            );
+          const lastTerminalAt = sorted
+            .filter((r) => r.status === "refused" || r.status === "accepted")
+            .reduce<string | null>((acc, r) => {
+              const t = r.updated_at || r.created_at;
+              if (!acc) return t;
+              return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
+            }, null);
+          const currentBatch = sorted.filter((r) =>
+            lastTerminalAt
+              ? new Date(r.created_at).getTime() >
+                new Date(lastTerminalAt).getTime()
+              : true
+          );
+          if (currentBatch.length === 0) continue;
+          if (currentBatch.some((r) => r.status !== "requested")) {
+            continue;
+          }
+          const requestedOnly = currentBatch.filter(
+            (r) => r.status === "requested"
+          );
+          if (requestedOnly.length === 0) continue;
+          const at = requestedOnly[0].created_at;
+          panels.push({ requesterId, at });
+        }
+        setRequesterPanels(panels);
+      } catch (e) {
+        // ignore
+      }
       // load comments (root only)
       const allComments = await issueCommentsManager.getComments(issueId, () =>
         getIssueCommentsAction(issueId)
@@ -120,6 +176,82 @@ export default function IssueActivityTimeline({
       }
     };
     load();
+
+    // subscribe to cache updates to refresh UI immediately after background refresh
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "IssueActivityManager" &&
+          detail.key === issueId
+        ) {
+          setItems(detail.data as any);
+        }
+        if (
+          detail.manager === "AssignmentRequestsManager" &&
+          detail.key === issueId
+        ) {
+          // recompute panels when assignment requests cache updates
+          const reqs = detail.data as any[];
+          const byRequester = new Map<string, any[]>();
+          for (const r of reqs) {
+            const key = String(r.requester_id);
+            const arr = byRequester.get(key) || [];
+            arr.push(r);
+            byRequester.set(key, arr);
+          }
+          const panels: { requesterId: string; at: string }[] = [];
+          for (const [requesterId, list] of byRequester.entries()) {
+            const sorted = list
+              .slice()
+              .sort(
+                (a, b) =>
+                  new Date(a.created_at).getTime() -
+                  new Date(b.created_at).getTime()
+              );
+            const lastTerminalAt = sorted
+              .filter((r) => r.status === "refused" || r.status === "accepted")
+              .reduce<string | null>((acc, r) => {
+                const t = r.updated_at || r.created_at;
+                if (!acc) return t;
+                return new Date(t).getTime() > new Date(acc).getTime()
+                  ? t
+                  : acc;
+              }, null);
+            const currentBatch = sorted.filter((r) =>
+              lastTerminalAt
+                ? new Date(r.created_at).getTime() >
+                  new Date(lastTerminalAt).getTime()
+                : true
+            );
+            if (currentBatch.length === 0) continue;
+            if (currentBatch.some((r) => r.status !== "requested")) {
+              continue;
+            }
+            const requestedOnly = currentBatch.filter(
+              (r) => r.status === "requested"
+            );
+            if (requestedOnly.length === 0) continue;
+            const at = requestedOnly[0].created_at;
+            panels.push({ requesterId, at });
+          }
+          setRequesterPanels(panels);
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as any);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("cache:updated", onCacheUpdated as any);
+      }
+    };
   }, [issueId]);
 
   const getStateName = (v: number | null | undefined): string => {
@@ -251,6 +383,45 @@ export default function IssueActivityTimeline({
           </>
         );
       }
+      case "assignment_requested": {
+        const requester =
+          p.requester_name ||
+          (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{requester || who}</span> requested to
+            be assigned
+          </>
+        );
+      }
+      case "assignment_request_accepted": {
+        const recipient =
+          p.recipient_name ||
+          (p.recipient_id ? userInfos[String(p.recipient_id)]?.name : "");
+        const requester =
+          p.requester_name ||
+          (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{recipient || who}</span> accepted{" "}
+            {requester ? `@${requester}` : "the"} assignment request
+          </>
+        );
+      }
+      case "assignment_request_refused": {
+        const recipient =
+          p.recipient_name ||
+          (p.recipient_id ? userInfos[String(p.recipient_id)]?.name : "");
+        const requester =
+          p.requester_name ||
+          (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
+        return (
+          <>
+            <span className="font-medium">{recipient || who}</span> refused{" "}
+            {requester ? `@${requester}` : "the"} assignment request
+          </>
+        );
+      }
       case "issue_closed":
         return (
           <>
@@ -278,14 +449,23 @@ export default function IssueActivityTimeline({
     [comments]
   );
 
-  // Build merged entries (activities + root comments) sorted by time asc
+  // Build merged entries (activities + root comments + assignment request panels) sorted by time asc
   const rootComments = comments.filter((c) => c.parent_id == null);
-  const merged = [
+  type MergedEntry =
+    | { kind: "activity"; at: string; a: IssueActivity }
+    | { kind: "comment"; at: string; c: IssueComment }
+    | { kind: "assign_panel"; at: string; requesterId: string };
+  const merged: MergedEntry[] = [
     ...items.map((a) => ({ kind: "activity" as const, at: a.created_at, a })),
     ...rootComments.map((c) => ({
       kind: "comment" as const,
       at: c.created_at,
       c,
+    })),
+    ...requesterPanels.map((p) => ({
+      kind: "assign_panel" as const,
+      at: p.at,
+      requesterId: p.requesterId,
     })),
   ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
 
@@ -325,7 +505,7 @@ export default function IssueActivityTimeline({
         </div>
       );
     }
-    // In timeline, comment item should not render extra avatar on the left
+    // In timeline, comment and assignment request panel items should not render extra avatar on the left
     return null;
   };
 
@@ -362,6 +542,74 @@ export default function IssueActivityTimeline({
               </span>
             </span>
           </div>
+        </div>
+      );
+    }
+    if (entry.kind === "assign_panel") {
+      return (
+        <div className="flex-1 -ml-10">
+          <AssignmentRequestPanel
+            key={entry.requesterId}
+            issueId={issueId}
+            requesterId={entry.requesterId}
+            meId={currentUser?.id ?? null}
+            canEdit={canEdit}
+            onFocusNewComment={() =>
+              setNewCommentFocusSignal((x) => (x == null ? 1 : x + 1))
+            }
+            onActivityChanged={async () => {
+              const [fresh, reqs] = await Promise.all([
+                listIssueActivityAction(issueId, 200),
+                listAssignmentRequestsAction(issueId),
+              ]);
+              setItems(fresh);
+              const byRequester = new Map<string, typeof reqs>();
+              for (const r of reqs) {
+                const key = String(r.requester_id);
+                const arr = byRequester.get(key) || [];
+                arr.push(r);
+                byRequester.set(key, arr);
+              }
+              const panels: { requesterId: string; at: string }[] = [];
+              for (const [requesterId, list] of byRequester.entries()) {
+                const sorted = list
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      new Date(a.created_at).getTime() -
+                      new Date(b.created_at).getTime()
+                  );
+                const lastTerminalAt = sorted
+                  .filter(
+                    (r) => r.status === "refused" || r.status === "accepted"
+                  )
+                  .reduce<string | null>((acc, r) => {
+                    const t = r.updated_at || r.created_at;
+                    if (!acc) return t;
+                    return new Date(t).getTime() > new Date(acc).getTime()
+                      ? t
+                      : acc;
+                  }, null);
+                const currentBatch = sorted.filter((r) =>
+                  lastTerminalAt
+                    ? new Date(r.created_at).getTime() >
+                      new Date(lastTerminalAt).getTime()
+                    : true
+                );
+                if (currentBatch.length === 0) continue;
+                if (currentBatch.some((r) => r.status !== "requested")) {
+                  continue;
+                }
+                const requestedOnly = currentBatch.filter(
+                  (r) => r.status === "requested"
+                );
+                if (requestedOnly.length === 0) continue;
+                const at = requestedOnly[0].created_at;
+                panels.push({ requesterId, at });
+              }
+              setRequesterPanels(panels);
+            }}
+          />
         </div>
       );
     }
@@ -467,7 +715,11 @@ export default function IssueActivityTimeline({
       {merged.map((entry) => (
         <div
           key={
-            entry.kind === "activity" ? `a-${entry.a.id}` : `c-${entry.c.id}`
+            entry.kind === "activity"
+              ? `a-${entry.a.id}`
+              : entry.kind === "comment"
+              ? `c-${entry.c.id}`
+              : `p-${entry.requesterId}-${entry.at}`
           }
           className="flex flex-col items-stretch w-full gap-0"
         >
@@ -487,6 +739,8 @@ export default function IssueActivityTimeline({
           </div>
         </div>
       ))}
+
+      {/* Assignment Request panels are now interleaved in the timeline via merged entries */}
 
       {/* Reviewer panel at the bottom, above new comment composer */}
       <IssueReviewPanel

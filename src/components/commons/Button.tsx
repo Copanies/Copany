@@ -2,7 +2,7 @@ import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger" | "approve";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   children: React.ReactNode;
   shape?: "rectangle" | "square";
 }
@@ -32,6 +32,7 @@ export default function Button({
   };
 
   const sizeClasses = {
+    xs: "px-1 py-0.5 text-sm",
     sm: "px-2 py-1 text-sm",
     md: "px-2 py-1 text-base",
     lg: "px-4 py-2 text-base",

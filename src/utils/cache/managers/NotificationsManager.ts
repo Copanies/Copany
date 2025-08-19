@@ -87,5 +87,15 @@ export class NotificationsManager {
   }
 }
 
-export const notificationsManager = new NotificationsManager();
+export const notificationsManager = new NotificationsManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "NotificationsManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});
 

@@ -255,12 +255,34 @@ export default function NotificationBell() {
     fetchUnreadCount();
     fetchList();
     console.log("[NotificationBell] mounted");
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "NotificationsManager" &&
+          detail.key === "inbox"
+        ) {
+          setNotifications(detail.data as any);
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as any);
+    }
     const t1 = setInterval(fetchUnreadCount, 30000);
     const t2 = setInterval(fetchList, 30000);
     return () => {
       clearInterval(t1);
       clearInterval(t2);
       console.log("[NotificationBell] unmounted");
+      if (typeof window !== "undefined") {
+        window.removeEventListener("cache:updated", onCacheUpdated as any);
+      }
     };
   }, [fetchUnreadCount, fetchList]);
 
@@ -297,6 +319,16 @@ export default function NotificationBell() {
         return "closed the Issue";
       case "mention":
         return "mentioned you in the Issue";
+      case "assignment_request_received":
+        return "requested to be assigned";
+      case "assignment_request_accepted":
+        return "accepted your assignment request";
+      case "assignment_request_refused":
+        return "refused your assignment request";
+      case "review_requested":
+        return "requested you to review";
+      case "review_approved":
+        return "approved the review";
       default:
         return "Notification";
     }
@@ -420,6 +452,37 @@ export default function NotificationBell() {
         );
       case "issue_closed":
         return <span className="text-sm">{latestTitle || "Issue"}</span>;
+      case "assignment_request_received":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `“${latestTitle}”` : "Issue"}
+          </span>
+        );
+      case "assignment_request_accepted":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `“${latestTitle}”: ` : ""}Your request was accepted
+          </span>
+        );
+      case "assignment_request_refused":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `“${latestTitle}”: ` : ""}Your request was refused
+          </span>
+        );
+      case "review_requested":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `“${latestTitle}”: ` : ""}You were requested to
+            review
+          </span>
+        );
+      case "review_approved":
+        return (
+          <span className="text-sm">
+            {latestTitle ? `“${latestTitle}”: ` : ""}Review approved
+          </span>
+        );
       default:
         return latestTitle || p.issue_title ? (
           <span className="text-sm">{latestTitle || p.issue_title}</span>
