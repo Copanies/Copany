@@ -5,6 +5,8 @@ import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
 import { issuesManager } from "@/utils/cache";
+import { issueActivityManager } from "@/utils/cache";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 interface IssueEditorViewProps {
@@ -130,6 +132,13 @@ export default function IssueEditorView({
 
         hasUnsavedChangesRef.current = false;
         console.log("✅ Server save completed successfully");
+
+        // 标题或描述变化会产生活动，强制刷新活动流
+        try {
+          await issueActivityManager.revalidate(issueData.id, () =>
+            listIssueActivityAction(issueData.id, 200)
+          );
+        } catch (_) {}
       } catch (error) {
         console.error("❌ Error saving to server:", error);
         hasUnsavedChangesRef.current = true;

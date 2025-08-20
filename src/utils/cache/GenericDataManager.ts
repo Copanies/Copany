@@ -46,6 +46,7 @@ export abstract class GenericDataManager<T, TItem = T> {
   private readonly itemOps?: DataItemOperations<T, TItem>;
   private backgroundRefreshPromises = new Map<string, Promise<T>>();
   private knownKeys = new Set<string>();
+  private lastFetchFns = new Map<string, () => Promise<T>>();
   private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
@@ -98,6 +99,8 @@ export abstract class GenericDataManager<T, TItem = T> {
   ): Promise<T> {
     // Track known keys so optional auto refresh can consider them
     this.knownKeys.add(key);
+    // Remember the fetch function for later explicit revalidation
+    this.lastFetchFns.set(key, fetchFn);
     // If force refresh, clear cache and wait for network request
     if (forceRefresh) {
       this.config.cacheManager.clear(key);
@@ -183,6 +186,42 @@ export abstract class GenericDataManager<T, TItem = T> {
   }
 
   /**
+   * Explicitly revalidate a key (e.g., after a known server-side mutation)
+   * If fetchFn is not provided, it attempts to reuse the last fetchFn recorded by getData
+   */
+  async revalidate(
+    key: string,
+    options?: { background?: boolean; fetchFn?: () => Promise<T> }
+  ): Promise<T | null> {
+    const background = options?.background !== false; // default true
+    const fetchFn = options?.fetchFn || this.lastFetchFns.get(key);
+    if (!fetchFn) {
+      console.warn(
+        `[${this.config.managerName}] revalidate skipped: missing fetchFn for key ${key}`
+      );
+      return null;
+    }
+
+    // Update refresh timestamp to avoid duplicate background refresh gating
+    try {
+      this.config.cacheManager.updateRefreshTimestamp(key);
+    } catch (_) {}
+
+    try {
+      const data = await this.fetchAndCache(key, fetchFn, background);
+      if (this.config.onDataUpdated) {
+        try {
+          this.config.onDataUpdated(key, data);
+        } catch (_) {}
+      }
+      return data;
+    } catch (error) {
+      console.error(`[${this.config.managerName}] ❌ Revalidate failed:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Fetch and cache data
    */
   private async fetchAndCache(
@@ -204,6 +243,18 @@ export abstract class GenericDataManager<T, TItem = T> {
 
       // Cache data
       this.config.cacheManager.set(key, validData);
+
+      // Notify UI immediately as well (not only background refresh)
+      if (this.config.onDataUpdated) {
+        try {
+          this.config.onDataUpdated(key, validData);
+        } catch (error) {
+          console.error(
+            `[${this.config.managerName}] ❌ Failed to notify UI update:`,
+            error
+          );
+        }
+      }
 
       if (!isBackgroundRefresh) {
         console.log(
@@ -275,6 +326,16 @@ export abstract class GenericDataManager<T, TItem = T> {
    */
   setData(key: string, data: T): void {
     this.config.cacheManager.set(key, data);
+    if (this.config.onDataUpdated) {
+      try {
+        this.config.onDataUpdated(key, data);
+      } catch (error) {
+        console.error(
+          `[${this.config.managerName}] ❌ Failed to notify UI update:`,
+          error
+        );
+      }
+    }
   }
 
   /**

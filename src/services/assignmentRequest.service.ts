@@ -6,7 +6,22 @@ import type {
 } from "@/types/database.types";
 
 export class AssignmentRequestService {
+  static async listByCopany(copanyId: string): Promise<AssignmentRequest[]> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("issue_assignment_request")
+      .select("*")
+      .eq("copany_id", copanyId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data || []) as AssignmentRequest[];
+  }
+
   static async listByIssue(issueId: string): Promise<AssignmentRequest[]> {
+    // Guard against temporary/invalid ids (e.g., "temp") to avoid bigint casting errors
+    if (!/^\d+$/.test(String(issueId))) {
+      return [];
+    }
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue_assignment_request")
@@ -39,8 +54,21 @@ export class AssignmentRequestService {
       }
     }
 
+    // Load copany_id for the issue to store redundancy for copany-level listing
+    let copanyId: string | null = null;
+    {
+      const { data: issueRow, error: issueErr } = await supabase
+        .from("issue")
+        .select("copany_id")
+        .eq("id", issueId)
+        .single();
+      if (issueErr) throw new Error(issueErr.message);
+      copanyId = (issueRow?.copany_id as string) || null;
+    }
+
     // Insert many; we rely on partial unique index (status='requested') to prevent duplicates in-progress
     const payload = recipientIds.map((rid) => ({
+      copany_id: copanyId,
       issue_id: issueId,
       requester_id: requesterId,
       recipient_id: rid,
@@ -100,6 +128,7 @@ export class AssignmentRequestService {
     status: AssignmentRequestStatus
   ): Promise<AssignmentRequest> {
     const supabase = await createSupabaseClient();
+    // 1) 更新状态，触发活动、通知与自动 skip
     const { data, error } = await supabase
       .from("issue_assignment_request")
       .update({ status })
@@ -109,7 +138,19 @@ export class AssignmentRequestService {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as AssignmentRequest;
+
+    const updated = data as AssignmentRequest;
+
+    // 2) 在产生副作用后，删除该 requester 的本批记录（accepted/refused 会导致本批其余记录被 skip）
+    try {
+      await supabase
+        .from("issue_assignment_request")
+        .delete()
+        .eq("issue_id", issueId)
+        .eq("requester_id", requesterId);
+    } catch (_) {}
+
+    return updated;
   }
 }
 

@@ -8,7 +8,7 @@ import {
   CopanyContributor,
   LEVEL_SCORES,
 } from "@/types/database.types";
-import { contributorsManager, ContributionsManager } from "@/utils/cache";
+import { contributorsManager, contributionsManager } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
@@ -26,16 +26,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   const [contributors, setContributors] = useState<CopanyContributor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Create ContributionsManager instance with data update callback
-  const contributionsManagerWithCallback = useMemo(() => {
-    return new ContributionsManager((key, updatedData) => {
-      console.log(
-        `[ContributionView] Background refresh completed, data updated: ${key}`,
-        updatedData
-      );
-      setContributions(updatedData); // Automatically update UI
-    });
-  }, []);
+  // 统一改为使用默认 contributionsManager，并依赖全局事件联动 UI
 
   const loadData = useCallback(
     async (forceRefresh: boolean = false) => {
@@ -43,11 +34,10 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         setIsLoading(true);
 
         const contributionDataPromise = forceRefresh
-          ? contributionsManagerWithCallback.refreshContributions(
-              copanyId,
-              () => generateContributionsFromIssuesAction(copanyId)
+          ? contributionsManager.refreshContributions(copanyId, () =>
+              generateContributionsFromIssuesAction(copanyId)
             )
-          : contributionsManagerWithCallback.getContributions(copanyId, () =>
+          : contributionsManager.getContributions(copanyId, () =>
               generateContributionsFromIssuesAction(copanyId)
             );
 
@@ -68,12 +58,57 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         setIsLoading(false);
       }
     },
-    [copanyId, contributionsManagerWithCallback]
+    [copanyId]
   );
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // 订阅贡献与贡献者缓存后台刷新
+  useEffect(() => {
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "ContributionsManager" &&
+          String(detail.key) === String(copanyId)
+        ) {
+          setContributions(
+            Array.isArray(detail.data) ? (detail.data as Contribution[]) : []
+          );
+          return;
+        }
+        if (
+          detail.manager === "ContributorsManager" &&
+          String(detail.key) === String(copanyId)
+        ) {
+          setContributors(
+            Array.isArray(detail.data)
+              ? (detail.data as CopanyContributor[])
+              : []
+          );
+          return;
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [copanyId]);
 
   // Convert contributors to AssigneeUser format
   const users: AssigneeUser[] = contributors.map((contributor) => ({

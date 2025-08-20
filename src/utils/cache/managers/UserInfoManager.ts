@@ -4,11 +4,12 @@ import { userInfoCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 class UserInfoDataManager extends GenericDataManager<UserInfo> {
-  constructor() {
+  constructor(onDataUpdated?: (key: string, data: UserInfo) => void) {
     super({
       cacheManager: userInfoCache,
       managerName: "UserInfoManager",
       enableStaleCache: false,
+      onDataUpdated,
     });
   }
   protected getDataInfo(data: UserInfo): string {
@@ -16,7 +17,17 @@ class UserInfoDataManager extends GenericDataManager<UserInfo> {
   }
 }
 
-const userInfoDataManager = new UserInfoDataManager();
+const userInfoDataManager = new UserInfoDataManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "UserInfoManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});
 
 export class UserInfoManager {
   async getUserInfo(userId: string): Promise<UserInfo | null> {

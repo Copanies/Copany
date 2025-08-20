@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
@@ -9,11 +9,12 @@ import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
-  requestAssignmentToEditorsAction,
   listAssignmentRequestsAction,
+  requestAssignmentToEditorsAction,
 } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
-import { assignmentRequestsManager } from "@/utils/cache";
+import { assignmentRequestsManager, issueActivityManager } from "@/utils/cache";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -31,6 +32,7 @@ interface IssueAssigneeSelectorProps {
   disableServerUpdate?: boolean;
   readOnly?: boolean;
   onRequestAssignment?: () => void; // 当只读并点击 Self 时，触发页面级弹窗
+  hasPendingByMe?: boolean; // 外部传入：当前用户是否在该 issue 有进行中的请求
 }
 
 export default function IssueAssigneeSelector({
@@ -45,64 +47,11 @@ export default function IssueAssigneeSelector({
   disableServerUpdate = false,
   readOnly = false,
   onRequestAssignment,
+  hasPendingByMe = false,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
-  const [hasPendingByMe, setHasPendingByMe] = useState<boolean>(false);
-
-  // Check if current user already has an in-progress (requested batch) assignment request
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        if (!currentUser) {
-          if (!cancelled) setHasPendingByMe(false);
-          return;
-        }
-        const list = await assignmentRequestsManager.getRequests(issueId, () =>
-          listAssignmentRequestsAction(issueId)
-        );
-        const byMe = list.filter(
-          (x) => String(x.requester_id) === String(currentUser.id)
-        );
-        if (byMe.length === 0) {
-          if (!cancelled) setHasPendingByMe(false);
-          return;
-        }
-        const sorted = [...byMe].sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-        const lastTerminalAt = sorted
-          .filter(
-            (r) =>
-              r.status === "accepted" ||
-              r.status === "refused" ||
-              r.status === "skipped"
-          )
-          .reduce<string | null>((acc, r) => {
-            const t = r.updated_at || r.created_at;
-            if (!acc) return t;
-            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-          }, null);
-        const currentBatch = sorted.filter((r) =>
-          lastTerminalAt
-            ? new Date(r.created_at).getTime() >
-              new Date(lastTerminalAt).getTime()
-            : true
-        );
-        const inProgress =
-          currentBatch.length > 0 &&
-          currentBatch.every((r) => r.status === "requested");
-        if (!cancelled) setHasPendingByMe(inProgress);
-      } catch (_) {
-        if (!cancelled) setHasPendingByMe(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [issueId, currentUser]);
+  // 不再在组件内请求/订阅 assignment request，由上层视图通过 hasPendingByMe 控制
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -116,6 +65,17 @@ export default function IssueAssigneeSelector({
             } else {
               await requestAssignmentToEditorsAction(issueId, null);
             }
+            // 请求发起成功后，强制刷新请求列表缓存，驱动时间线面板显示
+            try {
+              await Promise.all([
+                assignmentRequestsManager.revalidate(issueId, () =>
+                  listAssignmentRequestsAction(issueId)
+                ),
+                issueActivityManager.revalidate(issueId, () =>
+                  listIssueActivityAction(issueId, 200)
+                ),
+              ]);
+            } catch (_) {}
           }
         } catch (error) {
           console.error("Error requesting assignment:", error);
@@ -164,6 +124,13 @@ export default function IssueAssigneeSelector({
         if (!disableServerUpdate) {
           await updateIssueAssigneeAction(issueId, assigneeValue);
           console.log("Assignee updated successfully:", assigneeValue);
+
+          // 指派变化会产生活动，强制刷新活动流
+          try {
+            await issueActivityManager.revalidate(issueId, () =>
+              listIssueActivityAction(issueId, 200)
+            );
+          } catch (_) {}
         }
       } catch (error) {
         console.error("Error updating assignee:", error);

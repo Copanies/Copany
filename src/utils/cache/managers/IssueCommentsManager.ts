@@ -156,4 +156,14 @@ export class IssueCommentsManager {
 }
 
 // Default instance (no callback, for simple operations)
-export const issueCommentsManager = new IssueCommentsManager(); 
+export const issueCommentsManager = new IssueCommentsManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "IssueCommentsManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});

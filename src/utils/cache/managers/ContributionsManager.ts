@@ -76,5 +76,15 @@ export class ContributionsManager {
   }
 }
 
-// Default instance (no callback, for simple operations)
-export const contributionsManager = new ContributionsManager();
+// 默认实例：派发统一的 cache:updated 事件
+export const contributionsManager = new ContributionsManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "ContributionsManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});

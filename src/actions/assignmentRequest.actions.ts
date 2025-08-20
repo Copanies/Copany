@@ -9,7 +9,15 @@ import type {
 export async function listAssignmentRequestsAction(
   issueId: string
 ): Promise<AssignmentRequest[]> {
+  console.log("🔍 Action: listAssignmentRequestsAction", issueId);
   return await AssignmentRequestService.listByIssue(issueId);
+}
+
+export async function listAssignmentRequestsByCopanyAction(
+  copanyId: string
+): Promise<AssignmentRequest[]> {
+  console.log("🔍 Action: listAssignmentRequestsByCopanyAction", copanyId);
+  return await AssignmentRequestService.listByCopany(copanyId);
 }
 
 export async function requestAssignmentToEditorsAction(

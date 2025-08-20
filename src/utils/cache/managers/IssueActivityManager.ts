@@ -51,6 +51,14 @@ export class IssueActivityManager {
   addActivity(issueId: string, item: IssueActivity): void {
     this.manager.addItem(issueId, item);
   }
+  /**
+   * 强制重新验证指定 issueId 的活动列表（例如已知服务端产生了新活动）
+   */
+  async revalidate(issueId: string, fetchFn?: () => Promise<IssueActivity[]>): Promise<IssueActivity[] | null> {
+    return (await this.manager.revalidate(issueId, { background: false, fetchFn })) as
+      | IssueActivity[]
+      | null;
+  }
   clear(issueId: string): void {
     this.manager.clearCache(issueId);
   }

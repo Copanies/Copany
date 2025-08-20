@@ -11,6 +11,7 @@ import {
 } from "@/types/database.types";
 
 export async function getIssuesAction(copanyId: string) {
+  console.log("🔍 Action: getIssuesAction", copanyId);
   return await IssueService.getIssues(copanyId);
 }
 

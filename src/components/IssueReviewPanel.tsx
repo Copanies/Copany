@@ -4,12 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
-import { userInfoManager, issueReviewersManager } from "@/utils/cache";
+import {
+  userInfoManager,
+  issueReviewersManager,
+  issueActivityManager,
+} from "@/utils/cache";
 import {
   listIssueReviewersAction,
   approveMyReviewAction,
 } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
@@ -92,6 +97,83 @@ export default function IssueReviewPanel({
   useEffect(() => {
     load();
   }, [load]);
+
+  // Subscribe to cache updates for reviewers and user infos
+  useEffect(() => {
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+
+        if (
+          detail.manager === "IssueReviewersManager" &&
+          String(detail.key) === String(issueId)
+        ) {
+          const rs = (detail.data as IssueReviewer[]) || [];
+          setReviewers(rs);
+          const ids = Array.from(new Set(rs.map((r) => String(r.reviewer_id))));
+          if (ids.length > 0) {
+            userInfoManager
+              .getMultipleUserInfo(ids)
+              .then((users) => {
+                const map: Record<
+                  string,
+                  { name: string; email: string; avatar_url: string }
+                > = {};
+                for (const id of Object.keys(users)) {
+                  map[id] = {
+                    name: users[id].name || users[id].email || id,
+                    email: users[id].email,
+                    avatar_url: users[id].avatar_url || "",
+                  };
+                }
+                setUserInfos((prev) => ({ ...prev, ...map }));
+              })
+              .catch(() => {});
+          }
+          return;
+        }
+
+        if (detail.manager === "UserInfoManager") {
+          const userId = String(detail.key);
+          const exists = reviewers.some(
+            (r) => String(r.reviewer_id) === userId
+          );
+          if (exists) {
+            const info = detail.data as {
+              name?: string;
+              email?: string;
+              avatar_url?: string;
+            };
+            setUserInfos((prev) => ({
+              ...prev,
+              [userId]: {
+                name: info?.name || info?.email || userId,
+                email: info?.email || "",
+                avatar_url: info?.avatar_url || "",
+              },
+            }));
+          }
+          return;
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [issueId, reviewers]);
 
   // Only render in In Review state (after hooks)
   if (issueState !== IssueState.InReview) return null;
@@ -226,6 +308,17 @@ export default function IssueReviewPanel({
                   try {
                     setIsSubmitting(true);
                     await updateIssueStateAction(issueId, IssueState.Done);
+                    // 触发活动与评审者的强制刷新
+                    try {
+                      await Promise.all([
+                        issueActivityManager.revalidate(issueId, () =>
+                          listIssueActivityAction(issueId, 200)
+                        ),
+                        issueReviewersManager.revalidate(issueId, () =>
+                          listIssueReviewersAction(issueId)
+                        ),
+                      ]);
+                    } catch (_) {}
                     if (onActivityChanged) await onActivityChanged();
                   } catch (e) {
                     console.error(e);
@@ -257,6 +350,17 @@ export default function IssueReviewPanel({
                     () => listIssueReviewersAction(issueId)
                   );
                   setReviewers(rs);
+                  // 触发活动与评审者的强制刷新
+                  try {
+                    await Promise.all([
+                      issueActivityManager.revalidate(issueId, () =>
+                        listIssueActivityAction(issueId, 200)
+                      ),
+                      issueReviewersManager.revalidate(issueId, () =>
+                        listIssueReviewersAction(issueId)
+                      ),
+                    ]);
+                  } catch (_) {}
                   if (onActivityChanged) await onActivityChanged();
                 } catch (e) {
                   console.error(e);

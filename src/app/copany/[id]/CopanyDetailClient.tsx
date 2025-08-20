@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Copany } from "@/types/database.types";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { currentUserManager, CopanyManager } from "@/utils/cache";
+import { currentUserManager, copanyManager } from "@/utils/cache";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import LicenseView from "./subviews/LicenseView";
@@ -32,16 +32,7 @@ export default function CopanyDetailClient({
   const [isLoading, setIsLoading] = useState(true);
   const hasInitialLoadRef = useRef(false);
 
-  // Create a CopanyManager instance with a data update callback
-  const copanyManagerWithCallback = useMemo(() => {
-    return new CopanyManager((key, updatedData) => {
-      console.log(
-        `[CopanyDetailClient] 后台刷新完成，数据已更新: ${key}`,
-        updatedData
-      );
-      setCopany(updatedData); // Automatically update UI
-    });
-  }, []);
+  // 统一改为使用默认 copanyManager，并依赖全局事件联动 UI
 
   // Use new SWR strategy to load data
   const loadCopany = useCallback(async () => {
@@ -56,7 +47,7 @@ export default function CopanyDetailClient({
 
       // Load copany data and current user information in parallel
       const [copanyData, userData] = await Promise.all([
-        copanyManagerWithCallback.getCopany(copanyId, async () => {
+        copanyManager.getCopany(copanyId, async () => {
           const result = await getCopanyByIdAction(copanyId);
           if (!result) {
             throw new Error("Copany not found");
@@ -76,11 +67,42 @@ export default function CopanyDetailClient({
     } finally {
       setIsLoading(false);
     }
-  }, [copanyId, copanyManagerWithCallback]);
+  }, [copanyId]);
 
   useEffect(() => {
     loadCopany();
   }, [loadCopany]);
+
+  // 订阅全局 cache:updated，以便接收默认 copanyManager 的更新（例如其他组件 setCopany）
+  useEffect(() => {
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "CopanyManager" &&
+          String(detail.key) === String(copanyId)
+        ) {
+          setCopany((detail.data as Copany) || null);
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [copanyId]);
 
   if (isLoading) {
     return (

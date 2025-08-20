@@ -4,6 +4,8 @@ import { useState } from "react";
 import { IssuePriority } from "@/types/database.types";
 import { updateIssuePriorityAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
+import { issueActivityManager } from "@/utils/cache";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 
 interface IssuePrioritySelectorProps {
   issueId: string;
@@ -40,6 +42,13 @@ export default function IssuePrioritySelector({
       if (!disableServerUpdate) {
         await updateIssuePriorityAction(issueId, newPriority);
         console.log("Priority updated successfully:", newPriority);
+
+        // 优先级变化会产生活动，强制刷新活动流
+        try {
+          await issueActivityManager.revalidate(issueId, () =>
+            listIssueActivityAction(issueId, 200)
+          );
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating priority:", error);

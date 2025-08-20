@@ -4,6 +4,8 @@ import { useState } from "react";
 import { IssueLevel } from "@/types/database.types";
 import { updateIssueLevelAction } from "@/actions/issue.actions";
 import Dropdown from "@/components/commons/Dropdown";
+import { issueActivityManager } from "@/utils/cache";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 
 interface IssueLevelSelectorProps {
   issueId: string;
@@ -40,6 +42,13 @@ export default function IssueLevelSelector({
       if (!disableServerUpdate) {
         await updateIssueLevelAction(issueId, newLevel);
         console.log("Level updated successfully:", newLevel);
+
+        // 等级变化会产生活动，强制刷新活动流
+        try {
+          await issueActivityManager.revalidate(issueId, () =>
+            listIssueActivityAction(issueId, 200)
+          );
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating level:", error);

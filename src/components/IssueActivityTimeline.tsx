@@ -41,6 +41,7 @@ import type { AssignmentRequest } from "@/types/database.types";
 
 interface IssueActivityTimelineProps {
   issueId: string;
+  copanyId?: string;
   canEdit: boolean;
   issueState?: number | null;
   issueLevel?: number | null;
@@ -48,6 +49,7 @@ interface IssueActivityTimelineProps {
 
 export default function IssueActivityTimeline({
   issueId,
+  copanyId,
   canEdit,
   issueState,
   issueLevel,
@@ -77,13 +79,17 @@ export default function IssueActivityTimeline({
 
   useEffect(() => {
     const load = async () => {
-      const data = await issueActivityManager.getActivities(issueId, () =>
-        listIssueActivityAction(issueId, 200)
-      );
+      const isValidIssueId = /^\d+$/.test(String(issueId));
+      const data = isValidIssueId
+        ? await issueActivityManager.getActivities(issueId, () =>
+            listIssueActivityAction(issueId, 200)
+          )
+        : [];
       setItems(data);
       // load assignment requests group heads (only requested) and compute earliest created_at per requester
       // replaced with: load assignment requests panels: compute current batch per requester and hide if batch ended
       try {
+        if (!isValidIssueId) throw new Error("skip for temp id");
         const reqs = await assignmentRequestsManager.getRequests(issueId, () =>
           listAssignmentRequestsAction(issueId)
         );
@@ -132,9 +138,11 @@ export default function IssueActivityTimeline({
         // ignore
       }
       // load comments (root only)
-      const allComments = await issueCommentsManager.getComments(issueId, () =>
-        getIssueCommentsAction(issueId)
-      );
+      const allComments = isValidIssueId
+        ? await issueCommentsManager.getComments(issueId, () =>
+            getIssueCommentsAction(issueId)
+          )
+        : [];
       setComments(allComments);
       const idSet = new Set<string>();
       for (const a of data) {
@@ -186,11 +194,19 @@ export default function IssueActivityTimeline({
           data: unknown;
         };
         if (!detail) return;
+        if (!/^\d+$/.test(String(issueId))) return; // 临时 id 不响应
         if (
           detail.manager === "IssueActivityManager" &&
           detail.key === issueId
         ) {
           setItems(detail.data as IssueActivity[]);
+        }
+        // Comments updated for this issue → sync comments
+        if (
+          detail.manager === "IssueCommentsManager" &&
+          String(detail.key) === String(issueId)
+        ) {
+          setComments((detail.data as IssueComment[]) || []);
         }
         if (
           detail.manager === "AssignmentRequestsManager" &&
@@ -241,6 +257,35 @@ export default function IssueActivityTimeline({
             panels.push({ requesterId, at });
           }
           setRequesterPanels(panels);
+        }
+        // User info updated → if any relevant user is affected, merge update
+        if (detail.manager === "UserInfoManager") {
+          const userId = String(detail.key);
+          // Only update when the user appears in current items/comments context
+          const appearsInActivities = items.some(
+            (a) => String(a.actor_id) === userId
+          );
+          const appearsInComments = comments.some(
+            (c) => String(c.created_by) === userId
+          );
+          const appearsInReplies = repliesOnly.some(
+            (c) => String(c.created_by) === userId
+          );
+          if (appearsInActivities || appearsInComments || appearsInReplies) {
+            const info = detail.data as {
+              name?: string;
+              email?: string;
+              avatar_url?: string;
+            };
+            setUserInfos((prev) => ({
+              ...prev,
+              [userId]: {
+                name: info?.name || info?.email || userId,
+                email: info?.email || "",
+                avatar_url: info?.avatar_url || "",
+              },
+            }));
+          }
         }
       } catch (_) {}
     };
@@ -554,6 +599,7 @@ export default function IssueActivityTimeline({
           <AssignmentRequestPanel
             key={entry.requesterId}
             issueId={issueId}
+            copanyId={copanyId ?? null}
             requesterId={entry.requesterId}
             meId={currentUser?.id ?? null}
             canEdit={canEdit}

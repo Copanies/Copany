@@ -67,11 +67,32 @@ export class IssueReviewersManager {
   removeReviewer(issueId: string, reviewerId: string): void {
     this.manager.removeItem(issueId, reviewerId);
   }
+  /**
+   * 强制重新验证指定 issueId 的 reviewers 列表（例如指派请求或状态变化后）
+   */
+  async revalidate(
+    issueId: string,
+    fetchFn?: () => Promise<IssueReviewer[]>
+  ): Promise<IssueReviewer[] | null> {
+    return (await this.manager.revalidate(issueId, { background: false, fetchFn })) as
+      | IssueReviewer[]
+      | null;
+  }
   clear(issueId?: string): void {
     this.manager.clearCache(issueId);
   }
 }
 
-export const issueReviewersManager = new IssueReviewersManager();
+export const issueReviewersManager = new IssueReviewersManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "IssueReviewersManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});
 
 

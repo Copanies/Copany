@@ -22,14 +22,17 @@ import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
   currentUserManager,
   contributorsManager,
-  IssuesManager,
+  issuesManager,
   issuesUiStateManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import { User } from "@supabase/supabase-js";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
-import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
+import {
+  listAssignmentRequestsAction,
+  listAssignmentRequestsByCopanyAction,
+} from "@/actions/assignmentRequest.actions";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import {
@@ -136,6 +139,9 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const [requestersInfo, setRequestersInfo] = useState<
     Record<string, UserInfo>
   >({});
+  // 标记本地变更与缓存同步，避免在 render 阶段触发事件回流导致 setState 警告
+  const isLocalUpdateRef = useRef(false);
+  const isSyncingToCacheRef = useRef(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -173,16 +179,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     setCollapsedGroups(issuesUiStateManager.getCollapsedGroups(copanyId));
   }, [copanyId]);
 
-  // Create IssuesManager instance with data update callback
-  const issuesManagerWithCallback = useMemo(() => {
-    return new IssuesManager((key, updatedData) => {
-      console.log(
-        `[IssuesView] Background refresh completed, data updated: ${key}`,
-        updatedData
-      );
-      setIssues(updatedData); // 自动更新 UI
-    });
-  }, []);
+  // 使用默认 issuesManager，UI 通过全局 cache:updated 事件联动
 
   // Function to load user and contributor data
   const loadUserData = useCallback(async () => {
@@ -207,10 +204,9 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     try {
       setIsLoading(true);
 
-      // Use IssuesManager with callback, support background refresh to automatically update UI
-      const issuesData = await issuesManagerWithCallback.getIssues(
-        copanyId,
-        () => getIssuesAction(copanyId)
+      // 使用默认 issuesManager 加载，后续更新通过 cache:updated 事件联动
+      const issuesData = await issuesManager.getIssues(copanyId, () =>
+        getIssuesAction(copanyId)
       );
 
       setIssues(issuesData);
@@ -219,7 +215,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     } finally {
       setIsLoading(false);
     }
-  }, [copanyId, issuesManagerWithCallback]);
+  }, [copanyId]);
 
   // Load data when component mounts
   useEffect(() => {
@@ -343,7 +339,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     })();
   }, [filteredIssues, reviewersByIssue]);
 
-  // Lazy load in-progress assignment request requesters for visible issues
+  // Lazy load in-progress assignment request requesters for visible issues (fetch by copany once)
   useEffect(() => {
     const targetIssueIds = filteredIssues.map((it) => String(it.id));
     const missing = targetIssueIds.filter(
@@ -352,32 +348,28 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         !loadingPendingRequestsRef.current.has(id)
     );
     if (missing.length === 0) return;
+    // 标记这些 issueId 正在加载，避免重复请求
     missing.forEach((id) => loadingPendingRequestsRef.current.add(id));
     (async () => {
       try {
-        // fetch all missing issues' requests in parallel
-        const results = await Promise.all(
-          missing.map(async (issueId) => {
-            try {
-              const list = await assignmentRequestsManager.getRequests(
-                issueId,
-                () => listAssignmentRequestsAction(issueId)
-              );
-              return [issueId, list] as const;
-            } catch (e) {
-              console.error("Failed to load assignment requests", {
-                issueId,
-                e,
-              });
-              return [issueId, [] as AssignmentRequest[]] as const;
-            }
-          })
+        // 统一按 copany 拉取所有申请记录（通过缓存管理器）
+        const all = await assignmentRequestsManager.getRequestsByCopany(
+          copanyId,
+          () => listAssignmentRequestsByCopanyAction(copanyId)
         );
-        // compute in-progress requester ids and gather user ids
+        // 根据 issue_id 分组（用于下方徽标计算）
+        const byIssue: Record<string, AssignmentRequest[]> = {};
+        for (const it of all) {
+          const key = String(it.issue_id);
+          if (!byIssue[key]) byIssue[key] = [];
+          byIssue[key].push(it);
+        }
+
+        // 仅为当前缺失的 issue 计算徽标所需的 in-progress requester ids
         const nextPending: Record<string, string[]> = {};
         const userIdSet = new Set<string>();
-        for (const [issueId, list] of results) {
-          // group by requester and compute current batch still in requested status
+        for (const issueId of missing) {
+          const list = byIssue[issueId] || [];
           const byRequester = new Map<string, AssignmentRequest[]>();
           const sorted = [...list].sort(
             (a, b) =>
@@ -421,7 +413,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           }
           nextPending[issueId] = inProgress;
         }
-        // update state
+
         setPendingRequestersByIssue((prev) => ({ ...prev, ...nextPending }));
         if (userIdSet.size > 0) {
           try {
@@ -437,7 +429,149 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         missing.forEach((id) => loadingPendingRequestsRef.current.delete(id));
       }
     })();
-  }, [filteredIssues, pendingRequestersByIssue]);
+  }, [filteredIssues, pendingRequestersByIssue, copanyId]);
+
+  // 订阅各类缓存的后台刷新事件，自动联动本页 UI
+  useEffect(() => {
+    const computePendingRequestersForIssue = (
+      list: AssignmentRequest[]
+    ): string[] => {
+      const byRequester = new Map<string, AssignmentRequest[]>();
+      const sorted = [...list].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      for (const it of sorted) {
+        const key = String(it.requester_id);
+        if (!byRequester.has(key)) byRequester.set(key, []);
+        byRequester.get(key)!.push(it);
+      }
+      const inProgress: string[] = [];
+      for (const [rid, items] of byRequester.entries()) {
+        const lastTerminalAt = items
+          .filter(
+            (r) =>
+              r.status === "accepted" ||
+              r.status === "refused" ||
+              r.status === "skipped"
+          )
+          .reduce<string | null>((acc, r) => {
+            const t = r.updated_at || r.created_at;
+            if (!acc) return t;
+            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
+          }, null);
+        const currentBatch = items.filter((r) =>
+          lastTerminalAt
+            ? new Date(r.created_at).getTime() >
+              new Date(lastTerminalAt).getTime()
+            : true
+        );
+        if (
+          currentBatch.length > 0 &&
+          currentBatch.every((r) => r.status === "requested")
+        ) {
+          inProgress.push(rid);
+        }
+      }
+      return inProgress;
+    };
+
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+
+        // Issues 列表：同 copanyId 时直接替换列表
+        console.log("IssuesManager", detail.manager, detail.key, detail.data);
+        if (detail.manager === "IssuesManager" && detail.key === copanyId) {
+          setIssues(
+            Array.isArray(detail.data)
+              ? (detail.data as IssueWithAssignee[])
+              : []
+          );
+          return;
+        }
+
+        // Contributors：同 copanyId 时刷新指派下拉可选项
+        if (
+          detail.manager === "ContributorsManager" &&
+          detail.key === copanyId
+        ) {
+          setContributors(
+            Array.isArray(detail.data)
+              ? (detail.data as CopanyContributor[])
+              : []
+          );
+          return;
+        }
+
+        // Reviewers：key 为 issueId，更新徽标数据映射
+        if (detail.manager === "IssueReviewersManager") {
+          const issueId = String(detail.key);
+          const list = (detail.data as IssueReviewer[]) || [];
+          setReviewersByIssue((prev) => ({ ...prev, [issueId]: list }));
+          return;
+        }
+
+        // Assignment requests：key 为 issueId，更新 in-progress 请求者徽标与用户信息
+        if (detail.manager === "AssignmentRequestsManager") {
+          const issueId = String(detail.key);
+          const list = (detail.data as AssignmentRequest[]) || [];
+          const inProgress = computePendingRequestersForIssue(list);
+          setPendingRequestersByIssue((prev) => ({
+            ...prev,
+            [issueId]: inProgress,
+          }));
+          if (inProgress.length > 0) {
+            userInfoManager
+              .getMultipleUserInfo(inProgress)
+              .then((infos) => {
+                setRequestersInfo((prev) => ({ ...prev, ...infos }));
+              })
+              .catch(() => {});
+          }
+          return;
+        }
+
+        // 用户信息：若为当前显示的请求者之一，则合并更新
+        if (detail.manager === "UserInfoManager") {
+          const userId = String(detail.key);
+          const info = detail.data as UserInfo;
+          setRequestersInfo((prev) => ({ ...prev, [userId]: info }));
+          return;
+        }
+      } catch (_) {}
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [copanyId]);
+
+  // 把本地 state 的更改在提交后同步回缓存，并经由全局事件广播
+  useEffect(() => {
+    if (!isLocalUpdateRef.current) return;
+    if (isSyncingToCacheRef.current) return;
+    isSyncingToCacheRef.current = true;
+    try {
+      issuesManager.setIssues(copanyId, issues);
+    } finally {
+      isSyncingToCacheRef.current = false;
+      isLocalUpdateRef.current = false;
+    }
+  }, [issues, copanyId]);
 
   const renderAssignmentRequestBadge = (issueId: string) => {
     const reqIds = pendingRequestersByIssue[String(issueId)] || [];
@@ -486,13 +620,20 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
       setIssues((prevIssues) => {
-        const updatedIssues = [...prevIssues, newIssue];
-        // Update issues list cache
-        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
+        // 去重合并：如果已存在同 id，则替换；否则追加
+        const exists = prevIssues.some(
+          (it) => String(it.id) === String(newIssue.id)
+        );
+        const updatedIssues = exists
+          ? prevIssues.map((it) =>
+              String(it.id) === String(newIssue.id) ? newIssue : it
+            )
+          : [...prevIssues, newIssue];
+        // 延后同步到缓存（由专门 effect 负责）
         return updatedIssues;
       });
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle issue state update callback
@@ -503,18 +644,16 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           if (issue.id === issueId) {
             // Optimistically update state only; closed_at handled centrally by cache layer and then corrected by server response
             const updatedIssue = { ...issue, state: newState };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
+            // 延后同步到缓存（由专门 effect 负责）
             return updatedIssue;
           }
           return issue;
         });
-        // Update issues list cache
-        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
+        // 延后同步到缓存（由专门 effect 负责）
         return updatedIssues;
       });
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle issue priority update callback
@@ -527,8 +666,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               ...issue,
               priority: newPriority,
             };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
+            // 延后同步到缓存（由专门 effect 负责）
             return updatedIssue;
           }
           return issue;
@@ -536,7 +674,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle issue level update callback
@@ -549,8 +687,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               ...issue,
               level: newLevel,
             };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
+            // 延后同步到缓存（由专门 effect 负责）
             return updatedIssue;
           }
           return issue;
@@ -558,7 +695,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle issue assignee update callback
@@ -576,8 +713,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               assignee: newAssignee,
               assignee_user: assigneeUser,
             };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
+            // 延后同步到缓存（由专门 effect 负责）
             return updatedIssue;
           }
           return issue;
@@ -585,7 +721,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         return updatedIssues;
       });
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle issue deletion
@@ -597,8 +733,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           const updatedIssues = prevIssues.filter(
             (issue) => issue.id !== issueId
           );
-          // Update issues list cache
-          issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
+          // 延后同步到缓存（由专门 effect 负责）
           return updatedIssues;
         });
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // Close menu
@@ -608,14 +743,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       } catch (error) {
         console.error("Error deleting issue:", error);
         // If deletion fails, reload data to restore state
-        const issuesData = await issuesManagerWithCallback.getIssues(
-          copanyId,
-          () => getIssuesAction(copanyId)
+        const issuesData = await issuesManager.getIssues(copanyId, () =>
+          getIssuesAction(copanyId)
         );
         setIssues(issuesData);
       }
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId]
   );
 
   // Handle right-click menu
@@ -778,14 +912,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                           const updated = prev.map((it) =>
                             it.id === serverIssue.id ? serverIssue : it
                           );
-                          issuesManagerWithCallback.updateIssue(
-                            copanyId,
-                            serverIssue
-                          );
-                          issuesManagerWithCallback.setIssues(
-                            copanyId,
-                            updated
-                          );
+                          // 延后同步到缓存（由专门 effect 负责）
                           return updated;
                         });
                       }}
@@ -818,6 +945,28 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       showText={false}
                       onAssigneeChange={handleIssueAssigneeUpdated}
                       readOnly={readOnly}
+                      disableServerUpdate={true}
+                      hasPendingByMe={(() => {
+                        const meId = currentUser?.id
+                          ? String(currentUser.id)
+                          : null;
+                        if (!meId) return false;
+                        const reqIds =
+                          pendingRequestersByIssue[String(issue.id)] || [];
+                        return reqIds.includes(meId);
+                      })()}
+                      onRequestAssignment={() => {
+                        try {
+                          const params = new URLSearchParams(
+                            searchParams.toString()
+                          );
+                          router.push(
+                            `/copany/${copanyId}/issue/${
+                              issue.id
+                            }?${params.toString()}`
+                          );
+                        } catch (_) {}
+                      }}
                     />
                   </div>
                 );

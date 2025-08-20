@@ -174,6 +174,19 @@ export class IssuesManager {
   setIssues(copanyId: string, issues: IssueWithAssignee[]): void {
     this.dataManager.setData(copanyId, issues);
   }
+
+  /**
+   * 强制重新验证指定 Copany 的 issues 列表
+   */
+  async revalidate(
+    copanyId: string,
+    fetchFn?: () => Promise<IssueWithAssignee[]>
+  ): Promise<IssueWithAssignee[] | null> {
+    return (await this.dataManager.revalidate(copanyId, {
+      background: false,
+      fetchFn,
+    })) as IssueWithAssignee[] | null;
+  }
 }
 
 // Default instance (no callback, for simple operations)

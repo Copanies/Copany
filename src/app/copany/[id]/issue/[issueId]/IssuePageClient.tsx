@@ -248,11 +248,83 @@ export default function IssuePageClient({
           data: unknown;
         };
         if (!detail) return;
+
+        // 1) Issues list updated → 找到当前 issue 并刷新
         if (detail.manager === "IssuesManager" && detail.key === copanyId) {
           const list = detail.data as IssueWithAssignee[];
           const found = list.find((x) => String(x.id) === String(issueId));
           if (found) setIssueData(found);
+          return;
         }
+
+        // 2) Contributors 更新 → 刷新指派下拉可选项
+        if (
+          detail.manager === "ContributorsManager" &&
+          detail.key === copanyId
+        ) {
+          const list = detail.data as CopanyContributor[];
+          setContributors(Array.isArray(list) ? list : []);
+          return;
+        }
+
+        // 3) Assignment requests 更新 → 仅处理当前 issueId
+        if (
+          detail.manager === "AssignmentRequestsManager" &&
+          String(detail.key) === String(issueId)
+        ) {
+          const list = (detail.data as AssignmentRequest[]) || [];
+          const map: Record<string, AssignmentRequest[]> = {};
+          for (const it of list) {
+            if (it.status !== "requested") continue;
+            const key = String(it.requester_id);
+            if (!map[key]) map[key] = [];
+            map[key].push(it);
+          }
+          setPendingRequestsByRequester(map);
+
+          // 确保请求者信息同步
+          const requesterIds = Object.keys(map);
+          if (requesterIds.length > 0) {
+            userInfoManager
+              .getMultipleUserInfo(requesterIds)
+              .then((infos) => setRequestersInfo(infos))
+              .catch(() => {});
+          } else {
+            setRequestersInfo({});
+          }
+          return;
+        }
+
+        // 4) User info 更新 → 如果是创建者或请求者，则更新
+        if (detail.manager === "UserInfoManager") {
+          const userId = String(detail.key);
+          const data = detail.data as UserInfo;
+
+          const creatorId = issueData?.created_by
+            ? String(issueData.created_by)
+            : null;
+
+          if (creatorId && userId === creatorId) {
+            setCreatorInfo(data || null);
+            return;
+          }
+
+          if (userId in pendingRequestsByRequester) {
+            setRequestersInfo((prev) => ({ ...prev, [userId]: data }));
+            return;
+          }
+        }
+
+        // 5) Copany 更新 → 可能影响编辑权限，重新计算
+        if (detail.manager === "CopanyManager" && detail.key === copanyId) {
+          if (issueData) {
+            computeEditPermission(issueData);
+          }
+          return;
+        }
+
+        // 6) 其他 manager（如 IssueActivityManager/IssueCommentsManager/NotificationsManager）
+        // 通常由它们自身使用的子组件订阅，这里无需处理
       } catch (_) {}
     };
     if (typeof window !== "undefined") {
@@ -594,6 +666,14 @@ export default function IssuePageClient({
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}
+                  hasPendingByMe={(() => {
+                    const meId = currentUser?.id
+                      ? String(currentUser.id)
+                      : null;
+                    if (!meId) return false;
+                    const list = pendingRequestsByRequester[meId] || [];
+                    return list.length > 0;
+                  })()}
                 />
                 {(() => {
                   const meId = currentUser?.id ? String(currentUser.id) : null;
@@ -654,6 +734,7 @@ export default function IssuePageClient({
             {/* Issue activity timeline (includes comments) */}
             <IssueActivityTimeline
               issueId={issueData.id}
+              copanyId={copanyId}
               canEdit={canEdit}
               issueState={issueData.state}
               issueLevel={issueData.level}
@@ -727,6 +808,14 @@ export default function IssuePageClient({
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}
+                  hasPendingByMe={(() => {
+                    const meId = currentUser?.id
+                      ? String(currentUser.id)
+                      : null;
+                    if (!meId) return false;
+                    const list = pendingRequestsByRequester[meId] || [];
+                    return list.length > 0;
+                  })()}
                 />
                 {(() => {
                   const meId = currentUser?.id ? String(currentUser.id) : null;

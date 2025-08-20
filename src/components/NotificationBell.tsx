@@ -286,6 +286,14 @@ export default function NotificationBell() {
             setUnreadCount(localUnread);
           } catch (_) {}
         }
+        // Copany 信息更新：如果侧边显示中包含该 copany，则合并更新（用于展示 logo）
+        if (detail.manager === "CopanyManager") {
+          const id = String(detail.key);
+          setCopanies((prev) => ({
+            ...prev,
+            [id]: (detail.data as Copany) || prev[id],
+          }));
+        }
       } catch (_) {}
     };
     if (typeof window !== "undefined") {

@@ -5,6 +5,14 @@ import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { assignmentRequestsManager, userInfoManager } from "@/utils/cache";
 import {
+  issuesManager,
+  issueActivityManager,
+  issueReviewersManager,
+} from "@/utils/cache";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
+import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
+import { getIssueAction } from "@/actions/issue.actions";
+import {
   listAssignmentRequestsAction,
   acceptAssignmentRequestAction,
   refuseAssignmentRequestAction,
@@ -16,6 +24,7 @@ import { HandRaisedIcon } from "@heroicons/react/24/outline";
 
 interface AssignmentRequestPanelProps {
   issueId: string;
+  copanyId: string | null;
   requesterId: string; // 渲染该发起人的面板
   meId: string | null;
   canEdit: boolean; // determines button enable state (accept/refuse requires recipient permission)
@@ -25,6 +34,7 @@ interface AssignmentRequestPanelProps {
 
 export default function AssignmentRequestPanel({
   issueId,
+  copanyId,
   requesterId,
   meId,
   canEdit,
@@ -76,6 +86,11 @@ export default function AssignmentRequestPanel({
   }, [items, requesterId]);
 
   const load = useCallback(async () => {
+    // 非法 issueId（如 "temp"）直接跳过
+    if (!/^\d+$/.test(String(issueId))) {
+      setItems([]);
+      return;
+    }
     const list = await assignmentRequestsManager.getRequests(issueId, () =>
       listAssignmentRequestsAction(issueId)
     );
@@ -106,6 +121,95 @@ export default function AssignmentRequestPanel({
   useEffect(() => {
     load();
   }, [load]);
+
+  // Subscribe to cache updates for assignment requests and user infos
+  useEffect(() => {
+    // 非法 issueId（如 "temp"）时不订阅
+    if (!/^\d+$/.test(String(issueId))) return;
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+
+        // Assignment requests for current issue
+        if (
+          detail.manager === "AssignmentRequestsManager" &&
+          String(detail.key) === String(issueId)
+        ) {
+          const list = (detail.data as AssignmentRequest[]) || [];
+          setItems(list);
+          // sync user infos used in panel
+          const idSet = new Set<string>();
+          for (const it of list) {
+            idSet.add(String(it.requester_id));
+            idSet.add(String(it.recipient_id));
+          }
+          const ids = Array.from(idSet);
+          if (ids.length > 0) {
+            userInfoManager
+              .getMultipleUserInfo(ids)
+              .then((users) => {
+                const map: Record<
+                  string,
+                  { name: string; email: string; avatar_url: string }
+                > = {};
+                for (const id of Object.keys(users)) {
+                  map[id] = {
+                    name: users[id].name || users[id].email || id,
+                    email: users[id].email,
+                    avatar_url: users[id].avatar_url || "",
+                  };
+                }
+                setUserInfos((prev) => ({ ...prev, ...map }));
+              })
+              .catch(() => {});
+          }
+          return;
+        }
+
+        // user info update for participants in current items
+        if (detail.manager === "UserInfoManager") {
+          const userId = String(detail.key);
+          const info = detail.data as {
+            name?: string;
+            email?: string;
+            avatar_url?: string;
+          };
+          const exists = items.some(
+            (x) =>
+              String(x.requester_id) === userId ||
+              String(x.recipient_id) === userId
+          );
+          if (exists) {
+            setUserInfos((prev) => ({
+              ...prev,
+              [userId]: {
+                name: info?.name || info?.email || userId,
+                email: info?.email || "",
+                avatar_url: info?.avatar_url || "",
+              },
+            }));
+          }
+          return;
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [issueId, items]);
 
   if (requestsForRequester.length === 0) return null;
 
@@ -224,6 +328,24 @@ export default function AssignmentRequestPanel({
                         );
                         assignmentRequestsManager.setRequests(issueId, fresh);
                         setItems(fresh);
+                        // 由于接受请求会导致 Issue.assignee 变化、产生活动、可能影响评审者，触发对应缓存的联动刷新
+                        try {
+                          // 刷新 issue 列表缓存（更新 assignee）
+                          if (copanyId) {
+                            const latest = await getIssueAction(issueId);
+                            if (latest) {
+                              issuesManager.updateIssue(copanyId, latest);
+                            }
+                          }
+                          await Promise.all([
+                            issueActivityManager.revalidate(issueId, () =>
+                              listIssueActivityAction(issueId, 200)
+                            ),
+                            issueReviewersManager.revalidate(issueId, () =>
+                              listIssueReviewersAction(issueId)
+                            ),
+                          ]);
+                        } catch (_) {}
                         if (onActivityChanged) await onActivityChanged();
                       } catch (e) {
                         console.error(e);
@@ -266,6 +388,17 @@ export default function AssignmentRequestPanel({
                         );
                         assignmentRequestsManager.setRequests(issueId, fresh);
                         setItems(fresh);
+                        // 拒绝请求通常也会产生活动，刷新活动与评审者
+                        try {
+                          await Promise.all([
+                            issueActivityManager.revalidate(issueId, () =>
+                              listIssueActivityAction(issueId, 200)
+                            ),
+                            issueReviewersManager.revalidate(issueId, () =>
+                              listIssueReviewersAction(issueId)
+                            ),
+                          ]);
+                        } catch (_) {}
                         if (onActivityChanged) await onActivityChanged();
                       } catch (e) {
                         console.error(e);

@@ -4,11 +4,12 @@ import { contributorsCache } from "../instances";
 import { GenericDataManager } from "../GenericDataManager";
 
 class ContributorsDataManager extends GenericDataManager<CopanyContributor[]> {
-  constructor() {
+  constructor(onDataUpdated?: (key: string, data: CopanyContributor[]) => void) {
     super({
       cacheManager: contributorsCache,
       managerName: "ContributorsManager",
       enableStaleCache: false,
+      onDataUpdated,
     });
   }
   protected getDataInfo(data: CopanyContributor[]): string {
@@ -16,7 +17,17 @@ class ContributorsDataManager extends GenericDataManager<CopanyContributor[]> {
   }
 }
 
-const contributorsDataManager = new ContributorsDataManager();
+const contributorsDataManager = new ContributorsDataManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "ContributorsManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});
 
 export class ContributorsManager {
   async getContributors(copanyId: string): Promise<CopanyContributor[]> {

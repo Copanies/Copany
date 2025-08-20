@@ -24,6 +24,41 @@ export default function ContributorAvatarStack({
     loadContributors();
   }, [copany.id]);
 
+  // Subscribe to cache updates for contributors so avatars stay fresh
+  useEffect(() => {
+    const onCacheUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          manager: string;
+          key: string;
+          data: unknown;
+        };
+        if (!detail) return;
+        if (
+          detail.manager === "ContributorsManager" &&
+          String(detail.key) === String(copany.id)
+        ) {
+          setContributors(
+            Array.isArray(detail.data)
+              ? (detail.data as CopanyContributor[])
+              : []
+          );
+        }
+      } catch (_) {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "cache:updated",
+          onCacheUpdated as EventListener
+        );
+      }
+    };
+  }, [copany.id]);
+
   // create a list of contributors
   const allContributors = [
     // creator always at the first place

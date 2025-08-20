@@ -36,5 +36,15 @@ export class CopanyManager {
   }
 }
 
-// 默认实例（无回调，用于简单操作）
-export const copanyManager = new CopanyManager();
+// 默认实例：派发统一的 cache:updated 事件
+export const copanyManager = new CopanyManager((key, data) => {
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { manager: "CopanyManager", key, data },
+        })
+      );
+    }
+  } catch (_) {}
+});

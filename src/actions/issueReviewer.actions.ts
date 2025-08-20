@@ -6,6 +6,7 @@ import type { IssueReviewer, ReviewerStatus } from "@/types/database.types";
 export async function listIssueReviewersAction(
   issueId: string
 ): Promise<IssueReviewer[]> {
+  console.log("🔍 Action: listIssueReviewersAction", issueId);
   return await IssueReviewerService.list(issueId);
 }
 
