@@ -182,7 +182,7 @@ export default function IssueAssigneeSelector({
           {
             value: currentUser.id,
             label: (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 justify-between w-full">
                 {renderUserLabel(
                   currentUser.user_metadata?.name || "Unknown",
                   currentUser.user_metadata?.avatar_url || null,

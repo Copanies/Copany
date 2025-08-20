@@ -25,6 +25,7 @@ import {
   copanyManager,
   issuePermissionManager,
   assignmentRequestsManager,
+  issueActivityManager,
 } from "@/utils/cache";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
@@ -42,6 +43,7 @@ import {
   listAssignmentRequestsAction,
   requestAssignmentToEditorsAction,
 } from "@/actions/assignmentRequest.actions";
+import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { userInfoManager } from "@/utils/cache";
@@ -694,7 +696,7 @@ export default function IssuePageClient({
                       >
                         <div className="flex flex-row items-center gap-1">
                           <HandRaisedIcon className="w-4 h-4 -rotate-30" />
-                          <p>Own this</p>
+                          <p>Assign to me</p>
                         </div>
                       </Button>
                     );
@@ -836,7 +838,7 @@ export default function IssuePageClient({
                       >
                         <div className="flex flex-row items-center gap-1">
                           <HandRaisedIcon className="w-4 h-4 -rotate-30" />
-                          <p>Own this</p>
+                          <p>Assign to me</p>
                         </div>
                       </Button>
                     );
@@ -896,7 +898,7 @@ export default function IssuePageClient({
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold">Message (optional)</label>
             <textarea
-              className="w-full min-h-[32px] rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 outline-none"
+              className="w-full min-h-[32px] rounded-md border border-gray-300 dark:border-gray-700 bg-transparent text-gray-900 dark:text-gray-100 px-3 py-2 outline-none"
               placeholder="Leave a message"
               value={requestMessage}
               onChange={(e) => setRequestMessage(e.target.value)}
@@ -938,7 +940,12 @@ export default function IssuePageClient({
                   );
                   setIsRequestModalOpen(false);
                   setRequestMessage("");
-                  await reloadPendingRequests();
+                  await Promise.all([
+                    reloadPendingRequests(),
+                    issueActivityManager.revalidate(issueId, () =>
+                      listIssueActivityAction(issueId, 200)
+                    ),
+                  ]);
                 } catch (e) {
                   console.error(e);
                 }

@@ -517,11 +517,48 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           return;
         }
 
-        // Assignment requests：key 为 issueId，更新 in-progress 请求者徽标与用户信息
+        // Assignment requests：支持两种事件
+        // 1) key 为 "copany:<copanyId>" → 批量更新该 copany 下所有 issue 的 in-progress 请求者
+        // 2) key 为 issueId → 仅更新该 issue 的 in-progress 请求者
         if (detail.manager === "AssignmentRequestsManager") {
-          const issueId = String(detail.key);
-          const list = (detail.data as AssignmentRequest[]) || [];
-          const inProgress = computePendingRequestersForIssue(list);
+          const keyStr = String(detail.key);
+          const dataList = (detail.data as AssignmentRequest[]) || [];
+          // 情况 1：copany 级事件
+          if (keyStr.startsWith("copany:")) {
+            const [, keyCopanyId] = keyStr.split(":");
+            if (String(keyCopanyId) === String(copanyId)) {
+              const byIssue: Record<string, AssignmentRequest[]> = {};
+              for (const it of dataList) {
+                const k = String(it.issue_id);
+                if (!byIssue[k]) byIssue[k] = [];
+                byIssue[k].push(it);
+              }
+              const nextPending: Record<string, string[]> = {};
+              const requesterIds = new Set<string>();
+              for (const [iid, items] of Object.entries(byIssue)) {
+                const inProg = computePendingRequestersForIssue(items);
+                nextPending[iid] = inProg;
+                for (const rid of inProg) requesterIds.add(rid);
+              }
+              setPendingRequestersByIssue((prev) => ({
+                ...prev,
+                ...nextPending,
+              }));
+              if (requesterIds.size > 0) {
+                userInfoManager
+                  .getMultipleUserInfo(Array.from(requesterIds))
+                  .then((infos) => {
+                    setRequestersInfo((prev) => ({ ...prev, ...infos }));
+                  })
+                  .catch(() => {});
+              }
+            }
+            return;
+          }
+
+          // 情况 2：issue 级事件（保持原逻辑）
+          const issueId = keyStr;
+          const inProgress = computePendingRequestersForIssue(dataList);
           setPendingRequestersByIssue((prev) => ({
             ...prev,
             [issueId]: inProgress,
