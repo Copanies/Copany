@@ -615,10 +615,11 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialState={issueData.state}
               showText={true}
+              copanyId={copanyId}
               onStateChange={(_, newState) => handleStateChange(newState)}
               onServerUpdated={(serverIssue) => {
                 setIssueData(serverIssue);
-                issuesManager.updateIssue(copanyId, serverIssue);
+                updateIssueInCache(serverIssue);
               }}
               readOnly={!canEdit}
             />
@@ -632,6 +633,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialPriority={issueData.priority}
               showText={true}
+              copanyId={copanyId}
               onPriorityChange={(_, newPriority) =>
                 handlePriorityChange(newPriority)
               }
@@ -647,6 +649,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialLevel={issueData.level}
               showText={true}
+              copanyId={copanyId}
               onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
               readOnly={!canEdit}
             />
@@ -664,6 +667,7 @@ export default function IssuePageClient({
                   assigneeUser={issueData.assignee_user}
                   currentUser={currentUser}
                   contributors={contributors}
+                  copanyId={copanyId}
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}
@@ -807,6 +811,7 @@ export default function IssuePageClient({
                   assigneeUser={issueData.assignee_user}
                   currentUser={currentUser}
                   contributors={contributors}
+                  copanyId={copanyId}
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}

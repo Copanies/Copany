@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IssueLevel } from "@/types/database.types";
 import { updateIssueLevelAction } from "@/actions/issue.actions";
+import { useUpdateIssueLevel } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
 import { issueActivityManager } from "@/utils/cache";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
@@ -15,6 +16,7 @@ interface IssueLevelSelectorProps {
   onLevelChange?: (issueId: string, newLevel: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  copanyId?: string;
 }
 
 export default function IssueLevelSelector({
@@ -25,8 +27,10 @@ export default function IssueLevelSelector({
   onLevelChange,
   disableServerUpdate = false,
   readOnly = false,
+  copanyId,
 }: IssueLevelSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
+  const mutation = useUpdateIssueLevel(copanyId || "");
 
   const handleLevelChange = async (newLevel: number) => {
     if (readOnly) return;
@@ -40,7 +44,11 @@ export default function IssueLevelSelector({
 
       // Only call the update level API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssueLevelAction(issueId, newLevel);
+        if (copanyId) {
+          await mutation.mutateAsync({ issueId, level: newLevel });
+        } else {
+          await updateIssueLevelAction(issueId, newLevel);
+        }
         console.log("Level updated successfully:", newLevel);
 
         // 等级变化会产生活动，强制刷新活动流

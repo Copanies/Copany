@@ -45,7 +45,7 @@ import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import { useIssues } from "@/hooks/issues";
+import { useIssues, useDeleteIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 
 // Function to group issues by state
@@ -147,6 +147,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const deleteIssue = useDeleteIssue(copanyId);
 
   // Search query state synced with URL ?q=
   const [searchQuery, setSearchQuery] = useState<string>(
@@ -711,21 +712,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
       try {
-        // Remove from frontend first
-        queryClient.setQueryData<IssueWithAssignee[]>(
-          ["issues", copanyId],
-          (prev) => {
-            const base = prev || [];
-            return base.filter((issue) => String(issue.id) !== String(issueId));
-          }
-        );
-        setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // Close menu
-
-        // Then call delete interface
-        await deleteIssueAction(issueId);
+        await deleteIssue.mutateAsync({ issueId });
+        setContextMenu({ show: false, x: 0, y: 0, issueId: "" });
       } catch (error) {
         console.error("Error deleting issue:", error);
-        // If deletion fails, refetch list
         try {
           await queryClient.invalidateQueries({
             queryKey: ["issues", copanyId],
@@ -733,7 +723,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         } catch (_) {}
       }
     },
-    [copanyId, queryClient]
+    [copanyId, queryClient, deleteIssue]
   );
 
   // Handle right-click menu

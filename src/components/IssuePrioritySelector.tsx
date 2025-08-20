@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IssuePriority } from "@/types/database.types";
 import { updateIssuePriorityAction } from "@/actions/issue.actions";
+import { useUpdateIssuePriority } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
 import { issueActivityManager } from "@/utils/cache";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
@@ -15,6 +16,7 @@ interface IssuePrioritySelectorProps {
   onPriorityChange?: (issueId: string, newPriority: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  copanyId?: string; // for React Query mutation
 }
 
 export default function IssuePrioritySelector({
@@ -25,8 +27,10 @@ export default function IssuePrioritySelector({
   onPriorityChange,
   disableServerUpdate = false,
   readOnly = false,
+  copanyId,
 }: IssuePrioritySelectorProps) {
   const [currentPriority, setCurrentPriority] = useState(initialPriority);
+  const mutation = useUpdateIssuePriority(copanyId || "");
 
   const handlePriorityChange = async (newPriority: number) => {
     if (readOnly) return;
@@ -40,7 +44,11 @@ export default function IssuePrioritySelector({
 
       // Only call the update priority API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssuePriorityAction(issueId, newPriority);
+        if (copanyId) {
+          await mutation.mutateAsync({ issueId, priority: newPriority });
+        } else {
+          await updateIssuePriorityAction(issueId, newPriority);
+        }
         console.log("Priority updated successfully:", newPriority);
 
         // 优先级变化会产生活动，强制刷新活动流

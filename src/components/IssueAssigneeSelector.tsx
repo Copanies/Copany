@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
+import { useUpdateIssueAssignee } from "@/hooks/issues";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
@@ -33,6 +34,7 @@ interface IssueAssigneeSelectorProps {
   readOnly?: boolean;
   onRequestAssignment?: () => void; // 当只读并点击 Self 时，触发页面级弹窗
   hasPendingByMe?: boolean; // 外部传入：当前用户是否在该 issue 有进行中的请求
+  copanyId?: string;
 }
 
 export default function IssueAssigneeSelector({
@@ -48,10 +50,12 @@ export default function IssueAssigneeSelector({
   readOnly = false,
   onRequestAssignment,
   hasPendingByMe = false,
+  copanyId,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
   // 不再在组件内请求/订阅 assignment request，由上层视图通过 hasPendingByMe 控制
+  const mutation = useUpdateIssueAssignee(copanyId || "");
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -122,7 +126,11 @@ export default function IssueAssigneeSelector({
 
         // Only call the update assignee API when not in creation mode
         if (!disableServerUpdate) {
-          await updateIssueAssigneeAction(issueId, assigneeValue);
+          if (copanyId) {
+            await mutation.mutateAsync({ issueId, assignee: assigneeValue });
+          } else {
+            await updateIssueAssigneeAction(issueId, assigneeValue);
+          }
           console.log("Assignee updated successfully:", assigneeValue);
 
           // 指派变化会产生活动，强制刷新活动流

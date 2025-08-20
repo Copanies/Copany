@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
+import { useUpdateIssueState } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
@@ -22,6 +23,7 @@ interface IssueStateSelectorProps {
   disableServerUpdate?: boolean;
   readOnly?: boolean;
   onServerUpdated?: (updatedIssue: IssueWithAssignee) => void;
+  copanyId?: string;
 }
 
 export default function IssueStateSelector({
@@ -33,10 +35,12 @@ export default function IssueStateSelector({
   disableServerUpdate = false,
   readOnly = false,
   onServerUpdated,
+  copanyId,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
   const [hasApprovedReview, setHasApprovedReview] = useState<boolean>(false);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState<boolean>(false);
+  const mutation = useUpdateIssueState(copanyId || "");
 
   useEffect(() => {
     let mounted = true;
@@ -113,7 +117,15 @@ export default function IssueStateSelector({
 
       // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
-        const updatedIssue = await updateIssueStateAction(issueId, newState);
+        let updatedIssue: IssueWithAssignee;
+        if (copanyId) {
+          updatedIssue = await mutation.mutateAsync({
+            issueId,
+            state: newState,
+          });
+        } else {
+          updatedIssue = await updateIssueStateAction(issueId, newState);
+        }
         // Notify server-updated result so parent can overwrite cache/state with authoritative data
         if (onServerUpdated) {
           onServerUpdated(updatedIssue);
