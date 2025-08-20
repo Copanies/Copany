@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
-import { deleteIssueAction, getIssuesAction } from "@/actions/issue.actions";
+import { deleteIssueAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
   IssuePriority,
@@ -22,7 +22,6 @@ import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
   currentUserManager,
   contributorsManager,
-  issuesManager,
   issuesUiStateManager,
 } from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
@@ -46,6 +45,8 @@ import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
+import { useIssues } from "@/hooks/issues";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -110,8 +111,8 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
-  const [issues, setIssues] = useState<IssueWithAssignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
+  const issues = issuesData || [];
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
@@ -145,7 +146,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasInitialLoadRef = useRef(false);
+  const queryClient = useQueryClient();
 
   // Search query state synced with URL ?q=
   const [searchQuery, setSearchQuery] = useState<string>(
@@ -179,8 +180,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     setCollapsedGroups(issuesUiStateManager.getCollapsedGroups(copanyId));
   }, [copanyId]);
 
-  // 使用默认 issuesManager，UI 通过全局 cache:updated 事件联动
-
   // Function to load user and contributor data
   const loadUserData = useCallback(async () => {
     try {
@@ -196,32 +195,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     }
   }, [copanyId]);
 
-  // Use new SWR strategy to load Issues
-  const loadIssues = useCallback(async () => {
-    if (hasInitialLoadRef.current) return;
-    hasInitialLoadRef.current = true;
-
-    try {
-      setIsLoading(true);
-
-      // 使用默认 issuesManager 加载，后续更新通过 cache:updated 事件联动
-      const issuesData = await issuesManager.getIssues(copanyId, () =>
-        getIssuesAction(copanyId)
-      );
-
-      setIssues(issuesData);
-    } catch (error) {
-      console.error("Error loading issues:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [copanyId]);
-
   // Load data when component mounts
   useEffect(() => {
-    loadIssues();
     loadUserData();
-  }, [loadIssues, loadUserData]);
+  }, [loadUserData]);
 
   // Compute per-issue permissions for current list
   useEffect(() => {
@@ -431,7 +408,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     })();
   }, [filteredIssues, pendingRequestersByIssue, copanyId]);
 
-  // 订阅各类缓存的后台刷新事件，自动联动本页 UI
+  // 订阅各类缓存的后台刷新事件，自动联动本页 UI（非 Issues 相关仍保留）
   useEffect(() => {
     const computePendingRequestersForIssue = (
       list: AssignmentRequest[]
@@ -485,16 +462,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         };
         if (!detail) return;
 
-        // Issues 列表：同 copanyId 时直接替换列表
-        console.log("IssuesManager", detail.manager, detail.key, detail.data);
-        if (detail.manager === "IssuesManager" && detail.key === copanyId) {
-          setIssues(
-            Array.isArray(detail.data)
-              ? (detail.data as IssueWithAssignee[])
-              : []
-          );
-          return;
-        }
+        // Issues 列表由 React Query 管理
 
         // Contributors：同 copanyId 时刷新指派下拉可选项
         if (
@@ -597,18 +565,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     };
   }, [copanyId]);
 
-  // 把本地 state 的更改在提交后同步回缓存，并经由全局事件广播
-  useEffect(() => {
-    if (!isLocalUpdateRef.current) return;
-    if (isSyncingToCacheRef.current) return;
-    isSyncingToCacheRef.current = true;
-    try {
-      issuesManager.setIssues(copanyId, issues);
-    } finally {
-      isSyncingToCacheRef.current = false;
-      isLocalUpdateRef.current = false;
-    }
-  }, [issues, copanyId]);
+  // 本地变更改为直接写入 React Query 缓存
 
   const renderAssignmentRequestBadge = (issueId: string) => {
     const reqIds = pendingRequestersByIssue[String(issueId)] || [];
@@ -656,83 +613,76 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
-      setIssues((prevIssues) => {
-        // 去重合并：如果已存在同 id，则替换；否则追加
-        const exists = prevIssues.some(
-          (it) => String(it.id) === String(newIssue.id)
-        );
-        const updatedIssues = exists
-          ? prevIssues.map((it) =>
-              String(it.id) === String(newIssue.id) ? newIssue : it
-            )
-          : [...prevIssues, newIssue];
-        // 延后同步到缓存（由专门 effect 负责）
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || [];
+          const exists = base.some(
+            (it) => String(it.id) === String(newIssue.id)
+          );
+          return exists
+            ? base.map((it) =>
+                String(it.id) === String(newIssue.id) ? newIssue : it
+              )
+            : [...base, newIssue];
+        }
+      );
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle issue state update callback
   const handleIssueStateUpdated = useCallback(
     (issueId: string, newState: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            // Optimistically update state only; closed_at handled centrally by cache layer and then corrected by server response
-            const updatedIssue = { ...issue, state: newState };
-            // 延后同步到缓存（由专门 effect 负责）
-            return updatedIssue;
-          }
-          return issue;
-        });
-        // 延后同步到缓存（由专门 effect 负责）
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || [];
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, state: newState }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle issue priority update callback
   const handleIssuePriorityUpdated = useCallback(
     (issueId: string, newPriority: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              priority: newPriority,
-            };
-            // 延后同步到缓存（由专门 effect 负责）
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || [];
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, priority: newPriority }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle issue level update callback
   const handleIssueLevelUpdated = useCallback(
     (issueId: string, newLevel: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              level: newLevel,
-            };
-            // 延后同步到缓存（由专门 effect 负责）
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || [];
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, level: newLevel }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle issue assignee update callback
@@ -742,23 +692,19 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       newAssignee: string | null,
       assigneeUser: AssigneeUser | null
     ) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              assignee: newAssignee,
-              assignee_user: assigneeUser,
-            };
-            // 延后同步到缓存（由专门 effect 负责）
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || [];
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, assignee: newAssignee, assignee_user: assigneeUser }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle issue deletion
@@ -766,27 +712,28 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     async (issueId: string) => {
       try {
         // Remove from frontend first
-        setIssues((prevIssues) => {
-          const updatedIssues = prevIssues.filter(
-            (issue) => issue.id !== issueId
-          );
-          // 延后同步到缓存（由专门 effect 负责）
-          return updatedIssues;
-        });
+        queryClient.setQueryData<IssueWithAssignee[]>(
+          ["issues", copanyId],
+          (prev) => {
+            const base = prev || [];
+            return base.filter((issue) => String(issue.id) !== String(issueId));
+          }
+        );
         setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // Close menu
 
         // Then call delete interface
         await deleteIssueAction(issueId);
       } catch (error) {
         console.error("Error deleting issue:", error);
-        // If deletion fails, reload data to restore state
-        const issuesData = await issuesManager.getIssues(copanyId, () =>
-          getIssuesAction(copanyId)
-        );
-        setIssues(issuesData);
+        // If deletion fails, refetch list
+        try {
+          await queryClient.invalidateQueries({
+            queryKey: ["issues", copanyId],
+          });
+        } catch (_) {}
       }
     },
-    [copanyId]
+    [copanyId, queryClient]
   );
 
   // Handle right-click menu
@@ -817,7 +764,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     },
   ];
 
-  if (isLoading) {
+  if (isIssuesLoading) {
     return <LoadingView type="label" />;
   }
 
@@ -945,13 +892,17 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       readOnly={readOnly}
                       onStateChange={handleIssueStateUpdated}
                       onServerUpdated={(serverIssue) => {
-                        setIssues((prev) => {
-                          const updated = prev.map((it) =>
-                            it.id === serverIssue.id ? serverIssue : it
-                          );
-                          // 延后同步到缓存（由专门 effect 负责）
-                          return updated;
-                        });
+                        queryClient.setQueryData<IssueWithAssignee[]>(
+                          ["issues", copanyId],
+                          (prev) => {
+                            const base = prev || [];
+                            return base.map((it) =>
+                              String(it.id) === String(serverIssue.id)
+                                ? serverIssue
+                                : it
+                            );
+                          }
+                        );
                       }}
                     />
                     <IssuePrioritySelector

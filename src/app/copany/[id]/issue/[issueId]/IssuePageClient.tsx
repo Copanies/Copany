@@ -21,12 +21,13 @@ import IssueActivityTimeline from "@/components/IssueActivityTimeline";
 import {
   currentUserManager,
   contributorsManager,
-  issuesManager,
   copanyManager,
   issuePermissionManager,
   assignmentRequestsManager,
   issueActivityManager,
 } from "@/utils/cache";
+import { useIssue } from "@/hooks/issues";
+import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
 import { User } from "@supabase/supabase-js";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
@@ -78,6 +79,7 @@ export default function IssuePageClient({
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const handleBack = () => {
     // Build return URL, keep tab and subtab parameters
@@ -97,15 +99,24 @@ export default function IssuePageClient({
     const handleBeforeUnload = () => {
       // If there are unsaved changes, save silently
       if (hasUnsavedChangesRef.current && issueData) {
-        // Save in cache first
-        issuesManager.updateIssue(copanyId, issueData);
-        // Use sendBeacon for reliable background save
+        // Update React Query cache to persist latest draft locally
+        try {
+          queryClient.setQueryData<IssueWithAssignee[]>(
+            ["issues", copanyId],
+            (prev) => {
+              if (!prev) return prev as any;
+              return prev.map((it) =>
+                String(it.id) === String(issueData.id) ? issueData : it
+              );
+            }
+          );
+        } catch (_) {}
+
         const payload = JSON.stringify({
           id: issueData.id,
           description: issueData.description,
         });
 
-        // Try using sendBeacon for background save
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/api/issue/update", payload);
         }
@@ -115,9 +126,7 @@ export default function IssuePageClient({
     };
 
     const handleVisibilityChange = () => {
-      // Save immediately when page becomes hidden
       if (document.hidden && hasUnsavedChangesRef.current && issueData) {
-        // Here you can trigger save logic
         console.log("🚀 Background save initiated on visibility change");
       }
     };
@@ -129,7 +138,7 @@ export default function IssuePageClient({
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [issueData, copanyId]);
+  }, [issueData, copanyId, queryClient]);
 
   const computeEditPermission = useCallback(
     async (issueData: IssueWithAssignee) => {
@@ -166,41 +175,6 @@ export default function IssuePageClient({
 
         setCurrentUser(user);
         setContributors(contributorList);
-
-        console.log(`[IssuePageClient] 📱 Client mounted, checking cache...`);
-
-        // First try to get from cache
-        const cachedData = issuesManager.getIssue(copanyId, issueId);
-        if (cachedData) {
-          console.log(
-            `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
-          );
-          setIssueData(cachedData);
-        } else {
-          console.log(
-            `[IssuePageClient] 🚫 No cache available, loading from server...`
-          );
-        }
-
-        // Compute edit permission
-        if (cachedData) {
-          await computeEditPermission(cachedData);
-        }
-
-        setIsLoading(false);
-
-        // Then get latest data from server
-        const freshIssueData = await getIssueAction(issueId);
-        console.log(
-          `[IssuePageClient] ✅ Loaded from server:`,
-          freshIssueData?.title
-        );
-        setIssueData(freshIssueData);
-        await computeEditPermission(freshIssueData);
-        // Update cache
-        if (freshIssueData) {
-          issuesManager.updateIssue(copanyId, freshIssueData);
-        }
 
         // Load pending assignment requests (requested only), grouped by requester
         try {
@@ -241,7 +215,7 @@ export default function IssuePageClient({
 
     loadData();
 
-    // Listen cache updates to immediately reflect background refresh results
+    // Listen cache updates from non-migrated managers
     const onCacheUpdated = (e: Event) => {
       try {
         const detail = (e as CustomEvent).detail as {
@@ -251,13 +225,7 @@ export default function IssuePageClient({
         };
         if (!detail) return;
 
-        // 1) Issues list updated → 找到当前 issue 并刷新
-        if (detail.manager === "IssuesManager" && detail.key === copanyId) {
-          const list = detail.data as IssueWithAssignee[];
-          const found = list.find((x) => String(x.id) === String(issueId));
-          if (found) setIssueData(found);
-          return;
-        }
+        // Issues list is now managed by React Query
 
         // 2) Contributors 更新 → 刷新指派下拉可选项
         if (
@@ -340,7 +308,38 @@ export default function IssuePageClient({
         );
       }
     };
-  }, [copanyId, issueId, computeEditPermission]);
+  }, [copanyId, issueId, computeEditPermission, issueData]);
+
+  // Use React Query to get current issue
+  const { data: rqIssue, isLoading: isIssueLoading } = useIssue(
+    copanyId,
+    issueId
+  );
+
+  // Sync RQ issue to local state for editor and permission computation
+  useEffect(() => {
+    if (rqIssue) {
+      setIssueData(rqIssue);
+      computeEditPermission(rqIssue);
+    }
+  }, [rqIssue, computeEditPermission]);
+
+  const updateIssueInCache = useCallback(
+    (updated: IssueWithAssignee) => {
+      try {
+        queryClient.setQueryData<IssueWithAssignee[]>(
+          ["issues", copanyId],
+          (prev) => {
+            if (!prev) return prev as any;
+            return prev.map((it) =>
+              String(it.id) === String(updated.id) ? updated : it
+            );
+          }
+        );
+      } catch (_) {}
+    },
+    [queryClient, copanyId]
+  );
 
   // Load creator user info via userInfoManager
   useEffect(() => {
@@ -388,14 +387,14 @@ export default function IssuePageClient({
         // Optimistically update state only; closed_at handled by cache and corrected by server
         const optimistic = { ...issueData, state: newState };
         setIssueData(optimistic);
-        issuesManager.updateIssue(copanyId, optimistic);
+        updateIssueInCache(optimistic);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
         console.error("Error updating issue state:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handlePriorityChange = useCallback(
@@ -408,14 +407,14 @@ export default function IssuePageClient({
           priority: newPriority,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Priority updated: ${newPriority}`);
       } catch (error) {
         console.error("Error updating issue priority:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handleLevelChange = useCallback(
@@ -428,14 +427,14 @@ export default function IssuePageClient({
           level: newLevel,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Level updated: ${newLevel}`);
       } catch (error) {
         console.error("Error updating issue level:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handleAssigneeChange = useCallback(
@@ -453,14 +452,14 @@ export default function IssuePageClient({
           assignee_user: assigneeUser,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Assignee updated: ${newAssignee}`);
       } catch (error) {
         console.error("Error updating issue assignee:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   // Handle title change
@@ -474,14 +473,14 @@ export default function IssuePageClient({
           title: newTitle,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Title updated: ${newTitle}`);
       } catch (error) {
         console.error("Error updating issue title:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   // Handle description change
@@ -495,14 +494,14 @@ export default function IssuePageClient({
           description: newDescription,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Description updated`, newDescription);
       } catch (error) {
         console.error("Error updating issue description:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const assignmentRequestView = (() => {
@@ -566,7 +565,7 @@ export default function IssuePageClient({
     );
   })();
 
-  if (isLoading) {
+  if (isLoading || isIssueLoading) {
     return <LoadingView type="page" />;
   }
 
@@ -765,7 +764,8 @@ export default function IssuePageClient({
                 onStateChange={(_, newState) => handleStateChange(newState)}
                 onServerUpdated={(serverIssue) => {
                   setIssueData(serverIssue);
-                  issuesManager.updateIssue(copanyId, serverIssue);
+                  updateIssueInCache(serverIssue);
+                  updateIssueInCache(serverIssue);
                 }}
                 readOnly={!canEdit}
               />
