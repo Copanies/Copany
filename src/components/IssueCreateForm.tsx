@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { createIssueAction } from "@/actions/issue.actions";
+import { useCreateIssue } from "@/hooks/issues";
 import {
   IssueWithAssignee,
   IssueLevel,
@@ -34,6 +35,7 @@ export default function IssueCreateForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createIssue = useCreateIssue(copanyId);
 
   // Add property state management
   const [state, setState] = useState<number>(IssueState.Backlog);
@@ -89,7 +91,7 @@ export default function IssueCreateForm({
     setIsSubmitting(true);
 
     try {
-      const newIssue = await createIssueAction({
+      const newIssue = await createIssue.mutateAsync({
         copany_id: copanyId,
         title: title,
         description: description,

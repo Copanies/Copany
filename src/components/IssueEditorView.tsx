@@ -4,10 +4,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
-import { issuesManager } from "@/utils/cache";
 import { issueActivityManager } from "@/utils/cache";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
@@ -32,6 +32,7 @@ export default function IssueEditorView({
   const editorDivRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const queryClient = useQueryClient();
 
   // Handle content changes - add debounce processing
   const handleContentChange = useCallback(
@@ -119,15 +120,46 @@ export default function IssueEditorView({
 
       console.log("🚀 Starting server save...");
       try {
-        const updatedIssue = await updateIssueTitleAndDescriptionAction(
-          issueData.id,
-          currentTitle,
-          currentDescription
-        );
+        // Prefer API route to avoid full-page refresh caused by Server Actions
+        let updatedIssue: IssueWithAssignee | null = null;
+        try {
+          const res = await fetch("/api/issue/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: issueData.id,
+              title: currentTitle,
+              description: currentDescription,
+            }),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            updatedIssue = json.issue as IssueWithAssignee;
+          }
+        } catch (_) {}
+        if (!updatedIssue) {
+          updatedIssue = await updateIssueTitleAndDescriptionAction(
+            issueData.id,
+            currentTitle,
+            currentDescription
+          );
+        }
 
         if (issueData.copany_id) {
-          console.log("💾 Updating cache with new data");
-          issuesManager.setIssue(issueData.copany_id, updatedIssue);
+          console.log("💾 Updating cache with new data (React Query)");
+          try {
+            queryClient.setQueryData<IssueWithAssignee[]>(
+              ["issues", String(issueData.copany_id)],
+              (prev) => {
+                if (!prev) return prev as any;
+                return prev.map((it) =>
+                  String(it.id) === String(updatedIssue!.id)
+                    ? updatedIssue!
+                    : it
+                );
+              }
+            );
+          } catch (_) {}
         }
 
         hasUnsavedChangesRef.current = false;

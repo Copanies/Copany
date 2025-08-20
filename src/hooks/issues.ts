@@ -11,7 +11,16 @@ function issuesKey(copanyId: string): QueryKey { return ["issues", copanyId]; }
 export function useIssues(copanyId: string) {
   return useQuery<IssueWithAssignee[]>({
     queryKey: issuesKey(copanyId),
-    queryFn: () => getIssuesAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/issues?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issues as IssueWithAssignee[];
+      } catch {
+        return await getIssuesAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
@@ -30,8 +39,20 @@ export function useIssue(copanyId: string, issueId: string) {
 export function useUpdateIssuePriority(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { issueId: string; priority: IssuePriority }) =>
-      updateIssuePriorityAction(vars.issueId, vars.priority),
+    mutationFn: async (vars: { issueId: string; priority: IssuePriority }) => {
+      try {
+        const res = await fetch("/api/issue/priority", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vars),
+        });
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issue as IssueWithAssignee;
+      } catch {
+        return await updateIssuePriorityAction(vars.issueId, vars.priority);
+      }
+    },
     onMutate: async ({ issueId, priority }) => {
       await qc.cancelQueries({ queryKey: issuesKey(copanyId) });
       const prev = qc.getQueryData<IssueWithAssignee[]>(issuesKey(copanyId));
@@ -55,8 +76,20 @@ export function useUpdateIssuePriority(copanyId: string) {
 export function useUpdateIssueLevel(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { issueId: string; level: IssueLevel }) =>
-      updateIssueLevelAction(vars.issueId, vars.level),
+    mutationFn: async (vars: { issueId: string; level: IssueLevel }) => {
+      try {
+        const res = await fetch("/api/issue/level", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vars),
+        });
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issue as IssueWithAssignee;
+      } catch {
+        return await updateIssueLevelAction(vars.issueId, vars.level);
+      }
+    },
     onMutate: async ({ issueId, level }) => {
       await qc.cancelQueries({ queryKey: issuesKey(copanyId) });
       const prev = qc.getQueryData<IssueWithAssignee[]>(issuesKey(copanyId));
@@ -80,8 +113,20 @@ export function useUpdateIssueLevel(copanyId: string) {
 export function useUpdateIssueAssignee(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { issueId: string; assignee: string | null }) =>
-      updateIssueAssigneeAction(vars.issueId, vars.assignee),
+    mutationFn: async (vars: { issueId: string; assignee: string | null }) => {
+      try {
+        const res = await fetch("/api/issue/assignee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vars),
+        });
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issue as IssueWithAssignee;
+      } catch {
+        return await updateIssueAssigneeAction(vars.issueId, vars.assignee);
+      }
+    },
     onMutate: async ({ issueId, assignee }) => {
       await qc.cancelQueries({ queryKey: issuesKey(copanyId) });
       const prev = qc.getQueryData<IssueWithAssignee[]>(issuesKey(copanyId));
@@ -105,8 +150,20 @@ export function useUpdateIssueAssignee(copanyId: string) {
 export function useUpdateIssueState(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { issueId: string; state: IssueState }) =>
-      updateIssueStateAction(vars.issueId, vars.state),
+    mutationFn: async (vars: { issueId: string; state: IssueState }) => {
+      try {
+        const res = await fetch("/api/issue/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vars),
+        });
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issue as IssueWithAssignee;
+      } catch {
+        return await updateIssueStateAction(vars.issueId, vars.state);
+      }
+    },
     onMutate: async ({ issueId, state }) => {
       await qc.cancelQueries({ queryKey: issuesKey(copanyId) });
       const prev = qc.getQueryData<IssueWithAssignee[]>(issuesKey(copanyId));
@@ -151,8 +208,20 @@ export function useDeleteIssue(copanyId: string) {
 export function useCreateIssue(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at" | "created_by">) =>
-      createIssueAction(payload),
+    mutationFn: async (payload: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at" | "created_by">) => {
+      try {
+        const res = await fetch("/api/issue/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issue as IssueWithAssignee;
+      } catch {
+        return await createIssueAction(payload);
+      }
+    },
     onSuccess: (created) => {
       qc.setQueryData<IssueWithAssignee[]>(issuesKey(copanyId), (prev) => {
         const base = prev || [];
