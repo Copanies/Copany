@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateIssueAction } from "@/actions/issue.actions";
+import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const data = JSON.parse(body);
 
-    const { id, title, description, state, priority, level, assignee } = data;
+    const { id, title, description } = data;
 
     if (!id || title === undefined || description === undefined) {
       return NextResponse.json(
@@ -16,15 +16,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Call existing issue update action
-    const updatedIssue = await updateIssueAction({
+    const updatedIssue = await updateIssueTitleAndDescriptionAction(
       id,
       title,
-      description,
-      state: state ?? 0,
-      priority: priority ?? null,
-      level: level ?? null,
-      assignee: assignee ?? null,
-    });
+      description
+    );
 
     return NextResponse.json({ success: true, issue: updatedIssue });
   } catch (error) {

@@ -100,12 +100,7 @@ export default function IssuePageClient({
         // Use sendBeacon for reliable background save
         const payload = JSON.stringify({
           id: issueData.id,
-          title: issueData.title,
           description: issueData.description,
-          state: issueData.state ?? 0,
-          priority: issueData.priority ?? null,
-          level: issueData.level ?? null,
-          assignee: issueData.assignee ?? null,
         });
 
         // Try using sendBeacon for background save

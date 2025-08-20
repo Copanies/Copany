@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
-import { updateIssueAction } from "@/actions/issue.actions";
+import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
 import { issuesManager } from "@/utils/cache";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
@@ -117,15 +117,11 @@ export default function IssueEditorView({
 
       console.log("🚀 Starting server save...");
       try {
-        const updatedIssue = await updateIssueAction({
-          id: issueData.id,
-          title: currentTitle,
-          description: currentDescription,
-          state: issueData.state ?? 0,
-          priority: issueData.priority ?? null,
-          level: issueData.level ?? null,
-          assignee: issueData.assignee ?? null,
-        });
+        const updatedIssue = await updateIssueTitleAndDescriptionAction(
+          issueData.id,
+          currentTitle,
+          currentDescription
+        );
 
         if (issueData.copany_id) {
           console.log("💾 Updating cache with new data");
