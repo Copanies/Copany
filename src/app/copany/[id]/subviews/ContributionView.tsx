@@ -1,14 +1,8 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { generateContributionsFromIssuesAction } from "@/actions/contribution.actions";
-import {
-  Contribution,
-  IssueLevel,
-  AssigneeUser,
-  CopanyContributor,
-  LEVEL_SCORES,
-} from "@/types/database.types";
-import { contributorsManager, contributionsManager } from "@/utils/cache";
+import { useMemo } from "react";
+import { IssueLevel, AssigneeUser, LEVEL_SCORES } from "@/types/database.types";
+import { useContributions } from "@/hooks/activity";
+import { useContributors } from "@/hooks/contributors";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
@@ -22,93 +16,14 @@ interface ContributionViewProps {
 
 export default function ContributionView({ copanyId }: ContributionViewProps) {
   const router = useRouter();
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // 统一改为使用默认 contributionsManager，并依赖全局事件联动 UI
+  // 使用 React Query hooks 替代 cacheManager
+  const { data: contributions = [], isLoading: isContributionsLoading } =
+    useContributions(copanyId);
+  const { data: contributors = [], isLoading: isContributorsLoading } =
+    useContributors(copanyId);
 
-  const loadData = useCallback(
-    async (forceRefresh: boolean = false) => {
-      try {
-        setIsLoading(true);
-
-        const contributionDataPromise = forceRefresh
-          ? contributionsManager.refreshContributions(copanyId, () =>
-              generateContributionsFromIssuesAction(copanyId)
-            )
-          : contributionsManager.getContributions(copanyId, () =>
-              generateContributionsFromIssuesAction(copanyId)
-            );
-
-        const contributorDataPromise =
-          contributorsManager.getContributors(copanyId);
-
-        // Execute requests in parallel
-        const [newContributionData, newContributorData] = await Promise.all([
-          contributionDataPromise,
-          contributorDataPromise,
-        ]);
-
-        setContributions(newContributionData);
-        setContributors(newContributorData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [copanyId]
-  );
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // 订阅贡献与贡献者缓存后台刷新
-  useEffect(() => {
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (
-          detail.manager === "ContributionsManager" &&
-          String(detail.key) === String(copanyId)
-        ) {
-          setContributions(
-            Array.isArray(detail.data) ? (detail.data as Contribution[]) : []
-          );
-          return;
-        }
-        if (
-          detail.manager === "ContributorsManager" &&
-          String(detail.key) === String(copanyId)
-        ) {
-          setContributors(
-            Array.isArray(detail.data)
-              ? (detail.data as CopanyContributor[])
-              : []
-          );
-          return;
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [copanyId]);
+  const isLoading = isContributionsLoading || isContributorsLoading;
 
   // Convert contributors to AssigneeUser format
   const users: AssigneeUser[] = contributors.map((contributor) => ({
@@ -314,7 +229,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
           />
         }
         title="No contribution yet"
-        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member’s share of contributions."
+        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member's share of contributions."
         buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
         buttonTitle="View issues"
         buttonAction={() => {

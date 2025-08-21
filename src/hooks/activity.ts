@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { IssueActivity } from "@/types/database.types";
+import type { IssueActivity, Contribution } from "@/types/database.types";
 import { listIssueActivityAction } from "@/actions/issueActivity.actions";
+import { generateContributionsFromIssuesAction } from "@/actions/contribution.actions";
 
 export function useIssueActivity(issueId: string, limit = 200) {
   return useQuery<IssueActivity[]>({
@@ -20,6 +21,16 @@ export function useIssueActivity(issueId: string, limit = 200) {
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
     staleTime: 5_000,
+  });
+}
+
+export function useContributions(copanyId: string) {
+  return useQuery<Contribution[]>({
+    queryKey: ["contributions", copanyId],
+    queryFn: () => generateContributionsFromIssuesAction(copanyId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 30 * 1000, // 30 seconds
+    refetchIntervalInBackground: true,
   });
 }
 

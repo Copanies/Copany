@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Copany } from "@/types/database.types";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { currentUserManager, copanyManager } from "@/utils/cache";
+import { useCopany } from "@/hooks/copany";
+import { useCurrentUser } from "@/hooks/currentUser";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import LicenseView from "./subviews/LicenseView";
@@ -12,7 +10,6 @@ import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
 import ContributionView from "./subviews/ContributionView";
 import SettingsView from "./subviews/settings/SettingsView";
-import { User } from "@supabase/supabase-js";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 
@@ -27,82 +24,11 @@ export default function CopanyDetailClient({
     copanyId,
   });
 
-  const [copany, setCopany] = useState<Copany | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const hasInitialLoadRef = useRef(false);
+  // 使用 React Query hooks 替代 cacheManager
+  const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
-  // 统一改为使用默认 copanyManager，并依赖全局事件联动 UI
-
-  // Use new SWR strategy to load data
-  const loadCopany = useCallback(async () => {
-    if (hasInitialLoadRef.current) return;
-    hasInitialLoadRef.current = true;
-
-    try {
-      console.log(
-        `[CopanyDetailClient] 🔄 Loading copany with SWR strategy...`
-      );
-      setIsLoading(true);
-
-      // Load copany data and current user information in parallel
-      const [copanyData, userData] = await Promise.all([
-        copanyManager.getCopany(copanyId, async () => {
-          const result = await getCopanyByIdAction(copanyId);
-          if (!result) {
-            throw new Error("Copany not found");
-          }
-          return result;
-        }),
-        currentUserManager.getCurrentUser(),
-      ]);
-
-      console.log(`[CopanyDetailClient] ✅ Loaded copany:`, copanyData);
-      console.log(`[CopanyDetailClient] ✅ Loaded user:`, userData?.email);
-
-      setCopany(copanyData);
-      setCurrentUser(userData);
-    } catch (error) {
-      console.error("[CopanyDetailClient] ❌ Error loading copany:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [copanyId]);
-
-  useEffect(() => {
-    loadCopany();
-  }, [loadCopany]);
-
-  // 订阅全局 cache:updated，以便接收默认 copanyManager 的更新（例如其他组件 setCopany）
-  useEffect(() => {
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (
-          detail.manager === "CopanyManager" &&
-          String(detail.key) === String(copanyId)
-        ) {
-          setCopany((detail.data as Copany) || null);
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [copanyId]);
+  const isLoading = isCopanyLoading || isUserLoading;
 
   if (isLoading) {
     return (
@@ -135,7 +61,10 @@ export default function CopanyDetailClient({
         <LicenseView
           githubUrl={copany.github_url}
           copany={copany}
-          onCopanyUpdate={setCopany}
+          onCopanyUpdate={(_updatedCopany) => {
+            // 这里可以通过 React Query 的 setQueryData 来更新缓存
+            // 或者让 LicenseView 内部处理数据更新
+          }}
         />
       ),
     },
@@ -152,7 +81,13 @@ export default function CopanyDetailClient({
           {
             label: "Settings",
             content: (
-              <SettingsView copany={copany} onCopanyUpdate={setCopany} />
+              <SettingsView
+                copany={copany}
+                onCopanyUpdate={(_updatedCopany) => {
+                  // 这里可以通过 React Query 的 setQueryData 来更新缓存
+                  // 或者让 SettingsView 内部处理数据更新
+                }}
+              />
             ),
           },
         ]
