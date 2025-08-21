@@ -5,7 +5,7 @@ import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
@@ -31,6 +31,114 @@ export default function IssueEditorView({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
+
+  // React Query mutation for updating issue
+  const updateIssueMutation = useMutation({
+    mutationFn: async ({
+      id,
+      title,
+      description,
+    }: {
+      id: string;
+      title: string;
+      description: string;
+    }) => {
+      // Prefer API route to avoid full-page refresh caused by Server Actions
+      try {
+        const res = await fetch("/api/issue/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, title, description }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          return json.issue as IssueWithAssignee;
+        }
+        throw new Error("API update failed");
+      } catch (error) {
+        // Fallback to Server Action
+        return await updateIssueTitleAndDescriptionAction(
+          id,
+          title,
+          description
+        );
+      }
+    },
+    onMutate: async ({ id, title, description }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["issues", String(issueData.copany_id)],
+      });
+
+      // Snapshot the previous value
+      const previousIssues = queryClient.getQueryData<IssueWithAssignee[]>([
+        "issues",
+        String(issueData.copany_id),
+      ]);
+
+      // Optimistically update to the new value
+      if (previousIssues && issueData.copany_id) {
+        queryClient.setQueryData<IssueWithAssignee[]>(
+          ["issues", String(issueData.copany_id)],
+          (prev) => {
+            if (!prev) return prev;
+            return prev.map((it) =>
+              String(it.id) === String(id) ? { ...it, title, description } : it
+            );
+          }
+        );
+      }
+
+      return { previousIssues };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousIssues && issueData.copany_id) {
+        queryClient.setQueryData(
+          ["issues", String(issueData.copany_id)],
+          context.previousIssues
+        );
+      }
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : "Save failed, please try again later"
+      );
+    },
+    onSuccess: async (updatedIssue) => {
+      // Update cache with new data
+      if (issueData.copany_id) {
+        queryClient.setQueryData<IssueWithAssignee[]>(
+          ["issues", String(issueData.copany_id)],
+          (prev) => {
+            if (!prev) return prev;
+            return prev.map((it) =>
+              String(it.id) === String(updatedIssue.id) ? updatedIssue : it
+            );
+          }
+        );
+      }
+
+      // Invalidate related queries to trigger refresh
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["issueActivity", issueData.id],
+          }),
+          // Invalidate issue details if they exist
+          queryClient.invalidateQueries({
+            queryKey: ["issue", issueData.id],
+          }),
+        ]);
+      } catch (_) {}
+
+      setSaveError(null);
+      console.log("✅ Issue updated successfully");
+    },
+    onSettled: () => {
+      setIsSaving(false);
+    },
+  });
 
   // Handle content changes - add debounce processing
   const handleContentChange = useCallback(
@@ -99,102 +207,6 @@ export default function IssueEditorView({
   // Mark if there are unsaved changes
   const hasUnsavedChangesRef = useRef(false);
 
-  // Server save function
-  const saveToServerRef = useRef<(() => Promise<void>) | null>(null);
-
-  // Create server save function
-  useEffect(() => {
-    saveToServerRef.current = async () => {
-      if (isSaving) {
-        console.log("⏳ Already saving, skipping...");
-        return;
-      }
-
-      const currentTitle = titleRef.current;
-      const currentDescription = editingContentRef.current;
-
-      setIsSaving(true);
-      setSaveError(null);
-
-      console.log("🚀 Starting server save...");
-      try {
-        // Prefer API route to avoid full-page refresh caused by Server Actions
-        let updatedIssue: IssueWithAssignee | null = null;
-        try {
-          const res = await fetch("/api/issue/update", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: issueData.id,
-              title: currentTitle,
-              description: currentDescription,
-            }),
-          });
-          if (res.ok) {
-            const json = await res.json();
-            updatedIssue = json.issue as IssueWithAssignee;
-          }
-        } catch (_) {}
-        if (!updatedIssue) {
-          updatedIssue = await updateIssueTitleAndDescriptionAction(
-            issueData.id,
-            currentTitle,
-            currentDescription
-          );
-        }
-
-        if (issueData.copany_id) {
-          console.log("💾 Updating cache with new data (React Query)");
-          try {
-            queryClient.setQueryData<IssueWithAssignee[]>(
-              ["issues", String(issueData.copany_id)],
-              (prev) => {
-                if (!prev) return prev as any;
-                return prev.map((it) =>
-                  String(it.id) === String(updatedIssue!.id)
-                    ? updatedIssue!
-                    : it
-                );
-              }
-            );
-          } catch (_) {}
-        }
-
-        hasUnsavedChangesRef.current = false;
-        console.log("✅ Server save completed successfully");
-
-        // 标题或描述变化会产生活动，触发活动流查询失效
-        try {
-          await queryClient.invalidateQueries({
-            queryKey: ["issueActivity", issueData.id],
-          });
-        } catch (_) {}
-      } catch (error) {
-        console.error("❌ Error saving to server:", error);
-        hasUnsavedChangesRef.current = true;
-        setSaveError(
-          error instanceof Error
-            ? error.message
-            : "Save failed, please try again later"
-        );
-      } finally {
-        setIsSaving(false);
-      }
-    };
-  }, [
-    isSaving,
-    issueData.id,
-    issueData.title,
-    issueData.description,
-    issueData.state,
-    issueData.priority,
-    issueData.level,
-    issueData.assignee,
-    issueData.copany_id,
-    isReadonly,
-    queryClient,
-  ]);
-
   // Auto-save logic
   useEffect(() => {
     // Check if there are changes that need saving
@@ -217,14 +229,17 @@ export default function IssueEditorView({
 
       console.log("⏰ Auto-save timer triggered");
 
-      if (saveToServerRef.current) {
-        try {
-          await saveToServerRef.current();
-          console.log("✅ Auto-save completed successfully");
-        } catch (error) {
-          console.error("❌ Auto-save failed:", error);
-        }
-      }
+      const currentTitle = titleRef.current;
+      const currentDescription = editingContentRef.current;
+
+      // Use React Query mutation
+      updateIssueMutation.mutate({
+        id: issueData.id,
+        title: currentTitle,
+        description: currentDescription,
+      });
+
+      hasUnsavedChangesRef.current = false;
     }, 3000);
 
     return () => {
@@ -233,20 +248,28 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [isSaving, title, editingContent, isReadonly]);
+  }, [
+    isSaving,
+    title,
+    editingContent,
+    isReadonly,
+    updateIssueMutation,
+    issueData.id,
+  ]);
 
   // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       // If there are unsaved changes, save immediately
-      if (
-        !isReadonlyRef.current &&
-        hasUnsavedChangesRef.current &&
-        saveToServerRef.current
-      ) {
+      if (!isReadonlyRef.current && hasUnsavedChangesRef.current && !isSaving) {
         console.log("💾 Saving changes before unmount");
-        saveToServerRef.current().catch((error) => {
-          console.error("❌ Final save failed:", error);
+        const currentTitle = titleRef.current;
+        const currentDescription = editingContentRef.current;
+
+        updateIssueMutation.mutate({
+          id: issueData.id,
+          title: currentTitle,
+          description: currentDescription,
         });
       }
 
@@ -258,7 +281,7 @@ export default function IssueEditorView({
         clearTimeout(contentChangeTimeoutRef.current);
       }
     };
-  }, []);
+  }, [updateIssueMutation, issueData.id]);
 
   // Focus description editor on mount (without scrolling)
   useEffect(() => {
@@ -267,6 +290,11 @@ export default function IssueEditorView({
 
   // The initial content is only set once when the component is mounted
   const [initialContent] = useState(issueData.description || "");
+
+  // Update isSaving state based on mutation state
+  useEffect(() => {
+    setIsSaving(updateIssueMutation.isPending);
+  }, [updateIssueMutation.isPending]);
 
   return (
     <div className="w-full">

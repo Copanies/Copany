@@ -18,7 +18,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useIssueReviewers } from "@/hooks/reviewers";
 import { useUsersInfo } from "@/hooks/userInfo";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface IssueReviewPanelProps {
   issueId: string;
@@ -40,13 +40,17 @@ export default function IssueReviewPanel({
   onActivityChanged,
 }: IssueReviewPanelProps) {
   const isDarkMode = useDarkMode();
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
+
+  // React Query hooks for data fetching
   const { data: reviewersData } = useIssueReviewers(issueId);
   const reviewers = (reviewersData || []) as IssueReviewer[];
+
   const reviewerIds = useMemo(
     () => Array.from(new Set(reviewers.map((r) => String(r.reviewer_id)))),
     [reviewers]
   );
+
   const { data: userInfosMap } = useUsersInfo(reviewerIds);
   const userInfos: Record<
     string,
@@ -58,7 +62,62 @@ export default function IssueReviewPanel({
     ])
   );
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // React Query mutations
+  const approveReviewMutation = useMutation({
+    mutationFn: async () => {
+      return await approveMyReviewAction(issueId);
+    },
+    onSuccess: async () => {
+      // Invalidate related queries to trigger refresh
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["issueActivity", issueId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["issueReviewers", issueId],
+          }),
+        ]);
+      } catch (_) {}
+
+      if (onActivityChanged) {
+        await onActivityChanged();
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to approve review:", error);
+    },
+  });
+
+  const updateIssueStateMutation = useMutation({
+    mutationFn: async (newState: IssueState) => {
+      return await updateIssueStateAction(issueId, newState);
+    },
+    onSuccess: async () => {
+      // Invalidate related queries to trigger refresh
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["issueActivity", issueId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["issueReviewers", issueId],
+          }),
+          // Invalidate issues list if we have copany_id
+          queryClient.invalidateQueries({
+            queryKey: ["issues"],
+          }),
+        ]);
+      } catch (_) {}
+
+      if (onActivityChanged) {
+        await onActivityChanged();
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to update issue state:", error);
+    },
+  });
 
   const hasAnyApproved = useMemo(
     () => reviewers.some((r) => r.status === "approved"),
@@ -204,27 +263,9 @@ export default function IssueReviewPanel({
             ) : (
               <Button
                 onClick={async () => {
-                  try {
-                    setIsSubmitting(true);
-                    await updateIssueStateAction(issueId, IssueState.Done);
-                    try {
-                      await Promise.all([
-                        qc.invalidateQueries({
-                          queryKey: ["issueActivity", issueId],
-                        }),
-                        qc.invalidateQueries({
-                          queryKey: ["issueReviewers", issueId],
-                        }),
-                      ]);
-                    } catch (_) {}
-                    if (onActivityChanged) await onActivityChanged();
-                  } catch (e) {
-                    console.error(e);
-                  } finally {
-                    setIsSubmitting(false);
-                  }
+                  updateIssueStateMutation.mutate(IssueState.Done);
                 }}
-                disabled={isSubmitting || !meId}
+                disabled={updateIssueStateMutation.isPending || !meId}
                 size="sm"
                 variant="approve"
               >
@@ -237,27 +278,9 @@ export default function IssueReviewPanel({
           ) : (
             <Button
               onClick={async () => {
-                try {
-                  setIsSubmitting(true);
-                  await approveMyReviewAction(issueId);
-                  try {
-                    await Promise.all([
-                      qc.invalidateQueries({
-                        queryKey: ["issueActivity", issueId],
-                      }),
-                      qc.invalidateQueries({
-                        queryKey: ["issueReviewers", issueId],
-                      }),
-                    ]);
-                  } catch (_) {}
-                  if (onActivityChanged) await onActivityChanged();
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSubmitting(false);
-                }
+                approveReviewMutation.mutate();
               }}
-              disabled={isSubmitting || !meId || !canApprove}
+              disabled={approveReviewMutation.isPending || !meId || !canApprove}
               size="sm"
               variant="approve"
             >
