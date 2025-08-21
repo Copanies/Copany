@@ -44,6 +44,13 @@ import { useCopany } from "@/hooks/copany";
 import { useAssignmentRequests } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useIssuePermission } from "@/hooks/permissions";
+import {
+  EMPTY_ARRAY,
+  EMPTY_OBJECT,
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
+  EMPTY_USER_INFOS_OBJECT,
+} from "@/utils/constants";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -77,11 +84,13 @@ export default function IssuePageClient({
 
   // React Query hooks
   const { data: currentUser } = useCurrentUser();
-  const { data: contributors = [], isLoading: isContributorsLoading } =
-    useContributors(copanyId);
+  const {
+    data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
+    isLoading: isContributorsLoading,
+  } = useContributors(copanyId);
   const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
   const {
-    data: assignmentRequests = [],
+    data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
     isLoading: isAssignmentRequestsLoading,
   } = useAssignmentRequests(issueId);
   const { data: canEdit = false, isLoading: isPermissionLoading } =
@@ -100,9 +109,7 @@ export default function IssuePageClient({
 
     // Add requester IDs from assignment requests
     assignmentRequests.forEach((req) => {
-      if (req.status === "requested" && req.requester_id) {
-        ids.add(String(req.requester_id));
-      }
+      if (req.requester_id) ids.add(String(req.requester_id));
     });
 
     // Add creator ID if exists
@@ -113,13 +120,13 @@ export default function IssuePageClient({
     return Array.from(ids);
   }, [assignmentRequests, issueData?.created_by]);
 
-  const { data: userInfosMap = {} } = useUsersInfo(userIds);
+  const { data: userInfosMap = EMPTY_USER_INFOS_OBJECT } =
+    useUsersInfo(userIds);
 
   // Compute pending requests by requester
   const pendingRequestsByRequester = useMemo(() => {
     const map: Record<string, AssignmentRequest[]> = {};
     for (const req of assignmentRequests) {
-      if (req.status !== "requested") continue;
       const key = String(req.requester_id);
       if (!map[key]) map[key] = [];
       map[key].push(req);
@@ -535,7 +542,8 @@ export default function IssuePageClient({
                       ? String(currentUser.id)
                       : null;
                     if (!meId) return false;
-                    const list = pendingRequestsByRequester[meId] || [];
+                    const list =
+                      pendingRequestsByRequester[meId] || EMPTY_ARRAY;
                     return list.length > 0;
                   })()}
                 />
@@ -679,7 +687,8 @@ export default function IssuePageClient({
                       ? String(currentUser.id)
                       : null;
                     if (!meId) return false;
-                    const list = pendingRequestsByRequester[meId] || [];
+                    const list =
+                      pendingRequestsByRequester[meId] || EMPTY_ARRAY;
                     return list.length > 0;
                   })()}
                 />

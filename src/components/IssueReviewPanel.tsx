@@ -19,6 +19,10 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import { useIssueReviewers } from "@/hooks/reviewers";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  EMPTY_REVIEWERS_ARRAY,
+  EMPTY_USER_INFOS_OBJECT,
+} from "@/utils/constants";
 
 interface IssueReviewPanelProps {
   issueId: string;
@@ -44,7 +48,7 @@ export default function IssueReviewPanel({
 
   // React Query hooks for data fetching
   const { data: reviewersData } = useIssueReviewers(issueId);
-  const reviewers = (reviewersData || []) as IssueReviewer[];
+  const reviewers = (reviewersData ?? EMPTY_REVIEWERS_ARRAY) as IssueReviewer[];
 
   const reviewerIds = useMemo(
     () => Array.from(new Set(reviewers.map((r) => String(r.reviewer_id)))),
@@ -56,7 +60,7 @@ export default function IssueReviewPanel({
     string,
     { name: string; email: string; avatar_url: string }
   > = Object.fromEntries(
-    Object.entries(userInfosMap || {}).map(([id, v]) => [
+    Object.entries(userInfosMap ?? EMPTY_USER_INFOS_OBJECT).map(([id, v]) => [
       id,
       { name: v.name, email: v.email, avatar_url: v.avatar_url },
     ])

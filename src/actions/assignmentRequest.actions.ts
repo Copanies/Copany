@@ -2,9 +2,7 @@
 import { getCurrentUser } from "@/actions/auth.actions";
 import { AssignmentRequestService } from "@/services/assignmentRequest.service";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
-import type {
-  AssignmentRequest,
-} from "@/types/database.types";
+import type { AssignmentRequest } from "@/types/database.types";
 
 export async function listAssignmentRequestsAction(
   issueId: string
@@ -32,26 +30,22 @@ export async function requestAssignmentToEditorsAction(
 export async function acceptAssignmentRequestAction(
   issueId: string,
   requesterId: string
-): Promise<AssignmentRequest> {
+): Promise<void> {
   const me = await getCurrentUser();
   if (!me) throw new Error("User not found");
-  const updated = await AssignmentRequestService.setStatus(issueId, requesterId, me.id, "accepted");
-  // 设置 assignee 为请求者
-  try {
-    await updateIssueAssigneeAction(issueId, requesterId);
-  } catch (e) {
-    console.error("Failed to set assignee after accepting request", e);
-  }
-  return updated;
+  // 删除该收件人为我的该 requester 的请求
+  await AssignmentRequestService.deleteForRecipient(issueId, requesterId, me.id);
+  // Assignee 设置交由前端处理
 }
 
 export async function refuseAssignmentRequestAction(
   issueId: string,
   requesterId: string
-): Promise<AssignmentRequest> {
+): Promise<void> {
   const me = await getCurrentUser();
   if (!me) throw new Error("User not found");
-  return await AssignmentRequestService.setStatus(issueId, requesterId, me.id, "refused");
+  // 直接删除该收件人为我的请求
+  await AssignmentRequestService.deleteForRecipient(issueId, requesterId, me.id);
 }
 
 

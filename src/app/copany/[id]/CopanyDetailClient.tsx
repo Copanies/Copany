@@ -12,6 +12,7 @@ import ContributionView from "./subviews/ContributionView";
 import SettingsView from "./subviews/settings/SettingsView";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -100,8 +101,8 @@ export default function CopanyDetailClient({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image
-              src={copany.logo_url || ""}
-              alt={copany.name || ""}
+              src={copany.logo_url || EMPTY_STRING}
+              alt={copany.name || EMPTY_STRING}
               width={40}
               height={40}
               className="rounded-md"

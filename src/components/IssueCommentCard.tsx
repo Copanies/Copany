@@ -10,6 +10,7 @@ import EllipsisHorizontalIcon from "@heroicons/react/24/outline/EllipsisHorizont
 import type { IssueComment } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface IssueCommentCardProps {
   comment: IssueComment;
@@ -66,7 +67,9 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.id ?? null;
 
-  const author = comment.created_by ? userInfos[comment.created_by]?.name : "";
+  const author = comment.created_by
+    ? userInfos[comment.created_by]?.name
+    : EMPTY_STRING;
   const [openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
     null
   );
@@ -209,8 +212,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           <div className="px-1 -mb-1 -mt-2">
             <MilkdownEditor
               onContentChange={setEditingContent}
-              initialContent={comment.content || ""}
-              placeholder={isLoggedIn ? "" : "Please sign in to reply"}
+              initialContent={comment.content || EMPTY_STRING}
+              placeholder={
+                isLoggedIn ? EMPTY_STRING : "Please sign in to reply"
+              }
               isReadonly={!isLoggedIn}
             />
           </div>
@@ -257,9 +262,9 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
       ) : (
         <div className="px-1 -mb-1 -mt-2">
           <MilkdownEditor
-            initialContent={comment.content || ""}
+            initialContent={comment.content || EMPTY_STRING}
             isReadonly={true}
-            placeholder=""
+            placeholder={EMPTY_STRING}
           />
         </div>
       )}
@@ -435,9 +440,11 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                       <div className="pl-6 -mb-1 -mt-2">
                         <MilkdownEditor
                           onContentChange={setEditingContent}
-                          initialContent={reply.content || ""}
+                          initialContent={reply.content || EMPTY_STRING}
                           placeholder={
-                            isLoggedIn ? "" : "Please sign in to reply"
+                            isLoggedIn
+                              ? EMPTY_STRING
+                              : "Please sign in to reply"
                           }
                           isReadonly={!isLoggedIn}
                         />
@@ -491,9 +498,9 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   ) : (
                     <div className="pl-6 -mb-1 -mt-2">
                       <MilkdownEditor
-                        initialContent={reply.content || ""}
+                        initialContent={reply.content || EMPTY_STRING}
                         isReadonly={true}
-                        placeholder=""
+                        placeholder={EMPTY_STRING}
                       />
                     </div>
                   )}
@@ -514,7 +521,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             <MilkdownEditor
               key={replyingToCommentId || "reply"}
               onContentChange={setReplyContent}
-              initialContent=""
+              initialContent={EMPTY_STRING}
               placeholder={
                 isLoggedIn
                   ? replyingToCommentId === String(comment.id)

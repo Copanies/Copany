@@ -9,6 +9,7 @@ import ContributionPieChart from "@/components/ContributionPieChart";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ChartPieIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { EMPTY_CONTRIBUTORS_ARRAY } from "@/utils/constants";
 
 interface ContributionViewProps {
   copanyId: string;
@@ -18,20 +19,26 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   const router = useRouter();
 
   // 使用 React Query hooks 替代 cacheManager
-  const { data: contributions = [], isLoading: isContributionsLoading } =
-    useContributions(copanyId);
-  const { data: contributors = [], isLoading: isContributorsLoading } =
-    useContributors(copanyId);
+  const {
+    data: contributions = EMPTY_CONTRIBUTORS_ARRAY,
+    isLoading: isContributionsLoading,
+  } = useContributions(copanyId);
+  const {
+    data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
+    isLoading: isContributorsLoading,
+  } = useContributors(copanyId);
 
   const isLoading = isContributionsLoading || isContributorsLoading;
 
   // Convert contributors to AssigneeUser format
-  const users: AssigneeUser[] = contributors.map((contributor) => ({
-    id: contributor.user_id,
-    name: contributor.name,
-    email: contributor.email,
-    avatar_url: contributor.avatar_url,
-  }));
+  const users: AssigneeUser[] = useMemo(() => {
+    return contributors.map((contributor) => ({
+      id: contributor.user_id,
+      name: contributor.name,
+      email: contributor.email,
+      avatar_url: contributor.avatar_url,
+    }));
+  }, [contributors]);
 
   // Calculate total contribution value for each user and sort
   const usersWithContribution = useMemo(() => {

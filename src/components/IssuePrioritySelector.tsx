@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IssuePriority } from "@/types/database.types";
 import { updateIssuePriorityAction } from "@/actions/issue.actions";
 import { useUpdateIssuePriority } from "@/hooks/issues";
@@ -32,6 +32,12 @@ export default function IssuePrioritySelector({
   const mutation = useUpdateIssuePriority(copanyId || "");
   const qc = useQueryClient();
 
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
+
   const handlePriorityChange = async (newPriority: number) => {
     if (readOnly) return;
     try {
@@ -45,7 +51,7 @@ export default function IssuePrioritySelector({
       // Only call the update priority API when not in creation mode
       if (!disableServerUpdate) {
         if (copanyId) {
-          await mutation.mutateAsync({ issueId, priority: newPriority });
+          await mutateRef.current({ issueId, priority: newPriority });
         } else {
           await updateIssuePriorityAction(issueId, newPriority);
         }

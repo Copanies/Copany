@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useCreateCopany } from "@/hooks/copany";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 
 type _RepoData =
   RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
@@ -31,8 +32,9 @@ export default function CreateCopanyButton() {
   const [isUploading, setIsUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [copanyName, setCopanyName] = useState("");
-  const [copanyDescription, setCopanyDescription] = useState("");
+  const [copanyName, setCopanyName] = useState<string>(EMPTY_STRING);
+  const [copanyDescription, setCopanyDescription] =
+    useState<string>(EMPTY_STRING);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +60,12 @@ export default function CreateCopanyButton() {
       router.push(`/copany/${result.copany.id}`);
     }
   });
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(createCopanyMutation.mutate);
+  useEffect(() => {
+    mutateRef.current = createCopanyMutation.mutate;
+  }, [createCopanyMutation.mutate]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -97,17 +105,17 @@ export default function CreateCopanyButton() {
     const repo = repoData?.data?.find((r) => r.id === repoId);
     if (repo) {
       setCopanyName(repo.name);
-      setCopanyDescription(repo.description || "");
+      setCopanyDescription(repo.description || EMPTY_STRING);
     }
   };
 
   // 获取默认 logo URL
   const getDefaultLogoUrl = () => {
     const repo = getSelectedRepo();
-    if (!repo) return "";
+    if (!repo) return EMPTY_STRING;
 
     // 使用仓库 owner 的头像（个人或组织）
-    return repo.owner.avatar_url || "";
+    return repo.owner.avatar_url || EMPTY_STRING;
   };
 
   // 从 Supabase Storage URL 中提取文件路径
@@ -250,8 +258,8 @@ export default function CreateCopanyButton() {
     setIsUploading(false);
     setIsImageLoading(false);
     setUploadError(null);
-    setCopanyName("");
-    setCopanyDescription("");
+    setCopanyName(EMPTY_STRING);
+    setCopanyDescription(EMPTY_STRING);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -369,7 +377,7 @@ export default function CreateCopanyButton() {
         )}
         {status === "success" && repoData?.data && (
           <>
-            {repoData.data.length === 0 ? (
+            {(repoData.data || EMPTY_ARRAY).length === 0 ? (
               <EmptyPlaceholderView
                 icon={
                   <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
@@ -384,7 +392,7 @@ export default function CreateCopanyButton() {
                 size="md"
               />
             ) : (
-              repoData.data.map((repo) => (
+              (repoData.data || EMPTY_ARRAY).map((repo) => (
                 <div
                   key={repo.id}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"

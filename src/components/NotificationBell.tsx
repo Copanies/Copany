@@ -14,6 +14,10 @@ import { useNotifications, useMarkNotifications } from "@/hooks/notifications";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { listNotificationsAction } from "@/actions/notification.actions";
 
+// Stable empty array to avoid re-creating [] on every render,
+// which would otherwise retrigger effects depending on it
+const EMPTY_NOTIFICATIONS: Notification[] = [];
+
 function BellIcon({ hasUnread }: { hasUnread: boolean }) {
   return (
     <div className="relative">
@@ -31,7 +35,8 @@ export default function NotificationBell() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [copanies, setCopanies] = useState<Record<string, Copany>>({});
   const { data: notificationsData } = useNotifications();
-  const baseNotifications = notificationsData?.items || [];
+  // Use a stable fallback to prevent effect dependency churn
+  const baseNotifications = notificationsData?.items ?? EMPTY_NOTIFICATIONS;
   const unreadCount = notificationsData?.unread || 0;
   const markMutation = useMarkNotifications();
   const [isOpen, setIsOpen] = useState(false);
@@ -44,9 +49,10 @@ export default function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Local list for pagination-append
-  const [list, setList] = useState<Notification[]>([]);
+  const [list, setList] = useState<Notification[]>(EMPTY_NOTIFICATIONS);
   useEffect(() => {
-    setList(baseNotifications);
+    // Only update when the reference really changes to avoid render loops
+    setList((prev) => (prev === baseNotifications ? prev : baseNotifications));
   }, [baseNotifications]);
 
   const { data: actorUsersMap } = useUsersInfo(

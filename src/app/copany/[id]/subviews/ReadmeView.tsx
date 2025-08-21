@@ -8,6 +8,7 @@ import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface ReadmeViewProps {
   githubUrl?: string | null;
@@ -50,7 +51,7 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 };
 
 export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
-  const [readmeContent, setReadmeContent] = useState<string>("");
+  const [readmeContent, setReadmeContent] = useState<string>(EMPTY_STRING);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -95,7 +96,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     // 处理 README 数据
     if (readmeData === "No README") {
       setNotFound(true);
-      setReadmeContent("");
+      setReadmeContent(EMPTY_STRING);
       setError(null);
     } else if (readmeData) {
       setNotFound(false);

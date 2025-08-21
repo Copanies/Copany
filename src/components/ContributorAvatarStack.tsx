@@ -4,6 +4,7 @@ import { CopanyContributor, Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useContributors } from "@/hooks/contributors";
 import { useMemo } from "react";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 
 interface ContributorAvatarStackProps {
   copany: Copany;
@@ -15,7 +16,7 @@ export default function ContributorAvatarStack({
   className = "",
 }: ContributorAvatarStackProps) {
   const { data: contributorsData } = useContributors(copany.id);
-  const contributors = contributorsData || [];
+  const contributors = contributorsData || EMPTY_ARRAY;
 
   // create a list of contributors
   const allContributors = useMemo(
@@ -27,7 +28,7 @@ export default function ContributorAvatarStack({
           name: copany.created_by,
           avatar_url:
             contributors.find((c) => c.user_id === copany.created_by)
-              ?.avatar_url || "",
+              ?.avatar_url || EMPTY_STRING,
           isCreator: true,
         },
         // contributors sorted by contribution (excluding creator)

@@ -35,6 +35,20 @@ import { useIssueReviewers } from "@/hooks/reviewers";
 import { useAssignmentRequestsByCopany } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { issuesUiStateManager } from "@/utils/cache";
+import {
+  EMPTY_ARRAY,
+  EMPTY_OBJECT,
+  EMPTY_STRING,
+  EMPTY_ISSUES_ARRAY,
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
+  EMPTY_USER_INFOS_OBJECT,
+  EMPTY_CAN_EDIT_BY_ISSUE,
+  EMPTY_REVIEWERS_BY_ISSUE,
+  EMPTY_PENDING_REQUESTERS_BY_ISSUE,
+  EMPTY_ISSUE_DATA,
+  NO_TITLE_TEXT,
+} from "@/utils/constants";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -100,7 +114,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
   const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
-  const issues = issuesData || [];
+  const issues = issuesData || EMPTY_ISSUES_ARRAY;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
@@ -111,19 +125,20 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // React Query hooks for data fetching
   const { data: currentUser } = useCurrentUser();
-  const { data: contributors = [] } = useContributors(copanyId);
-  const { data: assignmentRequests = [] } =
+  const { data: contributors = EMPTY_CONTRIBUTORS_ARRAY } =
+    useContributors(copanyId);
+  const { data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY } =
     useAssignmentRequestsByCopany(copanyId);
 
   // Local state for UI
   const [canEditByIssue, setCanEditByIssue] = useState<Record<string, boolean>>(
-    {}
+    EMPTY_CAN_EDIT_BY_ISSUE
   );
 
   // cache reviewers per issue for lightweight list indicators
   const [reviewersByIssue, setReviewersByIssue] = useState<
     Record<string, IssueReviewer[]>
-  >({});
+  >(EMPTY_REVIEWERS_BY_ISSUE);
   const loadingReviewersRef = useRef<Set<string>>(new Set());
 
   const router = useRouter();
@@ -133,10 +148,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // Search query state synced with URL ?q=
   const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("q") ?? ""
+    searchParams.get("q") ?? EMPTY_STRING
   );
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") ?? "");
+    setSearchQuery(searchParams.get("q") ?? EMPTY_STRING);
   }, [searchParams]);
 
   // Collapsible group states via cache manager
@@ -199,7 +214,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // Compute pending requesters by issue from assignment requests data
   const pendingRequestersByIssue = useMemo(() => {
-    if (!assignmentRequests || assignmentRequests.length === 0) return {};
+    if (!assignmentRequests || assignmentRequests.length === 0)
+      return EMPTY_PENDING_REQUESTERS_BY_ISSUE;
 
     const byIssue: Record<string, AssignmentRequest[]> = {};
     for (const request of assignmentRequests) {
@@ -224,32 +240,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
       const inProgress: string[] = [];
       for (const [requesterId, items] of byRequester.entries()) {
-        const lastTerminalAt = items
-          .filter(
-            (r) =>
-              r.status === "accepted" ||
-              r.status === "refused" ||
-              r.status === "skipped"
-          )
-          .reduce<string | null>((acc, r) => {
-            const t = r.updated_at || r.created_at;
-            if (!acc) return t;
-            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-          }, null);
-
-        const currentBatch = items.filter((r) =>
-          lastTerminalAt
-            ? new Date(r.created_at).getTime() >
-              new Date(lastTerminalAt).getTime()
-            : true
-        );
-
-        if (
-          currentBatch.length > 0 &&
-          currentBatch.every((r) => r.status === "requested")
-        ) {
-          inProgress.push(requesterId);
-        }
+        // Without status, any existing items mean in-progress requests by this requester
+        if (items.length > 0) inProgress.push(requesterId);
       }
 
       result[issueId] = inProgress;
@@ -270,7 +262,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   }, [pendingRequestersByIssue]);
 
   // Fetch user info for pending requesters
-  const { data: requestersInfo = {} } = useUsersInfo(pendingRequesterIds);
+  const { data: requestersInfo = EMPTY_USER_INFOS_OBJECT } =
+    useUsersInfo(pendingRequesterIds);
 
   // Lazy load reviewers for currently visible InReview issues
   useEffect(() => {
@@ -315,7 +308,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   const renderReviewBadge = (issue: IssueWithAssignee) => {
     if (issue.state !== IssueState.InReview) return null;
-    const list = reviewersByIssue[String(issue.id)] || [];
+    const list = reviewersByIssue[String(issue.id)] || EMPTY_ARRAY;
     if (list.length === 0) return null;
     const meId = currentUser?.id ? String(currentUser.id) : null;
     const hasApproved = list.some((r) => r.status === "approved");
@@ -351,7 +344,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   };
 
   const renderAssignmentRequestBadge = (issueId: string) => {
-    const reqIds = pendingRequestersByIssue[String(issueId)] || [];
+    const reqIds = pendingRequestersByIssue[String(issueId)] || EMPTY_ARRAY;
     if (!reqIds || reqIds.length === 0) return null;
     const max = 2;
     const shown = reqIds.slice(0, max);
@@ -399,7 +392,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       queryClient.setQueryData<IssueWithAssignee[]>(
         ["issues", copanyId],
         (prev) => {
-          const base = prev || [];
+          const base = prev || EMPTY_ISSUES_ARRAY;
           const exists = base.some(
             (it) => String(it.id) === String(newIssue.id)
           );
@@ -420,7 +413,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       queryClient.setQueryData<IssueWithAssignee[]>(
         ["issues", copanyId],
         (prev) => {
-          const base = prev || [];
+          const base = prev || EMPTY_ISSUES_ARRAY;
           return base.map((issue) =>
             String(issue.id) === String(issueId)
               ? { ...issue, state: newState }
@@ -438,7 +431,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       queryClient.setQueryData<IssueWithAssignee[]>(
         ["issues", copanyId],
         (prev) => {
-          const base = prev || [];
+          const base = prev || EMPTY_ISSUES_ARRAY;
           return base.map((issue) =>
             String(issue.id) === String(issueId)
               ? { ...issue, priority: newPriority }
@@ -456,7 +449,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       queryClient.setQueryData<IssueWithAssignee[]>(
         ["issues", copanyId],
         (prev) => {
-          const base = prev || [];
+          const base = prev || EMPTY_ISSUES_ARRAY;
           return base.map((issue) =>
             String(issue.id) === String(issueId)
               ? { ...issue, level: newLevel }
@@ -478,7 +471,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       queryClient.setQueryData<IssueWithAssignee[]>(
         ["issues", copanyId],
         (prev) => {
-          const base = prev || [];
+          const base = prev || EMPTY_ISSUES_ARRAY;
           return base.map((issue) =>
             String(issue.id) === String(issueId)
               ? { ...issue, assignee: newAssignee, assignee_user: assigneeUser }
@@ -667,7 +660,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                         queryClient.setQueryData<IssueWithAssignee[]>(
                           ["issues", copanyId],
                           (prev) => {
-                            const base = prev || [];
+                            const base = prev || EMPTY_ISSUES_ARRAY;
                             return base.map((it) =>
                               String(it.id) === String(serverIssue.id)
                                 ? serverIssue
@@ -685,7 +678,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       readOnly={readOnly}
                     />
                     <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full flex items-center gap-2">
-                      <span>{issue.title || "No title"}</span>
+                      <span>{issue.title || NO_TITLE_TEXT}</span>
                       {renderReviewBadge(issue)}
                     </div>
                     {renderAssignmentRequestBadge(String(issue.id))}
@@ -712,7 +705,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                           : null;
                         if (!meId) return false;
                         const reqIds =
-                          pendingRequestersByIssue[String(issue.id)] || [];
+                          pendingRequestersByIssue[String(issue.id)] ||
+                          EMPTY_ARRAY;
                         return reqIds.includes(meId);
                       })()}
                       onRequestAssignment={() => {
@@ -759,7 +753,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           copanyId={copanyId}
           onIssueCreated={handleIssueCreated}
           onClose={() => setIsModalOpen(false)}
-          currentUser={currentUser || null}
+          currentUser={currentUser || EMPTY_ISSUE_DATA}
           contributors={contributors}
         />
       </Modal>

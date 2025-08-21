@@ -31,6 +31,10 @@ export default function IssueEditorView({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
+  // Keep a stable reference to mutate to avoid effect dependency churn
+  const mutateRef = useRef<
+    (vars: { id: string; title: string; description: string }) => void
+  >(() => {});
 
   // React Query mutation for updating issue
   const updateIssueMutation = useMutation({
@@ -140,6 +144,11 @@ export default function IssueEditorView({
     },
   });
 
+  // Sync latest mutate function to ref
+  useEffect(() => {
+    mutateRef.current = updateIssueMutation.mutate;
+  }, [updateIssueMutation.mutate]);
+
   // Handle content changes - add debounce processing
   const handleContentChange = useCallback(
     (content: string) => {
@@ -232,8 +241,8 @@ export default function IssueEditorView({
       const currentTitle = titleRef.current;
       const currentDescription = editingContentRef.current;
 
-      // Use React Query mutation
-      updateIssueMutation.mutate({
+      // Use stable mutate ref to avoid retriggering effect due to object identity changes
+      mutateRef.current({
         id: issueData.id,
         title: currentTitle,
         description: currentDescription,
@@ -248,14 +257,7 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [
-    isSaving,
-    title,
-    editingContent,
-    isReadonly,
-    updateIssueMutation,
-    issueData.id,
-  ]);
+  }, [isSaving, title, editingContent, isReadonly, issueData.id]);
 
   // Cleanup when component unmounts
   useEffect(() => {
@@ -266,7 +268,7 @@ export default function IssueEditorView({
         const currentTitle = titleRef.current;
         const currentDescription = editingContentRef.current;
 
-        updateIssueMutation.mutate({
+        mutateRef.current({
           id: issueData.id,
           title: currentTitle,
           description: currentDescription,
@@ -281,7 +283,7 @@ export default function IssueEditorView({
         clearTimeout(contentChangeTimeoutRef.current);
       }
     };
-  }, [updateIssueMutation, issueData.id]);
+  }, [issueData.id]);
 
   // Focus description editor on mount (without scrolling)
   useEffect(() => {

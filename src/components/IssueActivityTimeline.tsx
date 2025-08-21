@@ -34,6 +34,7 @@ import {
 import { useAssignmentRequests } from "@/hooks/assignmentRequests";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useUsersInfo } from "@/hooks/userInfo";
+import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
 
 interface IssueActivityTimelineProps {
   issueId: string;
@@ -67,9 +68,10 @@ export default function IssueActivityTimeline({
   const isValidIssueId = /^\d+$/.test(String(issueId));
 
   // React Query hooks
-  const { data: activities = [] } = useIssueActivity(issueId, 200);
-  const { data: comments = [] } = useComments(issueId);
-  const { data: assignmentRequests = [] } = useAssignmentRequests(issueId);
+  const { data: activities = EMPTY_ARRAY } = useIssueActivity(issueId, 200);
+  const { data: comments = EMPTY_ARRAY } = useComments(issueId);
+  const { data: assignmentRequests = EMPTY_ARRAY } =
+    useAssignmentRequests(issueId);
   const { data: currentUser } = useCurrentUser();
 
   // Collect user IDs from activities and comments
@@ -79,7 +81,8 @@ export default function IssueActivityTimeline({
     // From activities
     for (const activity of activities) {
       if (activity.actor_id) idSet.add(String(activity.actor_id));
-      const payload = (activity.payload ?? {}) as IssueActivityPayload;
+      const payload = (activity.payload ??
+        EMPTY_OBJECT) as IssueActivityPayload;
       if (payload.from_user_id) idSet.add(String(payload.from_user_id));
       if (payload.to_user_id) idSet.add(String(payload.to_user_id));
       if (payload.reviewer_id) idSet.add(String(payload.reviewer_id));
@@ -101,13 +104,18 @@ export default function IssueActivityTimeline({
   }, [activities, comments, currentUser?.id]);
 
   // Get user infos
-  const { data: userInfosMap = {} } = useUsersInfo(userIds);
+  const { data: userInfosMap = EMPTY_OBJECT } = useUsersInfo(userIds);
   const userInfos = useMemo(() => {
     const map: Record<
       string,
       { name: string; email: string; avatar_url: string }
     > = {};
-    for (const [id, userInfo] of Object.entries(userInfosMap)) {
+    for (const [id, userInfo] of Object.entries(
+      userInfosMap as Record<
+        string,
+        { name: string; email: string; avatar_url: string }
+      >
+    )) {
       map[id] = {
         name: userInfo.name || userInfo.email || id,
         email: userInfo.email,
@@ -124,7 +132,7 @@ export default function IssueActivityTimeline({
     const byRequester = new Map<string, AssignmentRequest[]>();
     for (const request of assignmentRequests) {
       const key = String(request.requester_id);
-      const arr = byRequester.get(key) || [];
+      const arr = byRequester.get(key) ?? [];
       arr.push(request);
       byRequester.set(key, arr);
     }
@@ -138,32 +146,9 @@ export default function IssueActivityTimeline({
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
 
-      const lastTerminalAt = sorted
-        .filter((r) => r.status === "refused" || r.status === "accepted")
-        .reduce<string | null>((acc, r) => {
-          const t = r.updated_at || r.created_at;
-          if (!acc) return t;
-          return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-        }, null);
-
-      const currentBatch = sorted.filter((r) =>
-        lastTerminalAt
-          ? new Date(r.created_at).getTime() >
-            new Date(lastTerminalAt).getTime()
-          : true
-      );
-
-      if (currentBatch.length === 0) continue;
-      if (currentBatch.some((r) => r.status !== "requested")) {
-        continue;
-      }
-
-      const requestedOnly = currentBatch.filter(
-        (r) => r.status === "requested"
-      );
-      if (requestedOnly.length === 0) continue;
-
-      const at = requestedOnly[0].created_at;
+      // Without status, any remaining rows are pending; if any exist, create a panel
+      if (sorted.length === 0) continue;
+      const at = sorted[0].created_at;
       panels.push({ requesterId, at });
     }
 
@@ -235,7 +220,7 @@ export default function IssueActivityTimeline({
 
   const renderHeaderCompact = (item: IssueActivity): ReactNode => {
     const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
-    const p = (item.payload ?? {}) as IssueActivityPayload;
+    const p = (item.payload ?? EMPTY_OBJECT) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
       case "issue_created":

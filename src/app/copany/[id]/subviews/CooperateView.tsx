@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import VerticalTabView from "@/components/commons/VerticalTabView";
 import IssuesView from "./IssuesView";
 import ProjectsView from "./ProjectsView";
+import { EMPTY_ARRAY } from "@/utils/constants";
 
 export default function CooperateView({ copanyId }: { copanyId: string }) {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function CooperateView({ copanyId }: { copanyId: string }) {
   const getInitialTab = () => {
     const urlTab = searchParams.get(urlParamName);
     const validTab = tabs.find((tab) => tab.label === urlTab);
-    return validTab ? validTab.label : tabs[0].label;
+    return validTab ? validTab.label : tabs[0]?.label || "Issue";
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());

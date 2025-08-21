@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IssueLevel } from "@/types/database.types";
 import { updateIssueLevelAction } from "@/actions/issue.actions";
 import { useUpdateIssueLevel } from "@/hooks/issues";
@@ -32,6 +32,12 @@ export default function IssueLevelSelector({
   const mutation = useUpdateIssueLevel(copanyId || "");
   const qc = useQueryClient();
 
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
+
   const handleLevelChange = async (newLevel: number) => {
     if (readOnly) return;
     try {
@@ -45,7 +51,7 @@ export default function IssueLevelSelector({
       // Only call the update level API when not in creation mode
       if (!disableServerUpdate) {
         if (copanyId) {
-          await mutation.mutateAsync({ issueId, level: newLevel });
+          await mutateRef.current({ issueId, level: newLevel });
         } else {
           await updateIssueLevelAction(issueId, newLevel);
         }

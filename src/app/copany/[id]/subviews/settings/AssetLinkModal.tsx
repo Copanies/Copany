@@ -3,13 +3,14 @@
 import { updateCopanyAction } from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Modal from "@/components/commons/Modal";
 import Dropdown from "@/components/commons/Dropdown";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EMPTY_STRING } from "@/utils/constants";
 
 export default function AssetLinkModal({
   isOpen,
@@ -68,6 +69,14 @@ export default function AssetLinkModal({
     },
   });
 
+  // 稳定 mutation 的可变方法
+  const mutateAsyncRef = useRef(updateCopanyAssetLinkMutation.mutateAsync);
+
+  // 同步 ref 中的最新函数
+  if (updateCopanyAssetLinkMutation.mutateAsync !== mutateAsyncRef.current) {
+    mutateAsyncRef.current = updateCopanyAssetLinkMutation.mutateAsync;
+  }
+
   // 当弹窗打开时，设置初始值
   useEffect(() => {
     if (isOpen && editingAssetLink) {
@@ -90,7 +99,7 @@ export default function AssetLinkModal({
         [assetLinks.find((link) => link.id === assetType)?.key || ""]:
           assetLink,
       };
-      await updateCopanyAssetLinkMutation.mutateAsync(updatedCopany);
+      await mutateAsyncRef.current(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -201,7 +210,7 @@ export default function AssetLinkModal({
             id="assetLink"
             className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1"
             placeholder="https://example.com"
-            value={assetLink || ""}
+            value={assetLink || EMPTY_STRING}
             onChange={(e) => {
               setAssetLink(e.target.value);
             }}

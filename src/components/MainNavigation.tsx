@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import logo from "@/app/favicon.ico";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,12 @@ export default function MainNavigation() {
   const { data: user, isLoading: loading } = useCurrentUser();
   const isDarkMode = useDarkMode();
 
+  // 使用 useRef 稳定 queryClient 的引用，避免 effect 依赖整个对象
+  const queryClientRef = useRef(queryClient);
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  }, [queryClient]);
+
   useEffect(() => {
     const supabase = createClient();
 
@@ -30,18 +36,18 @@ export default function MainNavigation() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
         // 清除用户缓存
-        queryClient.removeQueries({ queryKey: ["currentUser"] });
-        queryClient.removeQueries({ queryKey: ["userInfo"] });
+        queryClientRef.current.removeQueries({ queryKey: ["currentUser"] });
+        queryClientRef.current.removeQueries({ queryKey: ["userInfo"] });
       } else if (event === "SIGNED_IN" && session?.user) {
         // 刷新用户查询
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        queryClientRef.current.invalidateQueries({ queryKey: ["currentUser"] });
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, []); // 移除 queryClient 依赖，使用 ref 中的最新值
 
   const handleLogout = async () => {
     try {

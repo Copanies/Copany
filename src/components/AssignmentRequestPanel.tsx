@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import type { AssignmentRequest } from "@/types/database.types";
@@ -14,6 +14,8 @@ import {
 } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useQueryClient } from "@tanstack/react-query";
+import { updateIssueAssigneeAction } from "@/actions/issue.actions";
+import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
 
 interface AssignmentRequestPanelProps {
   issueId: string;
@@ -35,7 +37,7 @@ export default function AssignmentRequestPanel({
   onActivityChanged,
 }: AssignmentRequestPanelProps) {
   const { data: itemsData } = useAssignmentRequests(issueId);
-  const items = (itemsData || []) as AssignmentRequest[];
+  const items = (itemsData || EMPTY_ARRAY) as AssignmentRequest[];
   const userIds = Array.from(
     new Set(
       items
@@ -48,9 +50,13 @@ export default function AssignmentRequestPanel({
     string,
     { name: string; email: string; avatar_url: string }
   > = Object.fromEntries(
-    Object.entries(userInfosMap || {}).map(([id, v]) => [
+    Object.entries(userInfosMap || EMPTY_OBJECT).map(([id, v]) => [
       id,
-      { name: v.name, email: v.email, avatar_url: v.avatar_url },
+      {
+        name: (v as any).name,
+        email: (v as any).email,
+        avatar_url: (v as any).avatar_url,
+      },
     ])
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,28 +71,14 @@ export default function AssignmentRequestPanel({
   );
 
   const requestsForRequester = useMemo(() => {
+    // With status removed, all rows are pending requests until deleted
     const list = items
       .filter((x) => String(x.requester_id) === String(requesterId))
       .sort(
         (a, b) =>
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
-    if (list.length === 0) return [] as AssignmentRequest[];
-    const lastTerminalAt = list
-      .filter((r) => r.status === "refused" || r.status === "accepted")
-      .reduce<string | null>((acc, r) => {
-        const t = r.updated_at || r.created_at;
-        if (!acc) return t;
-        return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-      }, null);
-    const currentBatch = list.filter((r) =>
-      lastTerminalAt
-        ? new Date(r.created_at).getTime() > new Date(lastTerminalAt).getTime()
-        : true
-    );
-    if (currentBatch.some((r) => r.status !== "requested"))
-      return [] as AssignmentRequest[];
-    return currentBatch.filter((r) => r.status === "requested");
+    return list;
   }, [items, requesterId]);
 
   if (requestsForRequester.length === 0) return null;
@@ -156,9 +148,7 @@ export default function AssignmentRequestPanel({
                       <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                         {name}
                       </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400 overflow-hidden">
-                        {r.status}
-                      </span>
+                      {/* status removed; keep the timestamp only */}
                       <span className="whitespace-nowrap text-sm text-gray-500">
                         · {formatRelativeTime(r.updated_at || r.created_at)}
                       </span>
@@ -180,11 +170,7 @@ export default function AssignmentRequestPanel({
                     disabled={
                       isSubmitting ||
                       !canEdit ||
-                      !reqs.some(
-                        (x) =>
-                          String(x.recipient_id) === String(meId) &&
-                          x.status === "requested"
-                      )
+                      !reqs.some((x) => String(x.recipient_id) === String(meId))
                     }
                     onClick={async () => {
                       const target = reqs.find(
@@ -196,6 +182,18 @@ export default function AssignmentRequestPanel({
                         await acceptMutation.mutateAsync(
                           String(target.requester_id)
                         );
+                        // Frontend handles assignee change on accept
+                        try {
+                          await updateIssueAssigneeAction(
+                            issueId,
+                            String(target.requester_id)
+                          );
+                        } catch (e) {
+                          console.error(
+                            "Failed to set assignee after accepting request",
+                            e
+                          );
+                        }
                         await Promise.all([
                           qc.invalidateQueries({
                             queryKey: ["issueActivity", issueId],
@@ -225,11 +223,7 @@ export default function AssignmentRequestPanel({
                     disabled={
                       isSubmitting ||
                       !canEdit ||
-                      !reqs.some(
-                        (x) =>
-                          String(x.recipient_id) === String(meId) &&
-                          x.status === "requested"
-                      )
+                      !reqs.some((x) => String(x.recipient_id) === String(meId))
                     }
                     onClick={async () => {
                       const target = reqs.find(

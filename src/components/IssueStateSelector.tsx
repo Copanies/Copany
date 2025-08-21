@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { useUpdateIssueState } from "@/hooks/issues";
@@ -41,6 +41,12 @@ export default function IssueStateSelector({
   const mutation = useUpdateIssueState(copanyId || "");
   const qc = useQueryClient();
 
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -77,7 +83,7 @@ export default function IssueStateSelector({
       if (!disableServerUpdate) {
         let updatedIssue: IssueWithAssignee;
         if (copanyId) {
-          updatedIssue = await mutation.mutateAsync({
+          updatedIssue = await mutateRef.current({
             issueId,
             state: newState,
           });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useRepoLicense } from "@/hooks/readme";
 import { updateCopanyLicenseAction } from "@/actions/copany.actions";
@@ -9,6 +9,7 @@ import { ScaleIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { Copany } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface LicenseViewProps {
   githubUrl?: string | null;
@@ -52,7 +53,7 @@ export default function LicenseView({
   const { data: licenseData, isLoading: isLicenseLoading } =
     useRepoLicense(githubUrl);
 
-  const [licenseContent, setLicenseContent] = useState<string>("");
+  const [licenseContent, setLicenseContent] = useState<string>(EMPTY_STRING);
   const [licenseType, setLicenseType] = useState<string | null>(copany.license);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -76,17 +77,23 @@ export default function LicenseView({
     },
   });
 
+  // 稳定 mutation 的可变方法
+  const mutateRef = useRef(updateLicenseMutation.mutate);
+  useEffect(() => {
+    mutateRef.current = updateLicenseMutation.mutate;
+  }, [updateLicenseMutation.mutate]);
+
   // 处理 license 数据变化
   useEffect(() => {
     if (!licenseData) {
       setNotFound(true);
-      setLicenseContent("");
+      setLicenseContent(EMPTY_STRING);
       return;
     }
 
     if (licenseData.content === "No License") {
       setNotFound(true);
-      setLicenseContent("");
+      setLicenseContent(EMPTY_STRING);
       return;
     }
 
@@ -96,7 +103,7 @@ export default function LicenseView({
       setError(null);
     } catch (_err) {
       setError("Failed to decode License content");
-      setLicenseContent("");
+      setLicenseContent(EMPTY_STRING);
     }
   }, [licenseData]);
 
@@ -109,10 +116,10 @@ export default function LicenseView({
       console.log(
         `📝 License type changed: ${licenseType} -> ${licenseData.type}`
       );
-      // 使用 mutation 来更新
-      updateLicenseMutation.mutate(licenseData.type);
+      // 使用 ref 来避免依赖整个 mutation 对象
+      mutateRef.current(licenseData.type);
     }
-  }, [githubUrl, licenseData, licenseType, updateLicenseMutation]);
+  }, [githubUrl, licenseData, licenseType]);
 
   if (isLicenseLoading) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { useUpdateIssueAssignee } from "@/hooks/issues";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
@@ -55,6 +55,12 @@ export default function IssueAssigneeSelector({
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
   const mutation = useUpdateIssueAssignee(copanyId || "");
   const qc = useQueryClient();
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -124,7 +130,7 @@ export default function IssueAssigneeSelector({
         // Only call the update assignee API when not in creation mode
         if (!disableServerUpdate) {
           if (copanyId) {
-            await mutation.mutateAsync({ issueId, assignee: assigneeValue });
+            await mutateRef.current({ issueId, assignee: assigneeValue });
           } else {
             await updateIssueAssigneeAction(issueId, assigneeValue);
           }
@@ -163,7 +169,6 @@ export default function IssueAssigneeSelector({
       onRequestAssignment,
       hasPendingByMe,
       copanyId,
-      mutation,
       qc,
     ]
   );

@@ -235,8 +235,6 @@ export interface IssueReviewer {
 }
 
 // Assignment Request
-export type AssignmentRequestStatus = "requested" | "accepted" | "refused" | "skipped";
-
 export interface AssignmentRequest {
   id: string;
   created_at: string;
@@ -246,5 +244,4 @@ export interface AssignmentRequest {
   requester_id: string;
   recipient_id: string;
   message: string | null;
-  status: AssignmentRequestStatus;
 }
