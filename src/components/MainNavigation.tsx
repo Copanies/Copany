@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import logo from "@/app/favicon.ico";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { useCurrentUser } from "@/hooks/currentUser";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
@@ -13,42 +12,40 @@ import NotificationBell from "./NotificationBell";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubIconDark from "@/assets/github_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function MainNavigation() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: user, isLoading: loading } = useCurrentUser();
   const isDarkMode = useDarkMode();
-
-  // 使用 React Query hook 替代 currentUserManager
-  const { data: user, isLoading: isUserLoading } = useCurrentUser();
 
   useEffect(() => {
     const supabase = createClient();
-
-    // 设置初始加载状态
-    setLoading(false);
 
     // 监听认证状态变化
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
-        // 用户登出时，React Query 会自动处理缓存失效
-        setLoading(false);
+        // 清除用户缓存
+        queryClient.removeQueries({ queryKey: ["currentUser"] });
+        queryClient.removeQueries({ queryKey: ["userInfo"] });
       } else if (event === "SIGNED_IN" && session?.user) {
-        // 用户登录时，React Query 会自动处理缓存更新
-        setLoading(false);
+        // 刷新用户查询
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
   const handleLogout = async () => {
     try {
-      // 执行服务器端登出，React Query 会自动处理缓存清理
+      // 执行服务器端登出
       await signOut();
     } catch (error) {
       console.error("Failed to logout:", error);
@@ -56,7 +53,7 @@ export default function MainNavigation() {
   };
 
   const renderUserSection = () => {
-    if (loading || isUserLoading) {
+    if (loading) {
       return <div className="p-2 w-8"></div>;
     }
 

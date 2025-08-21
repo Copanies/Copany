@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
@@ -9,6 +9,7 @@ import { ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";
 import EllipsisHorizontalIcon from "@heroicons/react/24/outline/EllipsisHorizontalIcon";
 import type { IssueComment } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useCurrentUser } from "@/hooks/currentUser";
 
 interface IssueCommentCardProps {
   comment: IssueComment;
@@ -60,31 +61,15 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
     isSubmitting,
   } = props;
   const isLoggedIn = props.isLoggedIn ?? true;
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // 使用 React Query 获取当前用户
+  const { data: currentUser } = useCurrentUser();
+  const currentUserId = currentUser?.id ?? null;
 
   const author = comment.created_by ? userInfos[comment.created_by]?.name : "";
   const [openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
     null
   );
-
-  // 获取当前用户ID，用于判断是否仅作者可以编辑/删除
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { currentUserManager } = await import(
-          "@/utils/cache/managers/CurrentUserManager"
-        );
-        const user = await currentUserManager.getCurrentUser();
-        if (!cancelled) setCurrentUserId(user?.id ?? null);
-      } catch (_) {
-        if (!cancelled) setCurrentUserId(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const pleaseSignInTooltipPortal = () => {
     return (
