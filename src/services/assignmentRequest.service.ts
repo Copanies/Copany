@@ -105,18 +105,16 @@ export class AssignmentRequestService {
     return await this.createForRecipients(issueId, requesterId, recipients, message);
   }
 
-  static async deleteForRecipient(
+  static async deleteAllForRequester(
     issueId: string,
-    requesterId: string,
-    recipientId: string
+    requesterId: string
   ): Promise<void> {
     const supabase = await createSupabaseClient();
     const { error } = await supabase
       .from("issue_assignment_request")
       .delete()
       .eq("issue_id", issueId)
-      .eq("requester_id", requesterId)
-      .eq("recipient_id", recipientId);
+      .eq("requester_id", requesterId);
     if (error) throw new Error(error.message);
   }
 }

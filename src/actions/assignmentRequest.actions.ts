@@ -1,7 +1,6 @@
 "use server";
 import { getCurrentUser } from "@/actions/auth.actions";
 import { AssignmentRequestService } from "@/services/assignmentRequest.service";
-import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import type { AssignmentRequest } from "@/types/database.types";
 
 export async function listAssignmentRequestsAction(
@@ -33,9 +32,7 @@ export async function acceptAssignmentRequestAction(
 ): Promise<void> {
   const me = await getCurrentUser();
   if (!me) throw new Error("User not found");
-  // 删除该收件人为我的该 requester 的请求
-  await AssignmentRequestService.deleteForRecipient(issueId, requesterId, me.id);
-  // Assignee 设置交由前端处理
+  await AssignmentRequestService.deleteAllForRequester(issueId, requesterId);
 }
 
 export async function refuseAssignmentRequestAction(
@@ -44,8 +41,7 @@ export async function refuseAssignmentRequestAction(
 ): Promise<void> {
   const me = await getCurrentUser();
   if (!me) throw new Error("User not found");
-  // 直接删除该收件人为我的请求
-  await AssignmentRequestService.deleteForRecipient(issueId, requesterId, me.id);
+  await AssignmentRequestService.deleteAllForRequester(issueId, requesterId);
 }
 
 
