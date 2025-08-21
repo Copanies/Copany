@@ -5,8 +5,7 @@ import { IssuePriority } from "@/types/database.types";
 import { updateIssuePriorityAction } from "@/actions/issue.actions";
 import { useUpdateIssuePriority } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
-import { issueActivityManager } from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssuePrioritySelectorProps {
   issueId: string;
@@ -31,6 +30,7 @@ export default function IssuePrioritySelector({
 }: IssuePrioritySelectorProps) {
   const [currentPriority, setCurrentPriority] = useState(initialPriority);
   const mutation = useUpdateIssuePriority(copanyId || "");
+  const qc = useQueryClient();
 
   const handlePriorityChange = async (newPriority: number) => {
     if (readOnly) return;
@@ -51,11 +51,9 @@ export default function IssuePrioritySelector({
         }
         console.log("Priority updated successfully:", newPriority);
 
-        // 优先级变化会产生活动，强制刷新活动流
+        // 优先级变化会产生活动，触发活动流查询失效
         try {
-          await issueActivityManager.revalidate(issueId, () =>
-            listIssueActivityAction(issueId, 200)
-          );
+          await qc.invalidateQueries({ queryKey: ["issueActivity", issueId] });
         } catch (_) {}
       }
     } catch (error) {

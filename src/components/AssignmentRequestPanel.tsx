@@ -1,33 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
-import { assignmentRequestsManager, userInfoManager } from "@/utils/cache";
-import {
-  issuesManager,
-  issueActivityManager,
-  issueReviewersManager,
-} from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
-import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
-import { getIssueAction } from "@/actions/issue.actions";
-import {
-  listAssignmentRequestsAction,
-  acceptAssignmentRequestAction,
-  refuseAssignmentRequestAction,
-} from "@/actions/assignmentRequest.actions";
 import type { AssignmentRequest } from "@/types/database.types";
 import Image from "next/image";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
+import {
+  useAssignmentRequests,
+  useAcceptAssignmentRequest,
+  useRefuseAssignmentRequest,
+} from "@/hooks/assignmentRequests";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AssignmentRequestPanelProps {
   issueId: string;
   copanyId: string | null;
-  requesterId: string; // 渲染该发起人的面板
+  requesterId: string;
   meId: string | null;
-  canEdit: boolean; // determines button enable state (accept/refuse requires recipient permission)
+  canEdit: boolean;
   onFocusNewComment?: () => void;
   onActivityChanged?: () => void | Promise<void>;
 }
@@ -41,14 +34,37 @@ export default function AssignmentRequestPanel({
   onFocusNewComment,
   onActivityChanged,
 }: AssignmentRequestPanelProps) {
-  const [items, setItems] = useState<AssignmentRequest[]>([]);
-  const [userInfos, setUserInfos] = useState<
-    Record<string, { name: string; email: string; avatar_url: string }>
-  >({});
+  const { data: itemsData } = useAssignmentRequests(issueId);
+  const items = (itemsData || []) as AssignmentRequest[];
+  const userIds = Array.from(
+    new Set(
+      items
+        .flatMap((it) => [String(it.requester_id), String(it.recipient_id)])
+        .filter(Boolean)
+    )
+  );
+  const { data: userInfosMap } = useUsersInfo(userIds);
+  const userInfos: Record<
+    string,
+    { name: string; email: string; avatar_url: string }
+  > = Object.fromEntries(
+    Object.entries(userInfosMap || {}).map(([id, v]) => [
+      id,
+      { name: v.name, email: v.email, avatar_url: v.avatar_url },
+    ])
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const qc = useQueryClient();
+  const acceptMutation = useAcceptAssignmentRequest(
+    issueId,
+    copanyId || undefined
+  );
+  const refuseMutation = useRefuseAssignmentRequest(
+    issueId,
+    copanyId || undefined
+  );
 
   const requestsForRequester = useMemo(() => {
-    // Only keep records for this requester
     const list = items
       .filter((x) => String(x.requester_id) === String(requesterId))
       .sort(
@@ -56,8 +72,6 @@ export default function AssignmentRequestPanel({
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
     if (list.length === 0) return [] as AssignmentRequest[];
-
-    // Find the most recent refused (or accepted) time as a separator to identify the current batch
     const lastTerminalAt = list
       .filter((r) => r.status === "refused" || r.status === "accepted")
       .reduce<string | null>((acc, r) => {
@@ -65,151 +79,15 @@ export default function AssignmentRequestPanel({
         if (!acc) return t;
         return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
       }, null);
-
-    // Current batch: all records created after lastTerminalAt
     const currentBatch = list.filter((r) =>
       lastTerminalAt
         ? new Date(r.created_at).getTime() > new Date(lastTerminalAt).getTime()
         : true
     );
-
-    // If any non-requested status (accepted/refused/skipped) exists in the current batch, the request has ended, do not render
-    if (currentBatch.some((r) => r.status !== "requested")) {
+    if (currentBatch.some((r) => r.status !== "requested"))
       return [] as AssignmentRequest[];
-    }
-
-    // Only keep records still in requested status in the current batch
-    const activeRequested = currentBatch.filter(
-      (r) => r.status === "requested"
-    );
-    return activeRequested;
+    return currentBatch.filter((r) => r.status === "requested");
   }, [items, requesterId]);
-
-  const load = useCallback(async () => {
-    // 非法 issueId（如 "temp"）直接跳过
-    if (!/^\d+$/.test(String(issueId))) {
-      setItems([]);
-      return;
-    }
-    const list = await assignmentRequestsManager.getRequests(issueId, () =>
-      listAssignmentRequestsAction(issueId)
-    );
-    setItems(list);
-    const idSet = new Set<string>();
-    for (const it of list) {
-      idSet.add(String(it.requester_id));
-      idSet.add(String(it.recipient_id));
-    }
-    const ids = Array.from(idSet);
-    if (ids.length > 0) {
-      const users = await userInfoManager.getMultipleUserInfo(ids);
-      const map: Record<
-        string,
-        { name: string; email: string; avatar_url: string }
-      > = {};
-      for (const id of Object.keys(users)) {
-        map[id] = {
-          name: users[id].name || users[id].email || id,
-          email: users[id].email,
-          avatar_url: users[id].avatar_url || "",
-        };
-      }
-      setUserInfos(map);
-    }
-  }, [issueId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Subscribe to cache updates for assignment requests and user infos
-  useEffect(() => {
-    // 非法 issueId（如 "temp"）时不订阅
-    if (!/^\d+$/.test(String(issueId))) return;
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-
-        // Assignment requests for current issue
-        if (
-          detail.manager === "AssignmentRequestsManager" &&
-          String(detail.key) === String(issueId)
-        ) {
-          const list = (detail.data as AssignmentRequest[]) || [];
-          setItems(list);
-          // sync user infos used in panel
-          const idSet = new Set<string>();
-          for (const it of list) {
-            idSet.add(String(it.requester_id));
-            idSet.add(String(it.recipient_id));
-          }
-          const ids = Array.from(idSet);
-          if (ids.length > 0) {
-            userInfoManager
-              .getMultipleUserInfo(ids)
-              .then((users) => {
-                const map: Record<
-                  string,
-                  { name: string; email: string; avatar_url: string }
-                > = {};
-                for (const id of Object.keys(users)) {
-                  map[id] = {
-                    name: users[id].name || users[id].email || id,
-                    email: users[id].email,
-                    avatar_url: users[id].avatar_url || "",
-                  };
-                }
-                setUserInfos((prev) => ({ ...prev, ...map }));
-              })
-              .catch(() => {});
-          }
-          return;
-        }
-
-        // user info update for participants in current items
-        if (detail.manager === "UserInfoManager") {
-          const userId = String(detail.key);
-          const info = detail.data as {
-            name?: string;
-            email?: string;
-            avatar_url?: string;
-          };
-          const exists = items.some(
-            (x) =>
-              String(x.requester_id) === userId ||
-              String(x.recipient_id) === userId
-          );
-          if (exists) {
-            setUserInfos((prev) => ({
-              ...prev,
-              [userId]: {
-                name: info?.name || info?.email || userId,
-                email: info?.email || "",
-                avatar_url: info?.avatar_url || "",
-              },
-            }));
-          }
-          return;
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [issueId, items]);
 
   if (requestsForRequester.length === 0) return null;
 
@@ -315,37 +193,22 @@ export default function AssignmentRequestPanel({
                       if (!target) return;
                       try {
                         setIsSubmitting(true);
-                        const updated = await acceptAssignmentRequestAction(
-                          issueId,
+                        await acceptMutation.mutateAsync(
                           String(target.requester_id)
                         );
-                        assignmentRequestsManager.updateRequest(
-                          issueId,
-                          updated
-                        );
-                        const fresh = await listAssignmentRequestsAction(
-                          issueId
-                        );
-                        assignmentRequestsManager.setRequests(issueId, fresh);
-                        setItems(fresh);
-                        // 由于接受请求会导致 Issue.assignee 变化、产生活动、可能影响评审者，触发对应缓存的联动刷新
-                        try {
-                          // 刷新 issue 列表缓存（更新 assignee）
-                          if (copanyId) {
-                            const latest = await getIssueAction(issueId);
-                            if (latest) {
-                              issuesManager.updateIssue(copanyId, latest);
-                            }
-                          }
-                          await Promise.all([
-                            issueActivityManager.revalidate(issueId, () =>
-                              listIssueActivityAction(issueId, 200)
-                            ),
-                            issueReviewersManager.revalidate(issueId, () =>
-                              listIssueReviewersAction(issueId)
-                            ),
-                          ]);
-                        } catch (_) {}
+                        await Promise.all([
+                          qc.invalidateQueries({
+                            queryKey: ["issueActivity", issueId],
+                          }),
+                          qc.invalidateQueries({
+                            queryKey: ["issueReviewers", issueId],
+                          }),
+                          copanyId
+                            ? qc.invalidateQueries({
+                                queryKey: ["issues", copanyId],
+                              })
+                            : Promise.resolve(),
+                        ]);
                         if (onActivityChanged) await onActivityChanged();
                       } catch (e) {
                         console.error(e);
@@ -375,30 +238,17 @@ export default function AssignmentRequestPanel({
                       if (!target) return;
                       try {
                         setIsSubmitting(true);
-                        const updated = await refuseAssignmentRequestAction(
-                          issueId,
+                        await refuseMutation.mutateAsync(
                           String(target.requester_id)
                         );
-                        assignmentRequestsManager.updateRequest(
-                          issueId,
-                          updated
-                        );
-                        const fresh = await listAssignmentRequestsAction(
-                          issueId
-                        );
-                        assignmentRequestsManager.setRequests(issueId, fresh);
-                        setItems(fresh);
-                        // 拒绝请求通常也会产生活动，刷新活动与评审者
-                        try {
-                          await Promise.all([
-                            issueActivityManager.revalidate(issueId, () =>
-                              listIssueActivityAction(issueId, 200)
-                            ),
-                            issueReviewersManager.revalidate(issueId, () =>
-                              listIssueReviewersAction(issueId)
-                            ),
-                          ]);
-                        } catch (_) {}
+                        await Promise.all([
+                          qc.invalidateQueries({
+                            queryKey: ["issueActivity", issueId],
+                          }),
+                          qc.invalidateQueries({
+                            queryKey: ["issueReviewers", issueId],
+                          }),
+                        ]);
                         if (onActivityChanged) await onActivityChanged();
                       } catch (e) {
                         console.error(e);

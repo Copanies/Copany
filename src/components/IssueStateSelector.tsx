@@ -9,9 +9,7 @@ import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
-import { issueReviewersManager } from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
-import { issueActivityManager } from "@/utils/cache";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDarkMode } from "@/utils/useDarkMode";
 
 interface IssueStateSelectorProps {
@@ -41,6 +39,7 @@ export default function IssueStateSelector({
   const [hasApprovedReview, setHasApprovedReview] = useState<boolean>(false);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState<boolean>(false);
   const mutation = useUpdateIssueState(copanyId || "");
+  const qc = useQueryClient();
 
   useEffect(() => {
     let mounted = true;
@@ -51,10 +50,7 @@ export default function IssueStateSelector({
       }
       try {
         setIsLoadingReviewers(true);
-        const reviewers = await issueReviewersManager.getReviewers(
-          issueId,
-          () => listIssueReviewersAction(issueId)
-        );
+        const reviewers = await listIssueReviewersAction(issueId);
         if (!mounted) return;
         setHasApprovedReview(reviewers.some((r) => r.status === "approved"));
       } catch (_) {
@@ -69,53 +65,15 @@ export default function IssueStateSelector({
     };
   }, [issueId, currentState]);
 
-  // Subscribe to cache updates for reviewers to reflect background refresh
-  useEffect(() => {
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (
-          detail.manager === "IssueReviewersManager" &&
-          String(detail.key) === String(issueId)
-        ) {
-          try {
-            const reviewers = (detail.data as { status?: string }[]) || [];
-            setHasApprovedReview(
-              reviewers.some((r) => r.status === "approved")
-            );
-          } catch (_) {}
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [issueId]);
-
   const handleStateChange = async (newState: number) => {
     if (readOnly) return;
     try {
       setCurrentState(newState);
 
-      // Immediately call callback to update frontend state, provide instant feedback
       if (onStateChange) {
         onStateChange(issueId, newState);
       }
 
-      // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
         let updatedIssue: IssueWithAssignee;
         if (copanyId) {
@@ -126,38 +84,24 @@ export default function IssueStateSelector({
         } else {
           updatedIssue = await updateIssueStateAction(issueId, newState);
         }
-        // Notify server-updated result so parent can overwrite cache/state with authoritative data
-        if (onServerUpdated) {
-          onServerUpdated(updatedIssue);
-        }
-        console.log("State updated successfully:", newState);
+        if (onServerUpdated) onServerUpdated(updatedIssue);
 
-        // 由于状态变化会产生新的活动，触发活动流刷新
         try {
-          await issueActivityManager.revalidate(issueId, () =>
-            listIssueActivityAction(issueId, 200)
-          );
-        } catch (_) {}
-
-        // 若进入 In Progress 或 In Review 等节点，重新拉取 reviewers（服务端可能创建/调整评审任务）
-        try {
-          await issueReviewersManager.revalidate(issueId, () =>
-            listIssueReviewersAction(issueId)
-          );
+          await Promise.all([
+            qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
+            qc.invalidateQueries({ queryKey: ["issueReviewers", issueId] }),
+          ]);
         } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating state:", error);
-      // Rollback state on error
       setCurrentState(initialState);
-      // If there's a callback, also need to rollback frontend state
       if (onStateChange && initialState !== null) {
         onStateChange(issueId, initialState);
       }
     }
   };
 
-  // Build state options with conditional disabling for Done
   const stateOptions = useMemo(() => {
     const allStates = [
       IssueState.Backlog,

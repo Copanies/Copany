@@ -5,8 +5,7 @@ import { IssueLevel } from "@/types/database.types";
 import { updateIssueLevelAction } from "@/actions/issue.actions";
 import { useUpdateIssueLevel } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
-import { issueActivityManager } from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueLevelSelectorProps {
   issueId: string;
@@ -31,6 +30,7 @@ export default function IssueLevelSelector({
 }: IssueLevelSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
   const mutation = useUpdateIssueLevel(copanyId || "");
+  const qc = useQueryClient();
 
   const handleLevelChange = async (newLevel: number) => {
     if (readOnly) return;
@@ -51,11 +51,9 @@ export default function IssueLevelSelector({
         }
         console.log("Level updated successfully:", newLevel);
 
-        // 等级变化会产生活动，强制刷新活动流
+        // 等级变化会产生活动，触发活动流查询失效
         try {
-          await issueActivityManager.revalidate(issueId, () =>
-            listIssueActivityAction(issueId, 200)
-          );
+          await qc.invalidateQueries({ queryKey: ["issueActivity", issueId] });
         } catch (_) {}
       }
     } catch (error) {
