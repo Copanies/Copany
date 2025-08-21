@@ -30,8 +30,8 @@ import {
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
-import { copanyManager } from "@/utils/cache";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -43,6 +43,7 @@ export default function SettingsView({
   onCopanyUpdate,
 }: SettingsViewProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isDarkMode = useDarkMode();
   const [name, setName] = useState(copany.name);
   const [description, setDescription] = useState(copany.description || "");
@@ -70,7 +71,37 @@ export default function SettingsView({
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
 
-  // 使用默认 copanyManager，UI 通过上层订阅统一联动
+  // React Query mutations
+  const updateCopanyMutation = useMutation({
+    mutationFn: updateCopanyAction,
+    onSuccess: (updatedCopany) => {
+      // 更新本地状态
+      onCopanyUpdate(updatedCopany);
+
+      // 失效相关查询
+      queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
+      queryClient.invalidateQueries({ queryKey: ["copanies"] });
+
+      // 设置查询数据以保持 UI 同步
+      queryClient.setQueryData(["copany", copany.id], updatedCopany);
+    },
+    onError: (error) => {
+      console.error("Failed to update copany:", error);
+    },
+  });
+
+  const deleteCopanyMutation = useMutation({
+    mutationFn: deleteCopanyAction,
+    onSuccess: () => {
+      // 失效相关查询
+      queryClient.invalidateQueries({ queryKey: ["copanies"] });
+      // 重定向到首页
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("Failed to delete copany:", error);
+    },
+  });
 
   const assetLinks = [
     {
@@ -146,9 +177,7 @@ export default function SettingsView({
         ...copany,
         name: name,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutation.mutateAsync(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -163,9 +192,7 @@ export default function SettingsView({
         ...copany,
         description: description,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutation.mutateAsync(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -179,9 +206,7 @@ export default function SettingsView({
         ...copany,
         [assetLinks.find((link) => link.id === assetType)?.key || ""]: null,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutation.mutateAsync(updatedCopany);
     } catch (error) {
       console.error(error);
     }
@@ -262,9 +287,7 @@ export default function SettingsView({
           ...copany,
           logo_url: result.url,
         };
-        await updateCopanyAction(updatedCopany);
-        copanyManager.setCopany(copany.id, updatedCopany);
-        onCopanyUpdate(updatedCopany);
+        await updateCopanyMutation.mutateAsync(updatedCopany);
       } else {
         setUploadError(result.error || "Upload failed");
       }
@@ -284,9 +307,7 @@ export default function SettingsView({
   async function handleDeleteCopany() {
     setIsDeleting(true);
     try {
-      await deleteCopanyAction(copany.id);
-      // Redirect to home page after successful deletion
-      router.push("/");
+      await deleteCopanyMutation.mutateAsync(copany.id);
     } catch (error) {
       console.error("Failed to delete Copany:", error);
     } finally {

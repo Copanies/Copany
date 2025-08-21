@@ -3,13 +3,13 @@
 import { updateCopanyAction } from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
-import { copanyManager } from "@/utils/cache";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Modal from "@/components/commons/Modal";
 import Dropdown from "@/components/commons/Dropdown";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function AssetLinkModal({
   isOpen,
@@ -42,6 +42,31 @@ export default function AssetLinkModal({
 
   const isEditMode = !!editingAssetLink;
   const isDarkMode = useDarkMode();
+  const queryClient = useQueryClient();
+
+  // React Query mutation for updating copany asset links
+  const updateCopanyAssetLinkMutation = useMutation({
+    mutationFn: updateCopanyAction,
+    onSuccess: (updatedCopany) => {
+      // 更新本地状态
+      onCopanyUpdate(updatedCopany);
+
+      // 失效相关查询
+      queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
+      queryClient.invalidateQueries({ queryKey: ["copanies"] });
+
+      // 设置查询数据以保持 UI 同步
+      queryClient.setQueryData(["copany", copany.id], updatedCopany);
+
+      // 重置状态并关闭弹窗
+      setAssetType(null);
+      setAssetLink(null);
+      onClose();
+    },
+    onError: (error) => {
+      console.error("Failed to update copany asset link:", error);
+    },
+  });
 
   // 当弹窗打开时，设置初始值
   useEffect(() => {
@@ -65,12 +90,7 @@ export default function AssetLinkModal({
         [assetLinks.find((link) => link.id === assetType)?.key || ""]:
           assetLink,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
-      setAssetType(null);
-      setAssetLink(null);
-      onClose();
+      await updateCopanyAssetLinkMutation.mutateAsync(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
