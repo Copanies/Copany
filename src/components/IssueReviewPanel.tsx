@@ -1,20 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
-import {
-  userInfoManager,
-  issueReviewersManager,
-  issueActivityManager,
-} from "@/utils/cache";
 import {
   listIssueReviewersAction,
   approveMyReviewAction,
 } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
@@ -22,6 +16,9 @@ import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useIssueReviewers } from "@/hooks/reviewers";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueReviewPanelProps {
   issueId: string;
@@ -43,11 +40,25 @@ export default function IssueReviewPanel({
   onActivityChanged,
 }: IssueReviewPanelProps) {
   const isDarkMode = useDarkMode();
-  const [reviewers, setReviewers] = useState<IssueReviewer[]>([]);
+  const qc = useQueryClient();
+  const { data: reviewersData } = useIssueReviewers(issueId);
+  const reviewers = (reviewersData || []) as IssueReviewer[];
+  const reviewerIds = useMemo(
+    () => Array.from(new Set(reviewers.map((r) => String(r.reviewer_id)))),
+    [reviewers]
+  );
+  const { data: userInfosMap } = useUsersInfo(reviewerIds);
+  const userInfos: Record<
+    string,
+    { name: string; email: string; avatar_url: string }
+  > = Object.fromEntries(
+    Object.entries(userInfosMap || {}).map(([id, v]) => [
+      id,
+      { name: v.name, email: v.email, avatar_url: v.avatar_url },
+    ])
+  );
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [userInfos, setUserInfos] = useState<
-    Record<string, { name: string; email: string; avatar_url: string }>
-  >({});
 
   const hasAnyApproved = useMemo(
     () => reviewers.some((r) => r.status === "approved"),
@@ -63,119 +74,10 @@ export default function IssueReviewPanel({
 
   const isReviewerMe = useMemo(() => {
     if (!meId) return false;
-    return reviewers.some((r) => String(r.reviewer_id) === String(meId));
+    return reviewers.some((r) => String(r.reviewer_id) === meId);
   }, [reviewers, meId]);
 
-  const load = useCallback(async () => {
-    // reviewers
-    const rs = await issueReviewersManager.getReviewers(issueId, () =>
-      listIssueReviewersAction(issueId)
-    );
-    setReviewers(rs);
-
-    // user infos
-    const ids = Array.from(new Set(rs.map((r) => String(r.reviewer_id))));
-    if (ids.length > 0) {
-      const users = await userInfoManager.getMultipleUserInfo(ids);
-      const map: Record<
-        string,
-        { name: string; email: string; avatar_url: string }
-      > = {};
-      for (const id of Object.keys(users)) {
-        map[id] = {
-          name: users[id].name || users[id].email || id,
-          email: users[id].email,
-          avatar_url: users[id].avatar_url || "",
-        };
-      }
-      setUserInfos(map);
-    } else {
-      setUserInfos({});
-    }
-  }, [issueId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Subscribe to cache updates for reviewers and user infos
-  useEffect(() => {
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-
-        if (
-          detail.manager === "IssueReviewersManager" &&
-          String(detail.key) === String(issueId)
-        ) {
-          const rs = (detail.data as IssueReviewer[]) || [];
-          setReviewers(rs);
-          const ids = Array.from(new Set(rs.map((r) => String(r.reviewer_id))));
-          if (ids.length > 0) {
-            userInfoManager
-              .getMultipleUserInfo(ids)
-              .then((users) => {
-                const map: Record<
-                  string,
-                  { name: string; email: string; avatar_url: string }
-                > = {};
-                for (const id of Object.keys(users)) {
-                  map[id] = {
-                    name: users[id].name || users[id].email || id,
-                    email: users[id].email,
-                    avatar_url: users[id].avatar_url || "",
-                  };
-                }
-                setUserInfos((prev) => ({ ...prev, ...map }));
-              })
-              .catch(() => {});
-          }
-          return;
-        }
-
-        if (detail.manager === "UserInfoManager") {
-          const userId = String(detail.key);
-          const exists = reviewers.some(
-            (r) => String(r.reviewer_id) === userId
-          );
-          if (exists) {
-            const info = detail.data as {
-              name?: string;
-              email?: string;
-              avatar_url?: string;
-            };
-            setUserInfos((prev) => ({
-              ...prev,
-              [userId]: {
-                name: info?.name || info?.email || userId,
-                email: info?.email || "",
-                avatar_url: info?.avatar_url || "",
-              },
-            }));
-          }
-          return;
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [issueId, reviewers]);
-
-  // Only render in In Review state (after hooks)
+  // Only render in In Review state
   if (issueState !== IssueState.InReview) return null;
 
   return (
@@ -195,11 +97,9 @@ export default function IssueReviewPanel({
       >
         <div className="flex flex-row items-center justify-between">
           <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex flex-row items-center gap-2">
-            {/* Title prefix: In Review label or Approved check */}
             {hasAnyApproved ? (
               <CheckIcon className="w-6 h-6 text-white bg-[#058E00] dark:bg-[#058E00] rounded-full p-1" />
             ) : (
-              // In Review label icon-only
               <Image
                 src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
                 alt="In Review"
@@ -215,7 +115,6 @@ export default function IssueReviewPanel({
           </div>
         </div>
 
-        {/* reviewers list */}
         <div className="flex flex-col gap-2">
           {reviewers.map((r) => {
             const info = userInfos[String(r.reviewer_id)];
@@ -308,15 +207,14 @@ export default function IssueReviewPanel({
                   try {
                     setIsSubmitting(true);
                     await updateIssueStateAction(issueId, IssueState.Done);
-                    // 触发活动与评审者的强制刷新
                     try {
                       await Promise.all([
-                        issueActivityManager.revalidate(issueId, () =>
-                          listIssueActivityAction(issueId, 200)
-                        ),
-                        issueReviewersManager.revalidate(issueId, () =>
-                          listIssueReviewersAction(issueId)
-                        ),
+                        qc.invalidateQueries({
+                          queryKey: ["issueActivity", issueId],
+                        }),
+                        qc.invalidateQueries({
+                          queryKey: ["issueReviewers", issueId],
+                        }),
                       ]);
                     } catch (_) {}
                     if (onActivityChanged) await onActivityChanged();
@@ -341,24 +239,15 @@ export default function IssueReviewPanel({
               onClick={async () => {
                 try {
                   setIsSubmitting(true);
-                  const updated = await approveMyReviewAction(issueId);
-                  // 更新缓存中的 Reviewer 状态
-                  issueReviewersManager.updateReviewer(issueId, updated);
-                  // 从缓存读取最新 reviewers
-                  const rs = await issueReviewersManager.getReviewers(
-                    issueId,
-                    () => listIssueReviewersAction(issueId)
-                  );
-                  setReviewers(rs);
-                  // 触发活动与评审者的强制刷新
+                  await approveMyReviewAction(issueId);
                   try {
                     await Promise.all([
-                      issueActivityManager.revalidate(issueId, () =>
-                        listIssueActivityAction(issueId, 200)
-                      ),
-                      issueReviewersManager.revalidate(issueId, () =>
-                        listIssueReviewersAction(issueId)
-                      ),
+                      qc.invalidateQueries({
+                        queryKey: ["issueActivity", issueId],
+                      }),
+                      qc.invalidateQueries({
+                        queryKey: ["issueReviewers", issueId],
+                      }),
                     ]);
                   } catch (_) {}
                   if (onActivityChanged) await onActivityChanged();
@@ -384,16 +273,14 @@ export default function IssueReviewPanel({
               onClick={() => {
                 try {
                   const el = document.getElementById("new-comment-composer");
+
                   if (el) {
                     el.scrollIntoView({ behavior: "smooth", block: "center" });
                   }
-                  // trigger focus after scroll
                   if (onFocusNewComment) {
                     setTimeout(() => onFocusNewComment(), 220);
                   }
-                } catch (_e) {
-                  // ignore
-                }
+                } catch (_e) {}
               }}
             >
               Leave a comment

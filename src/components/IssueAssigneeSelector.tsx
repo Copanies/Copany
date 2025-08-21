@@ -14,8 +14,7 @@ import {
   requestAssignmentToEditorsAction,
 } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
-import { assignmentRequestsManager, issueActivityManager } from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -54,8 +53,8 @@ export default function IssueAssigneeSelector({
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
-  // 不再在组件内请求/订阅 assignment request，由上层视图通过 hasPendingByMe 控制
   const mutation = useUpdateIssueAssignee(copanyId || "");
+  const qc = useQueryClient();
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -69,15 +68,13 @@ export default function IssueAssigneeSelector({
             } else {
               await requestAssignmentToEditorsAction(issueId, null);
             }
-            // 请求发起成功后，强制刷新请求列表缓存，驱动时间线面板显示
+            // 请求发起成功后，失效相关查询（assignment requests、activity）
             try {
               await Promise.all([
-                assignmentRequestsManager.revalidate(issueId, () =>
-                  listAssignmentRequestsAction(issueId)
-                ),
-                issueActivityManager.revalidate(issueId, () =>
-                  listIssueActivityAction(issueId, 200)
-                ),
+                qc.invalidateQueries({
+                  queryKey: ["assignmentRequests", "issue", issueId],
+                }),
+                qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
               ]);
             } catch (_) {}
           }
@@ -133,11 +130,14 @@ export default function IssueAssigneeSelector({
           }
           console.log("Assignee updated successfully:", assigneeValue);
 
-          // 指派变化会产生活动，强制刷新活动流
+          // 指派变化会产生活动，触发活动流与 Issues 查询失效
           try {
-            await issueActivityManager.revalidate(issueId, () =>
-              listIssueActivityAction(issueId, 200)
-            );
+            await Promise.all([
+              qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
+              copanyId
+                ? qc.invalidateQueries({ queryKey: ["issues", copanyId] })
+                : Promise.resolve(),
+            ]);
           } catch (_) {}
         }
       } catch (error) {
@@ -162,12 +162,23 @@ export default function IssueAssigneeSelector({
       readOnly,
       onRequestAssignment,
       hasPendingByMe,
+      copanyId,
+      mutation,
+      qc,
     ]
   );
 
   // Build grouped options
   const groups = (() => {
-    const groups = [];
+    const groups = [] as Array<{
+      title: string | null;
+      options: Array<{
+        value: string;
+        label: React.ReactElement;
+        disabled?: boolean;
+        tooltip?: string;
+      }>;
+    }>;
 
     // Add "Unassigned" option
     groups.push({

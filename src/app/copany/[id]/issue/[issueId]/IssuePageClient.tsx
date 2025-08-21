@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { getIssueAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
   IssueState,
@@ -18,14 +17,6 @@ import { renderUserLabel } from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
 import Modal from "@/components/commons/Modal";
 import IssueActivityTimeline from "@/components/IssueActivityTimeline";
-import {
-  currentUserManager,
-  contributorsManager,
-  copanyManager,
-  issuePermissionManager,
-  assignmentRequestsManager,
-  issueActivityManager,
-} from "@/utils/cache";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
@@ -38,17 +29,21 @@ import {
 } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
 import Image from "next/image";
 import {
   listAssignmentRequestsAction,
   requestAssignmentToEditorsAction,
 } from "@/actions/assignmentRequest.actions";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { userInfoManager } from "@/utils/cache";
 import type { UserInfo } from "@/actions/user.actions";
+// React Query hooks
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useContributors } from "@/hooks/contributors";
+import { useCopany } from "@/hooks/copany";
+import { useAssignmentRequests } from "@/hooks/assignmentRequests";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { useIssuePermission } from "@/hooks/permissions";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -60,20 +55,6 @@ export default function IssuePageClient({
   issueId,
 }: IssuePageClientProps) {
   const [issueData, setIssueData] = useState<IssueWithAssignee | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
-  const [canEdit, setCanEdit] = useState<boolean>(false);
-  const [isPermissionResolved, setIsPermissionResolved] =
-    useState<boolean>(false);
-  const [readOnlyTooltip, setReadOnlyTooltip] = useState<string>("");
-  const [pendingRequestsByRequester, setPendingRequestsByRequester] = useState<
-    Record<string, AssignmentRequest[]>
-  >({});
-  const [requestersInfo, setRequestersInfo] = useState<
-    Record<string, UserInfo>
-  >({});
-  const [creatorInfo, setCreatorInfo] = useState<UserInfo | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const router = useRouter();
@@ -93,6 +74,83 @@ export default function IssuePageClient({
 
   // For tracking unsaved changes
   const hasUnsavedChangesRef = useRef(false);
+
+  // React Query hooks
+  const { data: currentUser } = useCurrentUser();
+  const { data: contributors = [], isLoading: isContributorsLoading } =
+    useContributors(copanyId);
+  const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
+  const {
+    data: assignmentRequests = [],
+    isLoading: isAssignmentRequestsLoading,
+  } = useAssignmentRequests(issueId);
+  const { data: canEdit = false, isLoading: isPermissionLoading } =
+    useIssuePermission(copanyId, issueData);
+
+  // Overall loading state
+  const isLoading =
+    isContributorsLoading ||
+    isCopanyLoading ||
+    isAssignmentRequestsLoading ||
+    isPermissionLoading;
+
+  // Collect user IDs from assignment requests for user info
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    // Add requester IDs from assignment requests
+    assignmentRequests.forEach((req) => {
+      if (req.status === "requested" && req.requester_id) {
+        ids.add(String(req.requester_id));
+      }
+    });
+
+    // Add creator ID if exists
+    if (issueData?.created_by) {
+      ids.add(String(issueData.created_by));
+    }
+
+    return Array.from(ids);
+  }, [assignmentRequests, issueData?.created_by]);
+
+  const { data: userInfosMap = {} } = useUsersInfo(userIds);
+
+  // Compute pending requests by requester
+  const pendingRequestsByRequester = useMemo(() => {
+    const map: Record<string, AssignmentRequest[]> = {};
+    for (const req of assignmentRequests) {
+      if (req.status !== "requested") continue;
+      const key = String(req.requester_id);
+      if (!map[key]) map[key] = [];
+      map[key].push(req);
+    }
+    return map;
+  }, [assignmentRequests]);
+
+  // Extract requesters info and creator info
+  const requestersInfo = useMemo(() => {
+    const map: Record<string, UserInfo> = {};
+    Object.keys(pendingRequestsByRequester).forEach((requesterId) => {
+      if (userInfosMap[requesterId]) {
+        map[requesterId] = userInfosMap[requesterId];
+      }
+    });
+    return map;
+  }, [pendingRequestsByRequester, userInfosMap]);
+
+  const creatorInfo = useMemo(() => {
+    if (!issueData?.created_by) return null;
+    return userInfosMap[String(issueData.created_by)] || null;
+  }, [issueData?.created_by, userInfosMap]);
+
+  // Permission resolved when we have the data
+  const isPermissionResolved = !isPermissionLoading;
+
+  // Read-only tooltip
+  const readOnlyTooltip = useMemo(() => {
+    if (canEdit) return "";
+    return "Only the Copany owner, Issue creator, or current assignee can edit.";
+  }, [canEdit]);
 
   // Save handling when page leaves
   useEffect(() => {
@@ -142,173 +200,11 @@ export default function IssuePageClient({
 
   const computeEditPermission = useCallback(
     async (issueData: IssueWithAssignee) => {
-      const allowed = await issuePermissionManager.canEditIssue(
-        copanyId,
-        issueData
-      );
-      setCanEdit(allowed);
-      setReadOnlyTooltip(
-        allowed
-          ? ""
-          : "Only the Copany owner, Issue creator, or current assignee can edit."
-      );
-      setIsPermissionResolved(true);
+      // Permission is now handled by useIssuePermission hook
+      // No need to manually compute here
     },
     [copanyId]
   );
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Load user and contributor data
-        const [user, contributorList, _copany] = await Promise.all([
-          currentUserManager.getCurrentUser(),
-          contributorsManager.getContributors(copanyId),
-          copanyManager.getCopany(copanyId, async () => {
-            const result = await getCopanyByIdAction(copanyId);
-            if (!result) throw new Error("Copany not found");
-            return result as Copany;
-          }),
-        ]);
-
-        setCurrentUser(user);
-        setContributors(contributorList);
-
-        // Load pending assignment requests (requested only), grouped by requester
-        try {
-          const list = await assignmentRequestsManager.getRequests(
-            issueId,
-            () => listAssignmentRequestsAction(issueId)
-          );
-          const map: Record<string, AssignmentRequest[]> = {};
-          for (const it of list) {
-            if (it.status !== "requested") continue;
-            const key = String(it.requester_id);
-            if (!map[key]) map[key] = [];
-            map[key].push(it);
-          }
-          setPendingRequestsByRequester(map);
-          // 批量获取请求者用户信息
-          const requesterIds = Object.keys(map);
-          if (requesterIds.length > 0) {
-            try {
-              const infos = await userInfoManager.getMultipleUserInfo(
-                requesterIds
-              );
-              setRequestersInfo(infos);
-            } catch (e) {
-              console.error("Failed to load requester user infos", e);
-            }
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      } catch (error) {
-        console.error("Error loading issue data:", error);
-        setIsPermissionResolved(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Listen cache updates from non-migrated managers
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-
-        // Issues list is now managed by React Query
-
-        // 2) Contributors 更新 → 刷新指派下拉可选项
-        if (
-          detail.manager === "ContributorsManager" &&
-          detail.key === copanyId
-        ) {
-          const list = detail.data as CopanyContributor[];
-          setContributors(Array.isArray(list) ? list : []);
-          return;
-        }
-
-        // 3) Assignment requests 更新 → 仅处理当前 issueId
-        if (
-          detail.manager === "AssignmentRequestsManager" &&
-          String(detail.key) === String(issueId)
-        ) {
-          const list = (detail.data as AssignmentRequest[]) || [];
-          const map: Record<string, AssignmentRequest[]> = {};
-          for (const it of list) {
-            if (it.status !== "requested") continue;
-            const key = String(it.requester_id);
-            if (!map[key]) map[key] = [];
-            map[key].push(it);
-          }
-          setPendingRequestsByRequester(map);
-
-          // 确保请求者信息同步
-          const requesterIds = Object.keys(map);
-          if (requesterIds.length > 0) {
-            userInfoManager
-              .getMultipleUserInfo(requesterIds)
-              .then((infos) => setRequestersInfo(infos))
-              .catch(() => {});
-          } else {
-            setRequestersInfo({});
-          }
-          return;
-        }
-
-        // 4) User info 更新 → 如果是创建者或请求者，则更新
-        if (detail.manager === "UserInfoManager") {
-          const userId = String(detail.key);
-          const data = detail.data as UserInfo;
-
-          const creatorId = issueData?.created_by
-            ? String(issueData.created_by)
-            : null;
-
-          if (creatorId && userId === creatorId) {
-            setCreatorInfo(data || null);
-            return;
-          }
-
-          if (userId in pendingRequestsByRequester) {
-            setRequestersInfo((prev) => ({ ...prev, [userId]: data }));
-            return;
-          }
-        }
-
-        // 5) Copany 更新 → 可能影响编辑权限，重新计算
-        if (detail.manager === "CopanyManager" && detail.key === copanyId) {
-          if (issueData) {
-            computeEditPermission(issueData);
-          }
-          return;
-        }
-
-        // 6) 其他 manager（如 IssueActivityManager/IssueCommentsManager/NotificationsManager）
-        // 通常由它们自身使用的子组件订阅，这里无需处理
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [copanyId, issueId, computeEditPermission, issueData]);
 
   // Use React Query to get current issue
   const { data: rqIssue, isLoading: isIssueLoading } = useIssue(
@@ -320,9 +216,8 @@ export default function IssuePageClient({
   useEffect(() => {
     if (rqIssue) {
       setIssueData(rqIssue);
-      computeEditPermission(rqIssue);
     }
-  }, [rqIssue, computeEditPermission]);
+  }, [rqIssue]);
 
   const updateIssueInCache = useCallback(
     (updated: IssueWithAssignee) => {
@@ -341,43 +236,7 @@ export default function IssuePageClient({
     [queryClient, copanyId]
   );
 
-  // Load creator user info via userInfoManager
-  useEffect(() => {
-    const fetchCreator = async () => {
-      try {
-        const creatorId = issueData?.created_by
-          ? String(issueData.created_by)
-          : null;
-        if (!creatorId) {
-          setCreatorInfo(null);
-          return;
-        }
-        const info = await userInfoManager.getUserInfo(creatorId);
-        setCreatorInfo(info);
-      } catch (_) {
-        setCreatorInfo(null);
-      }
-    };
-    fetchCreator();
-  }, [issueData?.created_by]);
-
-  const reloadPendingRequests = useCallback(async () => {
-    try {
-      const list = await assignmentRequestsManager.getRequests(issueId, () =>
-        listAssignmentRequestsAction(issueId)
-      );
-      const map: Record<string, AssignmentRequest[]> = {};
-      for (const it of list) {
-        if (it.status !== "requested") continue;
-        const key = String(it.requester_id);
-        if (!map[key]) map[key] = [];
-        map[key].push(it);
-      }
-      setPendingRequestsByRequester(map);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [issueId]);
+  // Remove old fetchCreator and reloadPendingRequests functions since data is now managed by React Query
 
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
@@ -945,11 +804,15 @@ export default function IssuePageClient({
                   );
                   setIsRequestModalOpen(false);
                   setRequestMessage("");
+
+                  // Invalidate related queries to refresh data
                   await Promise.all([
-                    reloadPendingRequests(),
-                    issueActivityManager.revalidate(issueId, () =>
-                      listIssueActivityAction(issueId, 200)
-                    ),
+                    queryClient.invalidateQueries({
+                      queryKey: ["assignmentRequests", "issue", issueId],
+                    }),
+                    queryClient.invalidateQueries({
+                      queryKey: ["issueActivity", issueId],
+                    }),
                   ]);
                 } catch (e) {
                   console.error(e);

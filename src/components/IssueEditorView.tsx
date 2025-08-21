@@ -4,8 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
-import { issueActivityManager } from "@/utils/cache";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -165,11 +163,11 @@ export default function IssueEditorView({
         hasUnsavedChangesRef.current = false;
         console.log("✅ Server save completed successfully");
 
-        // 标题或描述变化会产生活动，强制刷新活动流
+        // 标题或描述变化会产生活动，触发活动流查询失效
         try {
-          await issueActivityManager.revalidate(issueData.id, () =>
-            listIssueActivityAction(issueData.id, 200)
-          );
+          await queryClient.invalidateQueries({
+            queryKey: ["issueActivity", issueData.id],
+          });
         } catch (_) {}
       } catch (error) {
         console.error("❌ Error saving to server:", error);
@@ -194,6 +192,7 @@ export default function IssueEditorView({
     issueData.assignee,
     issueData.copany_id,
     isReadonly,
+    queryClient,
   ]);
 
   // Auto-save logic
