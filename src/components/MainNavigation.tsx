@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { User } from "@supabase/supabase-js";
 import logo from "@/app/favicon.ico";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { currentUserManager } from "@/utils/cache";
+import { useCurrentUser } from "@/hooks/currentUser";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
@@ -17,41 +16,27 @@ import { useDarkMode } from "@/utils/useDarkMode";
 
 export default function MainNavigation() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const isDarkMode = useDarkMode();
+
+  // 使用 React Query hook 替代 currentUserManager
+  const { data: user, isLoading: isUserLoading } = useCurrentUser();
+
   useEffect(() => {
     const supabase = createClient();
 
-    // 获取初始用户信息（优先从缓存）
-    const getInitialUser = async () => {
-      try {
-        // 使用缓存管理器获取用户
-        const user = await currentUserManager.getCurrentUser();
-        setUser(user);
-      } catch (err) {
-        console.error("Failed to get user:", err);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialUser();
+    // 设置初始加载状态
+    setLoading(false);
 
     // 监听认证状态变化
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
-        // 清除用户缓存
-        currentUserManager.clearUser();
-        setUser(null);
+        // 用户登出时，React Query 会自动处理缓存失效
         setLoading(false);
       } else if (event === "SIGNED_IN" && session?.user) {
-        // 设置用户到缓存
-        currentUserManager.setUser(session.user);
-        setUser(session.user);
+        // 用户登录时，React Query 会自动处理缓存更新
         setLoading(false);
       }
     });
@@ -63,22 +48,15 @@ export default function MainNavigation() {
 
   const handleLogout = async () => {
     try {
-      // 立即清除客户端状态和缓存
-      setUser(null);
-      currentUserManager.clearUser();
-
-      // 然后执行服务器端登出
+      // 执行服务器端登出，React Query 会自动处理缓存清理
       await signOut();
     } catch (error) {
       console.error("Failed to logout:", error);
-      // 如果服务器端登出失败，恢复用户状态
-      const cachedUser = await currentUserManager.getCurrentUser();
-      setUser(cachedUser);
     }
   };
 
   const renderUserSection = () => {
-    if (loading) {
+    if (loading || isUserLoading) {
       return <div className="p-2 w-8"></div>;
     }
 

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { clearGithubTokenCookie } from "@/services/github.service";
-import { currentUserManager } from "@/utils/cache";
 
 /**
  * Authentication related Server Actions
@@ -69,10 +68,6 @@ export async function signOut() {
 
   // Clear GitHub access token Cookie
   await clearGithubTokenCookie();
-
-  // Clear CurrentUserManager cache
-  currentUserManager.clearUser();
-  console.log("🗑️ User cache cleared");
 
   console.log("✅ User sign out successful");
   redirect("/"); // This will throw NEXT_REDIRECT, which is normal

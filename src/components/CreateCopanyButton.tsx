@@ -4,7 +4,6 @@ import Image from "next/image";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { createCopanyAction } from "@/actions/copany.actions";
 import { getOrgAndReposAction } from "@/actions/github.action";
-import { RestEndpointMethodTypes } from "@octokit/rest";
 import Button from "./commons/Button";
 import LoadingView from "./commons/LoadingView";
 import Modal from "./commons/Modal";
@@ -16,14 +15,12 @@ import {
   ArrowUpRightIcon,
 } from "@heroicons/react/24/outline";
 
-import { copanyManager } from "@/utils/cache";
 import { useRouter } from "next/navigation";
-
-type RepoData =
-  RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function CreateCopanyButton() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
@@ -35,12 +32,44 @@ export default function CreateCopanyButton() {
   const [copanyDescription, setCopanyDescription] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [repoData, setRepoData] = useState<RepoData | null>(null);
-  const [isCreatingCopany, setIsCreatingCopany] = useState(false);
 
-  const [status, setStatus] = useState<"loading" | "failed" | "success">(
-    "loading"
-  );
+  // 使用 React Query 获取仓库数据
+  const {
+    data: repoData,
+    isLoading: isReposLoading,
+    error: reposError,
+    status,
+  } = useQuery({
+    queryKey: ["github", "repos"],
+    queryFn: getOrgAndReposAction,
+    enabled: isModalOpen, // 只在弹窗打开时获取数据
+    staleTime: 5 * 60 * 1000, // 5分钟内的数据认为是新鲜的
+  });
+
+  // 使用 React Query 处理 Copany 创建
+  const createCopanyMutation = useMutation({
+    mutationFn: createCopanyAction,
+    onSuccess: (result) => {
+      if (result.success && result.copany) {
+        // 将新创建的 copany 添加到缓存中
+        queryClient.setQueryData(["copany", result.copany.id], result.copany);
+
+        // 使 copany 列表查询失效，触发重新获取
+        queryClient.invalidateQueries({ queryKey: ["copanies"] });
+
+        // 关闭弹窗
+        setIsModalOpen(false);
+
+        // 跳转到新创建的 copany 详情页
+        router.push(`/copany/${result.copany.id}`);
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to create copany:", error);
+      setError("Failed to create copany");
+    },
+  });
+
   const [error, setError] = useState<string | null>(null);
 
   // 点击外部关闭下拉菜单
@@ -66,48 +95,10 @@ export default function CreateCopanyButton() {
     }
   }, [isDropdownOpen]);
 
-  // 当弹窗打开时获取数据
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    let cancelled = false;
-
-    const fetchRepos = async () => {
-      setStatus("loading");
-      try {
-        const result = await getOrgAndReposAction();
-
-        if (!cancelled) {
-          if (result.success && result.data) {
-            setRepoData(result.data);
-            setStatus("success");
-          } else {
-            setError(result.error || "Unknown error");
-            setStatus("failed");
-          }
-        }
-      } catch (error: unknown) {
-        console.error("Error fetching repos", error);
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError("Unknown error");
-        }
-        setStatus("failed");
-      }
-    };
-
-    fetchRepos();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isModalOpen]);
-
   // 获取选中的仓库
   const getSelectedRepo = () => {
-    if (!selectedRepoId || !repoData) return null;
-    return repoData.find((repo) => repo.id === selectedRepoId);
+    if (!selectedRepoId || !repoData?.data) return null;
+    return repoData.data.find((repo) => repo.id === selectedRepoId);
   };
 
   // 处理仓库选择，自动填充表单
@@ -116,7 +107,7 @@ export default function CreateCopanyButton() {
     setIsDropdownOpen(false);
 
     // 自动填充 copany 信息
-    const repo = repoData?.find((r) => r.id === repoId);
+    const repo = repoData?.data?.find((r) => r.id === repoId);
     if (repo) {
       setCopanyName(repo.name);
       setCopanyDescription(repo.description || "");
@@ -219,17 +210,15 @@ export default function CreateCopanyButton() {
 
   async function handleCreateCopany(e: React.FormEvent) {
     e.preventDefault();
-    setIsCreatingCopany(true);
+
     const repo = getSelectedRepo();
     if (!repo) {
-      setIsCreatingCopany(false);
       return;
     }
 
     // 验证必填字段
     if (!copanyName.trim()) {
       setError("Copany name is required");
-      setIsCreatingCopany(false);
       return;
     }
 
@@ -244,30 +233,17 @@ export default function CreateCopanyButton() {
         logoUrl = getDefaultLogoUrl();
       }
 
-      const result = await createCopanyAction({
+      // 使用 React Query mutation 创建 copany
+      createCopanyMutation.mutate({
         name: copanyName,
         description: copanyDescription,
         logo_url: logoUrl,
         github_url: repo.html_url,
         github_repository_id: repo.id.toString(),
       });
-      if (result.success && result.copany) {
-        // 将新创建的 copany 添加到缓存中
-        copanyManager.setCopany(result.copany.id, result.copany);
-
-        // 关闭弹窗
-        setIsModalOpen(false);
-
-        // 跳转到新创建的 copany 详情页
-        router.push(`/copany/${result.copany.id}`);
-      } else {
-        setError(result.error || "Failed to create copany");
-      }
     } catch (error) {
       console.error("Failed to create copany:", error);
       setError("Failed to create copany");
-    } finally {
-      setIsCreatingCopany(false);
     }
   }
 
@@ -292,7 +268,6 @@ export default function CreateCopanyButton() {
     setUploadError(null);
     setCopanyName("");
     setCopanyDescription("");
-    setStatus("loading");
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -398,15 +373,15 @@ export default function CreateCopanyButton() {
         className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-84 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {status === "loading" && (
+        {isReposLoading && (
           <div className="py-8">
             <LoadingView type="label" />
           </div>
         )}
-        {status === "failed" && <div className="px-2 py-1">{error}</div>}
-        {status === "success" && repoData && (
+        {reposError && <div className="px-2 py-1">{String(reposError)}</div>}
+        {status === "success" && repoData?.data && (
           <>
-            {repoData.length === 0 ? (
+            {repoData.data.length === 0 ? (
               <EmptyPlaceholderView
                 icon={
                   <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
@@ -421,7 +396,7 @@ export default function CreateCopanyButton() {
                 size="md"
               />
             ) : (
-              repoData.map((repo) => (
+              repoData.data.map((repo) => (
                 <div
                   key={repo.id}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
@@ -567,9 +542,9 @@ export default function CreateCopanyButton() {
           type="submit"
           variant="primary"
           size="sm"
-          disabled={!selectedRepoId || isCreatingCopany}
+          disabled={!selectedRepoId || createCopanyMutation.isPending}
         >
-          {isCreatingCopany ? "Creating..." : "Create Copany"}
+          {createCopanyMutation.isPending ? "Creating..." : "Create Copany"}
         </Button>
       </div>
     );
