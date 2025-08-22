@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
-import {
-  listIssueReviewersAction,
-  approveMyReviewAction,
-} from "@/actions/issueReviewer.actions";
+import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import InreviewIcon from "@/assets/in_review_state.svg";

@@ -53,9 +53,10 @@ export default function AssignmentRequestPanel({
     Object.entries(userInfosMap || EMPTY_OBJECT).map(([id, v]) => [
       id,
       {
-        name: (v as any).name,
-        email: (v as any).email,
-        avatar_url: (v as any).avatar_url,
+        name: (v as { name: string; email: string; avatar_url: string }).name,
+        email: (v as { name: string; email: string; avatar_url: string }).email,
+        avatar_url: (v as { name: string; email: string; avatar_url: string })
+          .avatar_url,
       },
     ])
   );

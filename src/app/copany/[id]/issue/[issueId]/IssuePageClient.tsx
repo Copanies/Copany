@@ -6,21 +6,20 @@ import {
   IssueWithAssignee,
   IssueState,
   IssuePriority,
-  CopanyContributor,
   AssigneeUser,
-  Copany,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import { renderUserLabel } from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
-import Modal from "@/components/commons/Modal";
+
+import AssignmentRequestModal from "@/components/AssignmentRequestModal";
 import IssueActivityTimeline from "@/components/IssueActivityTimeline";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
-import { User } from "@supabase/supabase-js";
+
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import {
   ChevronLeftIcon,
@@ -29,14 +28,10 @@ import {
 } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import {
-  listAssignmentRequestsAction,
-  requestAssignmentToEditorsAction,
-} from "@/actions/assignmentRequest.actions";
+
 import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type { UserInfo } from "@/actions/user.actions";
+
 // React Query hooks
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useContributors } from "@/hooks/contributors";
@@ -45,8 +40,6 @@ import { useAssignmentRequests } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useIssuePermission } from "@/hooks/permissions";
 import {
-  EMPTY_ARRAY,
-  EMPTY_OBJECT,
   EMPTY_CONTRIBUTORS_ARRAY,
   EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
   EMPTY_USER_INFOS_OBJECT,
@@ -63,7 +56,6 @@ export default function IssuePageClient({
 }: IssuePageClientProps) {
   const [issueData, setIssueData] = useState<IssueWithAssignee | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestMessage, setRequestMessage] = useState("");
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -88,7 +80,7 @@ export default function IssuePageClient({
     data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
     isLoading: isContributorsLoading,
   } = useContributors(copanyId);
-  const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
+  const { data: _copany, isLoading: isCopanyLoading } = useCopany(copanyId);
   const {
     data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
     isLoading: isAssignmentRequestsLoading,
@@ -169,7 +161,7 @@ export default function IssuePageClient({
           queryClient.setQueryData<IssueWithAssignee[]>(
             ["issues", copanyId],
             (prev) => {
-              if (!prev) return prev as any;
+              if (!prev) return prev;
               return prev.map((it) =>
                 String(it.id) === String(issueData.id) ? issueData : it
               );
@@ -203,15 +195,7 @@ export default function IssuePageClient({
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [issueData, copanyId, queryClient]);
-
-  const computeEditPermission = useCallback(
-    async (issueData: IssueWithAssignee) => {
-      // Permission is now handled by useIssuePermission hook
-      // No need to manually compute here
-    },
-    [copanyId]
-  );
+  }, [issueData, queryClient, copanyId]);
 
   // Use React Query to get current issue
   const { data: rqIssue, isLoading: isIssueLoading } = useIssue(
@@ -232,7 +216,7 @@ export default function IssuePageClient({
         queryClient.setQueryData<IssueWithAssignee[]>(
           ["issues", copanyId],
           (prev) => {
-            if (!prev) return prev as any;
+            if (!prev) return prev;
             return prev.map((it) =>
               String(it.id) === String(updated.id) ? updated : it
             );
@@ -737,102 +721,13 @@ export default function IssuePageClient({
         </div>
       </div>
       {/* Assignment Request Modal */}
-      <Modal
+      <AssignmentRequestModal
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        size="sm"
-      >
-        <div className="p-5">
-          <div className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <div className="flex flex-row items-center gap-0 -ml-2">
-              <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
-              {currentUser?.user_metadata?.avatar_url ? (
-                <Image
-                  src={currentUser.user_metadata.avatar_url}
-                  alt={currentUser.user_metadata?.name || "User"}
-                  width={28}
-                  height={28}
-                  className="w-5 h-5 rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">
-                  {(
-                    currentUser?.user_metadata?.name ||
-                    currentUser?.email ||
-                    "U"
-                  )
-                    .slice(0, 1)
-                    .toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span>Request to be assigned</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold">Message (optional)</label>
-            <textarea
-              className="w-full min-h-[32px] rounded-md border border-gray-300 dark:border-gray-700 bg-transparent text-gray-900 dark:text-gray-100 px-3 py-2 outline-none"
-              placeholder="Leave a message"
-              value={requestMessage}
-              onChange={(e) => setRequestMessage(e.target.value)}
-            />
-            <div className="flex flex-row flex-wrap gap-2 mt-1">
-              {[
-                "I can do this.",
-                "I will finish it.",
-                "I like this idea.",
-                "I want to fix it.",
-              ].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setRequestMessage(t)}
-                  className="px-2 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-900 hover:cursor-pointer"
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-5">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setIsRequestModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={async () => {
-                try {
-                  await requestAssignmentToEditorsAction(
-                    issueId,
-                    requestMessage.trim() ? requestMessage.trim() : null
-                  );
-                  setIsRequestModalOpen(false);
-                  setRequestMessage("");
-
-                  // Invalidate related queries to refresh data
-                  await Promise.all([
-                    queryClient.invalidateQueries({
-                      queryKey: ["assignmentRequests", "issue", issueId],
-                    }),
-                    queryClient.invalidateQueries({
-                      queryKey: ["issueActivity", issueId],
-                    }),
-                  ]);
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-            >
-              Send
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        issueId={issueId}
+        copanyId={copanyId}
+        currentUser={currentUser || null}
+      />
     </div>
   );
 }

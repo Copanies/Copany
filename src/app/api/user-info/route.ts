@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ map });
     }
     return NextResponse.json({ error: "id or ids required" }, { status: 400 });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

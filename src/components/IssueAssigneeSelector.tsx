@@ -9,10 +9,7 @@ import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  listAssignmentRequestsAction,
-  requestAssignmentToEditorsAction,
-} from "@/actions/assignmentRequest.actions";
+import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 

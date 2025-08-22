@@ -59,7 +59,7 @@ export default function IssueEditorView({
           return json.issue as IssueWithAssignee;
         }
         throw new Error("API update failed");
-      } catch (error) {
+      } catch (_error) {
         // Fallback to Server Action
         return await updateIssueTitleAndDescriptionAction(
           id,
@@ -257,7 +257,7 @@ export default function IssueEditorView({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [isSaving, title, editingContent, isReadonly, issueData.id]);
+  }, [title, editingContent, isReadonly, issueData.id, isSaving]);
 
   // Cleanup when component unmounts
   useEffect(() => {
@@ -283,7 +283,7 @@ export default function IssueEditorView({
         clearTimeout(contentChangeTimeoutRef.current);
       }
     };
-  }, [issueData.id]);
+  }, [issueData.id, isSaving]);
 
   // Focus description editor on mount (without scrolling)
   useEffect(() => {

@@ -7,7 +7,6 @@ import {
   IssueWithAssignee,
   IssuePriority,
   IssueState,
-  CopanyContributor,
   AssigneeUser,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
@@ -26,18 +25,18 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
-import type { UserInfo } from "@/actions/user.actions";
+
+import AssignmentRequestModal from "@/components/AssignmentRequestModal";
 import { useIssues, useDeleteIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useContributors } from "@/hooks/contributors";
-import { useIssueReviewers } from "@/hooks/reviewers";
+
 import { useAssignmentRequestsByCopany } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
+import { useCopany } from "@/hooks/copany";
 import { issuesUiStateManager } from "@/utils/cache";
 import {
-  EMPTY_ARRAY,
-  EMPTY_OBJECT,
   EMPTY_STRING,
   EMPTY_ISSUES_ARRAY,
   EMPTY_CONTRIBUTORS_ARRAY,
@@ -116,6 +115,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
   const issues = issuesData || EMPTY_ISSUES_ARRAY;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
     x: number;
@@ -129,6 +130,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     useContributors(copanyId);
   const { data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY } =
     useAssignmentRequestsByCopany(copanyId);
+  const { data: copany } = useCopany(copanyId);
 
   // Local state for UI
   const [canEditByIssue, setCanEditByIssue] = useState<Record<string, boolean>>(
@@ -180,26 +182,29 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   // Compute per-issue permissions for current list
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // TODO: Replace with proper permission hook when available
-        // For now, set all issues as editable for current user
-        if (currentUser) {
-          const map: Record<string, boolean> = {};
-          for (const issue of issues) {
-            map[String(issue.id)] = true;
-          }
-          setCanEditByIssue(map);
-        }
-      } catch (_) {
-        // ignore
+    try {
+      if (!currentUser || !copany) {
+        setCanEditByIssue(EMPTY_CAN_EDIT_BY_ISSUE);
+        return;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [issues, copanyId, currentUser]);
+
+      const uid = String(currentUser.id);
+      const ownerId = copany.created_by ? String(copany.created_by) : null;
+
+      const map: Record<string, boolean> = {};
+      for (const issue of issues) {
+        const isCreator = !!(
+          issue.created_by && String(issue.created_by) === uid
+        );
+        const isAssignee = !!(issue.assignee && String(issue.assignee) === uid);
+        const isOwner = !!(ownerId && ownerId === uid);
+        map[String(issue.id)] = isCreator || isAssignee || isOwner;
+      }
+      setCanEditByIssue(map);
+    } catch (_) {
+      // ignore
+    }
+  }, [issues, currentUser, copany]);
 
   // Filtered issues by search query
   const filteredIssues = useMemo(() => {
@@ -698,7 +703,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       showText={false}
                       onAssigneeChange={handleIssueAssigneeUpdated}
                       readOnly={readOnly}
-                      disableServerUpdate={true}
+                      disableServerUpdate={false}
                       hasPendingByMe={(() => {
                         const meId = currentUser?.id
                           ? String(currentUser.id)
@@ -710,16 +715,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                         return reqIds.includes(meId);
                       })()}
                       onRequestAssignment={() => {
-                        try {
-                          const params = new URLSearchParams(
-                            searchParams.toString()
-                          );
-                          router.push(
-                            `/copany/${copanyId}/issue/${
-                              issue.id
-                            }?${params.toString()}`
-                          );
-                        } catch (_) {}
+                        setSelectedIssueId(String(issue.id));
+                        setIsRequestModalOpen(true);
                       }}
                     />
                   </div>
@@ -739,6 +736,18 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       </div>
       {/* Create Issue modal */}
       {createIssueModal()}
+
+      {/* Assignment Request Modal */}
+      <AssignmentRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => {
+          setIsRequestModalOpen(false);
+          setSelectedIssueId("");
+        }}
+        issueId={selectedIssueId}
+        copanyId={copanyId}
+        currentUser={currentUser || null}
+      />
     </div>
   );
 

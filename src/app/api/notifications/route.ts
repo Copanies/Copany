@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const items = await listNotificationsAction(limit, before || undefined);
     const unread = await unreadCountAction();
     return NextResponse.json({ items, unread });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     else if (ids && Array.isArray(ids)) await markReadAction(ids);
     else return NextResponse.json({ error: "Missing" }, { status: 400 });
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

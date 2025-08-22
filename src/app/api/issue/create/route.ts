@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       assignee,
     });
     return NextResponse.json({ issue: created });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

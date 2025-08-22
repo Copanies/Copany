@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
-import { createIssueAction } from "@/actions/issue.actions";
+
 import { useCreateIssue } from "@/hooks/issues";
 import {
   IssueWithAssignee,

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!issueId) return NextResponse.json({ error: "issueId required" }, { status: 400 });
     const items = await getIssueCommentsAction(issueId);
     return NextResponse.json({ items });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!issueId || !content) return NextResponse.json({ error: "Missing" }, { status: 400 });
     const created = await createIssueCommentAction(issueId, content, parentId);
     return NextResponse.json({ item: created });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
     if (!commentId || !content) return NextResponse.json({ error: "Missing" }, { status: 400 });
     const updated = await updateIssueCommentAction(commentId, content);
     return NextResponse.json({ item: updated });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest) {
     if (!commentId) return NextResponse.json({ error: "commentId required" }, { status: 400 });
     await deleteIssueCommentAction(commentId);
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import type { Notification, Copany } from "@/types/database.types";
+import type {
+  Notification,
+  NotificationPayload,
+  Copany,
+} from "@/types/database.types";
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
 import Button from "./commons/Button";
 import { useRouter } from "next/navigation";
@@ -117,7 +121,7 @@ export default function NotificationBell() {
           try {
             const data = await getCopanyByIdAction(id);
             return data ? ([id, data] as const) : null;
-          } catch (e) {
+          } catch (_e) {
             return null;
           }
         })
@@ -253,7 +257,7 @@ export default function NotificationBell() {
   };
 
   const renderSecondaryLine = (n: Notification) => {
-    const p = n.payload || ({} as any);
+    const p = n.payload || ({} as NotificationPayload);
     const withIssue = n as unknown as { issue?: { title?: string | null } };
     const latestTitle = withIssue?.issue?.title || p.issue_title || "";
     switch (n.type) {

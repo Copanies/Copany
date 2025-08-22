@@ -1,6 +1,6 @@
 "use client";
 
-import { CopanyContributor, Copany } from "@/types/database.types";
+import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useContributors } from "@/hooks/contributors";
 import { useMemo } from "react";

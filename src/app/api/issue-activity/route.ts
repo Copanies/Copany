@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const limit = limitStr ? Number(limitStr) : 200;
     const items = await listIssueActivityAction(issueId, limit);
     return NextResponse.json({ items });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

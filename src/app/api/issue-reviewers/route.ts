@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!issueId) return NextResponse.json({ error: "issueId required" }, { status: 400 });
     const items = await listIssueReviewersAction(issueId);
     return NextResponse.json({ items });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

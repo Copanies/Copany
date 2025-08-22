@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
     const updated = await updateIssueAssigneeAction(issueId, assignee ?? null);
     return NextResponse.json({ issue: updated });
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
