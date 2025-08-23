@@ -20,7 +20,7 @@ import {
   EMPTY_REVIEWERS_ARRAY,
   EMPTY_USER_INFOS_OBJECT,
 } from "@/utils/constants";
-import { issuesKey, issueKey } from "@/hooks/issues";
+import { issuesKey } from "@/hooks/issues";
 
 interface IssueReviewPanelProps {
   copanyId: string;
@@ -271,9 +271,6 @@ export default function IssueReviewPanel({
                   queryClient.invalidateQueries({
                     queryKey: issuesKey(copanyId),
                   });
-                  // queryClient.invalidateQueries({
-                  //   queryKey: issueKey(copanyId, issueId),
-                  // });
                 }}
                 disabled={updateIssueStateMutation.isPending || !meId}
                 size="sm"

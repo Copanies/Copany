@@ -12,7 +12,6 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
-import { issueKey } from "@/hooks/issues";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -149,11 +148,6 @@ export default function IssueAssigneeSelector({
               copanyId
                 ? qc.invalidateQueries({ queryKey: ["issues", copanyId] })
                 : Promise.resolve(),
-              // copanyId
-              //   ? qc.invalidateQueries({
-              //       queryKey: issueKey(copanyId, issueId),
-              //     })
-              //   : Promise.resolve(),
             ]);
           } catch (_) {}
         }
