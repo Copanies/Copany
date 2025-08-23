@@ -1,11 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { User } from "@supabase/supabase-js";
 import logo from "@/app/favicon.ico";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { currentUserManager } from "@/utils/cache";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
@@ -14,30 +12,23 @@ import NotificationBell from "./NotificationBell";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubIconDark from "@/assets/github_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function MainNavigation() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: user, isLoading: loading } = useCurrentUser();
   const isDarkMode = useDarkMode();
+
+  // 使用 useRef 稳定 queryClient 的引用，避免 effect 依赖整个对象
+  const queryClientRef = useRef(queryClient);
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  }, [queryClient]);
+
   useEffect(() => {
     const supabase = createClient();
-
-    // 获取初始用户信息（优先从缓存）
-    const getInitialUser = async () => {
-      try {
-        // 使用缓存管理器获取用户
-        const user = await currentUserManager.getCurrentUser();
-        setUser(user);
-      } catch (err) {
-        console.error("Failed to get user:", err);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialUser();
 
     // 监听认证状态变化
     const {
@@ -45,35 +36,25 @@ export default function MainNavigation() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
         // 清除用户缓存
-        currentUserManager.clearUser();
-        setUser(null);
-        setLoading(false);
+        queryClientRef.current.removeQueries({ queryKey: ["currentUser"] });
+        queryClientRef.current.removeQueries({ queryKey: ["userInfo"] });
       } else if (event === "SIGNED_IN" && session?.user) {
-        // 设置用户到缓存
-        currentUserManager.setUser(session.user);
-        setUser(session.user);
-        setLoading(false);
+        // 刷新用户查询
+        queryClientRef.current.invalidateQueries({ queryKey: ["currentUser"] });
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // 移除 queryClient 依赖，使用 ref 中的最新值
 
   const handleLogout = async () => {
     try {
-      // 立即清除客户端状态和缓存
-      setUser(null);
-      currentUserManager.clearUser();
-
-      // 然后执行服务器端登出
+      // 执行服务器端登出
       await signOut();
     } catch (error) {
       console.error("Failed to logout:", error);
-      // 如果服务器端登出失败，恢复用户状态
-      const cachedUser = await currentUserManager.getCurrentUser();
-      setUser(cachedUser);
     }
   };
 

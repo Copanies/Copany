@@ -135,25 +135,30 @@ export class IssueService {
     return issuesWithAssignee[0];
   }
 
-  static async updateIssue(
-    issue: Omit<
-      Issue,
-      "created_at" | "updated_at" | "closed_at" | "created_by" | "copany_id"
-    >
+  static async deleteIssue(issueId: string): Promise<void> {
+    const supabase = await createSupabaseClient();
+    const { error } = await supabase.from("issue").delete().eq("id", issueId);
+    if (error) {
+      console.error("Error deleting issue:", error);
+      throw new Error(`Failed to delete issue: ${error.message}`);
+    }
+  }
+
+  static async updateIssueTitleAndDescription(
+    issueId: string,
+    title: string,
+    description: string
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue")
-      .update({
-        ...issue,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", issue.id)
+      .update({ title, description, updated_at: new Date().toISOString() })
+      .eq("id", issueId)
       .select()
       .single();
     if (error) {
-      console.error("Error updating issue:", error);
-      throw new Error(`Failed to update issue: ${error.message}`);
+      console.error("Error updating issue title and description:", error);
+      throw new Error(`Failed to update issue title and description: ${error.message}`);
     }
 
     const updatedIssue = data as Issue;
@@ -162,15 +167,6 @@ export class IssueService {
     ]);
 
     return issuesWithAssignee[0];
-  }
-
-  static async deleteIssue(issueId: string): Promise<void> {
-    const supabase = await createSupabaseClient();
-    const { error } = await supabase.from("issue").delete().eq("id", issueId);
-    if (error) {
-      console.error("Error deleting issue:", error);
-      throw new Error(`Failed to delete issue: ${error.message}`);
-    }
   }
 
   static async updateIssueState(

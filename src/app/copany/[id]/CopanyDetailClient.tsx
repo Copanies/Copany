@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Copany } from "@/types/database.types";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { currentUserManager, CopanyManager } from "@/utils/cache";
+import { useCopany } from "@/hooks/copany";
+import { useCurrentUser } from "@/hooks/currentUser";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./subviews/ReadmeView";
 import LicenseView from "./subviews/LicenseView";
@@ -12,9 +10,10 @@ import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
 import ContributionView from "./subviews/ContributionView";
 import SettingsView from "./subviews/settings/SettingsView";
-import { User } from "@supabase/supabase-js";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
+import { EMPTY_STRING } from "@/utils/constants";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -27,60 +26,12 @@ export default function CopanyDetailClient({
     copanyId,
   });
 
-  const [copany, setCopany] = useState<Copany | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const hasInitialLoadRef = useRef(false);
+  // 使用 React Query hooks 替代 cacheManager
+  const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  const queryClient = useQueryClient();
 
-  // Create a CopanyManager instance with a data update callback
-  const copanyManagerWithCallback = useMemo(() => {
-    return new CopanyManager((key, updatedData) => {
-      console.log(
-        `[CopanyDetailClient] 后台刷新完成，数据已更新: ${key}`,
-        updatedData
-      );
-      setCopany(updatedData); // Automatically update UI
-    });
-  }, []);
-
-  // Use new SWR strategy to load data
-  const loadCopany = useCallback(async () => {
-    if (hasInitialLoadRef.current) return;
-    hasInitialLoadRef.current = true;
-
-    try {
-      console.log(
-        `[CopanyDetailClient] 🔄 Loading copany with SWR strategy...`
-      );
-      setIsLoading(true);
-
-      // Load copany data and current user information in parallel
-      const [copanyData, userData] = await Promise.all([
-        copanyManagerWithCallback.getCopany(copanyId, async () => {
-          const result = await getCopanyByIdAction(copanyId);
-          if (!result) {
-            throw new Error("Copany not found");
-          }
-          return result;
-        }),
-        currentUserManager.getCurrentUser(),
-      ]);
-
-      console.log(`[CopanyDetailClient] ✅ Loaded copany:`, copanyData);
-      console.log(`[CopanyDetailClient] ✅ Loaded user:`, userData?.email);
-
-      setCopany(copanyData);
-      setCurrentUser(userData);
-    } catch (error) {
-      console.error("[CopanyDetailClient] ❌ Error loading copany:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [copanyId, copanyManagerWithCallback]);
-
-  useEffect(() => {
-    loadCopany();
-  }, [loadCopany]);
+  const isLoading = isCopanyLoading || isUserLoading;
 
   if (isLoading) {
     return (
@@ -113,7 +64,10 @@ export default function CopanyDetailClient({
         <LicenseView
           githubUrl={copany.github_url}
           copany={copany}
-          onCopanyUpdate={setCopany}
+          onCopanyUpdate={(_updatedCopany) => {
+            // 这里可以通过 React Query 的 setQueryData 来更新缓存
+            // 或者让 LicenseView 内部处理数据更新
+          }}
         />
       ),
     },
@@ -130,7 +84,17 @@ export default function CopanyDetailClient({
           {
             label: "Settings",
             content: (
-              <SettingsView copany={copany} onCopanyUpdate={setCopany} />
+              <SettingsView
+                copany={copany}
+                onCopanyUpdate={(updatedCopany) => {
+                  // 更新 React Query 缓存以保持 UI 同步
+                  queryClient.setQueryData(["copany", copanyId], updatedCopany);
+                  queryClient.invalidateQueries({
+                    queryKey: ["copany", copanyId],
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["copanies"] });
+                }}
+              />
             ),
           },
         ]
@@ -143,8 +107,8 @@ export default function CopanyDetailClient({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image
-              src={copany.logo_url || ""}
-              alt={copany.name || ""}
+              src={copany.logo_url || EMPTY_STRING}
+              alt={copany.name || EMPTY_STRING}
               width={40}
               height={40}
               className="rounded-md"

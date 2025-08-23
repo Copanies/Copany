@@ -1,12 +1,23 @@
 import { createSupabaseClient } from "@/utils/supabase/server";
-import type {
-  AssignmentRequest,
-  AssignmentRequestStatus,
-  Issue,
-} from "@/types/database.types";
+import type { AssignmentRequest, Issue } from "@/types/database.types";
 
 export class AssignmentRequestService {
+  static async listByCopany(copanyId: string): Promise<AssignmentRequest[]> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("issue_assignment_request")
+      .select("*")
+      .eq("copany_id", copanyId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data || []) as AssignmentRequest[];
+  }
+
   static async listByIssue(issueId: string): Promise<AssignmentRequest[]> {
+    // Guard against temporary/invalid ids (e.g., "temp") to avoid bigint casting errors
+    if (!/^\d+$/.test(String(issueId))) {
+      return [];
+    }
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("issue_assignment_request")
@@ -25,27 +36,28 @@ export class AssignmentRequestService {
   ): Promise<AssignmentRequest[]> {
     if (recipientIds.length === 0) return [];
     const supabase = await createSupabaseClient();
-    // Guard: Only one in-progress (requested) batch per (issue, requester)
+    // Guard: ensure there is no identical triplet already (prevent duplicates in one batch)
+    // We allow multiple batches over time; dedupe is by (issue, requester, recipient)
+
+    // Load copany_id for the issue to store redundancy for copany-level listing
+    let copanyId: string | null = null;
     {
-      const { data: existingRequested, error: existingErr } = await supabase
-        .from("issue_assignment_request")
-        .select("id")
-        .eq("issue_id", issueId)
-        .eq("requester_id", requesterId)
-        .eq("status", "requested");
-      if (existingErr) throw new Error(existingErr.message);
-      if ((existingRequested || []).length > 0) {
-        throw new Error("There is already an in-progress assignment request for this issue and requester.");
-      }
+      const { data: issueRow, error: issueErr } = await supabase
+        .from("issue")
+        .select("copany_id")
+        .eq("id", issueId)
+        .single();
+      if (issueErr) throw new Error(issueErr.message);
+      copanyId = (issueRow?.copany_id as string) || null;
     }
 
-    // Insert many; we rely on partial unique index (status='requested') to prevent duplicates in-progress
+    // Insert many; rely on unique index (issue_id, requester_id, recipient_id) to prevent exact duplicates
     const payload = recipientIds.map((rid) => ({
+      copany_id: copanyId,
       issue_id: issueId,
       requester_id: requesterId,
       recipient_id: rid,
       message: message ?? null,
-      status: "requested" as AssignmentRequestStatus,
     }));
     const { data, error } = await supabase
       .from("issue_assignment_request")
@@ -93,23 +105,17 @@ export class AssignmentRequestService {
     return await this.createForRecipients(issueId, requesterId, recipients, message);
   }
 
-  static async setStatus(
+  static async deleteAllForRequester(
     issueId: string,
-    requesterId: string,
-    recipientId: string,
-    status: AssignmentRequestStatus
-  ): Promise<AssignmentRequest> {
+    requesterId: string
+  ): Promise<void> {
     const supabase = await createSupabaseClient();
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("issue_assignment_request")
-      .update({ status })
+      .delete()
       .eq("issue_id", issueId)
-      .eq("requester_id", requesterId)
-      .eq("recipient_id", recipientId)
-      .select()
-      .single();
+      .eq("requester_id", requesterId);
     if (error) throw new Error(error.message);
-    return data as AssignmentRequest;
   }
 }
 

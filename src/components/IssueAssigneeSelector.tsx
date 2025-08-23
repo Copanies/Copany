@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
+import { useUpdateIssueAssignee } from "@/hooks/issues";
 import { CopanyContributor, AssigneeUser } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  requestAssignmentToEditorsAction,
-  listAssignmentRequestsAction,
-} from "@/actions/assignmentRequest.actions";
+import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
-import { assignmentRequestsManager } from "@/utils/cache";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -31,6 +29,8 @@ interface IssueAssigneeSelectorProps {
   disableServerUpdate?: boolean;
   readOnly?: boolean;
   onRequestAssignment?: () => void; // 当只读并点击 Self 时，触发页面级弹窗
+  hasPendingByMe?: boolean; // 外部传入：当前用户是否在该 issue 有进行中的请求
+  copanyId?: string;
 }
 
 export default function IssueAssigneeSelector({
@@ -45,64 +45,27 @@ export default function IssueAssigneeSelector({
   disableServerUpdate = false,
   readOnly = false,
   onRequestAssignment,
+  hasPendingByMe = false,
+  copanyId,
 }: IssueAssigneeSelectorProps) {
   const [currentAssignee, setCurrentAssignee] = useState(initialAssignee);
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
-  const [hasPendingByMe, setHasPendingByMe] = useState<boolean>(false);
+  const mutation = useUpdateIssueAssignee(copanyId || "");
+  const qc = useQueryClient();
 
-  // Check if current user already has an in-progress (requested batch) assignment request
+  // 当 props 变化时同步内部状态，确保外部缓存更新能反映到 UI
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        if (!currentUser) {
-          if (!cancelled) setHasPendingByMe(false);
-          return;
-        }
-        const list = await assignmentRequestsManager.getRequests(issueId, () =>
-          listAssignmentRequestsAction(issueId)
-        );
-        const byMe = list.filter(
-          (x) => String(x.requester_id) === String(currentUser.id)
-        );
-        if (byMe.length === 0) {
-          if (!cancelled) setHasPendingByMe(false);
-          return;
-        }
-        const sorted = [...byMe].sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-        const lastTerminalAt = sorted
-          .filter(
-            (r) =>
-              r.status === "accepted" ||
-              r.status === "refused" ||
-              r.status === "skipped"
-          )
-          .reduce<string | null>((acc, r) => {
-            const t = r.updated_at || r.created_at;
-            if (!acc) return t;
-            return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-          }, null);
-        const currentBatch = sorted.filter((r) =>
-          lastTerminalAt
-            ? new Date(r.created_at).getTime() >
-              new Date(lastTerminalAt).getTime()
-            : true
-        );
-        const inProgress =
-          currentBatch.length > 0 &&
-          currentBatch.every((r) => r.status === "requested");
-        if (!cancelled) setHasPendingByMe(inProgress);
-      } catch (_) {
-        if (!cancelled) setHasPendingByMe(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [issueId, currentUser]);
+    setCurrentAssignee(initialAssignee);
+  }, [initialAssignee]);
+  useEffect(() => {
+    setCurrentAssigneeUser(assigneeUser || null);
+  }, [assigneeUser]);
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
 
   const handleAssigneeChange = useCallback(
     async (newAssignee: string) => {
@@ -116,6 +79,15 @@ export default function IssueAssigneeSelector({
             } else {
               await requestAssignmentToEditorsAction(issueId, null);
             }
+            // 请求发起成功后，失效相关查询（assignment requests、activity）
+            try {
+              await Promise.all([
+                qc.invalidateQueries({
+                  queryKey: ["assignmentRequests", "issue", issueId],
+                }),
+                qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
+              ]);
+            } catch (_) {}
           }
         } catch (error) {
           console.error("Error requesting assignment:", error);
@@ -162,8 +134,22 @@ export default function IssueAssigneeSelector({
 
         // Only call the update assignee API when not in creation mode
         if (!disableServerUpdate) {
-          await updateIssueAssigneeAction(issueId, assigneeValue);
+          if (copanyId) {
+            await mutateRef.current({ issueId, assignee: assigneeValue });
+          } else {
+            await updateIssueAssigneeAction(issueId, assigneeValue);
+          }
           console.log("Assignee updated successfully:", assigneeValue);
+
+          // 指派变化会产生活动，触发活动流与 Issues 查询失效
+          try {
+            await Promise.all([
+              qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
+              copanyId
+                ? qc.invalidateQueries({ queryKey: ["issues", copanyId] })
+                : Promise.resolve(),
+            ]);
+          } catch (_) {}
         }
       } catch (error) {
         console.error("Error updating assignee:", error);
@@ -187,12 +173,22 @@ export default function IssueAssigneeSelector({
       readOnly,
       onRequestAssignment,
       hasPendingByMe,
+      copanyId,
+      qc,
     ]
   );
 
   // Build grouped options
   const groups = (() => {
-    const groups = [];
+    const groups = [] as Array<{
+      title: string | null;
+      options: Array<{
+        value: string;
+        label: React.ReactElement;
+        disabled?: boolean;
+        tooltip?: string;
+      }>;
+    }>;
 
     // Add "Unassigned" option
     groups.push({
@@ -215,7 +211,7 @@ export default function IssueAssigneeSelector({
           {
             value: currentUser.id,
             label: (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 justify-between w-full">
                 {renderUserLabel(
                   currentUser.user_metadata?.name || "Unknown",
                   currentUser.user_metadata?.avatar_url || null,

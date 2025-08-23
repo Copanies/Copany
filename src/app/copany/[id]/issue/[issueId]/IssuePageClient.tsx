@@ -1,33 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { getIssueAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
   IssueState,
   IssuePriority,
-  CopanyContributor,
   AssigneeUser,
-  Copany,
 } from "@/types/database.types";
+import type { UserInfo } from "@/actions/user.actions";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import { renderUserLabel } from "@/components/IssueAssigneeSelector";
 import IssueEditorView from "@/components/IssueEditorView";
-import Modal from "@/components/commons/Modal";
+
+import AssignmentRequestModal from "@/components/AssignmentRequestModal";
 import IssueActivityTimeline from "@/components/IssueActivityTimeline";
-import {
-  currentUserManager,
-  contributorsManager,
-  issuesManager,
-  copanyManager,
-  issuePermissionManager,
-  assignmentRequestsManager,
-} from "@/utils/cache";
+import { useIssue } from "@/hooks/issues";
+import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
-import { User } from "@supabase/supabase-js";
+
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import {
   ChevronLeftIcon,
@@ -36,16 +29,23 @@ import {
 } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import { EyeIcon } from "@heroicons/react/24/outline";
-import { getCopanyByIdAction } from "@/actions/copany.actions";
-import Image from "next/image";
-import {
-  listAssignmentRequestsAction,
-  requestAssignmentToEditorsAction,
-} from "@/actions/assignmentRequest.actions";
+
 import type { AssignmentRequest } from "@/types/database.types";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { userInfoManager } from "@/utils/cache";
-import type { UserInfo } from "@/actions/user.actions";
+
+// React Query hooks
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useContributors } from "@/hooks/contributors";
+import { useCopany } from "@/hooks/copany";
+import { useAssignmentRequests } from "@/hooks/assignmentRequests";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { useIssuePermission } from "@/hooks/permissions";
+import {
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
+  EMPTY_USER_INFOS_OBJECT,
+  EMPTY_ARRAY,
+} from "@/utils/constants";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -57,25 +57,11 @@ export default function IssuePageClient({
   issueId,
 }: IssuePageClientProps) {
   const [issueData, setIssueData] = useState<IssueWithAssignee | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
-  const [canEdit, setCanEdit] = useState<boolean>(false);
-  const [isPermissionResolved, setIsPermissionResolved] =
-    useState<boolean>(false);
-  const [readOnlyTooltip, setReadOnlyTooltip] = useState<string>("");
-  const [pendingRequestsByRequester, setPendingRequestsByRequester] = useState<
-    Record<string, AssignmentRequest[]>
-  >({});
-  const [requestersInfo, setRequestersInfo] = useState<
-    Record<string, UserInfo>
-  >({});
-  const [creatorInfo, setCreatorInfo] = useState<UserInfo | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestMessage, setRequestMessage] = useState("");
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const handleBack = () => {
     // Build return URL, keep tab and subtab parameters
@@ -90,25 +76,106 @@ export default function IssuePageClient({
   // For tracking unsaved changes
   const hasUnsavedChangesRef = useRef(false);
 
+  // React Query hooks
+  const { data: currentUser } = useCurrentUser();
+  const {
+    data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
+    isLoading: isContributorsLoading,
+  } = useContributors(copanyId);
+  const { data: _copany, isLoading: isCopanyLoading } = useCopany(copanyId);
+  const {
+    data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
+    isLoading: isAssignmentRequestsLoading,
+  } = useAssignmentRequests(issueId);
+  const { data: canEdit = false, isLoading: isPermissionLoading } =
+    useIssuePermission(copanyId, issueData);
+
+  // Overall loading state
+  const isLoading =
+    isContributorsLoading ||
+    isCopanyLoading ||
+    isAssignmentRequestsLoading ||
+    isPermissionLoading;
+
+  // Collect user IDs from assignment requests for user info
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    // Add requester IDs from assignment requests
+    assignmentRequests.forEach((req) => {
+      if (req.requester_id) ids.add(String(req.requester_id));
+    });
+
+    // Add creator ID if exists
+    if (issueData?.created_by) {
+      ids.add(String(issueData.created_by));
+    }
+
+    return Array.from(ids);
+  }, [assignmentRequests, issueData?.created_by]);
+
+  const { data: userInfosMap = EMPTY_USER_INFOS_OBJECT } =
+    useUsersInfo(userIds);
+
+  // Compute pending requests by requester
+  const pendingRequestsByRequester = useMemo(() => {
+    const map: Record<string, AssignmentRequest[]> = {};
+    for (const req of assignmentRequests) {
+      const key = String(req.requester_id);
+      if (!map[key]) map[key] = [];
+      map[key].push(req);
+    }
+    return map;
+  }, [assignmentRequests]);
+
+  // Extract requesters info and creator info
+  const requestersInfo = useMemo(() => {
+    const map: Record<string, UserInfo> = {};
+    Object.keys(pendingRequestsByRequester).forEach((requesterId) => {
+      if (userInfosMap[requesterId]) {
+        map[requesterId] = userInfosMap[requesterId];
+      }
+    });
+    return map;
+  }, [pendingRequestsByRequester, userInfosMap]);
+
+  const creatorInfo = useMemo(() => {
+    if (!issueData?.created_by) return null;
+    return userInfosMap[String(issueData.created_by)] || null;
+  }, [issueData?.created_by, userInfosMap]);
+
+  // Permission resolved when we have the data
+  const isPermissionResolved = !isPermissionLoading;
+
+  // Read-only tooltip
+  const readOnlyTooltip = useMemo(() => {
+    if (canEdit) return "";
+    return "Only the Copany owner, Issue creator, or current assignee can edit.";
+  }, [canEdit]);
+
   // Save handling when page leaves
   useEffect(() => {
     const handleBeforeUnload = () => {
       // If there are unsaved changes, save silently
       if (hasUnsavedChangesRef.current && issueData) {
-        // Save in cache first
-        issuesManager.updateIssue(copanyId, issueData);
-        // Use sendBeacon for reliable background save
+        // Update React Query cache to persist latest draft locally
+        try {
+          queryClient.setQueryData<IssueWithAssignee[]>(
+            ["issues", copanyId],
+            (prev) => {
+              if (!prev) return prev;
+              return prev.map((it) =>
+                String(it.id) === String(issueData.id) ? issueData : it
+              );
+            }
+          );
+        } catch (_) {}
+
         const payload = JSON.stringify({
           id: issueData.id,
-          title: issueData.title,
           description: issueData.description,
-          state: issueData.state ?? 0,
-          priority: issueData.priority ?? null,
-          level: issueData.level ?? null,
-          assignee: issueData.assignee ?? null,
         });
 
-        // Try using sendBeacon for background save
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/api/issue/update", payload);
         }
@@ -118,9 +185,7 @@ export default function IssuePageClient({
     };
 
     const handleVisibilityChange = () => {
-      // Save immediately when page becomes hidden
       if (document.hidden && hasUnsavedChangesRef.current && issueData) {
-        // Here you can trigger save logic
         console.log("🚀 Background save initiated on visibility change");
       }
     };
@@ -132,184 +197,40 @@ export default function IssuePageClient({
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [issueData, copanyId]);
+  }, [issueData, queryClient, copanyId]);
 
-  const computeEditPermission = useCallback(
-    async (issueData: IssueWithAssignee) => {
-      const allowed = await issuePermissionManager.canEditIssue(
-        copanyId,
-        issueData
-      );
-      setCanEdit(allowed);
-      setReadOnlyTooltip(
-        allowed
-          ? ""
-          : "Only the Copany owner, Issue creator, or current assignee can edit."
-      );
-      setIsPermissionResolved(true);
-    },
-    [copanyId]
+  // Use React Query to get current issue
+  const { data: rqIssue, isLoading: isIssueLoading } = useIssue(
+    copanyId,
+    issueId
   );
 
+  // Sync RQ issue to local state for editor and permission computation
   useEffect(() => {
-    const loadData = async () => {
+    if (rqIssue) {
+      setIssueData(rqIssue);
+    }
+  }, [rqIssue]);
+
+  const updateIssueInCache = useCallback(
+    (updated: IssueWithAssignee) => {
       try {
-        setIsLoading(true);
-
-        // Load user and contributor data
-        const [user, contributorList, _copany] = await Promise.all([
-          currentUserManager.getCurrentUser(),
-          contributorsManager.getContributors(copanyId),
-          copanyManager.getCopany(copanyId, async () => {
-            const result = await getCopanyByIdAction(copanyId);
-            if (!result) throw new Error("Copany not found");
-            return result as Copany;
-          }),
-        ]);
-
-        setCurrentUser(user);
-        setContributors(contributorList);
-
-        console.log(`[IssuePageClient] 📱 Client mounted, checking cache...`);
-
-        // First try to get from cache
-        const cachedData = issuesManager.getIssue(copanyId, issueId);
-        if (cachedData) {
-          console.log(
-            `[IssuePageClient] 💾 Using cached data: ${cachedData.title}`
-          );
-          setIssueData(cachedData);
-        } else {
-          console.log(
-            `[IssuePageClient] 🚫 No cache available, loading from server...`
-          );
-        }
-
-        // Compute edit permission
-        if (cachedData) {
-          await computeEditPermission(cachedData);
-        }
-
-        setIsLoading(false);
-
-        // Then get latest data from server
-        const freshIssueData = await getIssueAction(issueId);
-        console.log(
-          `[IssuePageClient] ✅ Loaded from server:`,
-          freshIssueData?.title
+        // 更新 issues 列表缓存
+        queryClient.setQueryData<IssueWithAssignee[]>(
+          ["issues", copanyId],
+          (prev) => {
+            if (!prev) return prev;
+            return prev.map((it) =>
+              String(it.id) === String(updated.id) ? updated : it
+            );
+          }
         );
-        setIssueData(freshIssueData);
-        await computeEditPermission(freshIssueData);
-        // Update cache
-        if (freshIssueData) {
-          issuesManager.updateIssue(copanyId, freshIssueData);
-        }
-
-        // Load pending assignment requests (requested only), grouped by requester
-        try {
-          const list = await assignmentRequestsManager.getRequests(
-            issueId,
-            () => listAssignmentRequestsAction(issueId)
-          );
-          const map: Record<string, AssignmentRequest[]> = {};
-          for (const it of list) {
-            if (it.status !== "requested") continue;
-            const key = String(it.requester_id);
-            if (!map[key]) map[key] = [];
-            map[key].push(it);
-          }
-          setPendingRequestsByRequester(map);
-          // 批量获取请求者用户信息
-          const requesterIds = Object.keys(map);
-          if (requesterIds.length > 0) {
-            try {
-              const infos = await userInfoManager.getMultipleUserInfo(
-                requesterIds
-              );
-              setRequestersInfo(infos);
-            } catch (e) {
-              console.error("Failed to load requester user infos", e);
-            }
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      } catch (error) {
-        console.error("Error loading issue data:", error);
-        setIsPermissionResolved(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Listen cache updates to immediately reflect background refresh results
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (detail.manager === "IssuesManager" && detail.key === copanyId) {
-          const list = detail.data as IssueWithAssignee[];
-          const found = list.find((x) => String(x.id) === String(issueId));
-          if (found) setIssueData(found);
-        }
       } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [copanyId, issueId, computeEditPermission]);
+    },
+    [queryClient, copanyId]
+  );
 
-  // Load creator user info via userInfoManager
-  useEffect(() => {
-    const fetchCreator = async () => {
-      try {
-        const creatorId = issueData?.created_by
-          ? String(issueData.created_by)
-          : null;
-        if (!creatorId) {
-          setCreatorInfo(null);
-          return;
-        }
-        const info = await userInfoManager.getUserInfo(creatorId);
-        setCreatorInfo(info);
-      } catch (_) {
-        setCreatorInfo(null);
-      }
-    };
-    fetchCreator();
-  }, [issueData?.created_by]);
-
-  const reloadPendingRequests = useCallback(async () => {
-    try {
-      const list = await assignmentRequestsManager.getRequests(issueId, () =>
-        listAssignmentRequestsAction(issueId)
-      );
-      const map: Record<string, AssignmentRequest[]> = {};
-      for (const it of list) {
-        if (it.status !== "requested") continue;
-        const key = String(it.requester_id);
-        if (!map[key]) map[key] = [];
-        map[key].push(it);
-      }
-      setPendingRequestsByRequester(map);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [issueId]);
+  // Remove old fetchCreator and reloadPendingRequests functions since data is now managed by React Query
 
   const handleStateChange = useCallback(
     async (newState: IssueState) => {
@@ -319,14 +240,14 @@ export default function IssuePageClient({
         // Optimistically update state only; closed_at handled by cache and corrected by server
         const optimistic = { ...issueData, state: newState };
         setIssueData(optimistic);
-        issuesManager.updateIssue(copanyId, optimistic);
+        updateIssueInCache(optimistic);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 State updated: ${newState}`);
       } catch (error) {
         console.error("Error updating issue state:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handlePriorityChange = useCallback(
@@ -339,14 +260,14 @@ export default function IssuePageClient({
           priority: newPriority,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Priority updated: ${newPriority}`);
       } catch (error) {
         console.error("Error updating issue priority:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handleLevelChange = useCallback(
@@ -359,14 +280,14 @@ export default function IssuePageClient({
           level: newLevel,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Level updated: ${newLevel}`);
       } catch (error) {
         console.error("Error updating issue level:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const handleAssigneeChange = useCallback(
@@ -384,14 +305,14 @@ export default function IssuePageClient({
           assignee_user: assigneeUser,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Assignee updated: ${newAssignee}`);
       } catch (error) {
         console.error("Error updating issue assignee:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   // Handle title change
@@ -405,14 +326,14 @@ export default function IssuePageClient({
           title: newTitle,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Title updated: ${newTitle}`);
       } catch (error) {
         console.error("Error updating issue title:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   // Handle description change
@@ -426,14 +347,14 @@ export default function IssuePageClient({
           description: newDescription,
         };
         setIssueData(updated);
-        issuesManager.updateIssue(copanyId, updated);
+        updateIssueInCache(updated);
         hasUnsavedChangesRef.current = true;
         console.log(`[IssuePageClient] 📝 Description updated`, newDescription);
       } catch (error) {
         console.error("Error updating issue description:", error);
       }
     },
-    [issueData, copanyId]
+    [issueData, updateIssueInCache]
   );
 
   const assignmentRequestView = (() => {
@@ -497,7 +418,7 @@ export default function IssuePageClient({
     );
   })();
 
-  if (isLoading) {
+  if (isLoading || isIssueLoading) {
     return <LoadingView type="page" />;
   }
 
@@ -547,10 +468,11 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialState={issueData.state}
               showText={true}
+              copanyId={copanyId}
               onStateChange={(_, newState) => handleStateChange(newState)}
               onServerUpdated={(serverIssue) => {
                 setIssueData(serverIssue);
-                issuesManager.updateIssue(copanyId, serverIssue);
+                updateIssueInCache(serverIssue);
               }}
               readOnly={!canEdit}
             />
@@ -564,6 +486,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialPriority={issueData.priority}
               showText={true}
+              copanyId={copanyId}
               onPriorityChange={(_, newPriority) =>
                 handlePriorityChange(newPriority)
               }
@@ -579,6 +502,7 @@ export default function IssuePageClient({
               issueId={issueData.id}
               initialLevel={issueData.level}
               showText={true}
+              copanyId={copanyId}
               onLevelChange={(_, newLevel) => handleLevelChange(newLevel)}
               readOnly={!canEdit}
             />
@@ -596,9 +520,19 @@ export default function IssuePageClient({
                   assigneeUser={issueData.assignee_user}
                   currentUser={currentUser}
                   contributors={contributors}
+                  copanyId={copanyId}
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}
+                  hasPendingByMe={(() => {
+                    const meId = currentUser?.id
+                      ? String(currentUser.id)
+                      : null;
+                    if (!meId) return false;
+                    const list =
+                      pendingRequestsByRequester[meId] || EMPTY_ARRAY;
+                    return list.length > 0;
+                  })()}
                 />
                 {(() => {
                   const meId = currentUser?.id ? String(currentUser.id) : null;
@@ -619,7 +553,7 @@ export default function IssuePageClient({
                       >
                         <div className="flex flex-row items-center gap-1">
                           <HandRaisedIcon className="w-4 h-4 -rotate-30" />
-                          <p>Own this</p>
+                          <p>Assign to me</p>
                         </div>
                       </Button>
                     );
@@ -659,6 +593,7 @@ export default function IssuePageClient({
             {/* Issue activity timeline (includes comments) */}
             <IssueActivityTimeline
               issueId={issueData.id}
+              copanyId={copanyId}
               canEdit={canEdit}
               issueState={issueData.state}
               issueLevel={issueData.level}
@@ -687,7 +622,8 @@ export default function IssuePageClient({
                 onStateChange={(_, newState) => handleStateChange(newState)}
                 onServerUpdated={(serverIssue) => {
                   setIssueData(serverIssue);
-                  issuesManager.updateIssue(copanyId, serverIssue);
+                  updateIssueInCache(serverIssue);
+                  updateIssueInCache(serverIssue);
                 }}
                 readOnly={!canEdit}
               />
@@ -729,9 +665,19 @@ export default function IssuePageClient({
                   assigneeUser={issueData.assignee_user}
                   currentUser={currentUser}
                   contributors={contributors}
+                  copanyId={copanyId}
                   onAssigneeChange={handleAssigneeChange}
                   readOnly={!canEdit}
                   onRequestAssignment={() => setIsRequestModalOpen(true)}
+                  hasPendingByMe={(() => {
+                    const meId = currentUser?.id
+                      ? String(currentUser.id)
+                      : null;
+                    if (!meId) return false;
+                    const list =
+                      pendingRequestsByRequester[meId] || EMPTY_ARRAY;
+                    return list.length > 0;
+                  })()}
                 />
                 {(() => {
                   const meId = currentUser?.id ? String(currentUser.id) : null;
@@ -752,7 +698,7 @@ export default function IssuePageClient({
                       >
                         <div className="flex flex-row items-center gap-1">
                           <HandRaisedIcon className="w-4 h-4 -rotate-30" />
-                          <p>Own this</p>
+                          <p>Assign to me</p>
                         </div>
                       </Button>
                     );
@@ -778,93 +724,13 @@ export default function IssuePageClient({
         </div>
       </div>
       {/* Assignment Request Modal */}
-      <Modal
+      <AssignmentRequestModal
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        size="sm"
-      >
-        <div className="p-5">
-          <div className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <div className="flex flex-row items-center gap-0 -ml-2">
-              <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
-              {currentUser?.user_metadata?.avatar_url ? (
-                <Image
-                  src={currentUser.user_metadata.avatar_url}
-                  alt={currentUser.user_metadata?.name || "User"}
-                  width={28}
-                  height={28}
-                  className="w-5 h-5 rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">
-                  {(
-                    currentUser?.user_metadata?.name ||
-                    currentUser?.email ||
-                    "U"
-                  )
-                    .slice(0, 1)
-                    .toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span>Request to be assigned</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold">Message (optional)</label>
-            <textarea
-              className="w-full min-h-[32px] rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 py-2 outline-none"
-              placeholder="Leave a message"
-              value={requestMessage}
-              onChange={(e) => setRequestMessage(e.target.value)}
-            />
-            <div className="flex flex-row flex-wrap gap-2 mt-1">
-              {[
-                "I can do this.",
-                "I will finish it.",
-                "I like this idea.",
-                "I want to fix it.",
-              ].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setRequestMessage(t)}
-                  className="px-2 py-1 text-sm rounded-md bg-gray-100 dark:bg-gray-900 hover:cursor-pointer"
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-5">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setIsRequestModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={async () => {
-                try {
-                  await requestAssignmentToEditorsAction(
-                    issueId,
-                    requestMessage.trim() ? requestMessage.trim() : null
-                  );
-                  setIsRequestModalOpen(false);
-                  setRequestMessage("");
-                  await reloadPendingRequests();
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-            >
-              Send
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        issueId={issueId}
+        copanyId={copanyId}
+        currentUser={currentUser || null}
+      />
     </div>
   );
 }

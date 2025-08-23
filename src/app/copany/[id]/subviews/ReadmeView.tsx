@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
-import { currentUserManager, readmeManager } from "@/utils/cache";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import { useQuery } from "@tanstack/react-query";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface ReadmeViewProps {
   githubUrl?: string | null;
@@ -49,101 +51,68 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 };
 
 export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
-  const [readmeContent, setReadmeContent] = useState<string>("");
+  const [readmeContent, setReadmeContent] = useState<string>(EMPTY_STRING);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  // 使用 React Query 获取当前用户
+  const { data: currentUser } = useCurrentUser();
+  const isLoggedIn = !!currentUser;
+
+  // 使用 React Query 获取 README 内容
+  const { data: readmeData, isLoading: isReadmeLoading } = useQuery({
+    queryKey: ["readme", githubUrl],
+    queryFn: async () => {
+      if (!githubUrl) {
+        return null;
+      }
+
+      try {
+        const readme = await getRepoReadmeAction(githubUrl);
+        if (!readme?.content) {
+          return "No README";
+        }
+        return decodeGitHubContent(readme.content);
+      } catch (error) {
+        console.error("Failed to get README:", error);
+        throw new Error("Failed to get README content.");
+      }
+    },
+    enabled: !!githubUrl,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 30 * 1000, // 30 seconds
+    refetchIntervalInBackground: true,
+  });
 
   useEffect(() => {
     console.log("ReadmeTabView mounted, starting to fetch README");
 
-    const fetchReadme = async () => {
-      try {
-        setError(null);
-        setNotFound(false);
+    if (!githubUrl) {
+      setReadmeContent("No repository information found");
+      return;
+    }
 
-        // Check if user is logged in, but don't prevent non-logged in users from viewing public repository README
-        const user = await currentUserManager.getCurrentUser();
-        setIsLoggedIn(!!user);
+    // 处理 README 数据
+    if (readmeData === "No README") {
+      setNotFound(true);
+      setReadmeContent(EMPTY_STRING);
+      setError(null);
+    } else if (readmeData) {
+      setNotFound(false);
+      setReadmeContent(readmeData);
+      setError(null);
+    }
+  }, [readmeData, githubUrl]);
 
-        if (!githubUrl) {
-          setReadmeContent("No repository information found");
-          return;
-        }
-
-        // First check if there's a cache, only show loading when network request is needed
-        const cachedContent = readmeManager.getCachedReadme(githubUrl);
-
-        if (cachedContent) {
-          // Cache exists, immediately display cached content without showing loading
-          if (cachedContent === "No README") {
-            setNotFound(true);
-            setReadmeContent("");
-          } else {
-            setReadmeContent(cachedContent);
-          }
-
-          // Refresh cache in background without showing loading
-          readmeManager
-            .getReadme(githubUrl, async () => {
-              const readme = await getRepoReadmeAction(githubUrl);
-              if (!readme?.content) {
-                return "No README";
-              }
-              return decodeGitHubContent(readme.content);
-            })
-            .then((freshContent) => {
-              // Only update UI when content has changed
-              if (freshContent !== cachedContent) {
-                if (freshContent === "No README") {
-                  setNotFound(true);
-                  setReadmeContent("");
-                } else {
-                  setNotFound(false);
-                  setReadmeContent(freshContent);
-                }
-              }
-            })
-            .catch((error) => {
-              console.warn("Background refresh README failed:", error);
-            });
-        } else {
-          // No cache, network request needed, show loading
-          setLoading(true);
-          try {
-            const content = await readmeManager.getReadme(
-              githubUrl,
-              async () => {
-                const readme = await getRepoReadmeAction(githubUrl);
-                if (!readme?.content) {
-                  return "No README";
-                }
-                return decodeGitHubContent(readme.content);
-              }
-            );
-
-            if (content === "No README") {
-              setNotFound(true);
-              setReadmeContent("");
-            } else {
-              setReadmeContent(content);
-            }
-          } finally {
-            setLoading(false);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to get README:", err);
-
-        const errorMessage = "Failed to get README content.";
-        setError(errorMessage);
-        setReadmeContent("");
-      }
-    };
-
-    fetchReadme();
-  }, [githubUrl]);
+  // 处理加载状态
+  useEffect(() => {
+    if (isReadmeLoading && !readmeData) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [isReadmeLoading, readmeData]);
 
   if (loading) {
     return (

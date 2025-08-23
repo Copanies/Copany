@@ -1,14 +1,12 @@
 "use client";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
-import { deleteIssueAction, getIssuesAction } from "@/actions/issue.actions";
 import {
   IssueWithAssignee,
   IssuePriority,
   IssueState,
-  CopanyContributor,
   AssigneeUser,
 } from "@/types/database.types";
 import IssueStateSelector from "@/components/IssueStateSelector";
@@ -19,30 +17,39 @@ import LoadingView from "@/components/commons/LoadingView";
 import { renderStateLabel } from "@/components/IssueStateSelector";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
-import {
-  currentUserManager,
-  contributorsManager,
-  IssuesManager,
-  issuesUiStateManager,
-} from "@/utils/cache";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
-import { User } from "@supabase/supabase-js";
-import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
-import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import {
-  issuePermissionManager,
-  issueReviewersManager,
-  assignmentRequestsManager,
-  userInfoManager,
-} from "@/utils/cache";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
-import type { UserInfo } from "@/actions/user.actions";
+import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
+
+import AssignmentRequestModal from "@/components/AssignmentRequestModal";
+import { useIssues, useDeleteIssue } from "@/hooks/issues";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useContributors } from "@/hooks/contributors";
+
+import { useAssignmentRequestsByCopany } from "@/hooks/assignmentRequests";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { useCopany } from "@/hooks/copany";
+import { useMultipleIssueReviewers } from "@/hooks/reviewers";
+import { issuesUiStateManager } from "@/utils/cache";
+import {
+  EMPTY_STRING,
+  EMPTY_ISSUES_ARRAY,
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
+  EMPTY_USER_INFOS_OBJECT,
+  EMPTY_CAN_EDIT_BY_ISSUE,
+  EMPTY_REVIEWERS_BY_ISSUE,
+  EMPTY_PENDING_REQUESTERS_BY_ISSUE,
+  EMPTY_ISSUE_DATA,
+  NO_TITLE_TEXT,
+} from "@/utils/constants";
 
 // Function to group issues by state
 function groupIssuesByState(issues: IssueWithAssignee[]) {
@@ -107,9 +114,11 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
-  const [issues, setIssues] = useState<IssueWithAssignee[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
+  const issues = issuesData || EMPTY_ISSUES_ARRAY;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
     x: number;
@@ -117,36 +126,35 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     issueId: string;
   }>({ show: false, x: 0, y: 0, issueId: "" });
 
-  // Add shared user and contributor status
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
+  // React Query hooks for data fetching
+  const { data: currentUser } = useCurrentUser();
+  const { data: contributors = EMPTY_CONTRIBUTORS_ARRAY } =
+    useContributors(copanyId);
+  const { data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY } =
+    useAssignmentRequestsByCopany(copanyId);
+  const { data: copany } = useCopany(copanyId);
+
+  // Local state for UI
   const [canEditByIssue, setCanEditByIssue] = useState<Record<string, boolean>>(
-    {}
+    EMPTY_CAN_EDIT_BY_ISSUE
   );
+
   // cache reviewers per issue for lightweight list indicators
   const [reviewersByIssue, setReviewersByIssue] = useState<
     Record<string, IssueReviewer[]>
-  >({});
-  const loadingReviewersRef = useRef<Set<string>>(new Set());
-  // assignment requests (in-progress) per issue → requester ids
-  const [pendingRequestersByIssue, setPendingRequestersByIssue] = useState<
-    Record<string, string[]>
-  >({});
-  const loadingPendingRequestsRef = useRef<Set<string>>(new Set());
-  const [requestersInfo, setRequestersInfo] = useState<
-    Record<string, UserInfo>
-  >({});
+  >(EMPTY_REVIEWERS_BY_ISSUE);
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasInitialLoadRef = useRef(false);
+  const queryClient = useQueryClient();
+  const deleteIssue = useDeleteIssue(copanyId);
 
   // Search query state synced with URL ?q=
   const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("q") ?? ""
+    searchParams.get("q") ?? EMPTY_STRING
   );
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") ?? "");
+    setSearchQuery(searchParams.get("q") ?? EMPTY_STRING);
   }, [searchParams]);
 
   // Collapsible group states via cache manager
@@ -173,92 +181,120 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     setCollapsedGroups(issuesUiStateManager.getCollapsedGroups(copanyId));
   }, [copanyId]);
 
-  // Create IssuesManager instance with data update callback
-  const issuesManagerWithCallback = useMemo(() => {
-    return new IssuesManager((key, updatedData) => {
-      console.log(
-        `[IssuesView] Background refresh completed, data updated: ${key}`,
-        updatedData
-      );
-      setIssues(updatedData); // 自动更新 UI
-    });
-  }, []);
-
-  // Function to load user and contributor data
-  const loadUserData = useCallback(async () => {
-    try {
-      const [user, contributorList] = await Promise.all([
-        currentUserManager.getCurrentUser(),
-        contributorsManager.getContributors(copanyId),
-      ]);
-
-      setCurrentUser(user);
-      setContributors(contributorList);
-    } catch (error) {
-      console.error("Error loading user data:", error);
-    }
-  }, [copanyId]);
-
-  // Use new SWR strategy to load Issues
-  const loadIssues = useCallback(async () => {
-    if (hasInitialLoadRef.current) return;
-    hasInitialLoadRef.current = true;
-
-    try {
-      setIsLoading(true);
-
-      // Use IssuesManager with callback, support background refresh to automatically update UI
-      const issuesData = await issuesManagerWithCallback.getIssues(
-        copanyId,
-        () => getIssuesAction(copanyId)
-      );
-
-      setIssues(issuesData);
-    } catch (error) {
-      console.error("Error loading issues:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [copanyId, issuesManagerWithCallback]);
-
-  // Load data when component mounts
-  useEffect(() => {
-    loadIssues();
-    loadUserData();
-  }, [loadIssues, loadUserData]);
-
   // Compute per-issue permissions for current list
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const entries = await Promise.all(
-          issues.map(async (it) => {
-            const allowed = await issuePermissionManager.canEditIssue(
-              copanyId,
-              it
-            );
-            return [String(it.id), !!allowed] as const;
-          })
-        );
-        if (cancelled) return;
-        const map: Record<string, boolean> = {};
-        for (const [id, allowed] of entries) map[id] = allowed;
-        setCanEditByIssue(map);
-      } catch (_) {
-        // ignore
+    try {
+      if (!currentUser || !copany) {
+        setCanEditByIssue(EMPTY_CAN_EDIT_BY_ISSUE);
+        return;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [issues, copanyId]);
 
-  // NOTE: lazy reviewers loading is defined below after filteredIssues
+      const uid = String(currentUser.id);
+      const ownerId = copany.created_by ? String(copany.created_by) : null;
+
+      const map: Record<string, boolean> = {};
+      for (const issue of issues) {
+        const isCreator = !!(
+          issue.created_by && String(issue.created_by) === uid
+        );
+        const isAssignee = !!(issue.assignee && String(issue.assignee) === uid);
+        const isOwner = !!(ownerId && ownerId === uid);
+        map[String(issue.id)] = isCreator || isAssignee || isOwner;
+      }
+      setCanEditByIssue(map);
+    } catch (_) {
+      // ignore
+    }
+  }, [issues, currentUser, copany]);
+
+  // Filtered issues by search query
+  const filteredIssues = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return issues;
+    return issues.filter((issue) => {
+      const title = (issue.title || "").toLowerCase();
+      const idStr = String(issue.id || "");
+      return title.includes(q) || idStr.includes(q);
+    });
+  }, [issues, searchQuery]);
+
+  // Compute pending requesters by issue from assignment requests data
+  const pendingRequestersByIssue = useMemo(() => {
+    if (!assignmentRequests || assignmentRequests.length === 0)
+      return EMPTY_PENDING_REQUESTERS_BY_ISSUE;
+
+    const byIssue: Record<string, AssignmentRequest[]> = {};
+    for (const request of assignmentRequests) {
+      const key = String(request.issue_id);
+      if (!byIssue[key]) byIssue[key] = [];
+      byIssue[key].push(request);
+    }
+
+    const result: Record<string, string[]> = {};
+    for (const [issueId, requests] of Object.entries(byIssue)) {
+      const byRequester = new Map<string, AssignmentRequest[]>();
+      const sorted = [...requests].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+
+      for (const request of sorted) {
+        const key = String(request.requester_id);
+        if (!byRequester.has(key)) byRequester.set(key, []);
+        byRequester.get(key)!.push(request);
+      }
+
+      const inProgress: string[] = [];
+      for (const [requesterId, items] of byRequester.entries()) {
+        // Without status, any existing items mean in-progress requests by this requester
+        if (items.length > 0) inProgress.push(requesterId);
+      }
+
+      result[issueId] = inProgress;
+    }
+
+    return result;
+  }, [assignmentRequests]);
+
+  // Get unique user IDs from pending requesters for user info
+  const pendingRequesterIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const requesterIds of Object.values(pendingRequestersByIssue)) {
+      for (const id of requesterIds) {
+        ids.add(id);
+      }
+    }
+    return Array.from(ids);
+  }, [pendingRequestersByIssue]);
+
+  // Fetch user info for pending requesters
+  const { data: requestersInfo = EMPTY_USER_INFOS_OBJECT } =
+    useUsersInfo(pendingRequesterIds);
+
+  // Get issue IDs that need reviewers data
+  const issueIdsNeedingReviewers = useMemo(() => {
+    return filteredIssues
+      .filter((it) => it.state === IssueState.InReview)
+      .map((it) => String(it.id));
+  }, [filteredIssues]);
+
+  // Fetch reviewers data for all InReview issues
+  const { data: reviewersData = EMPTY_REVIEWERS_OBJECT } =
+    useMultipleIssueReviewers(issueIdsNeedingReviewers);
+
+  // Update local state when reviewers data changes
+  useEffect(() => {
+    if (Object.keys(reviewersData).length > 0) {
+      setReviewersByIssue((prev) => ({
+        ...prev,
+        ...reviewersData,
+      }));
+    }
+  }, [reviewersData]);
 
   const renderReviewBadge = (issue: IssueWithAssignee) => {
     if (issue.state !== IssueState.InReview) return null;
-    const list = reviewersByIssue[String(issue.id)] || [];
+    const list = reviewersByIssue[String(issue.id)] || EMPTY_ARRAY;
     if (list.length === 0) return null;
     const meId = currentUser?.id ? String(currentUser.id) : null;
     const hasApproved = list.some((r) => r.status === "approved");
@@ -293,154 +329,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     }
   };
 
-  // Filtered issues by search query
-  const filteredIssues = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return issues;
-    return issues.filter((issue) => {
-      const title = (issue.title || "").toLowerCase();
-      const idStr = String(issue.id || "");
-      return title.includes(q) || idStr.includes(q);
-    });
-  }, [issues, searchQuery]);
-
-  // Lazy load reviewers for currently visible InReview issues
-  useEffect(() => {
-    const target = filteredIssues
-      .filter((it) => it.state === IssueState.InReview)
-      .map((it) => String(it.id));
-    const missing = target.filter(
-      (id) =>
-        reviewersByIssue[id] === undefined &&
-        !loadingReviewersRef.current.has(id)
-    );
-    if (missing.length === 0) return;
-    // mark loading to avoid duplicate requests
-    missing.forEach((id) => loadingReviewersRef.current.add(id));
-    (async () => {
-      try {
-        const results = await Promise.all(
-          missing.map(async (id) => {
-            try {
-              const rs = await issueReviewersManager.getReviewers(id, () =>
-                listIssueReviewersAction(id)
-              );
-              return [id, rs] as const;
-            } catch (e) {
-              console.error("Failed to load reviewers", { id, e });
-              return [id, [] as IssueReviewer[]] as const;
-            }
-          })
-        );
-        setReviewersByIssue((prev) => {
-          const next = { ...prev } as Record<string, IssueReviewer[]>;
-          for (const [id, rs] of results) next[id] = rs;
-          return next;
-        });
-      } finally {
-        missing.forEach((id) => loadingReviewersRef.current.delete(id));
-      }
-    })();
-  }, [filteredIssues, reviewersByIssue]);
-
-  // Lazy load in-progress assignment request requesters for visible issues
-  useEffect(() => {
-    const targetIssueIds = filteredIssues.map((it) => String(it.id));
-    const missing = targetIssueIds.filter(
-      (id) =>
-        pendingRequestersByIssue[id] === undefined &&
-        !loadingPendingRequestsRef.current.has(id)
-    );
-    if (missing.length === 0) return;
-    missing.forEach((id) => loadingPendingRequestsRef.current.add(id));
-    (async () => {
-      try {
-        // fetch all missing issues' requests in parallel
-        const results = await Promise.all(
-          missing.map(async (issueId) => {
-            try {
-              const list = await assignmentRequestsManager.getRequests(
-                issueId,
-                () => listAssignmentRequestsAction(issueId)
-              );
-              return [issueId, list] as const;
-            } catch (e) {
-              console.error("Failed to load assignment requests", {
-                issueId,
-                e,
-              });
-              return [issueId, [] as AssignmentRequest[]] as const;
-            }
-          })
-        );
-        // compute in-progress requester ids and gather user ids
-        const nextPending: Record<string, string[]> = {};
-        const userIdSet = new Set<string>();
-        for (const [issueId, list] of results) {
-          // group by requester and compute current batch still in requested status
-          const byRequester = new Map<string, AssignmentRequest[]>();
-          const sorted = [...list].sort(
-            (a, b) =>
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime()
-          );
-          for (const it of sorted) {
-            const key = String(it.requester_id);
-            if (!byRequester.has(key)) byRequester.set(key, []);
-            byRequester.get(key)!.push(it);
-          }
-          const inProgress: string[] = [];
-          for (const [rid, items] of byRequester.entries()) {
-            const lastTerminalAt = items
-              .filter(
-                (r) =>
-                  r.status === "accepted" ||
-                  r.status === "refused" ||
-                  r.status === "skipped"
-              )
-              .reduce<string | null>((acc, r) => {
-                const t = r.updated_at || r.created_at;
-                if (!acc) return t;
-                return new Date(t).getTime() > new Date(acc).getTime()
-                  ? t
-                  : acc;
-              }, null);
-            const currentBatch = items.filter((r) =>
-              lastTerminalAt
-                ? new Date(r.created_at).getTime() >
-                  new Date(lastTerminalAt).getTime()
-                : true
-            );
-            if (
-              currentBatch.length > 0 &&
-              currentBatch.every((r) => r.status === "requested")
-            ) {
-              inProgress.push(rid);
-              userIdSet.add(rid);
-            }
-          }
-          nextPending[issueId] = inProgress;
-        }
-        // update state
-        setPendingRequestersByIssue((prev) => ({ ...prev, ...nextPending }));
-        if (userIdSet.size > 0) {
-          try {
-            const infos = await userInfoManager.getMultipleUserInfo(
-              Array.from(userIdSet)
-            );
-            setRequestersInfo((prev) => ({ ...prev, ...infos }));
-          } catch (e) {
-            console.error("Failed to load requester user infos", e);
-          }
-        }
-      } finally {
-        missing.forEach((id) => loadingPendingRequestsRef.current.delete(id));
-      }
-    })();
-  }, [filteredIssues, pendingRequestersByIssue]);
-
   const renderAssignmentRequestBadge = (issueId: string) => {
-    const reqIds = pendingRequestersByIssue[String(issueId)] || [];
+    const reqIds = pendingRequestersByIssue[String(issueId)] || EMPTY_ARRAY;
     if (!reqIds || reqIds.length === 0) return null;
     const max = 2;
     const shown = reqIds.slice(0, max);
@@ -485,80 +375,76 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Handle issue creation callback
   const handleIssueCreated = useCallback(
     (newIssue: IssueWithAssignee) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = [...prevIssues, newIssue];
-        // Update issues list cache
-        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || EMPTY_ISSUES_ARRAY;
+          const exists = base.some(
+            (it) => String(it.id) === String(newIssue.id)
+          );
+          return exists
+            ? base.map((it) =>
+                String(it.id) === String(newIssue.id) ? newIssue : it
+              )
+            : [...base, newIssue];
+        }
+      );
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient]
   );
 
   // Handle issue state update callback
   const handleIssueStateUpdated = useCallback(
     (issueId: string, newState: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            // Optimistically update state only; closed_at handled centrally by cache layer and then corrected by server response
-            const updatedIssue = { ...issue, state: newState };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
-            return updatedIssue;
-          }
-          return issue;
-        });
-        // Update issues list cache
-        issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || EMPTY_ISSUES_ARRAY;
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, state: newState }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient]
   );
 
   // Handle issue priority update callback
   const handleIssuePriorityUpdated = useCallback(
     (issueId: string, newPriority: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              priority: newPriority,
-            };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || EMPTY_ISSUES_ARRAY;
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, priority: newPriority }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient]
   );
 
   // Handle issue level update callback
   const handleIssueLevelUpdated = useCallback(
     (issueId: string, newLevel: number) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              level: newLevel,
-            };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || EMPTY_ISSUES_ARRAY;
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, level: newLevel }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient]
   );
 
   // Handle issue assignee update callback
@@ -568,54 +454,37 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       newAssignee: string | null,
       assigneeUser: AssigneeUser | null
     ) => {
-      setIssues((prevIssues) => {
-        const updatedIssues = prevIssues.map((issue) => {
-          if (issue.id === issueId) {
-            const updatedIssue = {
-              ...issue,
-              assignee: newAssignee,
-              assignee_user: assigneeUser,
-            };
-            // Update single issue cache
-            issuesManagerWithCallback.updateIssue(copanyId, updatedIssue);
-            return updatedIssue;
-          }
-          return issue;
-        });
-        return updatedIssues;
-      });
+      queryClient.setQueryData<IssueWithAssignee[]>(
+        ["issues", copanyId],
+        (prev) => {
+          const base = prev || EMPTY_ISSUES_ARRAY;
+          return base.map((issue) =>
+            String(issue.id) === String(issueId)
+              ? { ...issue, assignee: newAssignee, assignee_user: assigneeUser }
+              : issue
+          );
+        }
+      );
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient]
   );
 
   // Handle issue deletion
   const handleDeleteIssue = useCallback(
     async (issueId: string) => {
       try {
-        // Remove from frontend first
-        setIssues((prevIssues) => {
-          const updatedIssues = prevIssues.filter(
-            (issue) => issue.id !== issueId
-          );
-          // Update issues list cache
-          issuesManagerWithCallback.setIssues(copanyId, updatedIssues);
-          return updatedIssues;
-        });
-        setContextMenu({ show: false, x: 0, y: 0, issueId: "" }); // Close menu
-
-        // Then call delete interface
-        await deleteIssueAction(issueId);
+        await deleteIssue.mutateAsync({ issueId });
+        setContextMenu({ show: false, x: 0, y: 0, issueId: "" });
       } catch (error) {
         console.error("Error deleting issue:", error);
-        // If deletion fails, reload data to restore state
-        const issuesData = await issuesManagerWithCallback.getIssues(
-          copanyId,
-          () => getIssuesAction(copanyId)
-        );
-        setIssues(issuesData);
+        try {
+          await queryClient.invalidateQueries({
+            queryKey: ["issues", copanyId],
+          });
+        } catch (_) {}
       }
     },
-    [copanyId, issuesManagerWithCallback]
+    [copanyId, queryClient, deleteIssue]
   );
 
   // Handle right-click menu
@@ -646,7 +515,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     },
   ];
 
-  if (isLoading) {
+  if (isIssuesLoading) {
     return <LoadingView type="label" />;
   }
 
@@ -774,20 +643,17 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       readOnly={readOnly}
                       onStateChange={handleIssueStateUpdated}
                       onServerUpdated={(serverIssue) => {
-                        setIssues((prev) => {
-                          const updated = prev.map((it) =>
-                            it.id === serverIssue.id ? serverIssue : it
-                          );
-                          issuesManagerWithCallback.updateIssue(
-                            copanyId,
-                            serverIssue
-                          );
-                          issuesManagerWithCallback.setIssues(
-                            copanyId,
-                            updated
-                          );
-                          return updated;
-                        });
+                        queryClient.setQueryData<IssueWithAssignee[]>(
+                          ["issues", copanyId],
+                          (prev) => {
+                            const base = prev || EMPTY_ISSUES_ARRAY;
+                            return base.map((it) =>
+                              String(it.id) === String(serverIssue.id)
+                                ? serverIssue
+                                : it
+                            );
+                          }
+                        );
                       }}
                     />
                     <IssuePrioritySelector
@@ -798,7 +664,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       readOnly={readOnly}
                     />
                     <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full flex items-center gap-2">
-                      <span>{issue.title || "No title"}</span>
+                      <span>{issue.title || NO_TITLE_TEXT}</span>
                       {renderReviewBadge(issue)}
                     </div>
                     {renderAssignmentRequestBadge(String(issue.id))}
@@ -818,6 +684,21 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       showText={false}
                       onAssigneeChange={handleIssueAssigneeUpdated}
                       readOnly={readOnly}
+                      disableServerUpdate={false}
+                      hasPendingByMe={(() => {
+                        const meId = currentUser?.id
+                          ? String(currentUser.id)
+                          : null;
+                        if (!meId) return false;
+                        const reqIds =
+                          pendingRequestersByIssue[String(issue.id)] ||
+                          EMPTY_ARRAY;
+                        return reqIds.includes(meId);
+                      })()}
+                      onRequestAssignment={() => {
+                        setSelectedIssueId(String(issue.id));
+                        setIsRequestModalOpen(true);
+                      }}
                     />
                   </div>
                 );
@@ -836,6 +717,18 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       </div>
       {/* Create Issue modal */}
       {createIssueModal()}
+
+      {/* Assignment Request Modal */}
+      <AssignmentRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => {
+          setIsRequestModalOpen(false);
+          setSelectedIssueId("");
+        }}
+        issueId={selectedIssueId}
+        copanyId={copanyId}
+        currentUser={currentUser || null}
+      />
     </div>
   );
 
@@ -850,7 +743,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           copanyId={copanyId}
           onIssueCreated={handleIssueCreated}
           onClose={() => setIsModalOpen(false)}
-          currentUser={currentUser}
+          currentUser={currentUser || EMPTY_ISSUE_DATA}
           contributors={contributors}
         />
       </Modal>

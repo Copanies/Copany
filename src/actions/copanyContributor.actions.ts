@@ -5,6 +5,7 @@ import { CopanyContributorService } from "@/services/copanyContributor.service";
  * Get company contributors list - Server Action
  */
 export async function getCopanyContributorsAction(copanyId: string) {
+  console.log("🔍 Action: getCopanyContributorsAction", copanyId);
   try {
     const contributors =
       await CopanyContributorService.getCopanyContributorsByCopanyId(copanyId);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   IssueActivity,
@@ -10,24 +10,11 @@ import {
   IssueLevel,
   IssueActivityPayload,
 } from "@/types/database.types";
-import { listIssueActivityAction } from "@/actions/issueActivity.actions";
-import {
-  issueActivityManager,
-  userInfoManager,
-  currentUserManager,
-} from "@/utils/cache";
 import { formatRelativeTime } from "@/utils/time";
 import { renderLevelLabel } from "@/components/IssueLevelSelector";
 import { renderPriorityLabel } from "@/components/IssuePrioritySelector";
 import { renderStateLabel } from "@/components/IssueStateSelector";
 import type { IssueComment } from "@/types/database.types";
-import {
-  getIssueCommentsAction,
-  createIssueCommentAction,
-  updateIssueCommentAction,
-  deleteIssueCommentAction,
-} from "@/actions/issueComment.actions";
-import { issueCommentsManager } from "@/utils/cache";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
@@ -35,12 +22,23 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import IssueCommentCard from "@/components/IssueCommentCard";
 import IssueReviewPanel from "@/components/IssueReviewPanel";
 import AssignmentRequestPanel from "@/components/AssignmentRequestPanel";
-import { assignmentRequestsManager } from "@/utils/cache";
-import { listAssignmentRequestsAction } from "@/actions/assignmentRequest.actions";
 import type { AssignmentRequest } from "@/types/database.types";
+import { useQueryClient } from "@tanstack/react-query";
+import { useIssueActivity } from "@/hooks/activity";
+import {
+  useComments,
+  useCreateComment,
+  useUpdateComment,
+  useDeleteComment,
+} from "@/hooks/comments";
+import { useAssignmentRequests } from "@/hooks/assignmentRequests";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useUsersInfo } from "@/hooks/userInfo";
+import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
 
 interface IssueActivityTimelineProps {
   issueId: string;
+  copanyId: string;
   canEdit: boolean;
   issueState?: number | null;
   issueLevel?: number | null;
@@ -48,13 +46,11 @@ interface IssueActivityTimelineProps {
 
 export default function IssueActivityTimeline({
   issueId,
+  copanyId,
   canEdit,
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
-  const [items, setItems] = useState<IssueActivity[]>([]);
-  const [comments, setComments] = useState<IssueComment[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
@@ -67,195 +63,102 @@ export default function IssueActivityTimeline({
     number | undefined
   >(undefined);
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
-  const [userInfos, setUserInfos] = useState<
-    Record<string, { name: string; email: string; avatar_url: string }>
-  >({});
-  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
-  const [requesterPanels, setRequesterPanels] = useState<
-    { requesterId: string; at: string }[]
-  >([]);
 
-  useEffect(() => {
-    const load = async () => {
-      const data = await issueActivityManager.getActivities(issueId, () =>
-        listIssueActivityAction(issueId, 200)
-      );
-      setItems(data);
-      // load assignment requests group heads (only requested) and compute earliest created_at per requester
-      // replaced with: load assignment requests panels: compute current batch per requester and hide if batch ended
-      try {
-        const reqs = await assignmentRequestsManager.getRequests(issueId, () =>
-          listAssignmentRequestsAction(issueId)
-        );
-        const byRequester = new Map<string, typeof reqs>();
-        for (const r of reqs) {
-          const key = String(r.requester_id);
-          const arr = byRequester.get(key) || [];
-          arr.push(r);
-          byRequester.set(key, arr);
-        }
-        const panels: { requesterId: string; at: string }[] = [];
-        for (const [requesterId, list] of byRequester.entries()) {
-          const sorted = list
-            .slice()
-            .sort(
-              (a, b) =>
-                new Date(a.created_at).getTime() -
-                new Date(b.created_at).getTime()
-            );
-          const lastTerminalAt = sorted
-            .filter((r) => r.status === "refused" || r.status === "accepted")
-            .reduce<string | null>((acc, r) => {
-              const t = r.updated_at || r.created_at;
-              if (!acc) return t;
-              return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
-            }, null);
-          const currentBatch = sorted.filter((r) =>
-            lastTerminalAt
-              ? new Date(r.created_at).getTime() >
-                new Date(lastTerminalAt).getTime()
-              : true
-          );
-          if (currentBatch.length === 0) continue;
-          if (currentBatch.some((r) => r.status !== "requested")) {
-            continue;
-          }
-          const requestedOnly = currentBatch.filter(
-            (r) => r.status === "requested"
-          );
-          if (requestedOnly.length === 0) continue;
-          const at = requestedOnly[0].created_at;
-          panels.push({ requesterId, at });
-        }
-        setRequesterPanels(panels);
-      } catch (_e) {
-        // ignore
-      }
-      // load comments (root only)
-      const allComments = await issueCommentsManager.getComments(issueId, () =>
-        getIssueCommentsAction(issueId)
-      );
-      setComments(allComments);
-      const idSet = new Set<string>();
-      for (const a of data) {
-        if (a.actor_id) idSet.add(String(a.actor_id));
-        const p = (a.payload ?? {}) as IssueActivityPayload;
-        if (p.from_user_id) idSet.add(String(p.from_user_id));
-        if (p.to_user_id) idSet.add(String(p.to_user_id));
-      }
-      for (const c of allComments) {
-        if (c.created_by) idSet.add(String(c.created_by));
-      }
-      // Ensure current logged-in user is present in userInfos by default
-      try {
-        const me = await currentUserManager.getCurrentUser();
-        if (me?.id) {
-          idSet.add(String(me.id));
-          console.log("currentUserManager me", me);
-          setCurrentUser({ id: String(me.id) });
-        }
-      } catch (_e) {
-        // ignore if unauthenticated
-      }
+  const queryClient = useQueryClient();
+  const isValidIssueId = /^\d+$/.test(String(issueId));
 
-      const ids = Array.from(idSet);
-      if (ids.length > 0) {
-        const users = await userInfoManager.getMultipleUserInfo(ids);
-        const map: Record<
-          string,
-          { name: string; email: string; avatar_url: string }
-        > = {};
-        for (const id of Object.keys(users)) {
-          map[id] = {
-            name: users[id].name || users[id].email || id,
-            email: users[id].email,
-            avatar_url: users[id].avatar_url || "",
-          };
-          setUserInfos(map);
-        }
-      }
-    };
-    load();
+  // React Query hooks
+  const { data: activities = EMPTY_ARRAY } = useIssueActivity(issueId, 200);
+  const { data: comments = EMPTY_ARRAY } = useComments(issueId);
+  const { data: assignmentRequests = EMPTY_ARRAY } =
+    useAssignmentRequests(issueId);
+  const { data: currentUser } = useCurrentUser();
 
-    // subscribe to cache updates to refresh UI immediately after background refresh
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (
-          detail.manager === "IssueActivityManager" &&
-          detail.key === issueId
-        ) {
-          setItems(detail.data as IssueActivity[]);
-        }
-        if (
-          detail.manager === "AssignmentRequestsManager" &&
-          detail.key === issueId
-        ) {
-          // recompute panels when assignment requests cache updates
-          const reqs = detail.data as AssignmentRequest[];
-          const byRequester = new Map<string, AssignmentRequest[]>();
-          for (const r of reqs) {
-            const key = String(r.requester_id);
-            const arr = byRequester.get(key) || [];
-            arr.push(r);
-            byRequester.set(key, arr);
-          }
-          const panels: { requesterId: string; at: string }[] = [];
-          for (const [requesterId, list] of byRequester.entries()) {
-            const sorted = list
-              .slice()
-              .sort(
-                (a, b) =>
-                  new Date(a.created_at).getTime() -
-                  new Date(b.created_at).getTime()
-              );
-            const lastTerminalAt = sorted
-              .filter((r) => r.status === "refused" || r.status === "accepted")
-              .reduce<string | null>((acc, r) => {
-                const t = r.updated_at || r.created_at;
-                if (!acc) return t;
-                return new Date(t).getTime() > new Date(acc).getTime()
-                  ? t
-                  : acc;
-              }, null);
-            const currentBatch = sorted.filter((r) =>
-              lastTerminalAt
-                ? new Date(r.created_at).getTime() >
-                  new Date(lastTerminalAt).getTime()
-                : true
-            );
-            if (currentBatch.length === 0) continue;
-            if (currentBatch.some((r) => r.status !== "requested")) {
-              continue;
-            }
-            const requestedOnly = currentBatch.filter(
-              (r) => r.status === "requested"
-            );
-            if (requestedOnly.length === 0) continue;
-            const at = requestedOnly[0].created_at;
-            panels.push({ requesterId, at });
-          }
-          setRequesterPanels(panels);
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
+  // Collect user IDs from activities and comments
+  const userIds = useMemo(() => {
+    const idSet = new Set<string>();
+
+    // From activities
+    for (const activity of activities) {
+      if (activity.actor_id) idSet.add(String(activity.actor_id));
+      const payload = (activity.payload ??
+        EMPTY_OBJECT) as IssueActivityPayload;
+      if (payload.from_user_id) idSet.add(String(payload.from_user_id));
+      if (payload.to_user_id) idSet.add(String(payload.to_user_id));
+      if (payload.reviewer_id) idSet.add(String(payload.reviewer_id));
+      if (payload.requester_id) idSet.add(String(payload.requester_id));
+      if (payload.recipient_id) idSet.add(String(payload.recipient_id));
     }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
+
+    // From comments
+    for (const comment of comments) {
+      if (comment.created_by) idSet.add(String(comment.created_by));
+    }
+
+    // Add current user if logged in
+    if (currentUser?.id) {
+      idSet.add(String(currentUser.id));
+    }
+
+    return Array.from(idSet);
+  }, [activities, comments, currentUser?.id]);
+
+  // Get user infos
+  const { data: userInfosMap = EMPTY_OBJECT } = useUsersInfo(userIds);
+  const userInfos = useMemo(() => {
+    const map: Record<
+      string,
+      { name: string; email: string; avatar_url: string }
+    > = {};
+    for (const [id, userInfo] of Object.entries(
+      userInfosMap as Record<
+        string,
+        { name: string; email: string; avatar_url: string }
+      >
+    )) {
+      map[id] = {
+        name: userInfo.name || userInfo.email || id,
+        email: userInfo.email,
+        avatar_url: userInfo.avatar_url || "",
+      };
+    }
+    return map;
+  }, [userInfosMap]);
+
+  // Compute requester panels from assignment requests
+  const requesterPanels = useMemo(() => {
+    if (!isValidIssueId || !assignmentRequests.length) return [];
+
+    const byRequester = new Map<string, AssignmentRequest[]>();
+    for (const request of assignmentRequests) {
+      const key = String(request.requester_id);
+      const arr = byRequester.get(key) ?? [];
+      arr.push(request);
+      byRequester.set(key, arr);
+    }
+
+    const panels: { requesterId: string; at: string }[] = [];
+    for (const [requesterId, list] of byRequester.entries()) {
+      const sorted = list
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-      }
-    };
-  }, [issueId]);
+
+      // Without status, any remaining rows are pending; if any exist, create a panel
+      if (sorted.length === 0) continue;
+      const at = sorted[0].created_at;
+      panels.push({ requesterId, at });
+    }
+
+    return panels;
+  }, [assignmentRequests, isValidIssueId]);
+
+  // Comment mutations
+  const createCommentMutation = useCreateComment(issueId);
+  const updateCommentMutation = useUpdateComment(issueId);
+  const deleteCommentMutation = useDeleteComment(issueId);
 
   const getStateName = (v: number | null | undefined): string => {
     if (v == null) return "";
@@ -317,7 +220,7 @@ export default function IssueActivityTimeline({
 
   const renderHeaderCompact = (item: IssueActivity): ReactNode => {
     const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
-    const p = (item.payload ?? {}) as IssueActivityPayload;
+    const p = (item.payload ?? EMPTY_OBJECT) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
       case "issue_created":
@@ -459,7 +362,11 @@ export default function IssueActivityTimeline({
     | { kind: "comment"; at: string; c: IssueComment }
     | { kind: "assign_panel"; at: string; requesterId: string };
   const merged: MergedEntry[] = [
-    ...items.map((a) => ({ kind: "activity" as const, at: a.created_at, a })),
+    ...activities.map((a) => ({
+      kind: "activity" as const,
+      at: a.created_at,
+      a,
+    })),
     ...rootComments.map((c) => ({
       kind: "comment" as const,
       at: c.created_at,
@@ -554,6 +461,7 @@ export default function IssueActivityTimeline({
           <AssignmentRequestPanel
             key={entry.requesterId}
             issueId={issueId}
+            copanyId={copanyId}
             requesterId={entry.requesterId}
             meId={currentUser?.id ?? null}
             canEdit={canEdit}
@@ -561,56 +469,15 @@ export default function IssueActivityTimeline({
               setNewCommentFocusSignal((x) => (x == null ? 1 : x + 1))
             }
             onActivityChanged={async () => {
-              const [fresh, reqs] = await Promise.all([
-                listIssueActivityAction(issueId, 200),
-                listAssignmentRequestsAction(issueId),
+              // Invalidate related queries to refresh data
+              await Promise.all([
+                queryClient.invalidateQueries({
+                  queryKey: ["issueActivity", issueId],
+                }),
+                queryClient.invalidateQueries({
+                  queryKey: ["assignmentRequests", "issue", issueId],
+                }),
               ]);
-              setItems(fresh);
-              const byRequester = new Map<string, typeof reqs>();
-              for (const r of reqs) {
-                const key = String(r.requester_id);
-                const arr = byRequester.get(key) || [];
-                arr.push(r);
-                byRequester.set(key, arr);
-              }
-              const panels: { requesterId: string; at: string }[] = [];
-              for (const [requesterId, list] of byRequester.entries()) {
-                const sorted = list
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      new Date(a.created_at).getTime() -
-                      new Date(b.created_at).getTime()
-                  );
-                const lastTerminalAt = sorted
-                  .filter(
-                    (r) => r.status === "refused" || r.status === "accepted"
-                  )
-                  .reduce<string | null>((acc, r) => {
-                    const t = r.updated_at || r.created_at;
-                    if (!acc) return t;
-                    return new Date(t).getTime() > new Date(acc).getTime()
-                      ? t
-                      : acc;
-                  }, null);
-                const currentBatch = sorted.filter((r) =>
-                  lastTerminalAt
-                    ? new Date(r.created_at).getTime() >
-                      new Date(lastTerminalAt).getTime()
-                    : true
-                );
-                if (currentBatch.length === 0) continue;
-                if (currentBatch.some((r) => r.status !== "requested")) {
-                  continue;
-                }
-                const requestedOnly = currentBatch.filter(
-                  (r) => r.status === "requested"
-                );
-                if (requestedOnly.length === 0) continue;
-                const at = requestedOnly[0].created_at;
-                panels.push({ requesterId, at });
-              }
-              setRequesterPanels(panels);
             }}
           />
         </div>
@@ -619,26 +486,17 @@ export default function IssueActivityTimeline({
     const c = entry.c;
     const replies = getRepliesForRoot(String(c.id));
 
-    // Handlers proxied to IssueCommentCard
+    // Handlers using React Query mutations
     const handleSubmitReply = async (
       parentId: string,
       content: string
     ): Promise<void> => {
       try {
-        setIsSubmitting(true);
-        const newReply = await createIssueCommentAction(
-          issueId,
-          content,
-          parentId
-        );
-        issueCommentsManager.addComment(issueId, newReply);
-        setComments((prev) => [...prev, newReply]);
+        await createCommentMutation.mutateAsync({ content, parentId });
         setReplyingToCommentId(null);
         setReplyContent("");
       } catch (e) {
         console.error(e);
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
@@ -648,29 +506,17 @@ export default function IssueActivityTimeline({
     ): Promise<void> => {
       if (!content.trim()) return;
       try {
-        setIsSubmitting(true);
-        const updated = await updateIssueCommentAction(commentId, content);
-        issueCommentsManager.updateComment(issueId, updated);
-        setComments((prev) =>
-          prev.map((x) => (String(x.id) === String(updated.id) ? updated : x))
-        );
+        await updateCommentMutation.mutateAsync({ commentId, content });
         setEditingCommentId(null);
         setEditingContent("");
       } catch (e) {
         console.error(e);
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
     const handleDelete = async (commentId: string): Promise<void> => {
       try {
-        setIsSubmitting(true);
-        await deleteIssueCommentAction(commentId);
-        issueCommentsManager.removeComment(issueId, commentId);
-        setComments((prev) =>
-          prev.filter((x) => String(x.id) !== String(commentId))
-        );
+        await deleteCommentMutation.mutateAsync({ commentId });
         if (replyingToCommentId === commentId) {
           setReplyingToCommentId(null);
           setReplyContent("");
@@ -681,8 +527,6 @@ export default function IssueActivityTimeline({
         }
       } catch (e) {
         console.error(e);
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
@@ -706,7 +550,11 @@ export default function IssueActivityTimeline({
           setEditingContent={setEditingContent}
           onSaveEdit={handleSaveEdit}
           onDelete={handleDelete}
-          isSubmitting={isSubmitting}
+          isSubmitting={
+            createCommentMutation.isPending ||
+            updateCommentMutation.isPending ||
+            deleteCommentMutation.isPending
+          }
           isLoggedIn={!!currentUser}
         />
       </div>
@@ -747,6 +595,7 @@ export default function IssueActivityTimeline({
 
       {/* Reviewer panel at the bottom, above new comment composer */}
       <IssueReviewPanel
+        copanyId={copanyId}
         issueId={issueId}
         issueState={issueState ?? null}
         issueLevel={issueLevel ?? null}
@@ -756,8 +605,10 @@ export default function IssueActivityTimeline({
           setNewCommentFocusSignal((x) => (x == null ? 1 : x + 1))
         }
         onActivityChanged={async () => {
-          const fresh = await listIssueActivityAction(issueId, 200);
-          setItems(fresh);
+          // Invalidate issue activity to refresh data
+          await queryClient.invalidateQueries({
+            queryKey: ["issueActivity", issueId],
+          });
         }}
       />
 
@@ -786,22 +637,18 @@ export default function IssueActivityTimeline({
               onClick={async () => {
                 if (!newCommentContent.trim()) return;
                 try {
-                  setIsSubmitting(true);
-                  const newComment = await createIssueCommentAction(
-                    issueId,
-                    newCommentContent
-                  );
-                  issueCommentsManager.addComment(issueId, newComment);
-                  setComments((prev) => [...prev, newComment]);
+                  await createCommentMutation.mutateAsync({
+                    content: newCommentContent,
+                  });
                   setNewCommentContent("");
                   setNewCommentKey(Math.random());
                 } catch (e) {
                   console.error(e);
-                } finally {
-                  setIsSubmitting(false);
                 }
               }}
-              disabled={isSubmitting || !newCommentContent.trim()}
+              disabled={
+                createCommentMutation.isPending || !newCommentContent.trim()
+              }
               shape="square"
               size="sm"
               className="!p-1"

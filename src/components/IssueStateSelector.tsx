@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
+import { useUpdateIssueState } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
-import { issueReviewersManager } from "@/utils/cache";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDarkMode } from "@/utils/useDarkMode";
 
 interface IssueStateSelectorProps {
@@ -20,6 +21,7 @@ interface IssueStateSelectorProps {
   disableServerUpdate?: boolean;
   readOnly?: boolean;
   onServerUpdated?: (updatedIssue: IssueWithAssignee) => void;
+  copanyId?: string;
 }
 
 export default function IssueStateSelector({
@@ -31,10 +33,24 @@ export default function IssueStateSelector({
   disableServerUpdate = false,
   readOnly = false,
   onServerUpdated,
+  copanyId,
 }: IssueStateSelectorProps) {
   const [currentState, setCurrentState] = useState(initialState);
   const [hasApprovedReview, setHasApprovedReview] = useState<boolean>(false);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState<boolean>(false);
+  const mutation = useUpdateIssueState(copanyId || "");
+  const qc = useQueryClient();
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
+
+  // 当 props 变化时同步内部状态，确保外部缓存更新能反映到 UI
+  useEffect(() => {
+    setCurrentState(initialState);
+  }, [initialState]);
 
   useEffect(() => {
     let mounted = true;
@@ -45,10 +61,7 @@ export default function IssueStateSelector({
       }
       try {
         setIsLoadingReviewers(true);
-        const reviewers = await issueReviewersManager.getReviewers(
-          issueId,
-          () => listIssueReviewersAction(issueId)
-        );
+        const reviewers = await listIssueReviewersAction(issueId);
         if (!mounted) return;
         setHasApprovedReview(reviewers.some((r) => r.status === "approved"));
       } catch (_) {
@@ -68,32 +81,38 @@ export default function IssueStateSelector({
     try {
       setCurrentState(newState);
 
-      // Immediately call callback to update frontend state, provide instant feedback
       if (onStateChange) {
         onStateChange(issueId, newState);
       }
 
-      // Only call the update state API when not in creation mode
       if (!disableServerUpdate) {
-        const updatedIssue = await updateIssueStateAction(issueId, newState);
-        // Notify server-updated result so parent can overwrite cache/state with authoritative data
-        if (onServerUpdated) {
-          onServerUpdated(updatedIssue);
+        let updatedIssue: IssueWithAssignee;
+        if (copanyId) {
+          updatedIssue = await mutateRef.current({
+            issueId,
+            state: newState,
+          });
+        } else {
+          updatedIssue = await updateIssueStateAction(issueId, newState);
         }
-        console.log("State updated successfully:", newState);
+        if (onServerUpdated) onServerUpdated(updatedIssue);
+
+        try {
+          await Promise.all([
+            qc.invalidateQueries({ queryKey: ["issueActivity", issueId] }),
+            qc.invalidateQueries({ queryKey: ["issueReviewers", issueId] }),
+          ]);
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating state:", error);
-      // Rollback state on error
       setCurrentState(initialState);
-      // If there's a callback, also need to rollback frontend state
       if (onStateChange && initialState !== null) {
         onStateChange(issueId, initialState);
       }
     }
   };
 
-  // Build state options with conditional disabling for Done
   const stateOptions = useMemo(() => {
     const allStates = [
       IssueState.Backlog,

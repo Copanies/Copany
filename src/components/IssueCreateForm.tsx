@@ -1,7 +1,8 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
-import { createIssueAction } from "@/actions/issue.actions";
+
+import { useCreateIssue } from "@/hooks/issues";
 import {
   IssueWithAssignee,
   IssueLevel,
@@ -16,6 +17,7 @@ import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
 import IssueLevelSelector from "@/components/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
+import { EMPTY_STRING } from "@/utils/constants";
 
 // Issue form component
 export default function IssueCreateForm({
@@ -31,9 +33,10 @@ export default function IssueCreateForm({
   currentUser: User | null;
   contributors: CopanyContributor[];
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState<string>(EMPTY_STRING);
+  const [description, setDescription] = useState<string>(EMPTY_STRING);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createIssue = useCreateIssue(copanyId);
 
   // Add property state management
   const [state, setState] = useState<number>(IssueState.Backlog);
@@ -89,7 +92,7 @@ export default function IssueCreateForm({
     setIsSubmitting(true);
 
     try {
-      const newIssue = await createIssueAction({
+      const newIssue = await createIssue.mutateAsync({
         copany_id: copanyId,
         title: title,
         description: description,
@@ -100,8 +103,8 @@ export default function IssueCreateForm({
       });
 
       // Reset form
-      setTitle("");
-      setDescription("");
+      setTitle(EMPTY_STRING);
+      setDescription(EMPTY_STRING);
       setState(IssueState.Backlog);
       setPriority(IssuePriority.None);
       setLevel(IssueLevel.level_None);

@@ -6,6 +6,7 @@ export async function listNotificationsAction(
   limit = 20,
   before?: string
 ): Promise<Notification[]> {
+  console.log("🔍 Action: listNotificationsAction", limit);
   return NotificationService.list(limit, before);
 }
 

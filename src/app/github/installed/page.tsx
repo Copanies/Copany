@@ -3,7 +3,6 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import GithubInstalledLoading from "./loading";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import { copanyCache } from "@/utils/cache/instances";
 import { useEffect } from "react";
 
 export default function GithubInstalled() {
@@ -33,9 +32,6 @@ export default function GithubInstalled() {
           console.error("Failed to fetch copany:", stateObj.copany_id);
           return;
         }
-
-        // set cache for later use
-        copanyCache.set(copanyData.id.toString(), copanyData);
 
         // Redirect after successful installation
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";

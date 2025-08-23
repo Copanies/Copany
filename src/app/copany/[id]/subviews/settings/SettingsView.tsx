@@ -7,7 +7,7 @@ import {
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
@@ -30,8 +30,9 @@ import {
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
-import { CopanyManager } from "@/utils/cache";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -43,9 +44,12 @@ export default function SettingsView({
   onCopanyUpdate,
 }: SettingsViewProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isDarkMode = useDarkMode();
   const [name, setName] = useState(copany.name);
-  const [description, setDescription] = useState(copany.description || "");
+  const [description, setDescription] = useState(
+    copany.description || EMPTY_STRING
+  );
   const [isRenaming, setIsRenaming] = useState(false);
   const [isAddAssetLinkModalOpen, setIsAddAssetLinkModalOpen] = useState(false);
   const [isEditAssetLinkModalOpen, setIsEditAssetLinkModalOpen] =
@@ -64,20 +68,56 @@ export default function SettingsView({
 
   // Delete Copany related states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [deleteConfirmName, setDeleteConfirmName] =
+    useState<string>(EMPTY_STRING);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
 
-  // Create a memoized CopanyManager instance with callback for real-time updates
-  const copanyManager = useMemo(() => {
-    return new CopanyManager((key, updatedData) => {
-      console.log(`[SettingsView] data updated: ${key}`, updatedData);
-      // Update the copany data when background refresh occurs
-      onCopanyUpdate(updatedData);
-    });
-  }, [onCopanyUpdate]);
+  // React Query mutations
+  const updateCopanyMutation = useMutation({
+    mutationFn: updateCopanyAction,
+    onSuccess: (updatedCopany) => {
+      // 更新本地状态
+      onCopanyUpdate(updatedCopany);
+
+      // 失效相关查询
+      queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
+      queryClient.invalidateQueries({ queryKey: ["copanies"] });
+
+      // 设置查询数据以保持 UI 同步
+      queryClient.setQueryData(["copany", copany.id], updatedCopany);
+    },
+    onError: (error) => {
+      console.error("Failed to update copany:", error);
+    },
+  });
+
+  const deleteCopanyMutation = useMutation({
+    mutationFn: deleteCopanyAction,
+    onSuccess: () => {
+      // 失效相关查询
+      queryClient.invalidateQueries({ queryKey: ["copanies"] });
+      // 重定向到首页
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("Failed to delete copany:", error);
+    },
+  });
+
+  // 稳定 mutation 的可变方法
+  const updateCopanyMutateRef = useRef(updateCopanyMutation.mutateAsync);
+  const deleteCopanyMutateRef = useRef(deleteCopanyMutation.mutateAsync);
+
+  // 同步 ref 中的最新函数
+  if (updateCopanyMutation.mutateAsync !== updateCopanyMutateRef.current) {
+    updateCopanyMutateRef.current = updateCopanyMutation.mutateAsync;
+  }
+  if (deleteCopanyMutation.mutateAsync !== deleteCopanyMutateRef.current) {
+    deleteCopanyMutateRef.current = deleteCopanyMutation.mutateAsync;
+  }
 
   const assetLinks = [
     {
@@ -153,9 +193,7 @@ export default function SettingsView({
         ...copany,
         name: name,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutateRef.current(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -170,9 +208,7 @@ export default function SettingsView({
         ...copany,
         description: description,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutateRef.current(updatedCopany);
     } catch (error) {
       console.error(error);
     } finally {
@@ -186,9 +222,7 @@ export default function SettingsView({
         ...copany,
         [assetLinks.find((link) => link.id === assetType)?.key || ""]: null,
       };
-      await updateCopanyAction(updatedCopany);
-      copanyManager.setCopany(copany.id, updatedCopany);
-      onCopanyUpdate(updatedCopany);
+      await updateCopanyMutateRef.current(updatedCopany);
     } catch (error) {
       console.error(error);
     }
@@ -269,9 +303,7 @@ export default function SettingsView({
           ...copany,
           logo_url: result.url,
         };
-        await updateCopanyAction(updatedCopany);
-        copanyManager.setCopany(copany.id, updatedCopany);
-        onCopanyUpdate(updatedCopany);
+        await updateCopanyMutateRef.current(updatedCopany);
       } else {
         setUploadError(result.error || "Upload failed");
       }
@@ -291,9 +323,7 @@ export default function SettingsView({
   async function handleDeleteCopany() {
     setIsDeleting(true);
     try {
-      await deleteCopanyAction(copany.id);
-      // Redirect to home page after successful deletion
-      router.push("/");
+      await deleteCopanyMutateRef.current(copany.id);
     } catch (error) {
       console.error("Failed to delete Copany:", error);
     } finally {
@@ -304,7 +334,7 @@ export default function SettingsView({
   // Close delete modal
   function handleCloseDeleteModal() {
     setIsDeleteModalOpen(false);
-    setDeleteConfirmName("");
+    setDeleteConfirmName(EMPTY_STRING);
   }
 
   return (

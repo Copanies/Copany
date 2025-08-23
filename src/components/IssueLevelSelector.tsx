@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IssueLevel } from "@/types/database.types";
 import { updateIssueLevelAction } from "@/actions/issue.actions";
+import { useUpdateIssueLevel } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssueLevelSelectorProps {
   issueId: string;
@@ -13,6 +15,7 @@ interface IssueLevelSelectorProps {
   onLevelChange?: (issueId: string, newLevel: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  copanyId?: string;
 }
 
 export default function IssueLevelSelector({
@@ -23,8 +26,17 @@ export default function IssueLevelSelector({
   onLevelChange,
   disableServerUpdate = false,
   readOnly = false,
+  copanyId,
 }: IssueLevelSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
+  const mutation = useUpdateIssueLevel(copanyId || "");
+  const qc = useQueryClient();
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
 
   const handleLevelChange = async (newLevel: number) => {
     if (readOnly) return;
@@ -38,8 +50,17 @@ export default function IssueLevelSelector({
 
       // Only call the update level API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssueLevelAction(issueId, newLevel);
+        if (copanyId) {
+          await mutateRef.current({ issueId, level: newLevel });
+        } else {
+          await updateIssueLevelAction(issueId, newLevel);
+        }
         console.log("Level updated successfully:", newLevel);
+
+        // 等级变化会产生活动，触发活动流查询失效
+        try {
+          await qc.invalidateQueries({ queryKey: ["issueActivity", issueId] });
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating level:", error);

@@ -1,20 +1,18 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { generateContributionsFromIssuesAction } from "@/actions/contribution.actions";
-import {
-  Contribution,
-  IssueLevel,
-  AssigneeUser,
-  CopanyContributor,
-  LEVEL_SCORES,
-} from "@/types/database.types";
-import { contributorsManager, ContributionsManager } from "@/utils/cache";
+import { useMemo } from "react";
+import { IssueLevel, AssigneeUser, LEVEL_SCORES } from "@/types/database.types";
+import { useContributions } from "@/hooks/activity";
+import { useContributors } from "@/hooks/contributors";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/ContributionChart";
 import ContributionPieChart from "@/components/ContributionPieChart";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ChartPieIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import {
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_CONTRIBUTION_ARRAY,
+} from "@/utils/constants";
 
 interface ContributionViewProps {
   copanyId: string;
@@ -22,66 +20,28 @@ interface ContributionViewProps {
 
 export default function ContributionView({ copanyId }: ContributionViewProps) {
   const router = useRouter();
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [contributors, setContributors] = useState<CopanyContributor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Create ContributionsManager instance with data update callback
-  const contributionsManagerWithCallback = useMemo(() => {
-    return new ContributionsManager((key, updatedData) => {
-      console.log(
-        `[ContributionView] Background refresh completed, data updated: ${key}`,
-        updatedData
-      );
-      setContributions(updatedData); // Automatically update UI
-    });
-  }, []);
+  // 使用 React Query hooks 替代 cacheManager
+  const {
+    data: contributions = EMPTY_CONTRIBUTION_ARRAY,
+    isLoading: isContributionsLoading,
+  } = useContributions(copanyId);
+  const {
+    data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
+    isLoading: isContributorsLoading,
+  } = useContributors(copanyId);
 
-  const loadData = useCallback(
-    async (forceRefresh: boolean = false) => {
-      try {
-        setIsLoading(true);
-
-        const contributionDataPromise = forceRefresh
-          ? contributionsManagerWithCallback.refreshContributions(
-              copanyId,
-              () => generateContributionsFromIssuesAction(copanyId)
-            )
-          : contributionsManagerWithCallback.getContributions(copanyId, () =>
-              generateContributionsFromIssuesAction(copanyId)
-            );
-
-        const contributorDataPromise =
-          contributorsManager.getContributors(copanyId);
-
-        // Execute requests in parallel
-        const [newContributionData, newContributorData] = await Promise.all([
-          contributionDataPromise,
-          contributorDataPromise,
-        ]);
-
-        setContributions(newContributionData);
-        setContributors(newContributorData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [copanyId, contributionsManagerWithCallback]
-  );
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const isLoading = isContributionsLoading || isContributorsLoading;
 
   // Convert contributors to AssigneeUser format
-  const users: AssigneeUser[] = contributors.map((contributor) => ({
-    id: contributor.user_id,
-    name: contributor.name,
-    email: contributor.email,
-    avatar_url: contributor.avatar_url,
-  }));
+  const users: AssigneeUser[] = useMemo(() => {
+    return contributors.map((contributor) => ({
+      id: contributor.user_id,
+      name: contributor.name,
+      email: contributor.email,
+      avatar_url: contributor.avatar_url,
+    }));
+  }, [contributors]);
 
   // Calculate total contribution value for each user and sort
   const usersWithContribution = useMemo(() => {
@@ -279,7 +239,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
           />
         }
         title="No contribution yet"
-        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member’s share of contributions."
+        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member's share of contributions."
         buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
         buttonTitle="View issues"
         buttonAction={() => {

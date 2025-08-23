@@ -11,6 +11,7 @@ import {
 } from "@/types/database.types";
 
 export async function getIssuesAction(copanyId: string) {
+  console.log("🔍 Action: getIssuesAction", copanyId);
   return await IssueService.getIssues(copanyId);
 }
 
@@ -50,19 +51,12 @@ export async function deleteIssueAction(issueId: string) {
   return await IssueService.deleteIssue(issueId);
 }
 
-export async function updateIssueAction(
-  issue: Omit<
-    Issue,
-    "created_at" | "updated_at" | "closed_at" | "created_by" | "copany_id"
-  >
-) {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("User not found");
-  }
-  return await IssueService.updateIssue({
-    ...issue,
-  });
+export async function updateIssueTitleAndDescriptionAction(
+  issueId: string,
+  title: string,
+  description: string
+): Promise<IssueWithAssignee> {
+  return await IssueService.updateIssueTitleAndDescription(issueId, title, description);
 }
 
 export async function updateIssueStateAction(

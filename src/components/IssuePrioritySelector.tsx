@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IssuePriority } from "@/types/database.types";
 import { updateIssuePriorityAction } from "@/actions/issue.actions";
+import { useUpdateIssuePriority } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IssuePrioritySelectorProps {
   issueId: string;
@@ -13,6 +15,7 @@ interface IssuePrioritySelectorProps {
   onPriorityChange?: (issueId: string, newPriority: number) => void;
   disableServerUpdate?: boolean;
   readOnly?: boolean;
+  copanyId?: string; // for React Query mutation
 }
 
 export default function IssuePrioritySelector({
@@ -23,8 +26,17 @@ export default function IssuePrioritySelector({
   onPriorityChange,
   disableServerUpdate = false,
   readOnly = false,
+  copanyId,
 }: IssuePrioritySelectorProps) {
   const [currentPriority, setCurrentPriority] = useState(initialPriority);
+  const mutation = useUpdateIssuePriority(copanyId || "");
+  const qc = useQueryClient();
+
+  // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
+  const mutateRef = useRef(mutation.mutateAsync);
+  useEffect(() => {
+    mutateRef.current = mutation.mutateAsync;
+  }, [mutation.mutateAsync]);
 
   const handlePriorityChange = async (newPriority: number) => {
     if (readOnly) return;
@@ -38,8 +50,17 @@ export default function IssuePrioritySelector({
 
       // Only call the update priority API when not in creation mode
       if (!disableServerUpdate) {
-        await updateIssuePriorityAction(issueId, newPriority);
+        if (copanyId) {
+          await mutateRef.current({ issueId, priority: newPriority });
+        } else {
+          await updateIssuePriorityAction(issueId, newPriority);
+        }
         console.log("Priority updated successfully:", newPriority);
+
+        // 优先级变化会产生活动，触发活动流查询失效
+        try {
+          await qc.invalidateQueries({ queryKey: ["issueActivity", issueId] });
+        } catch (_) {}
       }
     } catch (error) {
       console.error("Error updating priority:", error);

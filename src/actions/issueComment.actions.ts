@@ -5,6 +5,7 @@ import { IssueComment } from "@/types/database.types";
 
 // Comment actions
 export async function getIssueCommentsAction(issueId: string): Promise<IssueComment[]> {
+  console.log("🔍 Action: getIssueCommentsAction", issueId);
   return await IssueCommentService.getIssueComments(issueId);
 }
 

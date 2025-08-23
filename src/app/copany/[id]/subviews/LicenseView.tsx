@@ -1,34 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { currentUserManager, licenseManager } from "@/utils/cache";
-import {
-  getRepoLicenseAction,
-  getRepoLicenseTypeAction,
-} from "@/actions/github.action";
+import { useState, useEffect, useRef } from "react";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { useRepoLicense } from "@/hooks/readme";
 import { updateCopanyLicenseAction } from "@/actions/copany.actions";
 import LoadingView from "@/components/commons/LoadingView";
 import { ScaleIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { Copany } from "@/types/database.types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface LicenseViewProps {
   githubUrl?: string | null;
   copany: Copany;
   onCopanyUpdate?: (copany: Copany) => void;
 }
-
-const decodeGitHubContent = (base64String: string): string => {
-  try {
-    const binaryString = atob(base64String);
-    const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
-    const decoder = new TextDecoder("utf-8");
-    return decoder.decode(bytes);
-  } catch (error) {
-    console.error("Failed to decode GitHub content:", error);
-    throw new Error("Failed to decode GitHub content");
-  }
-};
 
 /**
  * Generate a link to create a new License file from GitHub URL
@@ -59,158 +46,82 @@ export default function LicenseView({
   copany,
   onCopanyUpdate,
 }: LicenseViewProps) {
-  const [licenseContent, setLicenseContent] = useState<string>("");
+  const queryClient = useQueryClient();
+
+  // 使用 React Query hooks 替代 cacheManager
+  const { data: currentUser } = useCurrentUser();
+  const { data: licenseData, isLoading: isLicenseLoading } =
+    useRepoLicense(githubUrl);
+
+  const [licenseContent, setLicenseContent] = useState<string>(EMPTY_STRING);
   const [licenseType, setLicenseType] = useState<string | null>(copany.license);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
+  // 使用 mutation 来更新 license
+  const updateLicenseMutation = useMutation({
+    mutationFn: async (licenseType: string) => {
+      await updateCopanyLicenseAction(copany.id, licenseType);
+      return licenseType;
+    },
+    onSuccess: (newLicenseType) => {
+      // 更新本地状态
+      setLicenseType(newLicenseType);
+      // 调用父组件的更新回调
+      onCopanyUpdate?.({
+        ...copany,
+        license: newLicenseType,
+      });
+      // 使相关的查询失效
+      queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
+    },
+  });
+
+  // 稳定 mutation 的可变方法
+  const mutateRef = useRef(updateLicenseMutation.mutate);
   useEffect(() => {
-    console.log("LicenseView mounted, starting to fetch License");
+    mutateRef.current = updateLicenseMutation.mutate;
+  }, [updateLicenseMutation.mutate]);
 
-    const fetchLicense = async () => {
-      try {
-        setError(null);
-        setNotFound(false);
+  // 处理 license 数据变化
+  useEffect(() => {
+    if (!licenseData) {
+      setNotFound(true);
+      setLicenseContent(EMPTY_STRING);
+      return;
+    }
 
-        // Check if user is logged in, but don't prevent non-logged in users from viewing public repository License
-        const user = await currentUserManager.getCurrentUser();
-        setIsLoggedIn(!!user);
+    if (licenseData.content === "No License") {
+      setNotFound(true);
+      setLicenseContent(EMPTY_STRING);
+      return;
+    }
 
-        if (!githubUrl) {
-          setLicenseContent("No repository information found");
-          return;
-        }
+    try {
+      setLicenseContent(licenseData.content);
+      setNotFound(false);
+      setError(null);
+    } catch (_err) {
+      setError("Failed to decode License content");
+      setLicenseContent(EMPTY_STRING);
+    }
+  }, [licenseData]);
 
-        // First check if there's a cache, only show loading when network request is needed
-        const cachedContent = licenseManager.getCachedLicense(githubUrl);
+  // 检查并更新 license type
+  useEffect(() => {
+    if (!githubUrl || !licenseData || licenseData.content === "No License")
+      return;
 
-        if (cachedContent) {
-          // Cache exists, immediately display cached content without showing loading
-          if (cachedContent === "No License") {
-            setNotFound(true);
-            setLicenseContent("");
-          } else {
-            setLicenseContent(cachedContent);
-          }
+    if (licenseData.type && licenseData.type !== licenseType) {
+      console.log(
+        `📝 License type changed: ${licenseType} -> ${licenseData.type}`
+      );
+      // 使用 ref 来避免依赖整个 mutation 对象
+      mutateRef.current(licenseData.type);
+    }
+  }, [githubUrl, licenseData, licenseType]);
 
-          // Refresh cache in background without showing loading
-          licenseManager
-            .getLicense(githubUrl, async () => {
-              const license = await getRepoLicenseAction(githubUrl);
-              if (
-                !license ||
-                Array.isArray(license) ||
-                !("content" in license)
-              ) {
-                return "No License";
-              }
-
-              // Get and update license type
-              const type = await getRepoLicenseTypeAction(githubUrl);
-              if (type !== licenseType) {
-                console.log(
-                  `📝 License type changed: ${licenseType} -> ${type}`
-                );
-                setLicenseType(type);
-                // Update server and local state
-                console.log(
-                  `💾 Updating license in database for Copany ${copany.id}...`
-                );
-                await updateCopanyLicenseAction(copany.id, type);
-                console.log("✅ Database update completed");
-                onCopanyUpdate?.({
-                  ...copany,
-                  license: type,
-                });
-                console.log("✨ Local state updated");
-              } else {
-                console.log("ℹ️ License type unchanged");
-              }
-
-              return decodeGitHubContent(license.content);
-            })
-            .then((freshContent) => {
-              // Only update UI when content has changed
-              if (freshContent !== cachedContent) {
-                if (freshContent === "No License") {
-                  setNotFound(true);
-                  setLicenseContent("");
-                } else {
-                  setNotFound(false);
-                  setLicenseContent(freshContent);
-                }
-              }
-            })
-            .catch((error) => {
-              console.warn("Background refresh License failed:", error);
-            });
-        } else {
-          // No cache, network request needed, show loading
-          setLoading(true);
-          try {
-            const content = await licenseManager.getLicense(
-              githubUrl,
-              async () => {
-                const license = await getRepoLicenseAction(githubUrl);
-                if (
-                  !license ||
-                  Array.isArray(license) ||
-                  !("content" in license)
-                ) {
-                  return "No License";
-                }
-
-                // Get and update license type
-                const type = await getRepoLicenseTypeAction(githubUrl);
-                if (type !== licenseType) {
-                  console.log(
-                    `📝 License type changed: ${licenseType} -> ${type}`
-                  );
-                  setLicenseType(type);
-                  // Update server and local state
-                  console.log(
-                    `💾 Updating license in database for Copany ${copany.id}...`
-                  );
-                  await updateCopanyLicenseAction(copany.id, type);
-                  console.log("✅ Database update completed");
-                  onCopanyUpdate?.({
-                    ...copany,
-                    license: type,
-                  });
-                  console.log("✨ Local state updated");
-                } else {
-                  console.log("ℹ️ License type unchanged");
-                }
-
-                return decodeGitHubContent(license.content);
-              }
-            );
-
-            if (content === "No License") {
-              setNotFound(true);
-              setLicenseContent("");
-            } else {
-              setLicenseContent(content);
-            }
-          } finally {
-            setLoading(false);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to get License:", err);
-
-        const errorMessage = "Failed to get License content.";
-        setError(errorMessage);
-        setLicenseContent("");
-      }
-    };
-
-    fetchLicense();
-  }, [githubUrl, copany, onCopanyUpdate, licenseType]);
-
-  if (loading) {
+  if (isLicenseLoading) {
     return (
       <div className="py-8 text-center">
         <LoadingView type="label" />
@@ -228,6 +139,7 @@ export default function LicenseView({
 
   if (notFound) {
     const newLicenseUrl = githubUrl ? generateNewLicenseUrl(githubUrl) : null;
+    const isLoggedIn = !!currentUser;
 
     return (
       <EmptyPlaceholderView

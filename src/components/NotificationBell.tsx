@@ -2,24 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import type { Notification, Copany } from "@/types/database.types";
+import type {
+  Notification,
+  NotificationPayload,
+  Copany,
+} from "@/types/database.types";
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
 import Button from "./commons/Button";
 import { useRouter } from "next/navigation";
 import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { userInfoManager } from "@/utils/cache/managers/UserInfoManager";
+import { useUsersInfo } from "@/hooks/userInfo";
 import { formatRelativeTime } from "@/utils/time";
 import type { UserInfo } from "@/actions/user.actions";
-import { issuesManager } from "@/utils/cache/managers/IssuesManager";
-import { copanyManager } from "@/utils/cache/managers/CopanyManager";
-import { notificationsManager } from "@/utils/cache";
+import { useNotifications, useMarkNotifications } from "@/hooks/notifications";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
-import {
-  listNotificationsAction,
-  unreadCountAction,
-  markReadAction,
-  markAllReadAction,
-} from "@/actions/notification.actions";
+import { listNotificationsAction } from "@/actions/notification.actions";
+
+// Stable empty array to avoid re-creating [] on every render,
+// which would otherwise retrigger effects depending on it
+const EMPTY_NOTIFICATIONS: Notification[] = [];
 
 function BellIcon({ hasUnread }: { hasUnread: boolean }) {
   return (
@@ -34,13 +35,14 @@ function BellIcon({ hasUnread }: { hasUnread: boolean }) {
 
 export default function NotificationBell() {
   const router = useRouter();
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [actorUsers, setActorUsers] = useState<Record<string, UserInfo>>({});
   const [copanies, setCopanies] = useState<Record<string, Copany>>({});
+  const { data: notificationsData } = useNotifications();
+  // Use a stable fallback to prevent effect dependency churn
+  const baseNotifications = notificationsData?.items ?? EMPTY_NOTIFICATIONS;
+  const unreadCount = notificationsData?.unread || 0;
+  const markMutation = useMarkNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState<{
     top: number;
@@ -50,63 +52,33 @@ export default function NotificationBell() {
   const buttonRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const fetchUnreadCount = useCallback(async () => {
-    console.log("[NotificationBell] fetchUnreadCount → start");
-    try {
-      const count = await unreadCountAction();
-      console.log("[NotificationBell] fetchUnreadCount → count", count || 0);
-      setUnreadCount(count || 0);
-    } catch (error) {
-      console.error("[NotificationBell] fetchUnreadCount → error", error);
-    }
-  }, []);
+  // Local list for pagination-append
+  const [list, setList] = useState<Notification[]>(EMPTY_NOTIFICATIONS);
+  useEffect(() => {
+    // Only update when the reference really changes to avoid render loops
+    setList((prev) => (prev === baseNotifications ? prev : baseNotifications));
+  }, [baseNotifications]);
 
-  const fetchList = useCallback(async () => {
-    console.log("[NotificationBell] fetchList → start");
-    setLoadingList(true);
-    try {
-      const data = await notificationsManager.getNotifications(
-        "inbox",
-        async () => await listNotificationsAction(20)
-      );
-      console.log("[NotificationBell] fetchList → loaded", {
-        count: data.length,
-      });
-      const ids = Array.from(
-        new Set(
-          data
-            .map((n) => n.copany_id)
-            .filter((v): v is string => typeof v === "string" && v.length > 0)
-        )
-      );
-      console.log("[NotificationBell] fetchList → unique copanyIds", ids);
-      setNotifications(data);
-      // 即时根据列表计算未读数，保证 UI 立刻更新（服务器轮询稍后会校准）
-      try {
-        const localUnread = data.filter((n) => !n.is_read && !n.read_at).length;
-        setUnreadCount(localUnread);
-      } catch (_) {}
-      const last = data[data.length - 1] as { created_at?: string } | undefined;
-      setNextCursor(last?.created_at ?? null);
-    } catch (error) {
-      console.error("[NotificationBell] fetchList → error", error);
-    }
-    setLoadingList(false);
-  }, []);
+  const { data: actorUsersMap } = useUsersInfo(
+    Array.from(
+      new Set(
+        list
+          .map((n) => n.actor_id)
+          .filter((v): v is string => typeof v === "string" && v.length > 0)
+      )
+    )
+  );
+
+  const actorUsers: Record<string, UserInfo> = actorUsersMap || {};
 
   const fetchMore = async () => {
     if (!nextCursor || isLoadingMore) return;
-    console.log("[NotificationBell] fetchMore → start", { nextCursor });
     setIsLoadingMore(true);
     try {
       const data = await listNotificationsAction(20, nextCursor);
       if (data && data.length > 0) {
-        console.log("[NotificationBell] fetchMore → loaded", {
-          count: data.length,
-        });
-        setNotifications((prev) => {
+        setList((prev) => {
           const merged = [...prev, ...data];
-          notificationsManager.setNotifications("inbox", merged);
           return merged;
         });
         const last = data[data.length - 1] as
@@ -114,7 +86,6 @@ export default function NotificationBell() {
           | undefined;
         setNextCursor(last?.created_at ?? null);
       } else {
-        console.log("[NotificationBell] fetchMore → no more data");
         setNextCursor(null);
       }
     } catch (error) {
@@ -123,132 +94,45 @@ export default function NotificationBell() {
     setIsLoadingMore(false);
   };
 
-  const loadActorUsers = useCallback(
-    async (items: Notification[]) => {
-      console.log("[NotificationBell] loadActorUsers → start", {
-        total: items.length,
-      });
-      const ids = Array.from(
-        new Set(
-          items
-            .map((n) => n.actor_id)
-            .filter((v): v is string => typeof v === "string" && v.length > 0)
-        )
-      );
-      console.log("[NotificationBell] loadActorUsers → unique actorIds", ids);
-      if (ids.length === 0) return;
-      // 仅加载缺失的用户信息
-      const missing = ids.filter((id) => !actorUsers[id]);
-      console.log(
-        "[NotificationBell] loadActorUsers → missing actorIds",
-        missing
-      );
-      if (missing.length === 0) return;
-      const users = await userInfoManager.getMultipleUserInfo(missing);
-      console.log(
-        "[NotificationBell] loadActorUsers → loaded users",
-        Object.keys(users)
-      );
-      setActorUsers((prev) => ({ ...prev, ...users }));
-    },
-    [actorUsers]
-  );
-
   const markAllRead = async () => {
-    console.log("[NotificationBell] markAllRead → start");
-    const now = new Date().toISOString();
     try {
-      await markAllReadAction();
-      console.log("[NotificationBell] markAllRead → success");
-      // 本地更新，避免立即触发重新拉取导致闪烁
-      setNotifications((prev) => {
-        const next = prev.map((n) =>
-          n.read_at ? n : { ...n, read_at: now, is_read: true }
-        );
-        notificationsManager.setNotifications("inbox", next);
-        return next;
-      });
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("[NotificationBell] markAllRead → error", error);
-    }
+      await markMutation.mutateAsync({ all: true });
+    } catch (_) {}
   };
 
   const markOneRead = async (id: string) => {
-    console.log("[NotificationBell] markOneRead → start", { id });
     try {
-      await markReadAction([id]);
-      console.log("[NotificationBell] markOneRead → success", { id });
-      setNotifications((prev) => {
-        const nowIso = new Date().toISOString();
-        const next = prev.map((n) =>
-          n.id === id ? { ...n, read_at: nowIso, is_read: true } : n
-        );
-        notificationsManager.setNotifications("inbox", next);
-        return next;
-      });
-      await fetchUnreadCount();
-    } catch (error) {
-      console.error("[NotificationBell] markOneRead → error", error);
-    }
+      await markMutation.mutateAsync({ ids: [id] });
+    } catch (_) {}
   };
 
-  // 加载通知涉及到的 Copany 信息（优先使用缓存）
+  // Load Copany infos for notifications
   const loadCopanies = useCallback(
     async (items: Notification[]) => {
-      console.log("[NotificationBell] loadCopanies → start", {
-        total: items.length,
-      });
       const ids = Array.from(
-        new Set(items.map((n) => n.copany_id).filter((id) => id != null))
+        new Set(
+          items.map((n) => n.copany_id).filter((id): id is string => !!id)
+        )
       );
-      console.log("[NotificationBell] loadCopanies → unique copanyIds", ids);
-      if (ids.length === 0) return;
       const missing = ids.filter((id) => !copanies[id]);
-      console.log(
-        "[NotificationBell] loadCopanies → missing copanyIds",
-        missing
-      );
       if (missing.length === 0) return;
-
       const results = await Promise.all(
         missing.map(async (id) => {
           try {
-            console.log("[NotificationBell] loadCopanies → fetching", { id });
-            const data = await copanyManager.getCopany(id, async () => {
-              const result = await getCopanyByIdAction(id);
-              if (!result) throw new Error("Copany not found");
-              return result as Copany;
-            });
-            console.log("[NotificationBell] loadCopanies → fetched", {
-              id,
-              name: data?.name,
-            });
-            return [id, data] as const;
-          } catch (e) {
-            console.error("[NotificationBell] loadCopanies → fetch error", {
-              id,
-              error: e,
-            });
+            const data = await getCopanyByIdAction(id);
+            return data ? ([id, data] as const) : null;
+          } catch (_e) {
             return null;
           }
         })
       );
-      const mapEntries = results.filter(Boolean) as ReadonlyArray<
+      const entries = results.filter(Boolean) as ReadonlyArray<
         readonly [string, Copany]
       >;
-      console.log(
-        "[NotificationBell] loadCopanies → merged entries",
-        mapEntries.map(([id, c]) => ({ id, name: c.name }))
-      );
-      if (mapEntries.length > 0) {
+      if (entries.length > 0) {
         setCopanies((prev) => {
           const next = { ...prev } as Record<string, Copany>;
-          for (const [id, c] of mapEntries) next[id] = c;
-          console.log(
-            "[NotificationBell] loadCopanies → state updated",
-            Object.keys(next)
-          );
+          for (const [id, c] of entries) next[id] = c;
           return next;
         });
       }
@@ -257,67 +141,15 @@ export default function NotificationBell() {
   );
 
   useEffect(() => {
-    fetchUnreadCount();
-    fetchList();
-    console.log("[NotificationBell] mounted");
-    const onCacheUpdated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          manager: string;
-          key: string;
-          data: unknown;
-        };
-        if (!detail) return;
-        if (
-          detail.manager === "NotificationsManager" &&
-          detail.key === "inbox"
-        ) {
-          const list = detail.data as Notification[];
-          setNotifications(list);
-          // 异步刷新完成后，重新计算光标与未读数，保证 UI 与最新数据同步
-          try {
-            const last = list[list.length - 1] as
-              | { created_at?: string }
-              | undefined;
-            setNextCursor(last?.created_at ?? null);
-            const localUnread = list.filter(
-              (n) => !n.is_read && !n.read_at
-            ).length;
-            setUnreadCount(localUnread);
-          } catch (_) {}
-        }
-      } catch (_) {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("cache:updated", onCacheUpdated as EventListener);
-    }
-    const t1 = setInterval(fetchUnreadCount, 30000);
-    const t2 = setInterval(fetchList, 30000);
-    return () => {
-      clearInterval(t1);
-      clearInterval(t2);
-      console.log("[NotificationBell] unmounted");
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "cache:updated",
-          onCacheUpdated as EventListener
-        );
-      }
-    };
-  }, [fetchUnreadCount, fetchList]);
+    const last = list[list.length - 1] as { created_at?: string } | undefined;
+    setNextCursor(last?.created_at ?? null);
+  }, [list]);
 
-  // 当通知列表变化时加载对应的触发者用户信息
   useEffect(() => {
-    console.log("[NotificationBell] notifications changed", {
-      count: notifications.length,
-    });
-    if (notifications.length > 0) {
-      loadActorUsers(notifications);
-      loadCopanies(notifications);
+    if (list.length > 0) {
+      loadCopanies(list);
     }
-  }, [notifications, loadActorUsers, loadCopanies]);
-
-  // Dropdown header removed (duplicated in panel)
+  }, [list, loadCopanies]);
 
   const simpleText = (n: Notification) => {
     switch (n.type) {
@@ -355,7 +187,6 @@ export default function NotificationBell() {
   };
 
   const openTarget = async (n: Notification) => {
-    // 标记已读并跳转
     await markOneRead(n.id);
     if (n.issue_id) {
       const anchor = n.comment_id ? `#comment-${n.comment_id}` : "";
@@ -426,20 +257,9 @@ export default function NotificationBell() {
   };
 
   const renderSecondaryLine = (n: Notification) => {
-    const p = n.payload || {};
-    // 优先从 Issues 缓存获取标题，其次用联表标题，再次回退 payload 快照
-    let latestTitle = "";
-    if (n.copany_id && n.issue_id) {
-      const cached = issuesManager.getIssue(
-        String(n.copany_id),
-        String(n.issue_id)
-      );
-      latestTitle = cached?.title || "";
-    }
-    if (!latestTitle) {
-      const withIssue = n as unknown as { issue?: { title?: string | null } };
-      latestTitle = withIssue?.issue?.title || p.issue_title || "";
-    }
+    const p = n.payload || ({} as NotificationPayload);
+    const withIssue = n as unknown as { issue?: { title?: string | null } };
+    const latestTitle = withIssue?.issue?.title || p.issue_title || "";
     switch (n.type) {
       case "issue_assigned":
         return (
@@ -501,8 +321,8 @@ export default function NotificationBell() {
           </span>
         );
       default:
-        return latestTitle || p.issue_title ? (
-          <span className="text-sm">{latestTitle || p.issue_title}</span>
+        return latestTitle ? (
+          <span className="text-sm">{latestTitle}</span>
         ) : null;
     }
   };
@@ -579,8 +399,8 @@ export default function NotificationBell() {
     if (!buttonRef.current) return null;
     const rect = buttonRef.current.getBoundingClientRect();
     const maxWidth = 420;
-    const safeMarginX = 8; // horizontal safe margin
-    const verticalGap = 4; // distance from bell to panel
+    const safeMarginX = 8;
+    const verticalGap = 4;
     const viewportWidth =
       document.documentElement.clientWidth || window.innerWidth;
     const width = Math.max(
@@ -588,7 +408,7 @@ export default function NotificationBell() {
       Math.min(maxWidth, viewportWidth - safeMarginX * 2)
     );
     const maxLeft = viewportWidth - safeMarginX - width;
-    const desiredLeft = rect.right - width; // right-align to trigger by default
+    const desiredLeft = rect.right - width;
     const left = Math.max(safeMarginX, Math.min(maxLeft, desiredLeft));
     const top = rect.bottom + verticalGap;
     return { top, left, width };
@@ -596,14 +416,10 @@ export default function NotificationBell() {
 
   const togglePanel = () => {
     if (isOpen) {
-      console.log("[NotificationBell] togglePanel → close");
       closePanel();
     } else {
-      console.log("[NotificationBell] togglePanel → open");
       setIsOpen(true);
-      // 打开即标记全部已读
       markAllRead();
-      // 定位到触发按钮
       const geo = computePanelGeometry();
       if (geo) setPanelPosition(geo);
     }
@@ -611,10 +427,8 @@ export default function NotificationBell() {
 
   const closePanel = () => setIsOpen(false);
 
-  // 点击外部关闭
   useEffect(() => {
     if (!isOpen) return;
-    console.log("[NotificationBell] panel opened");
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
@@ -623,7 +437,6 @@ export default function NotificationBell() {
         buttonRef.current &&
         !buttonRef.current.contains(target)
       ) {
-        console.log("[NotificationBell] click outside → close panel");
         closePanel();
       }
     };
@@ -695,8 +508,8 @@ export default function NotificationBell() {
               }
             }}
           >
-            {(loadingList ? [] : notifications).map(renderItem)}
-            {!loadingList && notifications.length === 0 && (
+            {list.map(renderItem)}
+            {list.length === 0 && (
               <div className="px-2 py-4 text-sm text-gray-500 dark:text-gray-400">
                 No notifications
               </div>
