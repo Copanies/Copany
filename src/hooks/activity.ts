@@ -18,9 +18,8 @@ export function useIssueActivity(issueId: string, limit = 200) {
         return await listIssueActivityAction(issueId, limit);
       }
     },
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: true,
-    staleTime: 5_000,
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }
 
@@ -28,9 +27,8 @@ export function useContributions(copanyId: string) {
   return useQuery<Contribution[]>({
     queryKey: ["contributions", copanyId],
     queryFn: () => generateContributionsFromIssuesAction(copanyId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // 30 seconds
-    refetchIntervalInBackground: true,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 

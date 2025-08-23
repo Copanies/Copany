@@ -56,7 +56,7 @@ export default function AssetLinkModal({
       queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
       queryClient.invalidateQueries({ queryKey: ["copanies"] });
 
-      // 设置查询数据以保持 UI 同步
+      // 设置查询数据以保持 UI 同步 - 使用正确的查询键
       queryClient.setQueryData(["copany", copany.id], updatedCopany);
 
       // 重置状态并关闭弹窗
@@ -94,10 +94,15 @@ export default function AssetLinkModal({
   ) {
     setIsLoading(true);
     try {
+      const assetLinkItem = assetLinks.find((link) => link.id === assetType);
+      if (!assetLinkItem?.key) {
+        console.error("Invalid asset type:", assetType);
+        return;
+      }
+
       const updatedCopany = {
         ...copany,
-        [assetLinks.find((link) => link.id === assetType)?.key || ""]:
-          assetLink,
+        [assetLinkItem.key]: assetLink,
       };
       await mutateAsyncRef.current(updatedCopany);
     } catch (error) {
@@ -111,6 +116,9 @@ export default function AssetLinkModal({
     <Modal
       isOpen={isOpen}
       onClose={() => {
+        // 重置状态
+        setAssetType(null);
+        setAssetLink(null);
         onClose();
       }}
     >

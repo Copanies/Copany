@@ -22,9 +22,8 @@ export function useContributors(copanyId: string) {
         return await getCopanyContributorsAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: true,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 

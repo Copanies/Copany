@@ -21,8 +21,8 @@ export function useAssignmentRequests(issueId: string) {
     queryKey: byIssueKey(issueId),
     queryFn: () => listAssignmentRequestsAction(issueId),
     enabled: /^\d+$/.test(String(issueId)),
-    staleTime: 10_000,
-    refetchInterval: 10_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 
@@ -31,8 +31,8 @@ export function useAssignmentRequestsByCopany(copanyId: string) {
     queryKey: byCopanyKey(copanyId),
     queryFn: () => listAssignmentRequestsByCopanyAction(copanyId),
     enabled: !!copanyId,
-    staleTime: 10_000,
-    refetchInterval: 10_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 

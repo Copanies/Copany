@@ -12,6 +12,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
+import { issueKey } from "@/hooks/issues";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -52,6 +53,14 @@ export default function IssueAssigneeSelector({
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
   const mutation = useUpdateIssueAssignee(copanyId || "");
   const qc = useQueryClient();
+
+  // 当 props 变化时同步内部状态，确保外部缓存更新能反映到 UI
+  useEffect(() => {
+    setCurrentAssignee(initialAssignee);
+  }, [initialAssignee]);
+  useEffect(() => {
+    setCurrentAssigneeUser(assigneeUser || null);
+  }, [assigneeUser]);
 
   // 使用 useRef 稳定 mutation 方法，避免 effect 依赖整个对象
   const mutateRef = useRef(mutation.mutateAsync);
@@ -140,6 +149,11 @@ export default function IssueAssigneeSelector({
               copanyId
                 ? qc.invalidateQueries({ queryKey: ["issues", copanyId] })
                 : Promise.resolve(),
+              // copanyId
+              //   ? qc.invalidateQueries({
+              //       queryKey: issueKey(copanyId, issueId),
+              //     })
+              //   : Promise.resolve(),
             ]);
           } catch (_) {}
         }

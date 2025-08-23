@@ -38,7 +38,7 @@ import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
 
 interface IssueActivityTimelineProps {
   issueId: string;
-  copanyId?: string;
+  copanyId: string;
   canEdit: boolean;
   issueState?: number | null;
   issueLevel?: number | null;
@@ -461,7 +461,7 @@ export default function IssueActivityTimeline({
           <AssignmentRequestPanel
             key={entry.requesterId}
             issueId={issueId}
-            copanyId={copanyId ?? null}
+            copanyId={copanyId}
             requesterId={entry.requesterId}
             meId={currentUser?.id ?? null}
             canEdit={canEdit}
@@ -595,6 +595,7 @@ export default function IssueActivityTimeline({
 
       {/* Reviewer panel at the bottom, above new comment composer */}
       <IssueReviewPanel
+        copanyId={copanyId}
         issueId={issueId}
         issueState={issueState ?? null}
         issueLevel={issueLevel ?? null}

@@ -13,6 +13,7 @@ import SettingsView from "./subviews/settings/SettingsView";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CopanyDetailClientProps {
   copanyId: string;
@@ -28,6 +29,7 @@ export default function CopanyDetailClient({
   // 使用 React Query hooks 替代 cacheManager
   const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  const queryClient = useQueryClient();
 
   const isLoading = isCopanyLoading || isUserLoading;
 
@@ -84,9 +86,13 @@ export default function CopanyDetailClient({
             content: (
               <SettingsView
                 copany={copany}
-                onCopanyUpdate={(_updatedCopany) => {
-                  // 这里可以通过 React Query 的 setQueryData 来更新缓存
-                  // 或者让 SettingsView 内部处理数据更新
+                onCopanyUpdate={(updatedCopany) => {
+                  // 更新 React Query 缓存以保持 UI 同步
+                  queryClient.setQueryData(["copany", copanyId], updatedCopany);
+                  queryClient.invalidateQueries({
+                    queryKey: ["copany", copanyId],
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["copanies"] });
                 }}
               />
             ),

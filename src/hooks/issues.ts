@@ -1,12 +1,12 @@
 // English comments per user rule
 "use client";
 
-import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
-import { getIssuesAction, updateIssuePriorityAction, updateIssueLevelAction, updateIssueAssigneeAction, updateIssueStateAction, deleteIssueAction, createIssueAction } from "@/actions/issue.actions";
+import { getIssuesAction, getIssueAction, updateIssuePriorityAction, updateIssueLevelAction, updateIssueAssigneeAction, updateIssueStateAction, deleteIssueAction, createIssueAction } from "@/actions/issue.actions";
 import type { IssueWithAssignee, IssuePriority, IssueLevel, IssueState, Issue } from "@/types/database.types";
 
-function issuesKey(copanyId: string): QueryKey { return ["issues", copanyId]; }
+export function issuesKey(copanyId: string): QueryKey { return ["issues", copanyId]; }
+export function issueKey(copanyId: string, issueId: string): QueryKey { return ["issue", copanyId, issueId]; }
 
 export function useIssues(copanyId: string) {
   return useQuery<IssueWithAssignee[]>({
@@ -21,19 +21,54 @@ export function useIssues(copanyId: string) {
         return await getIssuesAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: true,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 60_000, // 1 minute
   });
 }
 
 export function useIssue(copanyId: string, issueId: string) {
-  const q = useIssues(copanyId);
-  const issue = useMemo(() => {
-    const list = q.data || [];
-    return list.find((i) => String(i.id) === String(issueId)) || null;
-  }, [q.data, issueId]);
-  return { ...q, data: issue } as const;
+  // Derive single issue from the list query using `select`, keeping a single source of truth
+  return useQuery<IssueWithAssignee[], unknown, IssueWithAssignee | null>({
+    queryKey: issuesKey(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/issues?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.issues as IssueWithAssignee[];
+      } catch {
+        return await getIssuesAction(copanyId);
+      }
+    },
+    select: (issues) => {
+      const found = issues.find((i) => String(i.id) === String(issueId));
+      return found ?? null;
+    },
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days (align with list)
+    refetchInterval: 10_000, // 10 seconds
+  });
+}
+
+// Invalidate-like helper to actively refresh a single issue into the list cache,
+// which will propagate to any `useIssue` consumers via `select`.
+export function useInvalidateIssue(copanyId: string) {
+  const qc = useQueryClient();
+  return async (issueId: string) => {
+    try {
+      const fresh = await getIssueAction(issueId);
+      if (!fresh) return;
+      qc.setQueryData<IssueWithAssignee[]>(issuesKey(copanyId), (prev) => {
+        const base = prev || [];
+        const idx = base.findIndex((i) => String(i.id) === String(fresh.id));
+        if (idx === -1) return [fresh, ...base];
+        const next = base.slice();
+        next[idx] = fresh;
+        return next;
+      });
+    } catch (_) {
+      // swallow errors to keep UX smooth; caller may choose to show a toast
+    }
+  };
 }
 
 export function useUpdateIssuePriority(copanyId: string) {

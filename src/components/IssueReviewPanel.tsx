@@ -20,8 +20,10 @@ import {
   EMPTY_REVIEWERS_ARRAY,
   EMPTY_USER_INFOS_OBJECT,
 } from "@/utils/constants";
+import { issuesKey, issueKey } from "@/hooks/issues";
 
 interface IssueReviewPanelProps {
+  copanyId: string;
   issueId: string;
   issueState: number | null;
   issueLevel: number | null;
@@ -32,6 +34,7 @@ interface IssueReviewPanelProps {
 }
 
 export default function IssueReviewPanel({
+  copanyId,
   issueId,
   issueState,
   issueLevel,
@@ -265,6 +268,12 @@ export default function IssueReviewPanel({
               <Button
                 onClick={async () => {
                   updateIssueStateMutation.mutate(IssueState.Done);
+                  queryClient.invalidateQueries({
+                    queryKey: issuesKey(copanyId),
+                  });
+                  // queryClient.invalidateQueries({
+                  //   queryKey: issueKey(copanyId, issueId),
+                  // });
                 }}
                 disabled={updateIssueStateMutation.isPending || !meId}
                 size="sm"

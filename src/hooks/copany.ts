@@ -11,7 +11,8 @@ export function useCopany(copanyId: string) {
   return useQuery<Copany | null>({
     queryKey: copanyKey(copanyId),
     queryFn: () => getCopanyByIdAction(copanyId),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 

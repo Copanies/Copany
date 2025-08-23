@@ -17,7 +17,8 @@ export function useUserInfo(userId: string) {
         return await getUserByIdAction(userId);
       }
     },
-    staleTime: 60 * 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 60 * 60 * 1000, // 1 hour
   });
 }
 
@@ -35,7 +36,8 @@ export function useUsersInfo(userIds: string[]) {
         return await getUsersByIdsAction(userIds);
       }
     },
-    staleTime: 60 * 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 60 * 60 * 1000, // 1 hour
   });
 }
 

@@ -23,7 +23,8 @@ export function useRepoReadme(githubUrl?: string | null) {
       return decodeGitHubContent(res.content);
     },
     enabled: !!githubUrl,
-    staleTime: 60 * 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 60 * 60 * 1000, // 1 hour 
   });
 }
 
@@ -40,7 +41,8 @@ export function useRepoLicense(githubUrl?: string | null) {
       return { content: decodeGitHubContent(license.content), type: type ?? null };
     },
     enabled: !!githubUrl,
-    staleTime: 60 * 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 60 * 60 * 1000, // 1 hour 
   });
 }
 

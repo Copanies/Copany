@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
@@ -25,6 +25,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
+import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
 
 import AssignmentRequestModal from "@/components/AssignmentRequestModal";
 import { useIssues, useDeleteIssue } from "@/hooks/issues";
@@ -35,6 +36,7 @@ import { useContributors } from "@/hooks/contributors";
 import { useAssignmentRequestsByCopany } from "@/hooks/assignmentRequests";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCopany } from "@/hooks/copany";
+import { useMultipleIssueReviewers } from "@/hooks/reviewers";
 import { issuesUiStateManager } from "@/utils/cache";
 import {
   EMPTY_STRING,
@@ -141,7 +143,6 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const [reviewersByIssue, setReviewersByIssue] = useState<
     Record<string, IssueReviewer[]>
   >(EMPTY_REVIEWERS_BY_ISSUE);
-  const loadingReviewersRef = useRef<Set<string>>(new Set());
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -270,46 +271,26 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   const { data: requestersInfo = EMPTY_USER_INFOS_OBJECT } =
     useUsersInfo(pendingRequesterIds);
 
-  // Lazy load reviewers for currently visible InReview issues
-  useEffect(() => {
-    const target = filteredIssues
+  // Get issue IDs that need reviewers data
+  const issueIdsNeedingReviewers = useMemo(() => {
+    return filteredIssues
       .filter((it) => it.state === IssueState.InReview)
       .map((it) => String(it.id));
-    const missing = target.filter(
-      (id) =>
-        reviewersByIssue[id] === undefined &&
-        !loadingReviewersRef.current.has(id)
-    );
-    if (missing.length === 0) return;
-    // mark loading to avoid duplicate requests
-    missing.forEach((id) => loadingReviewersRef.current.add(id));
-    (async () => {
-      try {
-        const results = await Promise.all(
-          missing.map(async (id) => {
-            try {
-              // TODO: Replace with proper hook when available
-              // For now, return empty array
-              return [id, [] as IssueReviewer[]] as const;
-            } catch (e) {
-              console.error("Failed to load reviewers", { id, e });
-              return [id, [] as IssueReviewer[]] as const;
-            }
-          })
-        );
-        setReviewersByIssue((prev) => {
-          const next = { ...prev } as Record<string, IssueReviewer[]>;
-          for (const [id, rs] of results) next[id] = rs;
-          return next;
-        });
-      } finally {
-        missing.forEach((id) => loadingReviewersRef.current.delete(id));
-      }
-    })();
-  }, [filteredIssues, reviewersByIssue]);
+  }, [filteredIssues]);
 
-  // React Query automatically handles data synchronization
-  // No need for manual cache management or event bus subscriptions
+  // Fetch reviewers data for all InReview issues
+  const { data: reviewersData = EMPTY_REVIEWERS_OBJECT } =
+    useMultipleIssueReviewers(issueIdsNeedingReviewers);
+
+  // Update local state when reviewers data changes
+  useEffect(() => {
+    if (Object.keys(reviewersData).length > 0) {
+      setReviewersByIssue((prev) => ({
+        ...prev,
+        ...reviewersData,
+      }));
+    }
+  }, [reviewersData]);
 
   const renderReviewBadge = (issue: IssueWithAssignee) => {
     if (issue.state !== IssueState.InReview) return null;

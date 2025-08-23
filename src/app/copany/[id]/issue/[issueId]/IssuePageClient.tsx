@@ -8,6 +8,7 @@ import {
   IssuePriority,
   AssigneeUser,
 } from "@/types/database.types";
+import type { UserInfo } from "@/actions/user.actions";
 import IssueStateSelector from "@/components/IssueStateSelector";
 import IssuePrioritySelector from "@/components/IssuePrioritySelector";
 import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
@@ -43,7 +44,10 @@ import {
   EMPTY_CONTRIBUTORS_ARRAY,
   EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
   EMPTY_USER_INFOS_OBJECT,
+  EMPTY_ARRAY,
 } from "@/utils/constants";
+
+import { issueKey } from "@/hooks/issues";
 
 interface IssuePageClientProps {
   copanyId: string;
@@ -213,6 +217,7 @@ export default function IssuePageClient({
   const updateIssueInCache = useCallback(
     (updated: IssueWithAssignee) => {
       try {
+        // 更新 issues 列表缓存
         queryClient.setQueryData<IssueWithAssignee[]>(
           ["issues", copanyId],
           (prev) => {
@@ -222,9 +227,14 @@ export default function IssuePageClient({
             );
           }
         );
+        // 同步更新单个 issue 查询缓存
+        // queryClient.setQueryData<IssueWithAssignee>(
+        //   issueKey(copanyId, issueId),
+        //   updated
+        // );
       } catch (_) {}
     },
-    [queryClient, copanyId]
+    [queryClient, copanyId, issueId]
   );
 
   // Remove old fetchCreator and reloadPendingRequests functions since data is now managed by React Query

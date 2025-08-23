@@ -16,6 +16,7 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
+import { issueKey } from "@/hooks/issues";
 
 interface AssignmentRequestPanelProps {
   issueId: string;
@@ -207,6 +208,11 @@ export default function AssignmentRequestPanel({
                                 queryKey: ["issues", copanyId],
                               })
                             : Promise.resolve(),
+                          // copanyId
+                          //   ? qc.invalidateQueries({
+                          //       queryKey: issueKey(copanyId, issueId),
+                          //     })
+                          //   : Promise.resolve(),
                         ]);
                         if (onActivityChanged) await onActivityChanged();
                       } catch (e) {

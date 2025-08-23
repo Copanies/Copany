@@ -47,6 +47,11 @@ export default function IssueStateSelector({
     mutateRef.current = mutation.mutateAsync;
   }, [mutation.mutateAsync]);
 
+  // 当 props 变化时同步内部状态，确保外部缓存更新能反映到 UI
+  useEffect(() => {
+    setCurrentState(initialState);
+  }, [initialState]);
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {

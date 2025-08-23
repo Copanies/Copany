@@ -9,7 +9,10 @@ import ContributionPieChart from "@/components/ContributionPieChart";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ChartPieIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { EMPTY_CONTRIBUTORS_ARRAY } from "@/utils/constants";
+import {
+  EMPTY_CONTRIBUTORS_ARRAY,
+  EMPTY_CONTRIBUTION_ARRAY,
+} from "@/utils/constants";
 
 interface ContributionViewProps {
   copanyId: string;
@@ -20,7 +23,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
 
   // 使用 React Query hooks 替代 cacheManager
   const {
-    data: contributions = EMPTY_CONTRIBUTORS_ARRAY,
+    data: contributions = EMPTY_CONTRIBUTION_ARRAY,
     isLoading: isContributionsLoading,
   } = useContributions(copanyId);
   const {

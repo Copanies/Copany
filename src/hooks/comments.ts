@@ -19,8 +19,8 @@ export function useComments(issueId: string) {
         return await getIssueCommentsAction(issueId);
       }
     },
-    staleTime: 10_000,
-    refetchInterval: 10_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 1 * 60 * 1000, // 1 minute 
   });
 }
 
