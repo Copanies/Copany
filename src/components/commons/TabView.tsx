@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface TabViewProps {
-  tabs: { label: string; content: React.ReactNode }[];
+  tabs: { label: string; icon?: React.ReactNode; content: React.ReactNode }[];
   urlParamName?: string; // Optional URL parameter name
 }
 
@@ -46,7 +46,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     return tabs.map((tab) => (
       <div
         key={tab.label}
-        className="mt-4"
+        className="mt-4 mx-6"
         style={{ display: activeTab === tab.label ? "block" : "none" }}
       >
         {tab.content}
@@ -55,21 +55,26 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex gap-2 w-full flex-col">
-      <div className="flex gap-2 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap">
-        {tabs.map((tab) => (
-          <button
-            key={tab.label}
-            className={`${
-              activeTab === tab.label
-                ? "cursor-pointer rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-0.5 flex-shrink-0"
-                : "cursor-pointer rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 px-2 py-0.5 flex-shrink-0"
-            }`}
-            onClick={() => handleTabClick(tab.label)}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="flex w-full flex-col h-full min-h-screen">
+      <div className="mx-6 border-b border-gray-200 overflow-visible">
+        <div className="flex gap-2 flex-row overflow-x-auto overflow-visible scrollbar-hide whitespace-nowrap">
+          {tabs.map((tab) => (
+            <button
+              key={tab.label}
+              className={`${
+                activeTab === tab.label
+                  ? "cursor-pointer mx-2 pb-2 flex-shrink-0 border-b-2 border-primary"
+                  : "cursor-pointer mx-2 pb-[10px] flex-shrink-0"
+              }`}
+              onClick={() => handleTabClick(tab.label)}
+            >
+              <div className="flex flex-row gap-2 items-center">
+                {tab.icon && <div className="w-4 h-4">{tab.icon}</div>}
+                <span className="text-base">{tab.label}</span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
       {tabContents}
     </div>

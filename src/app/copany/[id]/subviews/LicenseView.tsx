@@ -44,7 +44,6 @@ const generateNewLicenseUrl = (githubUrl: string): string | null => {
 export default function LicenseView({
   githubUrl,
   copany,
-  onCopanyUpdate,
 }: LicenseViewProps) {
   const queryClient = useQueryClient();
 
@@ -67,11 +66,6 @@ export default function LicenseView({
     onSuccess: (newLicenseType) => {
       // 更新本地状态
       setLicenseType(newLicenseType);
-      // 调用父组件的更新回调
-      onCopanyUpdate?.({
-        ...copany,
-        license: newLicenseType,
-      });
       // 使相关的查询失效
       queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
     },

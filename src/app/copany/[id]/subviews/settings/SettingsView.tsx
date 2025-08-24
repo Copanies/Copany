@@ -354,7 +354,9 @@ export default function SettingsView({
         <div className="flex flex-col gap-2">{connectSection()}</div>
       </div>
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-red-500">Danger Zone</h1>
+        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
+          Danger Zone
+        </h1>
         <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
       </div>
 
@@ -524,7 +526,7 @@ export default function SettingsView({
                 : "Upload new picture"}
             </Button>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 1MB
             </p>
 
@@ -673,7 +675,7 @@ export default function SettingsView({
 
   function deleteCopanySection() {
     return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-red-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-1.5 border-red-500">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold ">Delete Copany</label>
           <p className="text-sm">
@@ -685,8 +687,9 @@ export default function SettingsView({
           className="w-fit h-fit text-sm"
           onClick={() => setIsDeleteModalOpen(true)}
           size="sm"
+          variant="danger"
         >
-          <p className="text-red-500 font-medium">Delete this Copany</p>
+          Delete this Copany
         </Button>
       </div>
     );

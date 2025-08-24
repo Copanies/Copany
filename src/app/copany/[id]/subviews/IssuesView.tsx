@@ -546,18 +546,21 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     return (
       <Button
         onClick={() => setIsModalOpen(true)}
-        className="min-w-24"
+        className="min-w-fit"
         size="md"
         disabled={disabled}
       >
-        New Issue
+        <div className="flex flex-row items-center gap-1">
+          <PlusIcon strokeWidth={1.5} className="w-4 h-4" />
+          <span className="text-base">New Issue</span>
+        </div>
       </Button>
     );
   };
 
   return (
     <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
+      <div className="flex items-center justify-between md:pl-4 px-0 gap-3 md:pt-2">
         {!currentUser ? (
           <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
             <Tooltip.Root>
@@ -604,7 +607,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           <div key={group.state} className="">
             {/* Group title (click to toggle collapse) */}
             <div
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+              className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
               onClick={() => toggleGroupCollapse(group.state)}
             >
               <div className="flex flex-row items-center gap-2">
@@ -621,7 +624,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                 const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
                 return (
                   <div
-                    className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                    className="flex flex-row items-center gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
                     key={issue.id}
                     onClick={() => {
                       // Keep current URL parameters

@@ -49,7 +49,7 @@ export default function VerticalTabView({
     return tabs.map((tab) => (
       <div
         key={tab.label}
-        className="mt-4"
+        className=""
         style={{ display: activeTab === tab.label ? "block" : "none" }}
       >
         {tab.content}
@@ -58,15 +58,15 @@ export default function VerticalTabView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex w-full flex-row h-full">
-      <div className="flex gap-2 flex-col w-30 pr-4 border-r border-[#E7E7E7] dark:border-[#333333]">
+    <div className="flex w-full flex-row h-full min-h-screen">
+      <div className="flex flex-col w-30 pr-4 border-r border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.label}
-            className={`${
+            className={`text-left ${
               activeTab === tab.label
-                ? "cursor-pointer rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-0.5"
-                : "cursor-pointer rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 px-2 py-0.5"
+                ? "cursor-pointer px-4 py-2 border-l-2 border-primary"
+                : "cursor-pointer px-[18px] py-2 border-l border-gray-200"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >
