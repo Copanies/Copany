@@ -308,7 +308,7 @@ export default function IssueAssigneeSelector({
     }
 
     // If not found, display a default user label
-    return renderUserLabel("Unknown User", null, showText, null);
+    return renderUserLabel("Unknown", null, showText, null);
   })();
 
   return (

@@ -245,3 +245,38 @@ export interface AssignmentRequest {
   recipient_id: string;
   message: string | null;
 }
+
+// Finance: Distribute & Transactions
+export type DistributeStatus = "in_progress" | "in_review" | "confirmed";
+
+export interface DistributeRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  to_user: string;
+  bank_card_number: string;
+  status: DistributeStatus;
+  contribution_percent: number; // numeric(5,2)
+  amount: number; // numeric(18,2)
+  currency: string; // e.g., USD
+  evidence_url: string | null;
+}
+
+export type TransactionType = "income" | "expense";
+export type TransactionReviewStatus = "in_review" | "confirmed";
+
+export interface TransactionRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  actor_id: string;
+  type: TransactionType;
+  description: string | null;
+  amount: number;
+  currency: string;
+  status: TransactionReviewStatus;
+  occurred_at: string; // when the income/expense happened
+  evidence_url: string | null;
+}

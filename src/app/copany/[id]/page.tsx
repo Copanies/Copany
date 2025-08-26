@@ -1,5 +1,5 @@
 import MainNavigation from "@/components/MainNavigation";
-import CopanyDetailClient from "./CopanyDetailClient";
+import CopanyView from "./CopanyView";
 
 export default async function CopanyDetailView({
   params,
@@ -11,7 +11,7 @@ export default async function CopanyDetailView({
   return (
     <main className="h-min-screen">
       <MainNavigation />
-      <CopanyDetailClient copanyId={id} />
+      <CopanyView copanyId={id} />
     </main>
   );
 }

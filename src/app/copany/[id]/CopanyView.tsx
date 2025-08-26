@@ -9,20 +9,27 @@ import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./subviews/CooperateView";
 import ContributionView from "./subviews/ContributionView";
+import FinanceView from "./subviews/finance/FinanceView";
 import SettingsView from "./subviews/settings/SettingsView";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  BookOpenIcon,
+  ScaleIcon,
+  UserGroupIcon,
+  ChartPieIcon,
+  ReceiptPercentIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
 
-interface CopanyDetailClientProps {
+interface CopanyViewProps {
   copanyId: string;
 }
 
-export default function CopanyDetailClient({
-  copanyId,
-}: CopanyDetailClientProps) {
-  console.log(`[CopanyDetailClient] 🚀 Component initialized:`, {
+export default function CopanyView({ copanyId }: CopanyViewProps) {
+  console.log(`[CopanyView] 🚀 Component initialized:`, {
     copanyId,
   });
 
@@ -56,33 +63,34 @@ export default function CopanyDetailClient({
   const tabs = [
     {
       label: "README",
+      icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
       content: <ReadmeView githubUrl={copany.github_url} />,
     },
     {
-      label: "License",
-      content: (
-        <LicenseView
-          githubUrl={copany.github_url}
-          copany={copany}
-          onCopanyUpdate={(_updatedCopany) => {
-            // 这里可以通过 React Query 的 setQueryData 来更新缓存
-            // 或者让 LicenseView 内部处理数据更新
-          }}
-        />
-      ),
+      label: "LICENSE",
+      icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
+      content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
     },
     {
       label: "Cooperate",
+      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
       content: <CooperateView copanyId={copanyId} />,
     },
     {
       label: "Contribution",
+      icon: <ChartPieIcon strokeWidth={2} className="w-4 h-4" />,
       content: <ContributionView copanyId={copanyId} />,
+    },
+    {
+      label: "Finance",
+      icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
+      content: <FinanceView copanyId={copanyId} />,
     },
     ...(isCreator
       ? [
           {
             label: "Settings",
+            icon: <Cog6ToothIcon strokeWidth={2} className="w-4 h-4" />,
             content: (
               <SettingsView
                 copany={copany}
@@ -102,8 +110,8 @@ export default function CopanyDetailClient({
   ];
 
   return (
-    <div className="p-6 max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
-      <div className="flex flex-col gap-4">
+    <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
+      <div className="flex flex-col gap-4 px-5 pt-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image

@@ -105,7 +105,7 @@ export function renderLevelLabel(level: number | null, showText: boolean) {
   const getLevelDisplay = (level: number | null) => {
     switch (level) {
       case IssueLevel.level_None:
-        return { symbol: "-", text: "Unknown level" };
+        return { symbol: "?", text: "Pending" };
       case IssueLevel.level_C:
         return { symbol: "C", text: "Level C" };
       case IssueLevel.level_B:
@@ -115,7 +115,7 @@ export function renderLevelLabel(level: number | null, showText: boolean) {
       case IssueLevel.level_S:
         return { symbol: "S", text: "Level S" };
       default:
-        return { symbol: "-", text: "Unknown level" };
+        return { symbol: "?", text: "Pending" };
     }
   };
 
@@ -124,7 +124,7 @@ export function renderLevelLabel(level: number | null, showText: boolean) {
   return (
     <div className="flex flex-row items-center gap-2">
       <div className="border border-gray-300 dark:border-gray-600 rounded-full px-[6px] py-[1px] min-w-[24px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
-        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center">
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center ">
           {symbol}
         </span>
       </div>

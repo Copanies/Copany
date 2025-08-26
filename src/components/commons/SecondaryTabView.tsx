@@ -2,15 +2,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-interface VerticalTabViewProps {
+interface SecondaryTabViewViewProps {
   tabs: { label: string; content: React.ReactNode }[];
   urlParamName?: string; // Optional URL parameter name
 }
 
-export default function VerticalTabView({
+export default function SecondaryTabViewView({
   tabs,
   urlParamName = "subtab",
-}: VerticalTabViewProps) {
+}: SecondaryTabViewViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,7 +49,7 @@ export default function VerticalTabView({
     return tabs.map((tab) => (
       <div
         key={tab.label}
-        className="mt-4"
+        className=""
         style={{ display: activeTab === tab.label ? "block" : "none" }}
       >
         {tab.content}
@@ -58,15 +58,15 @@ export default function VerticalTabView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex w-full flex-row h-full">
-      <div className="flex gap-2 flex-col w-30 pr-4 border-r border-[#E7E7E7] dark:border-[#333333]">
+    <div className="flex gap-3 md:gap-0 w-full h-full min-h-screen flex-col md:flex-row">
+      <div className="flex flex-row md:flex-col w-full md:w-40 shrink-0 px-0 md:px-0 md:pr-4 md:border-r border-gray-200 dark:border-gray-700 overflow-x-auto md:overflow-visible scrollbar-hide whitespace-nowrap md:whitespace-normal gap-2 md:gap-0 -mt-1 md:mt-0">
         {tabs.map((tab) => (
           <button
             key={tab.label}
-            className={`${
+            className={`text-left flex-shrink-0 cursor-pointer px-3 py-1 rounded-lg ${
               activeTab === tab.label
-                ? "cursor-pointer rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-0.5"
-                : "cursor-pointer rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 px-2 py-0.5"
+                ? " bg-gray-200 dark:bg-gray-700 md:px-4 md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l-2 md:border-primary"
+                : "bg-gray-100 dark:bg-gray-800 md:px-[18px] md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l md:border-gray-200 dark:md:border-gray-700"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >
@@ -74,7 +74,7 @@ export default function VerticalTabView({
           </button>
         ))}
       </div>
-      <div className="flex-1">{tabContents}</div>
+      <div className="flex-1 min-w-0">{tabContents}</div>
     </div>
   );
 }

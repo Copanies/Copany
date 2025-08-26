@@ -546,18 +546,20 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     return (
       <Button
         onClick={() => setIsModalOpen(true)}
-        className="min-w-24"
+        className="min-w-fit"
         size="md"
         disabled={disabled}
       >
-        New Issue
+        <div className="flex flex-row items-center gap-1">
+          <span className="text-base">New Issue</span>
+        </div>
       </Button>
     );
   };
 
   return (
-    <div className="min-h-screen flex flex-col gap-3">
-      <div className="flex items-center justify-between md:pl-4 px-0 gap-3">
+    <div className="min-h-screen w-full min-w-0 flex flex-col gap-3">
+      <div className="flex w-full min-w-0 items-center justify-between md:pl-4 px-0 gap-3 md:pt-2">
         {!currentUser ? (
           <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
             <Tooltip.Root>
@@ -599,12 +601,12 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
         />
       </div>
-      <div className="relative">
+      <div className="relative w-full min-w-0">
         {groupIssuesByState(filteredIssues).map((group) => (
-          <div key={group.state} className="">
+          <div key={group.state} className="w-full min-w-0">
             {/* Group title (click to toggle collapse) */}
             <div
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+              className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
               onClick={() => toggleGroupCollapse(group.state)}
             >
               <div className="flex flex-row items-center gap-2">
@@ -621,7 +623,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                 const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
                 return (
                   <div
-                    className="flex flex-row items-center gap-2 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                    className="flex w-full min-w-0 flex-row items-center gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
                     key={issue.id}
                     onClick={() => {
                       // Keep current URL parameters
@@ -663,8 +665,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       onPriorityChange={handleIssuePriorityUpdated}
                       readOnly={readOnly}
                     />
-                    <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 w-full flex items-center gap-2">
-                      <span>{issue.title || NO_TITLE_TEXT}</span>
+                    <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 min-w-0 flex items-center gap-2">
+                      <span className="truncate">
+                        {issue.title || NO_TITLE_TEXT}
+                      </span>
                       {renderReviewBadge(issue)}
                     </div>
                     {renderAssignmentRequestBadge(String(issue.id))}
