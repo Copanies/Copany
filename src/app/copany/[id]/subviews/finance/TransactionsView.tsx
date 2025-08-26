@@ -9,6 +9,7 @@ import {
   useReviewTransaction,
 } from "@/hooks/finance";
 import type { TransactionRow, TransactionType } from "@/types/database.types";
+import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
@@ -120,7 +121,8 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     file?: File | null
   ) {
     // Prefer evidence_url from payload (ImageUpload already uploaded)
-    let evidence_url: string | null = (payload as any).evidence_url || null;
+    let evidence_url: string | null =
+      (payload as { evidence_url?: string }).evidence_url || null;
     if (!evidence_url && file) {
       const res = await storageService.uploadFinanceEvidence(
         file,
@@ -481,7 +483,7 @@ function TransactionDetailModal({
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400">Status:</span>
-            <StatusLabel status={transaction.status as any} showText={true} />
+            <StatusLabel status={transaction.status} showText={true} />
           </div>
           {transaction.description && (
             <div className="flex flex-row items-center gap-2">
@@ -505,9 +507,11 @@ function TransactionDetailModal({
               src={transaction.evidence_url}
               alt="Evidence"
               renderTrigger={(open) => (
-                <img
+                <Image
                   src={transaction.evidence_url as string}
                   alt="Evidence"
+                  width={320}
+                  height={320}
                   className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                   onClick={open}
                 />
@@ -540,7 +544,7 @@ function TransactionsGroupList({
   onOpenView,
 }: {
   items: TransactionRow[];
-  transactionUsersInfo: Record<string, any>;
+  transactionUsersInfo: Record<string, UserInfo>;
   currentUserId?: string;
   onOpenView: (t: TransactionRow) => void;
 }) {
@@ -625,7 +629,7 @@ function TransactionsGroupList({
                   </span>
                 </div>
                 <span className="text-gray-700 dark:text-gray-300 flex-shrink-0 w-36">
-                  <StatusLabel status={t.status as any} showText={true} />
+                  <StatusLabel status={t.status} showText={true} />
                 </span>
                 <span className="flex-1 min-w-0 truncate w-40">
                   {t.description ? t.description : "No description"}

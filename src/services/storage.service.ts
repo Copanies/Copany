@@ -142,7 +142,7 @@ export class StorageService {
         .from(this.financeBucket)
         .getPublicUrl(filePath);
       return { success: true, url: urlData.publicUrl };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, error: "Unknown error occurred during upload" };
     }
   }
@@ -157,8 +157,8 @@ export class StorageService {
         .remove([filePath]);
       if (error) return { success: false, error: error.message };
       return { success: !!(data && data.length > 0) };
-    } catch (e: any) {
-      return { success: false, error: e?.message || "Unknown error" };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
     }
   }
 

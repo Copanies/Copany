@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Button from "./Button";
 import PhotoViewer from "./PhotoViewer";
 
@@ -119,9 +120,11 @@ export default function ImageUpload({
             src={previewUrl}
             alt="Evidence"
             renderTrigger={(open) => (
-              <img
+              <Image
                 src={previewUrl}
                 alt="Evidence"
+                width={160}
+                height={160}
                 className="max-h-40 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                 onClick={open}
               />

@@ -9,6 +9,7 @@ import {
   useRegenerateDistributes,
 } from "@/hooks/finance";
 import type { DistributeRow } from "@/types/database.types";
+import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import {
@@ -87,7 +88,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     );
   }, [distributes]);
 
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [_uploadingId, _setUploadingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDistributeId, setSelectedDistributeId] = useState<
     string | null
@@ -280,13 +281,13 @@ function DistributeEvidenceModal({
   onConfirm,
 }: {
   distribute: DistributeRow | null;
-  userInfo?: Record<string, any>;
+  userInfo?: UserInfo;
   copanyId: string;
   onClose: () => void;
   onConfirm: (evidenceUrl: string | null) => Promise<void>;
 }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [_file, _setFile] = useState<File | null>(null);
+  const [_isUploading, _setIsUploading] = useState(false);
   const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
 
   const handleConfirm = async () => {
@@ -327,7 +328,10 @@ function DistributeEvidenceModal({
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400">Status:</span>
-            <StatusLabel status={distribute?.status as any} showText={true} />
+            <StatusLabel
+              status={distribute?.status || "in_progress"}
+              showText={true}
+            />
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400">Amount:</span>
@@ -375,9 +379,9 @@ function DistributeEvidenceModal({
           variant="primary"
           size="md"
           onClick={handleConfirm}
-          disabled={isUploading}
+          disabled={_isUploading}
         >
-          {isUploading ? "Uploading..." : "Confirm"}
+          {_isUploading ? "Uploading..." : "Confirm"}
         </Button>
       </div>
     </div>
@@ -392,7 +396,7 @@ function DistributeDetailModal({
   onClose,
 }: {
   distribute: DistributeRow;
-  userInfo?: Record<string, any>;
+  userInfo?: UserInfo;
   canConfirm: boolean;
   onConfirm: () => Promise<void>;
   onClose: () => void;
@@ -427,7 +431,7 @@ function DistributeDetailModal({
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400">Status:</span>
-            <StatusLabel status={distribute.status as any} showText={true} />
+            <StatusLabel status={distribute.status} showText={true} />
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400">Amount:</span>
@@ -449,9 +453,11 @@ function DistributeDetailModal({
               src={distribute.evidence_url}
               alt="Evidence"
               renderTrigger={(open) => (
-                <img
+                <Image
                   src={distribute.evidence_url as string}
                   alt="Evidence"
+                  width={320}
+                  height={320}
                   className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                   onClick={open}
                 />
@@ -487,7 +493,7 @@ function DistributeGroupList({
   onOpenView,
 }: {
   items: DistributeRow[];
-  distributeUsersInfo: Record<string, any>;
+  distributeUsersInfo: Record<string, UserInfo>;
   isOwner: boolean;
   currentUserId?: string;
   onOpenTransfer: (id: string) => void;
@@ -584,7 +590,7 @@ function DistributeGroupList({
                   {formatAmount(d.amount, d.currency)}
                 </span>
                 <span className="text-left w-36">
-                  <StatusLabel status={d.status as any} showText={true} />
+                  <StatusLabel status={d.status} showText={true} />
                 </span>
                 <div className="sticky ml-auto right-0 flex items-center justify-start h-11 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
                   <div
