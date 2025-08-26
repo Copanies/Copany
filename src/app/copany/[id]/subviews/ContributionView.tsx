@@ -250,7 +250,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 mb-8">
+    <div className="flex flex-col gap-6 mb-8 px-0 md:px-5">
       <div className="flex flex-col w-full gap-2">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Distribution

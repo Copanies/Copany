@@ -375,7 +375,7 @@ export default function IssuePageClient({
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.name || "Unknown"
-                      : requestersInfo[requesterId]?.name || requesterId,
+                      : requestersInfo[requesterId]?.name || "Unknown",
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.avatar_url || null

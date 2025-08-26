@@ -338,7 +338,7 @@ export default function SettingsView({
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-8">
+    <div className="flex flex-col gap-8 pb-8 px-0 md:px-5">
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold">General</h1>
         <div className="flex flex-col gap-2">{renameSection()}</div>

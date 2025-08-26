@@ -55,9 +55,9 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex w-full flex-col h-full min-h-screen">
-      <div className="mx-6 border-b border-gray-200 overflow-visible">
-        <div className="flex gap-2 flex-row overflow-x-auto overflow-visible scrollbar-hide whitespace-nowrap">
+    <div className="flex w-full min-w-0 flex-col h-full min-h-screen">
+      <div className="mx-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex w-full min-w-0 gap-2 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap">
           {tabs.map((tab) => (
             <button
               key={tab.label}

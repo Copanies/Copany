@@ -9,6 +9,7 @@ export interface UploadResult {
 export class StorageService {
   private supabase = createClient();
   private bucketName = "copany-logos";
+  private financeBucket = "finance-evidence";
 
   /**
    * Upload copany logo to Supabase Storage
@@ -106,6 +107,76 @@ export class StorageService {
    */
   getMaxFileSize(): number {
     return 1 * 1024 * 1024; // 1MB
+  }
+
+  /**
+   * Finance evidence max size (20MB)
+   */
+  getFinanceEvidenceMaxFileSize(): number {
+    return 20 * 1024 * 1024; // 20MB
+  }
+
+  /**
+   * Upload finance evidence (image files) for distribute/transactions
+   */
+  async uploadFinanceEvidence(file: File, copanyId: string, kind: "distribute" | "transaction"): Promise<UploadResult> {
+    try {
+      if (!this.isValidImageFile(file)) {
+        return { success: false, error: "Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)" };
+      }
+      if (file.size > this.getFinanceEvidenceMaxFileSize()) {
+        return { success: false, error: "File size exceeds 20MB limit" };
+      }
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `${kind}-${copanyId}-${Date.now()}.${fileExtension}`;
+      const filePath = `${copanyId}/${kind}/${fileName}`;
+
+      const { error } = await this.supabase.storage
+        .from(this.financeBucket)
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
+      if (error) {
+        return { success: false, error: `Upload failed: ${error.message}` };
+      }
+
+      const { data: urlData } = this.supabase.storage
+        .from(this.financeBucket)
+        .getPublicUrl(filePath);
+      return { success: true, url: urlData.publicUrl };
+    } catch (error) {
+      return { success: false, error: "Unknown error occurred during upload" };
+    }
+  }
+
+  /**
+   * Delete finance evidence by full file path (relative to bucket)
+   */
+  async deleteFinanceEvidence(filePath: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await this.supabase.storage
+        .from(this.financeBucket)
+        .remove([filePath]);
+      if (error) return { success: false, error: error.message };
+      return { success: !!(data && data.length > 0) };
+    } catch (e: any) {
+      return { success: false, error: e?.message || "Unknown error" };
+    }
+  }
+
+  /**
+   * Extract path from public URL for this.financeBucket
+   */
+  extractFinancePathFromUrl(url: string): string | null {
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split("/");
+      const idx = parts.findIndex((p) => p === this.financeBucket);
+      if (idx >= 0 && idx < parts.length - 1) {
+        return parts.slice(idx + 1).join("/");
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 }
 

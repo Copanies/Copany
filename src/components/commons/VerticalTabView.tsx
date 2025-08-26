@@ -59,14 +59,14 @@ export default function VerticalTabView({
 
   return (
     <div className="flex w-full flex-row h-full min-h-screen">
-      <div className="flex flex-col w-30 pr-4 border-r border-gray-200">
+      <div className="flex flex-col w-40 shrink-0 pr-4 border-r border-gray-200 dark:border-gray-700">
         {tabs.map((tab) => (
           <button
             key={tab.label}
             className={`text-left ${
               activeTab === tab.label
                 ? "cursor-pointer px-4 py-2 border-l-2 border-primary"
-                : "cursor-pointer px-[18px] py-2 border-l border-gray-200"
+                : "cursor-pointer px-[18px] py-2 border-l border-gray-200 dark:border-gray-700"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >
@@ -74,7 +74,7 @@ export default function VerticalTabView({
           </button>
         ))}
       </div>
-      <div className="flex-1">{tabContents}</div>
+      <div className="flex-1 min-w-0">{tabContents}</div>
     </div>
   );
 }
