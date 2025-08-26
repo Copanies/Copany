@@ -586,7 +586,7 @@ function DistributeGroupList({
                 <span className="text-left w-36">
                   <StatusLabel status={d.status as any} showText={true} />
                 </span>
-                <div className="sticky ml-auto right-0 flex items-center justify-start h-11 bg-white dark:bg-inherit group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+                <div className="sticky ml-auto right-0 flex items-center justify-start h-11 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
                   <div
                     data-role="actions"
                     className="flex items-center justify-start gap-0 px-2"

@@ -633,7 +633,7 @@ function TransactionsGroupList({
                 <span className="flex-shrink-0 w-36">
                   {formatDate(t.occurred_at)}
                 </span>
-                <div className="sticky right-0 h-11 flex items-center justify-start gap-0 bg-white dark:bg-inherit group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+                <div className="sticky right-0 h-11 flex items-center justify-start gap-0 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
                   <div
                     data-role="actions"
                     className="flex items-center justify-start gap-0 px-2"
