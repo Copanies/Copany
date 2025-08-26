@@ -11,15 +11,20 @@ import {
 import type { DistributeRow } from "@/types/database.types";
 import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { InboxStackIcon } from "@heroicons/react/24/outline";
+import {
+  ReceiptPercentIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
+import LoadingView from "@/components/commons/LoadingView";
 import { getMonthlyPeriod } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
+import { useRouter } from "next/navigation";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -28,9 +33,12 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 export default function DistributeView({ copanyId }: { copanyId: string }) {
+  const router = useRouter();
+
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
-  const { data: distributes } = useDistributes(copanyId);
+  const { data: distributes, isLoading: isDistributesLoading } =
+    useDistributes(copanyId);
   const updateDistribute = useUpdateDistribute(copanyId);
   const regenerate = useRegenerateDistributes(copanyId);
 
@@ -93,10 +101,31 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     return !!(copany && currentUser && copany.created_by === currentUser.id);
   }, [copany, currentUser]);
 
+  if (isDistributesLoading) {
+    return <LoadingView type="label" />;
+  }
+
   if (!distributes || distributes.length === 0) {
     return (
       <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
+        <EmptyPlaceholderView
+          icon={
+            <ReceiptPercentIcon
+              className="w-16 h-16 text-gray-500"
+              strokeWidth={1}
+            />
+          }
+          title="No distribute records"
+          description="Distribute records are automatically generated based on the transaction log and each contributor's share ratio. Records are created on the 1st of every month at 00:00."
+          buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
+          buttonTitle="View Transactions"
+          buttonAction={() => {
+            router.push(
+              `/copany/${copanyId}?tab=Finance&financeTab=Transactions`
+            );
+          }}
+        />
+        <div className="flex items-center flex-1 justify-center">
           {isOwner && (
             <Button
               size="md"
@@ -105,20 +134,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 await regenerate.mutateAsync();
               }}
             >
-              Re-calculate
+              Calculate - for test
             </Button>
           )}
         </div>
-        <EmptyPlaceholderView
-          icon={
-            <InboxStackIcon
-              className="w-16 h-16 text-gray-500"
-              strokeWidth={1}
-            />
-          }
-          title="No distribute records"
-          description="When there is distributable amount, the records will be generated according to the contribution ratio."
-        />
       </div>
     );
   }
@@ -127,14 +146,12 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     <div className="p-0">
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedDistributes.map((group) => (
-          <div key={group.period.key} className="mb-6">
+          <div key={group.period.key} className="">
             {/* Period Header */}
             <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 dark:border-gray-700">
               <div className="flex items-center w-full justify-between">
-                <h3 className="test-base font-medium text-gray-900 dark:text-gray-100">
-                  {group.period.key}
-                </h3>
-                <span className="test-base font-medium text-gray-700 dark:text-gray-300">
+                <h3 className="test-base font-medium">{group.period.key}</h3>
+                <span className="test-base font-medium">
                   {formatAmount(
                     group.totalAmount,
                     group.items[0]?.currency || "USD"
@@ -162,16 +179,17 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
         ))}
       </div>
 
-      <div className="flex items-center justify-between md:pl-4 px-3 md:px-4 py-2">
+      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
         {isOwner && (
           <Button
-            size="sm"
-            variant="secondary"
+            size="md"
+            variant="primary"
+            className="w-fit"
             onClick={async () => {
               await regenerate.mutateAsync();
             }}
           >
-            Re-calculate
+            Calculate - for test
           </Button>
         )}
       </div>
@@ -576,12 +594,13 @@ function DistributeGroupList({
                       width: actionWidth ? `${actionWidth}px` : undefined,
                     }}
                   >
-                    {isOwner && d.status === "in_progress" && (
+                    {d.status === "in_progress" && (
                       <Button
                         size="sm"
                         variant="ghost"
                         className="!text-base"
                         onClick={() => onOpenTransfer(d.id)}
+                        disabled={!isOwner}
                       >
                         Distribute
                       </Button>

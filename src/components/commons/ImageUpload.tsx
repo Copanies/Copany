@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Button from "./Button";
+import PhotoViewer from "./PhotoViewer";
 
 export interface ImageUploadProps {
   value: string | null;
@@ -114,10 +115,17 @@ export default function ImageUpload({
         </div>
       ) : (
         <div className="flex flex-col items-center  gap-3">
-          <img
+          <PhotoViewer
             src={previewUrl}
-            alt="Uploaded"
-            className="h-auto max-w-[420px] rounded border border-gray-300 dark:border-gray-600"
+            alt="Evidence"
+            renderTrigger={(open) => (
+              <img
+                src={previewUrl}
+                alt="Evidence"
+                className="max-h-40 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
+                onClick={open}
+              />
+            )}
           />
           <div className="flex flex-col items-center gap-2">
             <input

@@ -2,15 +2,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-interface VerticalTabViewProps {
+interface SecondaryTabViewViewProps {
   tabs: { label: string; content: React.ReactNode }[];
   urlParamName?: string; // Optional URL parameter name
 }
 
-export default function VerticalTabView({
+export default function SecondaryTabViewView({
   tabs,
   urlParamName = "subtab",
-}: VerticalTabViewProps) {
+}: SecondaryTabViewViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -58,15 +58,15 @@ export default function VerticalTabView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex w-full flex-row h-full min-h-screen">
-      <div className="flex flex-col w-40 shrink-0 pr-4 border-r border-gray-200 dark:border-gray-700">
+    <div className="flex gap-3 md:gap-0 w-full h-full min-h-screen flex-col md:flex-row">
+      <div className="flex flex-row md:flex-col w-full md:w-40 shrink-0 px-0 md:px-0 md:pr-4 md:border-r border-gray-200 dark:border-gray-700 overflow-x-auto md:overflow-visible scrollbar-hide whitespace-nowrap md:whitespace-normal gap-2 md:gap-0 -mt-1 md:mt-0">
         {tabs.map((tab) => (
           <button
             key={tab.label}
-            className={`text-left ${
+            className={`text-left flex-shrink-0 cursor-pointer px-3 py-1 rounded-lg ${
               activeTab === tab.label
-                ? "cursor-pointer px-4 py-2 border-l-2 border-primary"
-                : "cursor-pointer px-[18px] py-2 border-l border-gray-200 dark:border-gray-700"
+                ? " bg-gray-200 dark:bg-gray-700 md:px-4 md:py-2 md:rounded-none md:bg-transparent md:border-l-2 md:border-primary"
+                : "bg-gray-100 dark:bg-gray-800 md:px-[18px] md:py-2 md:rounded-none md:bg-transparent md:border-l md:border-gray-200 dark:md:border-gray-700"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >

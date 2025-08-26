@@ -67,7 +67,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       content: <ReadmeView githubUrl={copany.github_url} />,
     },
     {
-      label: "License",
+      label: "LICENSE",
       icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
       content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
     },
@@ -111,7 +111,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   return (
     <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
-      <div className="flex flex-col gap-4 px-6 pt-6">
+      <div className="flex flex-col gap-4 px-5 pt-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image

@@ -14,7 +14,8 @@ import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import StatusLabel from "@/components/commons/StatusLabel";
-import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
+import LoadingView from "@/components/commons/LoadingView";
+import { BanknotesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import { formatDate, getMonthlyPeriod } from "@/utils/time";
@@ -35,7 +36,8 @@ function formatAmount(
 export default function TransactionsView({ copanyId }: { copanyId: string }) {
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
-  const { data: transactions } = useTransactions(copanyId);
+  const { data: transactions, isLoading: isTransactionsLoading } =
+    useTransactions(copanyId);
   const createTransaction = useCreateTransaction(copanyId);
   const reviewTransaction = useReviewTransaction(copanyId);
 
@@ -141,35 +143,26 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     await createTransaction.mutateAsync(transactionData);
   }
 
+  if (isTransactionsLoading) {
+    return <LoadingView type="label" />;
+  }
+
   if (!transactions || transactions.length === 0) {
     return (
       <div className="p-4 min-w-0">
-        <div className="flex items-center justify-between mb-2">
-          <div className="test-base text-gray-600">
-            记录项目收入与支出，成员提交，负责人审核。
-          </div>
-          {currentUser && (
-            <Button size="sm" onClick={() => setIsModalOpen(true)}>
-              <div className="flex flex-row items-center gap-1">
-                <PlusIcon className="w-4 h-4" />
-                <span>Add Transaction</span>
-              </div>
-            </Button>
-          )}
-        </div>
         <EmptyPlaceholderView
           icon={
-            <InboxStackIcon
+            <BanknotesIcon
               className="w-16 h-16 text-gray-500"
               strokeWidth={1}
             />
           }
-          title="暂无交易记录"
-          description="添加一笔交易记录开始管理项目财务。"
+          title="Add first transactions"
+          description="Transaction log records Copany’s income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner."
           buttonIcon={<PlusIcon className="w-4 h-4" />}
           buttonTitle="New Transaction"
           buttonAction={() => currentUser && setIsModalOpen(true)}
-          size="md"
+          size="lg"
         />
         <TransactionModal
           copanyId={copanyId}
@@ -183,7 +176,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="p-0 w-full min-w-0">
-      <div className="flex items-center justify-between md:pl-4 px-3 md:px-4 py-2">
+      <div className="flex items-center justify-between px-0 md:px-4 pt-2 pb-3">
         {/* <div className="text-base text-gray-600">Transactions</div> */}
         {currentUser && (
           <Button size="md" onClick={() => setIsModalOpen(true)}>
@@ -194,17 +187,17 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
         )}
       </div>
 
-      <div className="w-full mx-auto">
+      <div className="w-full mx-auto border-b border-gray-200 dark:border-gray-700">
         {groupedTransactions.map((group) => (
           <div key={group.period.key} className="w-full">
             {/* Period Header */}
             <div className="flex flex-1 px-3 md:px-4 w-full h-11 items-center bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 ">
               <div className="flex items-center justify-between w-full">
-                <span className="test-base font-medium text-gray-900 dark:text-gray-100">
+                <span className="test-base font-medium text-gray-900 dark:text-gray-100 truncate">
                   {group.period.key}
                 </span>
                 <div className="flex items-center gap-4 test-base">
-                  <span className="font-medium ">
+                  <span className="truncate">
                     {formatAmount(
                       group.netAmount,
                       group.items[0]?.currency || "USD",
@@ -290,7 +283,7 @@ function TransactionModal({
   ) => Promise<void>;
 }) {
   const [type, setType] = useState<TransactionType>("income");
-  const [amount, setAmount] = useState<number>(0);
+  const [amount, setAmount] = useState<number>();
   const [currency, setCurrency] = useState<string>("USD");
   const [occurredAt, setOccurredAt] = useState<string>(
     new Date().toISOString().slice(0, 16)
@@ -353,11 +346,11 @@ function TransactionModal({
                   onChange={(e) => setCurrency(e.target.value)}
                 >
                   <option value="USD">USD</option>
-                  <option value="CNY">CNY</option>
+                  {/* <option value="CNY">CNY</option>
                   <option value="EUR">EUR</option>
                   <option value="JPY">JPY</option>
                   <option value="GBP">GBP</option>
-                  <option value="KRW">KRW</option>
+                  <option value="KRW">KRW</option> */}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <svg
@@ -378,7 +371,7 @@ function TransactionModal({
               <input
                 className="border px-2 py-1 w-28 rounded-md border-gray-300 dark:border-gray-600 flex-1"
                 type="number"
-                placeholder="金额"
+                placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
               />
@@ -430,7 +423,7 @@ function TransactionModal({
               await onCreate(
                 {
                   type,
-                  amount,
+                  amount: amount || 0,
                   currency,
                   status: "in_review",
                   occurred_at: new Date(occurredAt).toISOString(),
@@ -440,7 +433,7 @@ function TransactionModal({
                 null
               );
               setDescription("");
-              setAmount(0);
+              setAmount(undefined);
               setEvidenceUrl(null);
               onClose();
             }}
@@ -648,17 +641,17 @@ function TransactionsGroupList({
                       width: actionWidth ? `${actionWidth}px` : undefined,
                     }}
                   >
-                    {(t.status === "in_review" || t.status === "confirmed") &&
-                      currentUserId && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="!text-base !border-0"
-                          onClick={() => onOpenView(t)}
-                        >
-                          View
-                        </Button>
-                      )}
+                    {(t.status === "in_review" || t.status === "confirmed") && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="!text-base !border-0"
+                        disabled={!currentUserId}
+                        onClick={() => onOpenView(t)}
+                      >
+                        View
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
