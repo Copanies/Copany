@@ -65,8 +65,8 @@ export default function SecondaryTabViewView({
             key={tab.label}
             className={`text-left flex-shrink-0 cursor-pointer px-3 py-1 rounded-lg ${
               activeTab === tab.label
-                ? " bg-gray-200 dark:bg-gray-700 md:px-4 md:py-2 md:rounded-none md:bg-transparent md:border-l-2 md:border-primary"
-                : "bg-gray-100 dark:bg-gray-800 md:px-[18px] md:py-2 md:rounded-none md:bg-transparent md:border-l md:border-gray-200 dark:md:border-gray-700"
+                ? " bg-gray-200 dark:bg-gray-700 md:px-4 md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l-2 md:border-primary"
+                : "bg-gray-100 dark:bg-gray-800 md:px-[18px] md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l md:border-gray-200 dark:md:border-gray-700"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >
