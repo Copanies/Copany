@@ -297,31 +297,48 @@ function detectCOSLLicense(content: string): boolean {
   // Normalize content for comparison
   const normalizedContent = content
     .replace(/\r\n/g, "\n") // Normalize line endings
-    .trim();
+    .trim()
+    .replace(/\s+/g, " "); // Collapse all whitespace to single spaces for robust matching
 
-  // Key unique characteristics of COSL
-  const coslCharacteristics = [
-    // Title and version
+  // console.log("✨ Normalized content:", normalizedContent); 
+
+  // Scored detection with detailed logging for robustness
+  const requiredPatterns = [
     /Copany Open Source License \(COSL\)/i,
-
-    // Unique sections
-    /Contribution Tracking/,
-    /Contribution Points \(CP\)/,
-    /Revenue Sharing/,
-
-    // Unique obligations
-    /Distribute revenue in proportion to contribution points/,
-    /Publicly disclose records of revenue distribution/,
-
-    // Unique terms
-    /Downstream License/,
-    /must remain under COSL/,
+    /Contribution Points \(CP\)/i,
+  ];
+  const strongSignals = [
+    /Downstream License/i,
+    /must remain under COSL/i,
+  ];
+  const obligationPatterns = [
+    /Publicly disclose detailed revenue statements within thirty \(30\) days of receipt/i,
+    /Distribute revenue in proportion to contribution points within thirty \(30\) days of receipt/i,
+    /Publicly disclose records of revenue distribution/i,
+    /Provide prior notice to the principal contributors before any commercialization or licensing/i,
+  ];
+  const minorSignals = [
+    /Contribution Tracking/i,
+    /Revenue Sharing/i,
   ];
 
-  // Check if all characteristics are present
-  const isCosl = coslCharacteristics.every((pattern) =>
-    pattern.test(normalizedContent)
-  );
+  const requiredMatches = requiredPatterns.map((re) => ({ re: re, ok: re.test(normalizedContent) }));
+  const strongMatches = strongSignals.map((re) => ({ re: re, ok: re.test(normalizedContent) }));
+  const obligationMatches = obligationPatterns.map((re) => ({ re: re, ok: re.test(normalizedContent) }));
+  const minorMatches = minorSignals.map((re) => ({ re: re, ok: re.test(normalizedContent) }));
+
+  const requiredOk = requiredMatches.every((m) => m.ok);
+  const strongOk = strongMatches.every((m) => m.ok);
+  const obligationsMatched = obligationMatches.filter((m) => m.ok).length;
+  const minorMatched = minorMatches.filter((m) => m.ok).length;
+
+  // console.log("🧪 COSL requiredMatches:", requiredMatches);
+  // console.log("🧪 COSL strongMatches:", strongMatches);
+  // console.log("🧪 COSL obligationMatches:", obligationMatches);
+  // console.log("🧪 COSL minorMatches:", minorMatches);
+  // console.log("🧪 COSL scores:", { requiredOk, strongOk, obligationsMatched, minorMatched });
+
+  const isCosl = requiredOk && strongOk && obligationsMatched >= 3 && minorMatched >= 1;
   console.log(`✨ COSL License detection result: ${isCosl}`);
   return isCosl;
 }
@@ -349,7 +366,8 @@ export async function getRepoLicenseType(repo: string): Promise<string | null> {
       return null;
     }
 
-    const content = atob(license.content);
+    const base64 = (license.content as string).replace(/\n/g, "");
+    const content = Buffer.from(base64, "base64").toString("utf-8");
     console.log("✅ License content fetched successfully");
 
     // Check for COSL first

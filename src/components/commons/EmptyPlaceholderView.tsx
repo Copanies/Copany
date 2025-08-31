@@ -57,7 +57,7 @@ export default function EmptyPlaceholderView({
                 <Tooltip.Trigger asChild>
                   <div className="inline-block">
                     <Button
-                      variant="primary"
+                      variant="secondary"
                       size="md"
                       onClick={buttonAction}
                       disabled
@@ -84,7 +84,7 @@ export default function EmptyPlaceholderView({
               </Tooltip.Root>
             </Tooltip.Provider>
           ) : (
-            <Button variant="primary" size="md" onClick={buttonAction}>
+            <Button variant="secondary" size="md" onClick={buttonAction}>
               <div className="flex items-center gap-2">
                 {buttonIcon}
                 <p>{buttonTitle}</p>

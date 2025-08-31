@@ -63,7 +63,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
               key={tab.label}
               className={`${
                 activeTab === tab.label
-                  ? "cursor-pointer mx-2 pb-2 flex-shrink-0 border-b-2 border-primary"
+                  ? "cursor-pointer mx-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
                   : "cursor-pointer mx-2 pb-[10px] flex-shrink-0"
               }`}
               onClick={() => handleTabClick(tab.label)}

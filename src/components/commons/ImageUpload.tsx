@@ -140,7 +140,7 @@ export default function ImageUpload({
             />
             <Button
               type="button"
-              variant="primary"
+              variant="secondary"
               size="sm"
               disabled={isUploading}
               onClick={() => inputRef.current?.click()}
