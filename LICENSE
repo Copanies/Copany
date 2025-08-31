@@ -11,10 +11,12 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
    Contributions (e.g. code, design, documentation) must be publicly recorded in a verifiable and reviewable form. All contributions should be assigned Contribution Points (CP), which must be transparently maintained and accessible to all stakeholders.
 
 3. Revenue Sharing
-   If the Project or its derivatives generate net revenue, the revenue holder must:
-   • Distribute profits proportionally to contributors based on CP within 15 days;
-   • Publish revenue and distribution records within 30 days;
-   • Notify major contributors prior to commercial licensing or monetization.
+   If this project or any derivative works generate net revenue, the revenue holder shall:
+
+   - Publicly disclose detailed revenue statements within thirty (30) days of receipt;
+   - Distribute revenue in proportion to contribution points within thirty (30) days of receipt;
+   - Publicly disclose records of revenue distribution;
+   - Provide prior notice to the principal contributors before any commercialization or licensing.
 
 4. Downstream License
    All derivative works must remain under COSL or an equivalent license that preserves attribution, contribution tracking, and revenue sharing obligations.

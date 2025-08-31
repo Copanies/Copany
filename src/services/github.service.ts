@@ -310,8 +310,8 @@ function detectCOSLLicense(content: string): boolean {
     /Revenue Sharing/,
 
     // Unique obligations
-    /Distribute profits proportionally to contributors based on CP/,
-    /Publish revenue and distribution records/,
+    /Distribute revenue in proportion to contribution points/,
+    /Publicly disclose records of revenue distribution/,
 
     // Unique terms
     /Downstream License/,
