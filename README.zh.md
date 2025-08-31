@@ -2,7 +2,7 @@
 
 <p align="center">
     <strong>开一个属于我们的 “公司”</strong><br>
-    <a href="https://github.com/Copanies/Copany/blob/main/README.en">English</a>
+    <a href="https://github.com/Copanies/Copany/blob/main/README.md">English</a>
     <span>中文</span>
 </p>
 
