@@ -3,7 +3,7 @@
 <p align="center">
     <strong>Let’s start our own “company”</strong><br>
     <span>English</span>
-    <a href="https://github.com/Copanies/Copany/blob/main/README.zh">中文</a>
+    <a href="https://github.com/Copanies/Copany/blob/main/README.zh.md">中文</a>
 </p>
 
 ## Introduction
