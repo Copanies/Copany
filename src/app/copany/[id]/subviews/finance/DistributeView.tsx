@@ -22,7 +22,7 @@ import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
 import LoadingView from "@/components/commons/LoadingView";
-import { getMonthlyPeriod } from "@/utils/time";
+import { formatDate, getMonthlyPeriod } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import { useRouter } from "next/navigation";
@@ -132,7 +132,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
               await regenerate.mutateAsync();
             }}
           >
-            Calculate last month's
+            Calculate Last Month's
           </Button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             await regenerate.mutateAsync();
           }}
         >
-          Calculate last month's
+          Calculate Last Month's
         </Button>
       </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">
@@ -412,7 +412,7 @@ function DistributeDetailModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">To:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
             <div className="flex flex-row items-center gap-1">
               {contributorAvatar ? (
                 <Image
@@ -431,24 +431,36 @@ function DistributeDetailModal({
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Status:
+            </span>
             <StatusLabel status={distribute.status} showText={true} />
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Amount:
+            </span>
             <span className="">
               {formatAmount(distribute.amount, distribute.currency)}
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">
-              Contribution Percent:
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              CP Percent:
             </span>
             <span className="">{distribute.contribution_percent}%</span>
           </div>
+          <div className="flex flex-row items-center gap-2">
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Distribute date:
+            </span>
+            <span className="">{formatDate(distribute.created_at)}</span>
+          </div>
         </div>
         <div>
-          <label className="block test-base font-semibold mb-2">Evidence</label>
+          <label className="block text-gray-600 dark:text-gray-400  mb-2">
+            Evidence:
+          </label>
           {distribute.evidence_url ? (
             <PhotoViewer
               src={distribute.evidence_url}

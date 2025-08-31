@@ -306,7 +306,7 @@ function TransactionModal({
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2">
-            <p className="font-semibold">Type</p>
+            <p className="font-semibold text-sm">Type</p>
             <div className="relative">
               <select
                 className="border px-2 py-1 pr-8 w-full rounded-md border-gray-300 dark:border-gray-600 appearance-none"
@@ -334,7 +334,7 @@ function TransactionModal({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold">Description</p>
+            <p className="font-semibold text-sm">Description</p>
             <input
               className="border px-2 py-1 flex-1 min-w-[200px] rounded-md border-gray-300 dark:border-gray-600"
               placeholder="Description about this transaction..."
@@ -343,7 +343,7 @@ function TransactionModal({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold">Amount</p>
+            <p className="font-semibold text-sm">Amount</p>
             <div className="flex flex-row gap-2">
               <div className="relative">
                 <select
@@ -384,7 +384,7 @@ function TransactionModal({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold">Occurred At</p>
+            <p className="font-semibold text-sm">Occurred At</p>
             <input
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
               type="datetime-local"
@@ -393,7 +393,7 @@ function TransactionModal({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold">Evidence</p>
+            <p className="font-semibold text-sm">Evidence</p>
             <ImageUpload
               value={evidenceUrl}
               onChange={(url) => setEvidenceUrl(url)}
@@ -532,7 +532,9 @@ function TransactionDetailModal({
           </div>
         </div>
         <div>
-          <label className="block test-base font-semibold mb-2">Evidence</label>
+          <label className="block text-gray-600 dark:text-gray-400  mb-2">
+            Evidence:
+          </label>
           {transaction.evidence_url ? (
             <PhotoViewer
               src={transaction.evidence_url}
