@@ -1,7 +1,7 @@
 <h1 align="center">Copany</h1>
 
 <p align="center">
-    <strong>Start a "company" of our own on Copany</strong><br>
+    <strong>Let’s start our own “company”</strong><br>
     <span>English</span>
     <a href="https://github.com/Copanies/Copany/blob/main/README.zh">中文</a>
 </p>
