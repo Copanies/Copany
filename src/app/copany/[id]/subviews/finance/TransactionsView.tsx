@@ -180,13 +180,16 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     <div className="p-0 w-full min-w-0">
       <div className="flex items-center justify-between px-0 md:px-4 pt-2 pb-3">
         {/* <div className="text-base text-gray-600">Transactions</div> */}
-        {currentUser && (
-          <Button size="md" onClick={() => setIsModalOpen(true)}>
-            <div className="flex flex-row items-center gap-1">
-              <span>Add Transaction</span>
-            </div>
-          </Button>
-        )}
+        <Button
+          size="md"
+          onClick={() => setIsModalOpen(true)}
+          disabled={!currentUser}
+          disableTooltipConent="Sign in to add a transaction"
+        >
+          <div className="flex flex-row items-center gap-1">
+            <span>New Transaction</span>
+          </div>
+        </Button>
       </div>
 
       <div className="w-full mx-auto border-b border-gray-200 dark:border-gray-700">
@@ -242,6 +245,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
           <TransactionDetailModal
             transaction={viewTransaction}
             isOwner={isOwner}
+            userInfo={transactionUsersInfo[viewTransaction.actor_id]}
             onClose={() => {
               setIsViewModalOpen(false);
               setViewTransaction(null);
@@ -451,14 +455,18 @@ function TransactionModal({
 function TransactionDetailModal({
   transaction,
   isOwner,
+  userInfo,
   onClose,
   onConfirm,
 }: {
   transaction: TransactionRow;
   isOwner: boolean;
+  userInfo: UserInfo;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
+  const actorName = userInfo?.name || transaction.actor_id;
+  const actorAvatar = userInfo?.avatar_url || "";
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -468,7 +476,9 @@ function TransactionDetailModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Amount:
+            </span>
             <span>
               {formatAmount(
                 transaction.amount,
@@ -478,23 +488,44 @@ function TransactionDetailModal({
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Type:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">Type:</span>
             <span className="">{transaction.type}</span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Submitter:
+            </span>
+            {actorAvatar ? (
+              <Image
+                src={actorAvatar}
+                alt={actorName}
+                width={20}
+                height={20}
+                className="w-5 h-5 rounded-full"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
+                {actorName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <span className="">{actorName}</span>
+          </div>
+          <div className="flex flex-row items-center gap-2">
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Status:
+            </span>
             <StatusLabel status={transaction.status} showText={true} />
           </div>
           {transaction.description && (
             <div className="flex flex-row items-center gap-2">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-gray-600 dark:text-gray-400 w-32">
                 Description:
               </span>
               <span className="">{transaction.description}</span>
             </div>
           )}
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-gray-600 dark:text-gray-400 w-32">
               Occurred at:
             </span>
             <span className="">{formatDate(transaction.occurred_at)}</span>
@@ -650,7 +681,6 @@ function TransactionsGroupList({
                         size="sm"
                         variant="ghost"
                         className="!text-base !border-0"
-                        disabled={!currentUserId}
                         onClick={() => onOpenView(t)}
                       >
                         View

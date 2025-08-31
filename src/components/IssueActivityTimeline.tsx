@@ -18,7 +18,6 @@ import type { IssueComment } from "@/types/database.types";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import IssueCommentCard from "@/components/IssueCommentCard";
 import IssueReviewPanel from "@/components/IssueReviewPanel";
 import AssignmentRequestPanel from "@/components/AssignmentRequestPanel";
@@ -656,27 +655,15 @@ export default function IssueActivityTimeline({
               <ArrowUpIcon className="w-4 h-4" />
             </Button>
           ) : (
-            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <div className="inline-block">
-                    <Button disabled shape="square" size="sm" className="!p-1">
-                      <ArrowUpIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    side="top"
-                    sideOffset={8}
-                    align="end"
-                    className="tooltip-surface"
-                  >
-                    Sign in to join the discussion
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Button
+              disabled
+              shape="square"
+              size="sm"
+              className="!p-1"
+              disableTooltipConent="Sign in to join the discussion"
+            >
+              <ArrowUpIcon className="w-4 h-4" />
+            </Button>
           )}
         </div>
       </div>

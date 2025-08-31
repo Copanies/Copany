@@ -393,7 +393,7 @@ export default function IssuePageClient({
                 </span>
               </div> */}
               <Button
-                variant="primary"
+                variant="secondary"
                 size="xs"
                 onClick={() => {
                   const el = document.getElementById(
@@ -429,7 +429,12 @@ export default function IssuePageClient({
   return (
     <div>
       <div className="max-w-screen-lg mx-auto flex flex-row items-center p-3 gap-2">
-        <Button variant="primary" size="md" shape="square" onClick={handleBack}>
+        <Button
+          variant="secondary"
+          size="md"
+          shape="square"
+          onClick={handleBack}
+        >
           <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
         {isPermissionResolved && !canEdit && (
@@ -548,7 +553,7 @@ export default function IssuePageClient({
                     return (
                       <Button
                         size="xs"
-                        variant="primary"
+                        variant="secondary"
                         onClick={() => setIsRequestModalOpen(true)}
                       >
                         <div className="flex flex-row items-center gap-1">
@@ -693,7 +698,7 @@ export default function IssuePageClient({
                     return (
                       <Button
                         size="xs"
-                        variant="primary"
+                        variant="secondary"
                         onClick={() => setIsRequestModalOpen(true)}
                       >
                         <div className="flex flex-row items-center gap-1">

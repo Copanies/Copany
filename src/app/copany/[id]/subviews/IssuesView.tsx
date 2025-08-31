@@ -21,7 +21,6 @@ import IssueLevelSelector from "@/components/IssueLevelSelector";
 import IssueCreateForm from "@/components/IssueCreateForm";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
@@ -542,13 +541,14 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     );
   }
 
-  const newIssueButton = (disabled: boolean) => {
+  const newIssueButton = () => {
     return (
       <Button
         onClick={() => setIsModalOpen(true)}
         className="min-w-fit"
         size="md"
-        disabled={disabled}
+        disabled={!currentUser}
+        disableTooltipConent="Sign in to create an issue"
       >
         <div className="flex flex-row items-center gap-1">
           <span className="text-base">New Issue</span>
@@ -560,27 +560,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   return (
     <div className="min-h-screen w-full min-w-0 flex flex-col gap-3">
       <div className="flex w-full min-w-0 items-center justify-between md:pl-4 px-0 gap-3 md:pt-2">
-        {!currentUser ? (
-          <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <div className="inline-block">{newIssueButton(true)}</div>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="bottom"
-                  sideOffset={8}
-                  align="start"
-                  className="tooltip-surface"
-                >
-                  Sign in to create an issue
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
-        ) : (
-          newIssueButton(false)
-        )}
+        {newIssueButton()}
         <input
           type="text"
           value={searchQuery}

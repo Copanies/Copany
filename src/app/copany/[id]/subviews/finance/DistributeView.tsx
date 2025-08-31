@@ -117,27 +117,23 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             />
           }
           title="No distribute records"
-          description="Distribute records are automatically generated based on the transaction log and each contributor's share ratio. Records are created on the 1st of every month at 00:00."
-          buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-          buttonTitle="View Transactions"
-          buttonAction={() => {
-            router.push(
-              `/copany/${copanyId}?tab=Finance&financeTab=Transactions`
-            );
-          }}
+          description="Distribute records are generated based on the transaction log and each contributor's share ratio."
         />
         <div className="flex items-center flex-1 justify-center">
-          {isOwner && (
-            <Button
-              size="md"
-              variant="primary"
-              onClick={async () => {
-                await regenerate.mutateAsync();
-              }}
-            >
-              Calculate - for test
-            </Button>
-          )}
+          <Button
+            size="md"
+            variant="secondary"
+            className="w-fit"
+            disabled={!isOwner}
+            disableTooltipConent={
+              !isOwner ? "You are not the owner of this copany" : undefined
+            }
+            onClick={async () => {
+              await regenerate.mutateAsync();
+            }}
+          >
+            Calculate last month's
+          </Button>
         </div>
       </div>
     );
@@ -145,6 +141,22 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="p-0">
+      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
+        <Button
+          size="md"
+          variant="secondary"
+          className="w-fit"
+          disabled={!isOwner}
+          disableTooltipConent={
+            !isOwner ? "You are not the owner of this copany" : undefined
+          }
+          onClick={async () => {
+            await regenerate.mutateAsync();
+          }}
+        >
+          Calculate last month's
+        </Button>
+      </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedDistributes.map((group) => (
           <div key={group.period.key} className="">
@@ -178,21 +190,6 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             />
           </div>
         ))}
-      </div>
-
-      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
-        {isOwner && (
-          <Button
-            size="md"
-            variant="primary"
-            className="w-fit"
-            onClick={async () => {
-              await regenerate.mutateAsync();
-            }}
-          >
-            Calculate - for test
-          </Button>
-        )}
       </div>
 
       {/* Distribute Evidence Modal */}
@@ -308,7 +305,7 @@ function DistributeEvidenceModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">To:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
             <div className="flex flex-row items-center gap-1">
               {contributorAvatar ? (
                 <Image
@@ -327,14 +324,18 @@ function DistributeEvidenceModal({
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Status:
+            </span>
             <StatusLabel
               status={distribute?.status || "in_progress"}
               showText={true}
             />
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Amount:
+            </span>
             <span className="">
               {formatAmount(
                 distribute?.amount || 0,
@@ -343,14 +344,14 @@ function DistributeEvidenceModal({
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">
-              Contribution Percent:
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              CP Percent:
             </span>
             <span className="">{distribute?.contribution_percent || 0}%</span>
           </div>
         </div>
         <label className="block test-base font-semibold mb-2 text-gray-900 dark:text-gray-100">
-          Upload evidence (optional)
+          Upload evidence (recommended)
         </label>
         <ImageUpload
           value={evidenceUrl}
@@ -381,7 +382,7 @@ function DistributeEvidenceModal({
           onClick={handleConfirm}
           disabled={_isUploading}
         >
-          {_isUploading ? "Uploading..." : "Confirm"}
+          {_isUploading ? "Uploading..." : "Distribute Completed"}
         </Button>
       </div>
     </div>
@@ -607,6 +608,11 @@ function DistributeGroupList({
                         className="!text-base"
                         onClick={() => onOpenTransfer(d.id)}
                         disabled={!isOwner}
+                        disableTooltipConent={
+                          !isOwner
+                            ? "You are not the owner of this copany"
+                            : undefined
+                        }
                       >
                         Distribute
                       </Button>
@@ -617,6 +623,9 @@ function DistributeGroupList({
                         variant="ghost"
                         className="!text-base"
                         disabled={!canView}
+                        disableTooltipConent={
+                          !canView ? "No permission to view" : undefined
+                        }
                         onClick={() => {
                           if (!canView) return;
                           onOpenView(d);

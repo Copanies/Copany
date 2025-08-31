@@ -1,10 +1,13 @@
 import React from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger" | "approve";
   size?: "xs" | "sm" | "md" | "lg";
   children: React.ReactNode;
   shape?: "rectangle" | "square";
+  // When button is disabled, show tooltip with this content. Keep name per request.
+  disableTooltipConent?: React.ReactNode;
 }
 
 export default function Button({
@@ -13,6 +16,7 @@ export default function Button({
   shape = "rectangle",
   className = "",
   children,
+  disableTooltipConent,
   ...props
 }: ButtonProps) {
   const baseClasses =
@@ -54,9 +58,35 @@ export default function Button({
     className,
   ].join(" ");
 
-  return (
+  const buttonElement = (
     <button className={combinedClasses} {...props}>
       {children}
     </button>
   );
+
+  const shouldShowDisabledTooltip = !!props.disabled && !!disableTooltipConent;
+
+  if (shouldShowDisabledTooltip) {
+    return (
+      <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <div className="inline-block">{buttonElement}</div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="bottom"
+              sideOffset={8}
+              align="start"
+              className="tooltip-surface"
+            >
+              {disableTooltipConent}
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+    );
+  }
+
+  return buttonElement;
 }

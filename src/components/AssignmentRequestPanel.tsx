@@ -5,7 +5,6 @@ import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import type { AssignmentRequest } from "@/types/database.types";
 import Image from "next/image";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import {
   useAssignmentRequests,
@@ -255,27 +254,13 @@ export default function AssignmentRequestPanel({
                   </Button>
                 </>
               ) : (
-                <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <div className="inline-block">
-                        <Button disabled size="sm">
-                          Accept
-                        </Button>
-                      </div>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        side="top"
-                        sideOffset={8}
-                        align="center"
-                        className="tooltip-surface"
-                      >
-                        Sign in to act on requests
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
-                </Tooltip.Provider>
+                <Button
+                  disabled
+                  size="sm"
+                  disableTooltipConent="Sign in to act on requests"
+                >
+                  Accept
+                </Button>
               )}
               {meId ? (
                 <Button
@@ -300,27 +285,13 @@ export default function AssignmentRequestPanel({
                   Comment
                 </Button>
               ) : (
-                <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <div className="inline-block">
-                        <Button disabled size="sm">
-                          Comment
-                        </Button>
-                      </div>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        side="top"
-                        sideOffset={8}
-                        align="center"
-                        className="tooltip-surface"
-                      >
-                        Sign in to join the discussion
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
-                </Tooltip.Provider>
+                <Button
+                  disabled
+                  size="sm"
+                  disableTooltipConent="Sign in to join the discussion"
+                >
+                  Comment
+                </Button>
               )}
             </div>
           </div>
