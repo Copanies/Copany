@@ -1,8 +1,8 @@
 <h1 align="center">Copany</h1>
 
 <p align="center">
-    <strong>来 Copany 开一个属于我们的“公司”</strong><br>
-    <a href="https://github.com/Copanies/Copany/blob/main/README">English</a>
+    <strong>开一个属于我们的 “公司”</strong><br>
+    <a href="https://github.com/Copanies/Copany/blob/main/README.en">English</a>
     <span>中文</span>
 </p>
 
