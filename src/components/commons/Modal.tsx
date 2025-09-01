@@ -11,7 +11,7 @@ export default function Modal({
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +51,13 @@ export default function Modal({
       {/* Modal content */}
       <div
         className={`relative bg-background dark:bg-background-dark rounded-lg shadow-xl dark:border dark:border-gray-800 w-full mx-4 max-h-[90vh] overflow-y-auto ${
-          size === "sm" ? "max-w-md" : size === "md" ? "max-w-2xl" : "max-w-4xl"
+          size === "sm"
+            ? "max-w-md"
+            : size === "md"
+            ? "max-w-2xl"
+            : size === "lg"
+            ? "max-w-3xl"
+            : "max-w-5xl"
         }`}
       >
         {/* Close button */}

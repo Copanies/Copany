@@ -54,9 +54,21 @@ export async function deleteIssueAction(issueId: string) {
 export async function updateIssueTitleAndDescriptionAction(
   issueId: string,
   title: string,
-  description: string
+  description: string,
+  expectedVersion?: number,
+  baseTitle?: string | null,
+  baseDescription?: string | null
 ): Promise<IssueWithAssignee> {
-  return await IssueService.updateIssueTitleAndDescription(issueId, title, description);
+  const user = await getCurrentUser();
+  return await IssueService.updateIssueTitleAndDescription(
+    issueId,
+    title,
+    description,
+    expectedVersion,
+    baseTitle,
+    baseDescription,
+    user?.id
+  );
 }
 
 export async function updateIssueStateAction(

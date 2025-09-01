@@ -358,7 +358,7 @@ export function renderUserLabel(
       {readOnly ? (
         labelContent
       ) : (
-        <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
+        <Tooltip.Provider delayDuration={500} skipDelayDuration={1000}>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>{labelContent}</Tooltip.Trigger>
             <Tooltip.Portal>
@@ -368,7 +368,7 @@ export function renderUserLabel(
                 align="center"
                 className="tooltip-surface"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 hover:cursor-pointer">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}

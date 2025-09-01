@@ -147,26 +147,157 @@ export class IssueService {
   static async updateIssueTitleAndDescription(
     issueId: string,
     title: string,
-    description: string
+    description: string,
+    expectedVersion?: number,
+    baseTitle?: string | null,
+    baseDescription?: string | null,
+    actorUserId?: string | null
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
-    const { data, error } = await supabase
-      .from("issue")
-      .update({ title, description, updated_at: new Date().toISOString() })
-      .eq("id", issueId)
-      .select()
-      .single();
-    if (error) {
-      console.error("Error updating issue title and description:", error);
-      throw new Error(`Failed to update issue title and description: ${error.message}`);
+
+    // If version not provided, fallback to simple update (legacy callers)
+    if (expectedVersion === undefined || expectedVersion === null) {
+      const { data, error } = await supabase
+        .from("issue")
+        .update({
+          title,
+          description,
+          updated_at: new Date().toISOString(),
+          content_version_updated_by: actorUserId ?? null,
+          content_version_updated_at: new Date().toISOString(),
+        })
+        .eq("id", issueId)
+        .select()
+        .single();
+      if (error) {
+        console.error("Error updating issue title and description:", error);
+        throw new Error(`Failed to update issue title and description: ${error.message}`);
+      }
+      const updatedIssue = data as Issue;
+      const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo([updatedIssue]);
+      return issuesWithAssignee[0];
     }
 
-    const updatedIssue = data as Issue;
-    const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo([
-      updatedIssue,
-    ]);
+    // Try optimistic update with version check
+    const optimisticUpdate = await supabase
+      .from("issue")
+      .update({
+        title,
+        description,
+        updated_at: new Date().toISOString(),
+        content_version_updated_by: actorUserId ?? null,
+        content_version_updated_at: new Date().toISOString(),
+        // bump version
+        version: (expectedVersion ?? 0) + 1,
+      })
+      .eq("id", issueId)
+      .eq("version", expectedVersion)
+      .select()
+      .single();
 
-    return issuesWithAssignee[0];
+    if (!optimisticUpdate.error && optimisticUpdate.data) {
+      const updatedIssue = optimisticUpdate.data as Issue;
+      const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo([updatedIssue]);
+      return issuesWithAssignee[0];
+    }
+
+    // Version conflict: fetch current, attempt auto-merge
+    const currentRes = await supabase
+      .from("issue")
+      .select("*")
+      .eq("id", issueId)
+      .single();
+    if (currentRes.error || !currentRes.data) {
+      console.error("Error fetching current issue after conflict:", currentRes.error);
+      throw new Error("Conflict and failed to fetch current issue");
+    }
+    const current = currentRes.data as Issue;
+
+    // Prefer updated_by on issue; fallback to last issue_activity
+    let updater: { id: string; name: string; avatar_url: string } | null = null;
+    try {
+      let actorId = (current as any)?.content_version_updated_by as string | undefined;
+      if (!actorId) {
+        const { data: lastAct } = await supabase
+          .from("issue_activity")
+          .select("actor_id, created_at")
+          .eq("issue_id", issueId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        actorId = (lastAct as any)?.actor_id as string | undefined;
+      }
+      if (actorId) {
+        const admin = await createAdminSupabaseClient();
+        const { data: userData } = await admin.auth.admin.getUserById(actorId);
+        const user = userData?.user;
+        if (user) {
+          updater = {
+            id: user.id,
+            name: (user.user_metadata?.name as string) || user.email || "Unknown User",
+            avatar_url: (user.user_metadata?.avatar_url as string) || "",
+          };
+        }
+      }
+    } catch (_) {}
+
+    // Lazy import to avoid circular deps
+    const { merge3 } = await import("@/utils/diff3");
+
+    const mergedTitle = merge3(
+      baseTitle ?? current.title ?? "",
+      current.title ?? "",
+      title ?? "",
+      { labelTheirs: "remote", labelYours: "local" }
+    );
+    const mergedDesc = merge3(
+      baseDescription ?? current.description ?? "",
+      current.description ?? "",
+      description ?? "",
+      { labelTheirs: "remote", labelYours: "local" }
+    );
+
+    // If no conflict in either, attempt to persist merged content against latest version
+    if (!mergedTitle.hadConflict && !mergedDesc.hadConflict) {
+      const tryMergeSave = await supabase
+        .from("issue")
+        .update({
+          title: mergedTitle.text,
+          description: mergedDesc.text,
+          updated_at: new Date().toISOString(),
+          content_version_updated_by: actorUserId ?? null,
+          content_version_updated_at: new Date().toISOString(),
+          version: (current.version ?? 0) + 1,
+        })
+        .eq("id", issueId)
+        .eq("version", current.version)
+        .select()
+        .single();
+
+      if (!tryMergeSave.error && tryMergeSave.data) {
+        const updatedIssue = tryMergeSave.data as Issue;
+        const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo([updatedIssue]);
+        return issuesWithAssignee[0];
+      }
+    }
+
+    // Still conflicting: throw a special error with payload
+    const conflictError = new Error("VERSION_CONFLICT");
+    // @ts-expect-error augment error object with data
+    conflictError.payload = {
+      conflict: true,
+      server: current,
+      mergedTitle: mergedTitle.text,
+      mergedDescription: mergedDesc.text,
+      serverVersion: current.version ?? 0,
+      updater,
+      updatedAt: current.content_version_updated_at ?? current.updated_at ?? null,
+    };
+    console.log("conflictError", conflictError);
+    console.log("current", current);
+    console.log("updater", updater);
+    console.log("updatedAt", current.content_version_updated_at ?? current.updated_at ?? null);
+    throw conflictError;
   }
 
   static async updateIssueState(
