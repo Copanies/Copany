@@ -110,7 +110,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
   ];
 
   return (
-    <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative">
+    <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative mb-8">
       <div className="flex flex-col gap-4 px-5 pt-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
@@ -126,7 +126,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               {copany.license && <LicenseBadge license={copany.license} />}
             </div>
           </div>
-          <div className="flex flex-row justify-between flex-wrap items-center gap-3">
+          <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             {copany.license && (
               <div className="block sm:hidden">
                 <LicenseBadge license={copany.license} />

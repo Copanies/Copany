@@ -415,7 +415,6 @@ export default function SettingsView({
           <div className="flex w-full">
             <Button
               type="button"
-              size="sm"
               onClick={handleDeleteCopany}
               disabled={deleteConfirmName !== copany.name || isDeleting}
               className="w-full"
@@ -518,7 +517,6 @@ export default function SettingsView({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || isImageLoading}
-              size="sm"
               className="w-fit"
             >
               {isUploading || isImageLoading
@@ -639,7 +637,6 @@ export default function SettingsView({
             </div>
           </div>
           <Button
-            size="sm"
             className="w-fit"
             variant="ghost"
             onClick={() => {
@@ -684,9 +681,8 @@ export default function SettingsView({
         </div>
 
         <Button
-          className="w-fit h-fit text-sm"
+          className="w-fit h-fit"
           onClick={() => setIsDeleteModalOpen(true)}
-          size="sm"
           variant="danger"
         >
           Delete this Copany

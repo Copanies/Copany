@@ -11,7 +11,6 @@ import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useIssueReviewers } from "@/hooks/reviewers";
 import { useUsersInfo } from "@/hooks/userInfo";
@@ -240,30 +239,17 @@ export default function IssueReviewPanel({
         <div className="flex flex-row gap-2">
           {hasAnyApproved ? (
             !canEdit ? (
-              <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <div className="inline-block">
-                      <Button disabled size="sm" variant="approve">
-                        <div className="flex flex-row items-center gap-1">
-                          <ArrowRightIcon className="w-4 h-4 text-white" />
-                          <span>Mark as Done</span>
-                        </div>
-                      </Button>
-                    </div>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      side="top"
-                      sideOffset={8}
-                      align="center"
-                      className="tooltip-surface"
-                    >
-                      No permission to edit
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
-              </Tooltip.Provider>
+              <Button
+                disabled
+                size="sm"
+                variant="approve"
+                disableTooltipConent="No permission to edit"
+              >
+                <div className="flex flex-row items-center gap-1">
+                  <ArrowRightIcon className="w-4 h-4 text-white" />
+                  <span>Mark as Done</span>
+                </div>
+              </Button>
             ) : (
               <Button
                 onClick={async () => {
@@ -316,27 +302,13 @@ export default function IssueReviewPanel({
               Leave a comment
             </Button>
           ) : (
-            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <div className="inline-block">
-                    <Button disabled size="sm">
-                      Leave a comment
-                    </Button>
-                  </div>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    side="top"
-                    sideOffset={8}
-                    align="center"
-                    className="tooltip-surface"
-                  >
-                    Sign in to join the discussion
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Button
+              disabled
+              size="sm"
+              disableTooltipConent="Sign in to join the discussion"
+            >
+              Leave a comment
+            </Button>
           )}
         </div>
       </div>

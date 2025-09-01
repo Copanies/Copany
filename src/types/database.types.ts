@@ -33,8 +33,11 @@ export interface Issue {
   level: number | null;
   created_by: string | null;
   updated_at: string | null;
+  content_version_updated_by?: string | null;
+  content_version_updated_at?: string | null;
   closed_at: string | null;
   assignee: string | null;
+  version?: number; // optimistic locking version
 }
 
 // Table: copany_contributor

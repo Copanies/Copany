@@ -529,7 +529,6 @@ export default function CreateCopanyButton() {
         <Button
           type="button"
           variant="secondary"
-          size="sm"
           onClick={handleCloseModal}
         >
           Cancel
@@ -537,7 +536,6 @@ export default function CreateCopanyButton() {
         <Button
           type="submit"
           variant="primary"
-          size="sm"
           disabled={!selectedRepoId || createCopanyMutation.isPending}
         >
           {createCopanyMutation.isPending ? "Creating..." : "Create Copany"}

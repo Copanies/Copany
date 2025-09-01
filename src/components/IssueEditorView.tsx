@@ -6,6 +6,25 @@ import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import IssueConflictResolverModal, {
+  type ConflictPayload,
+} from "@/components/IssueConflictResolverModal";
+
+type UpdaterInfo = {
+  id: string;
+  name: string;
+  avatar_url: string;
+  email: string | null;
+};
+
+type ConflictPayloadFromServer = {
+  server: { title: string | null; description: string | null } | null;
+  mergedTitle?: string;
+  mergedDescription?: string;
+  serverVersion?: number;
+  updater?: UpdaterInfo | null;
+  updatedAt?: string | null;
+};
 
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
@@ -26,7 +45,11 @@ export default function IssueEditorView({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [focusDescSignal, setFocusDescSignal] = useState<number>(0);
+  const [editorReinitKey, setEditorReinitKey] = useState<number>(0);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [conflictPayload, setConflictPayload] =
+    useState<ConflictPayload | null>(null);
   const editorDivRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,6 +58,11 @@ export default function IssueEditorView({
   const mutateRef = useRef<
     (vars: { id: string; title: string; description: string }) => void
   >(() => {});
+
+  // Versioning & base snapshot for optimistic locking and three-way merge
+  const versionRef = useRef<number>(issueData.version ?? 1);
+  const baseTitleRef = useRef<string>(issueData.title || "");
+  const baseDescriptionRef = useRef<string>(issueData.description || "");
 
   // React Query mutation for updating issue
   const updateIssueMutation = useMutation({
@@ -52,20 +80,59 @@ export default function IssueEditorView({
         const res = await fetch("/api/issue/update", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, title, description }),
+          body: JSON.stringify({
+            id,
+            title,
+            description,
+            version: versionRef.current,
+            baseTitle: baseTitleRef.current,
+            baseDescription: baseDescriptionRef.current,
+          }),
         });
         if (res.ok) {
           const json = await res.json();
           return json.issue as IssueWithAssignee;
         }
+        if (res.status === 409) {
+          const json = await res.json();
+          const err = new Error("VERSION_CONFLICT") as Error & {
+            payload?: unknown;
+          };
+          err.payload = json;
+          throw err;
+        }
         throw new Error("API update failed");
-      } catch (_error) {
-        // Fallback to Server Action
-        return await updateIssueTitleAndDescriptionAction(
-          id,
-          title,
-          description
-        );
+      } catch (_error: unknown) {
+        // If the API already reported a version conflict, bubble up directly
+        if (
+          _error &&
+          typeof _error === "object" &&
+          "message" in _error &&
+          _error.message === "VERSION_CONFLICT"
+        ) {
+          throw _error;
+        }
+        // Otherwise, fallback to Server Action (non-interactive env safe)
+        try {
+          return await updateIssueTitleAndDescriptionAction(
+            id,
+            title,
+            description,
+            versionRef.current,
+            baseTitleRef.current,
+            baseDescriptionRef.current
+          );
+        } catch (e: unknown) {
+          if (
+            e &&
+            typeof e === "object" &&
+            "message" in e &&
+            e.message === "VERSION_CONFLICT"
+          ) {
+            throw e; // bubble to onError
+          }
+          throw _error instanceof Error ? _error : new Error("Update failed");
+        }
       }
     },
     onMutate: async ({ id, title, description }) => {
@@ -95,7 +162,7 @@ export default function IssueEditorView({
 
       return { previousIssues };
     },
-    onError: (err, variables, context) => {
+    onError: (err: unknown, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousIssues && issueData.copany_id) {
         queryClient.setQueryData(
@@ -103,11 +170,29 @@ export default function IssueEditorView({
           context.previousIssues
         );
       }
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : "Save failed, please try again later"
-      );
+      if (
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        err.message === "VERSION_CONFLICT" &&
+        "payload" in err
+      ) {
+        const payload = (err as Error & { payload: ConflictPayloadFromServer })
+          .payload;
+        // Open modal for user to choose
+        setConflictPayload({
+          server: payload.server ?? null,
+          mergedTitle: payload.mergedTitle,
+          mergedDescription: payload.mergedDescription,
+          serverVersion: payload.serverVersion,
+          updater: payload.updater ?? null,
+          updatedAt: payload.updatedAt ?? null,
+        });
+        setConflictModalOpen(true);
+        setSaveError(null);
+        return;
+      }
+      setSaveError("保存失败，请稍后重试");
     },
     onSuccess: async (updatedIssue) => {
       // Update cache with new data
@@ -122,6 +207,20 @@ export default function IssueEditorView({
           }
         );
       }
+
+      // Refresh version/base snapshots from server truth
+      if ((updatedIssue as IssueWithAssignee & { version?: number }).version) {
+        versionRef.current = (
+          updatedIssue as IssueWithAssignee & { version: number }
+        ).version;
+      } else {
+        versionRef.current = versionRef.current + 1;
+      }
+      baseTitleRef.current = updatedIssue.title || "";
+      baseDescriptionRef.current = updatedIssue.description || "";
+      // Ensure local state reflects server data (in case of normalization)
+      setTitle(updatedIssue.title || "");
+      setEditingContent(updatedIssue.description || "");
 
       // Invalidate related queries to trigger refresh
       try {
@@ -290,8 +389,10 @@ export default function IssueEditorView({
     setFocusDescSignal((x) => x + 1);
   }, []);
 
-  // The initial content is only set once when the component is mounted
-  const [initialContent] = useState(issueData.description || "");
+  // Keep initial content in state so we can reset editor after conflict resolve
+  const [initialContent, setInitialContent] = useState(
+    issueData.description || ""
+  );
 
   // Update isSaving state based on mutation state
   useEffect(() => {
@@ -330,6 +431,7 @@ export default function IssueEditorView({
         <div>
           <div ref={editorDivRef}>
             <MilkdownEditor
+              key={`issue-main-${editorReinitKey}`}
               onContentChange={handleContentChange}
               initialContent={initialContent}
               isReadonly={isReadonly}
@@ -338,6 +440,46 @@ export default function IssueEditorView({
           </div>
         </div>
       </div>
+      {/* Conflict Resolver Modal */}
+      <IssueConflictResolverModal
+        isOpen={conflictModalOpen}
+        onClose={() => setConflictModalOpen(false)}
+        conflict={conflictPayload}
+        localTitle={titleRef.current}
+        localDescription={editingContentRef.current}
+        onResolve={({
+          title: chosenTitle,
+          description: chosenDesc,
+          versionFromServer,
+        }) => {
+          // Update base to current server
+          if (conflictPayload?.server) {
+            baseTitleRef.current = conflictPayload.server.title || "";
+            baseDescriptionRef.current =
+              conflictPayload.server.description || "";
+          }
+          if (typeof versionFromServer === "number") {
+            versionRef.current = versionFromServer;
+          }
+
+          // Apply chosen to editor
+          setTitle(chosenTitle);
+          setEditingContent(chosenDesc);
+          // Re-init main editor with chosen content so UI reflects immediately
+          setInitialContent(chosenDesc);
+          setEditorReinitKey((k) => k + 1);
+          setFocusDescSignal((x) => x + 1);
+
+          // Immediately save with latest server version
+          mutateRef.current({
+            id: issueData.id,
+            title: chosenTitle,
+            description: chosenDesc,
+          });
+
+          setConflictModalOpen(false);
+        }}
+      />
     </div>
   );
 }

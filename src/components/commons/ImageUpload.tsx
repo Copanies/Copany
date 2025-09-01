@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Button from "./Button";
 import PhotoViewer from "./PhotoViewer";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 
 export interface ImageUploadProps {
   value: string | null;
@@ -101,7 +102,10 @@ export default function ImageUpload({
             disabled={isUploading}
             onClick={() => inputRef.current?.click()}
           >
-            {isUploading ? "Uploading..." : uploadButtonText}
+            <div className="flex flex-row items-center justify-center gap-2">
+              <PhotoIcon className="w-5 h-5" strokeWidth={1.3} />
+              <p>{isUploading ? "Uploading..." : uploadButtonText}</p>
+            </div>
           </Button>
           {helperText && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -123,8 +127,8 @@ export default function ImageUpload({
               <Image
                 src={previewUrl}
                 alt="Evidence"
-                width={160}
-                height={160}
+                width={320}
+                height={320}
                 className="max-h-40 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                 onClick={open}
               />
@@ -140,12 +144,15 @@ export default function ImageUpload({
             />
             <Button
               type="button"
-              variant="primary"
+              variant="secondary"
               size="sm"
               disabled={isUploading}
               onClick={() => inputRef.current?.click()}
             >
-              {isUploading ? "Uploading..." : "Replace Image"}
+              <div className="flex flex-row items-center gap-2">
+                <PhotoIcon className="w-4 h-4" strokeWidth={1.5} />
+                <p>{isUploading ? "Uploading..." : "Replace Image"}</p>
+              </div>
             </Button>
             <Button
               type="button"

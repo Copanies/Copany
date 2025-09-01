@@ -8,7 +8,6 @@ import Dropdown from "@/components/commons/Dropdown";
 import { ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";
 import EllipsisHorizontalIcon from "@heroicons/react/24/outline/EllipsisHorizontalIcon";
 import type { IssueComment } from "@/types/database.types";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { EMPTY_STRING } from "@/utils/constants";
 
@@ -74,20 +73,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
     null
   );
 
-  const pleaseSignInTooltipPortal = () => {
-    return (
-      <Tooltip.Portal>
-        <Tooltip.Content
-          side="top"
-          sideOffset={8}
-          align="end"
-          className="tooltip-surface"
-        >
-          Please sign in to reply
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    );
-  };
+  const pleaseSignInTooltipText = "Please sign in to reply";
 
   return (
     <div className="flex flex-col gap-0 border border-gray-200 dark:border-gray-800 rounded-lg">
@@ -153,24 +139,16 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
               <ArrowTurnUpLeftIcon className="w-4 h-4" />
             </Button>
           ) : (
-            <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <div className="inline-block">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      shape="square"
-                      className="!p-1 text-gray-400"
-                      disabled
-                    >
-                      <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Tooltip.Trigger>
-                {pleaseSignInTooltipPortal()}
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Button
+              variant="ghost"
+              size="sm"
+              shape="square"
+              className="!p-1 text-gray-400"
+              disabled
+              disableTooltipConent={pleaseSignInTooltipText}
+            >
+              <ArrowTurnUpLeftIcon className="w-4 h-4" />
+            </Button>
           )}
           {isLoggedIn &&
             comment.created_by &&
@@ -244,18 +222,14 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                 Save
               </Button>
             ) : (
-              <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <div className="inline-block">
-                      <Button disabled className="" size="sm">
-                        Save
-                      </Button>
-                    </div>
-                  </Tooltip.Trigger>
-                  {pleaseSignInTooltipPortal()}
-                </Tooltip.Root>
-              </Tooltip.Provider>
+              <Button
+                disabled
+                className=""
+                size="sm"
+                disableTooltipConent={pleaseSignInTooltipText}
+              >
+                Save
+              </Button>
             )}
           </div>
         </div>
@@ -357,27 +331,16 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                           <ArrowTurnUpLeftIcon className="w-4 h-4" />
                         </Button>
                       ) : (
-                        <Tooltip.Provider
-                          delayDuration={150}
-                          skipDelayDuration={300}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          className="!p-1 text-gray-400"
+                          disabled
+                          disableTooltipConent={pleaseSignInTooltipText}
                         >
-                          <Tooltip.Root>
-                            <Tooltip.Trigger asChild>
-                              <div className="inline-block">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  shape="square"
-                                  className="!p-1 text-gray-400"
-                                  disabled
-                                >
-                                  <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </Tooltip.Trigger>
-                            {pleaseSignInTooltipPortal()}
-                          </Tooltip.Root>
-                        </Tooltip.Provider>
+                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                        </Button>
                       )}
                       {isLoggedIn &&
                         reply.created_by &&
@@ -477,21 +440,14 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             Save
                           </Button>
                         ) : (
-                          <Tooltip.Provider
-                            delayDuration={150}
-                            skipDelayDuration={300}
+                          <Button
+                            disabled
+                            className=""
+                            size="sm"
+                            disableTooltipConent={pleaseSignInTooltipText}
                           >
-                            <Tooltip.Root>
-                              <Tooltip.Trigger asChild>
-                                <div className="inline-block">
-                                  <Button disabled className="" size="sm">
-                                    Save
-                                  </Button>
-                                </div>
-                              </Tooltip.Trigger>
-                              {pleaseSignInTooltipPortal()}
-                            </Tooltip.Root>
-                          </Tooltip.Provider>
+                            Save
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -562,18 +518,14 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   Reply
                 </Button>
               ) : (
-                <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <div className="inline-block">
-                        <Button disabled className="" size="sm">
-                          Reply
-                        </Button>
-                      </div>
-                    </Tooltip.Trigger>
-                    {pleaseSignInTooltipPortal()}
-                  </Tooltip.Root>
-                </Tooltip.Provider>
+                <Button
+                  disabled
+                  className=""
+                  size="sm"
+                  disableTooltipConent={pleaseSignInTooltipText}
+                >
+                  Reply
+                </Button>
               )}
             </div>
           </div>

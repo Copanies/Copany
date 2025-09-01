@@ -12,20 +12,16 @@ import type { DistributeRow } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import {
-  ReceiptPercentIcon,
-  ArrowUpRightIcon,
-} from "@heroicons/react/24/outline";
+import { ReceiptPercentIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
 import LoadingView from "@/components/commons/LoadingView";
-import { getMonthlyPeriod } from "@/utils/time";
+import { formatDate, getMonthlyPeriod } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
-import { useRouter } from "next/navigation";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -34,8 +30,6 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 export default function DistributeView({ copanyId }: { copanyId: string }) {
-  const router = useRouter();
-
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: distributes, isLoading: isDistributesLoading } =
@@ -117,27 +111,23 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             />
           }
           title="No distribute records"
-          description="Distribute records are automatically generated based on the transaction log and each contributor's share ratio. Records are created on the 1st of every month at 00:00."
-          buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-          buttonTitle="View Transactions"
-          buttonAction={() => {
-            router.push(
-              `/copany/${copanyId}?tab=Finance&financeTab=Transactions`
-            );
-          }}
+          description="Distribute records are generated based on the transaction log and each contributor's share ratio."
         />
         <div className="flex items-center flex-1 justify-center">
-          {isOwner && (
-            <Button
-              size="md"
-              variant="primary"
-              onClick={async () => {
-                await regenerate.mutateAsync();
-              }}
-            >
-              Calculate - for test
-            </Button>
-          )}
+          <Button
+            size="md"
+            variant="secondary"
+            className="w-fit"
+            disabled={!isOwner}
+            disableTooltipConent={
+              !isOwner ? "You are not the owner of this copany" : undefined
+            }
+            onClick={async () => {
+              await regenerate.mutateAsync();
+            }}
+          >
+            Calculate Last Month&apos;s
+          </Button>
         </div>
       </div>
     );
@@ -145,6 +135,22 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="p-0">
+      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
+        <Button
+          size="md"
+          variant="secondary"
+          className="w-fit"
+          disabled={!isOwner}
+          disableTooltipConent={
+            !isOwner ? "You are not the owner of this copany" : undefined
+          }
+          onClick={async () => {
+            await regenerate.mutateAsync();
+          }}
+        >
+          Calculate Last Month&apos;s
+        </Button>
+      </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedDistributes.map((group) => (
           <div key={group.period.key} className="">
@@ -178,21 +184,6 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             />
           </div>
         ))}
-      </div>
-
-      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
-        {isOwner && (
-          <Button
-            size="md"
-            variant="primary"
-            className="w-fit"
-            onClick={async () => {
-              await regenerate.mutateAsync();
-            }}
-          >
-            Calculate - for test
-          </Button>
-        )}
       </div>
 
       {/* Distribute Evidence Modal */}
@@ -308,7 +299,7 @@ function DistributeEvidenceModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">To:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
             <div className="flex flex-row items-center gap-1">
               {contributorAvatar ? (
                 <Image
@@ -327,14 +318,18 @@ function DistributeEvidenceModal({
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Status:
+            </span>
             <StatusLabel
               status={distribute?.status || "in_progress"}
               showText={true}
             />
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Amount:
+            </span>
             <span className="">
               {formatAmount(
                 distribute?.amount || 0,
@@ -343,14 +338,14 @@ function DistributeEvidenceModal({
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">
-              Contribution Percent:
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              CP Percent:
             </span>
             <span className="">{distribute?.contribution_percent || 0}%</span>
           </div>
         </div>
         <label className="block test-base font-semibold mb-2 text-gray-900 dark:text-gray-100">
-          Upload evidence (optional)
+          Upload evidence (recommended)
         </label>
         <ImageUpload
           value={evidenceUrl}
@@ -381,7 +376,7 @@ function DistributeEvidenceModal({
           onClick={handleConfirm}
           disabled={_isUploading}
         >
-          {_isUploading ? "Uploading..." : "Confirm"}
+          {_isUploading ? "Uploading..." : "Distribute Completed"}
         </Button>
       </div>
     </div>
@@ -411,7 +406,7 @@ function DistributeDetailModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">To:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
             <div className="flex flex-row items-center gap-1">
               {contributorAvatar ? (
                 <Image
@@ -430,24 +425,36 @@ function DistributeDetailModal({
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Status:
+            </span>
             <StatusLabel status={distribute.status} showText={true} />
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Amount:
+            </span>
             <span className="">
               {formatAmount(distribute.amount, distribute.currency)}
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400">
-              Contribution Percent:
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              CP Percent:
             </span>
             <span className="">{distribute.contribution_percent}%</span>
           </div>
+          <div className="flex flex-row items-center gap-2">
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              Distribute date:
+            </span>
+            <span className="">{formatDate(distribute.created_at)}</span>
+          </div>
         </div>
         <div>
-          <label className="block test-base font-semibold mb-2">Evidence</label>
+          <label className="block text-gray-600 dark:text-gray-400  mb-2">
+            Evidence:
+          </label>
           {distribute.evidence_url ? (
             <PhotoViewer
               src={distribute.evidence_url}
@@ -607,6 +614,11 @@ function DistributeGroupList({
                         className="!text-base"
                         onClick={() => onOpenTransfer(d.id)}
                         disabled={!isOwner}
+                        disableTooltipConent={
+                          !isOwner
+                            ? "You are not the owner of this copany"
+                            : undefined
+                        }
                       >
                         Distribute
                       </Button>
@@ -617,6 +629,9 @@ function DistributeGroupList({
                         variant="ghost"
                         className="!text-base"
                         disabled={!canView}
+                        disableTooltipConent={
+                          !canView ? "No permission to view" : undefined
+                        }
                         onClick={() => {
                           if (!canView) return;
                           onOpenView(d);

@@ -226,6 +226,7 @@ export default function AssetLinkModal({
         </div>
         <div className="flex flex-row gap-2 justify-end px-8 pb-8">
           <Button
+            variant="secondary"
             onClick={() => {
               onClose();
             }}
@@ -233,6 +234,7 @@ export default function AssetLinkModal({
             Cancel
           </Button>
           <Button
+            variant="primary"
             disabled={assetType === null || !assetLink || isLoading}
             onClick={() => {
               if (assetType !== null) {
