@@ -26,9 +26,10 @@ export async function POST(request: NextRequest) {
         baseDescription
       );
       return NextResponse.json({ success: true, issue: updatedIssue });
-    } catch (err: any) {
-      if (err && err.message === "VERSION_CONFLICT") {
-        return NextResponse.json(err.payload ?? { error: "Version conflict" }, { status: 409 });
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "message" in err && err.message === "VERSION_CONFLICT") {
+        const errorWithPayload = err as Error & { payload?: unknown };
+        return NextResponse.json(errorWithPayload.payload ?? { error: "Version conflict" }, { status: 409 });
       }
       throw err;
     }

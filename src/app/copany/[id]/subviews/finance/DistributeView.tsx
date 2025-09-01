@@ -12,10 +12,7 @@ import type { DistributeRow } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import {
-  ReceiptPercentIcon,
-  ArrowUpRightIcon,
-} from "@heroicons/react/24/outline";
+import { ReceiptPercentIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
@@ -25,7 +22,6 @@ import LoadingView from "@/components/commons/LoadingView";
 import { formatDate, getMonthlyPeriod } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
-import { useRouter } from "next/navigation";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -34,8 +30,6 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 export default function DistributeView({ copanyId }: { copanyId: string }) {
-  const router = useRouter();
-
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: distributes, isLoading: isDistributesLoading } =
@@ -132,7 +126,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
               await regenerate.mutateAsync();
             }}
           >
-            Calculate Last Month's
+            Calculate Last Month&apos;s
           </Button>
         </div>
       </div>
@@ -154,7 +148,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             await regenerate.mutateAsync();
           }}
         >
-          Calculate Last Month's
+          Calculate Last Month&apos;s
         </Button>
       </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">

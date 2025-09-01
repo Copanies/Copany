@@ -1,7 +1,6 @@
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
-import Button from "./commons/Button";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";

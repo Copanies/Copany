@@ -10,6 +10,22 @@ import IssueConflictResolverModal, {
   type ConflictPayload,
 } from "@/components/IssueConflictResolverModal";
 
+type UpdaterInfo = {
+  id: string;
+  name: string;
+  avatar_url: string;
+  email: string | null;
+};
+
+type ConflictPayloadFromServer = {
+  server: { title: string | null; description: string | null } | null;
+  mergedTitle?: string;
+  mergedDescription?: string;
+  serverVersion?: number;
+  updater?: UpdaterInfo | null;
+  updatedAt?: string | null;
+};
+
 interface IssueEditorViewProps {
   issueData: IssueWithAssignee;
   onTitleChange?: (issueId: string, newTitle: string) => void;
@@ -79,14 +95,21 @@ export default function IssueEditorView({
         }
         if (res.status === 409) {
           const json = await res.json();
-          const err: any = new Error("VERSION_CONFLICT");
+          const err = new Error("VERSION_CONFLICT") as Error & {
+            payload?: unknown;
+          };
           err.payload = json;
           throw err;
         }
         throw new Error("API update failed");
-      } catch (_error: any) {
+      } catch (_error: unknown) {
         // If the API already reported a version conflict, bubble up directly
-        if (_error && _error.message === "VERSION_CONFLICT") {
+        if (
+          _error &&
+          typeof _error === "object" &&
+          "message" in _error &&
+          _error.message === "VERSION_CONFLICT"
+        ) {
           throw _error;
         }
         // Otherwise, fallback to Server Action (non-interactive env safe)
@@ -99,8 +122,13 @@ export default function IssueEditorView({
             baseTitleRef.current,
             baseDescriptionRef.current
           );
-        } catch (e: any) {
-          if (e && e.message === "VERSION_CONFLICT") {
+        } catch (e: unknown) {
+          if (
+            e &&
+            typeof e === "object" &&
+            "message" in e &&
+            e.message === "VERSION_CONFLICT"
+          ) {
             throw e; // bubble to onError
           }
           throw _error instanceof Error ? _error : new Error("Update failed");
@@ -134,7 +162,7 @@ export default function IssueEditorView({
 
       return { previousIssues };
     },
-    onError: (err: any, variables, context) => {
+    onError: (err: unknown, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousIssues && issueData.copany_id) {
         queryClient.setQueryData(
@@ -142,8 +170,15 @@ export default function IssueEditorView({
           context.previousIssues
         );
       }
-      if (err && err.message === "VERSION_CONFLICT" && err.payload) {
-        const payload = err.payload as any;
+      if (
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        err.message === "VERSION_CONFLICT" &&
+        "payload" in err
+      ) {
+        const payload = (err as Error & { payload: ConflictPayloadFromServer })
+          .payload;
         // Open modal for user to choose
         setConflictPayload({
           server: payload.server ?? null,
@@ -174,8 +209,10 @@ export default function IssueEditorView({
       }
 
       // Refresh version/base snapshots from server truth
-      if ((updatedIssue as any).version) {
-        versionRef.current = (updatedIssue as any).version as number;
+      if ((updatedIssue as IssueWithAssignee & { version?: number }).version) {
+        versionRef.current = (
+          updatedIssue as IssueWithAssignee & { version: number }
+        ).version;
       } else {
         versionRef.current = versionRef.current + 1;
       }

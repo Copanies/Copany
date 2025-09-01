@@ -216,7 +216,7 @@ export class IssueService {
     // Prefer updated_by on issue; fallback to last issue_activity
     let updater: { id: string; name: string; avatar_url: string } | null = null;
     try {
-      let actorId = (current as any)?.content_version_updated_by as string | undefined;
+      let actorId = (current as Issue & { content_version_updated_by?: string })?.content_version_updated_by;
       if (!actorId) {
         const { data: lastAct } = await supabase
           .from("issue_activity")
@@ -225,7 +225,7 @@ export class IssueService {
           .order("created_at", { ascending: false })
           .limit(1)
           .single();
-        actorId = (lastAct as any)?.actor_id as string | undefined;
+        actorId = (lastAct as { actor_id?: string })?.actor_id;
       }
       if (actorId) {
         const admin = await createAdminSupabaseClient();
