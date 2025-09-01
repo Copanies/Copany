@@ -241,54 +241,12 @@ export class IssueService {
       }
     } catch (_) {}
 
-    // Lazy import to avoid circular deps
-    const { merge3 } = await import("@/utils/diff3");
-
-    const mergedTitle = merge3(
-      baseTitle ?? current.title ?? "",
-      current.title ?? "",
-      title ?? "",
-      { labelTheirs: "remote", labelYours: "local" }
-    );
-    const mergedDesc = merge3(
-      baseDescription ?? current.description ?? "",
-      current.description ?? "",
-      description ?? "",
-      { labelTheirs: "remote", labelYours: "local" }
-    );
-
-    // If no conflict in either, attempt to persist merged content against latest version
-    if (!mergedTitle.hadConflict && !mergedDesc.hadConflict) {
-      const tryMergeSave = await supabase
-        .from("issue")
-        .update({
-          title: mergedTitle.text,
-          description: mergedDesc.text,
-          updated_at: new Date().toISOString(),
-          content_version_updated_by: actorUserId ?? null,
-          content_version_updated_at: new Date().toISOString(),
-          version: (current.version ?? 0) + 1,
-        })
-        .eq("id", issueId)
-        .eq("version", current.version)
-        .select()
-        .single();
-
-      if (!tryMergeSave.error && tryMergeSave.data) {
-        const updatedIssue = tryMergeSave.data as Issue;
-        const issuesWithAssignee = await this.enrichIssuesWithAssigneeInfo([updatedIssue]);
-        return issuesWithAssignee[0];
-      }
-    }
-
     // Still conflicting: throw a special error with payload
     const conflictError = new Error("VERSION_CONFLICT");
     // @ts-expect-error augment error object with data
     conflictError.payload = {
       conflict: true,
       server: current,
-      mergedTitle: mergedTitle.text,
-      mergedDescription: mergedDesc.text,
       serverVersion: current.version ?? 0,
       updater,
       updatedAt: current.content_version_updated_at ?? current.updated_at ?? null,
@@ -417,6 +375,5 @@ export class IssueService {
 
     return issuesWithAssignee[0];
   }
-
 
 }

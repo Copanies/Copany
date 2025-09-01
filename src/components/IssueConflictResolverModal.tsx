@@ -7,6 +7,7 @@ import MilkdownEditor from "@/components/MilkdownEditor";
 import { renderUserLabel } from "./IssueAssigneeSelector";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { formatRelativeTime } from "@/utils/time";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 type UpdaterInfo = {
   id: string;
@@ -76,15 +77,18 @@ export default function IssueConflictResolverModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       {/* Fixed-height container on small screens to avoid modal scroll */}
-      <div className="flex flex-col p-6 gap-4 w-full max-h-[90vh] md:h-auto overflow-hidden">
-        <div className="text-lg font-semibold">
-          Version conflict — choose which to keep
+      <div className="flex flex-col p-6 gap-4 w-full h-[calc(90vh-8px)] overflow-hidden">
+        <div className="flex flex-row text-lg font-semibold pr-4 gap-2">
+          <div className="flex flex-row h-[28px] items-center">
+            <ExclamationTriangleIcon className="w-5 h-5" strokeWidth={2} />
+          </div>
+          <span className="">Version conflict — choose which to keep</span>
         </div>
 
         {/* Content area: stack on small screens, side-by-side on md+ */}
         <div className="w-full flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left: Local */}
-          <div className="w-full md:w-1/2 md:pr-5 h-full flex flex-col min-h-0 overflow-hidden border-b pb-5 md:pb-0 md:border-b-0 md:border-r border-gray-200 dark:border-gray-800">
+          <div className="w-full flex-1 basis-1/2 md:w-1/2 md:basis-auto pb-4 mb:pb-0 md:pr-5 h-full flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800">
             <div className="flex flex-row items-center justify-between mb-5">
               <div className="flex flex-col gap-1">
                 <p>Editing now</p>
@@ -112,7 +116,7 @@ export default function IssueConflictResolverModal({
               </Button>
             </div>
 
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <input
                 className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0"
                 value={leftTitle}
@@ -126,7 +130,7 @@ export default function IssueConflictResolverModal({
                   initialContent={leftInitial}
                   isReadonly={false}
                   placeholder="Description"
-                  className="min-h-full w-full h-full -mx-3 -mt-2"
+                  className="w-full -mx-3 -mt-2"
                   focusSignal={leftFocusSignal}
                 />
               </div>
@@ -134,7 +138,7 @@ export default function IssueConflictResolverModal({
           </div>
 
           {/* Right: Server */}
-          <div className="w-full md:w-1/2 md:pl-[21px] md:-ml-[1px] h-full flex flex-col min-h-0 overflow-hidden mt-5 md:mt-0 border-gray-200 dark:border-gray-800 md:border-l">
+          <div className="w-full flex-1 basis-1/2 md:w-1/2 md:basis-auto mt-4 md:mt-0 md:pl-[21px] md:-ml-[1px] h-full flex flex-col overflow-hidden border-gray-200 dark:border-gray-800 md:border-l">
             <div className="flex flex-row items-center justify-between mb-5">
               <div className="flex flex-col gap-1">
                 <span>
@@ -163,7 +167,7 @@ export default function IssueConflictResolverModal({
               </Button>
             </div>
 
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <input
                 className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0"
                 value={rightTitle}
@@ -177,7 +181,7 @@ export default function IssueConflictResolverModal({
                   initialContent={rightInitial}
                   isReadonly={false}
                   placeholder="Description"
-                  className="min-h-full w-full h-full -mx-3 -mt-2"
+                  className="w-full -mx-3 -mt-2"
                   focusSignal={rightFocusSignal}
                 />
               </div>

@@ -104,10 +104,10 @@ export default function AssignmentRequestModal({
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <Button size="sm" variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" variant="primary" onClick={handleSend}>
+          <Button variant="primary" onClick={handleSend}>
             Send
           </Button>
         </div>
