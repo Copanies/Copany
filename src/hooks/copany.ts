@@ -2,17 +2,41 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Copany } from "@/types/database.types";
-import { getCopanyByIdAction, updateCopanyAction, createCopanyAction } from "@/actions/copany.actions";
+import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction } from "@/actions/copany.actions";
+import { listMyStarredCopanyIdsAction } from "@/actions/star.actions";
 
 function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
 function copaniesKey() { return ["copanies"] as const; }
+function myStarredCopanyIdsKey() { return ["myStarredCopanyIds"] as const; }
 
-export function useCopany(copanyId: string) {
+export function useCopany(
+  copanyId: string,
+  options?: { enabled?: boolean }
+) {
   return useQuery<Copany | null>({
     queryKey: copanyKey(copanyId),
     queryFn: () => getCopanyByIdAction(copanyId),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 1 * 60 * 1000, // 1 minute 
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useCopanies() {
+  return useQuery<Copany[]>({
+    queryKey: copaniesKey(),
+    queryFn: () => getCopaniesAction(),
+    staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 5 * 60 * 1000, // 5 minute 
+  });
+}
+
+export function useMyStarredCopanies() {
+  return useQuery<{ ids: string[] }>({
+    queryKey: myStarredCopanyIdsKey(),
+    queryFn: async () => ({ ids: await listMyStarredCopanyIdsAction() }),
+    staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 5 * 60 * 1000, // 5 minute 
   });
 }
 
