@@ -22,7 +22,7 @@ import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 export default function CreateCopanyButton({
   size = "md",
 }: {
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -280,6 +280,19 @@ export default function CreateCopanyButton({
 
   return (
     <>
+      {size === "lg" && (
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          variant="secondary"
+          size="md"
+        >
+          <div className="flex flex-row items-center gap-1">
+            <PlusIcon className="w-4 h-4 text-gray-900 dark:text-gray-100" />
+            New copany
+          </div>
+        </Button>
+      )}
+
       {size === "md" && (
         <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
           <div className="flex flex-row items-center gap-1">
@@ -300,9 +313,7 @@ export default function CreateCopanyButton({
           className="p-1 -ml-1"
           onClick={() => setIsModalOpen(true)}
         >
-          <PlusIcon
-            className="w-5 h-5 text-gray-900 dark:text-gray-100"
-          />
+          <PlusIcon className="w-5 h-5 text-gray-900 dark:text-gray-100" />
         </Button>
       )}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="md">
@@ -382,7 +393,7 @@ export default function CreateCopanyButton({
       >
         {status === "pending" && (
           <div className="py-8">
-            <LoadingView type="label" />
+            <LoadingView type="label" delay={500} />
           </div>
         )}
         {status === "error" && (

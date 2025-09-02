@@ -1,23 +1,44 @@
 "use client";
+import { useEffect, useState } from "react";
 import CopanyListView from "@/app/subviews/CopanyListView";
 import MainNavigation from "@/components/MainNavigation";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
+import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import { SquaresPlusIcon } from "@heroicons/react/24/outline";
+import CreateCopanyButton from "@/components/CreateCopanyButton";
 
 /**
  * Home page - Responsible for data fetching and page layout
  */
 export default function Home() {
   const { data: copanies, isLoading } = useCopanies();
+  // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  const safeIsLoading = isLoading || !isMounted;
   return (
     <main className="h-min-screen">
       <MainNavigation />
       <div className="p-6 max-w-screen-lg mx-auto flex flex-col">
         <div className="flex flex-col gap-4 pt-2">
-          {isLoading ? (
+          {safeIsLoading ? (
             <LoadingView type="page" />
-          ) : (
+          ) : copanies && copanies.length > 0 ? (
             <CopanyListView copanies={copanies || []} />
+          ) : (
+            <div className="flex flex-col items-center">
+              <EmptyPlaceholderView
+                icon={<SquaresPlusIcon className="w-16 h-16 text-gray-500" />}
+                title="No copanies yet"
+                description="Create a new copany to get started."
+              />
+              <div className="-mt-3">
+                <CreateCopanyButton size="lg" />
+              </div>
+            </div>
           )}
         </div>
       </div>

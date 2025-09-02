@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import logo from "@/app/favicon.ico";
 import { useRouter, usePathname } from "next/navigation";
@@ -62,7 +62,17 @@ export default function MainNavigation() {
     }
   };
 
+  // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const renderUserSection = () => {
+    if (!isMounted) {
+      return <div className="p-2 w-8"></div>;
+    }
+
     if (loading) {
       return <div className="p-2 w-8"></div>;
     }
@@ -188,7 +198,9 @@ export default function MainNavigation() {
           <>
             <Link
               href="/"
-              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm`}
+              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm ${
+                pathname === "/" ? "font-semibold" : ""
+              }`}
             >
               <span>Home</span>
               {pathname === "/" && (
@@ -197,7 +209,9 @@ export default function MainNavigation() {
             </Link>
             <Link
               href="/stars"
-              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm`}
+              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm ${
+                pathname.startsWith("/stars") ? "font-semibold" : ""
+              }`}
             >
               <span>Stars</span>
               {pathname.startsWith("/stars") && (
@@ -206,9 +220,16 @@ export default function MainNavigation() {
             </Link>
           </>
         ) : copanyId ? (
-          <div className="ml-1 text-sm truncate max-w-[40vw] md:max-w-[50vw]">
-            {copanyData?.name || ""}
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="!px-1"
+            onClick={() => router.push(`/copany/${copanyId}`)}
+          >
+            <div className="text-sm truncate max-w-[40vw] md:max-w-[50vw] font-semibold text-gray-900 dark:text-gray-100">
+              {copanyData?.name || ""}
+            </div>
+          </Button>
         ) : (
           <></>
         )}
