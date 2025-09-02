@@ -44,7 +44,7 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-gray-500/20"
+        className="fixed inset-0 bg-black/35 dark:bg-gray-500/20"
         onClick={onClose}
       />
 
