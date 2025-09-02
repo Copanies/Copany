@@ -338,7 +338,7 @@ export default function SettingsView({
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-8 px-0 md:px-5">
+    <div className="flex flex-col gap-8 pb-8 px-0">
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold">General</h1>
         <div className="flex flex-col gap-2">{renameSection()}</div>
@@ -408,20 +408,18 @@ export default function SettingsView({
               type="text"
               value={deleteConfirmName}
               onChange={(e) => setDeleteConfirmName(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border-1 border-red-500 dark:border-red-700 bg-transparent dark:text-gray-100"
+              className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
             />
           </div>
 
           <div className="flex w-full">
             <Button
-              type="button"
-              onClick={handleDeleteCopany}
               disabled={deleteConfirmName !== copany.name || isDeleting}
               className="w-full"
+              onClick={handleDeleteCopany}
+              variant="danger"
             >
-              <p className="text-red-500 font-medium w-full">
-                {isDeleting ? "Deleting..." : "Delete this Copany"}
-              </p>
+              {isDeleting ? "Deleting..." : "Delete this Copany"}
             </Button>
           </div>
         </div>
@@ -646,7 +644,7 @@ export default function SettingsView({
               };
               const state = encodeURIComponent(btoa(JSON.stringify(stateObj)));
               window.open(
-                `https://github.com/apps/copany-bot/installations/new?state=${state}`,
+                `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_NAME}/installations/new?state=${state}`,
                 "_blank"
               );
             }}
