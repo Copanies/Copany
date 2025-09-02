@@ -102,6 +102,19 @@ export async function getCopanyByIdAction(copanyId: string) {
 }
 
 /**
+ * Get copanies list - Server Action
+ */
+export async function getCopaniesAction() {
+  try {
+    const copanies = await CopanyService.getCopanies();
+    return copanies;
+  } catch (error) {
+    console.error("❌ Failed to get copanies:", error);
+    throw error;
+  }
+}
+
+/**
  * Update company - Server Action
  */
 export async function updateCopanyAction(

@@ -1,14 +1,15 @@
 "use client";
 import CopanyListView from "@/app/subviews/CopanyListView";
 import MainNavigation from "@/components/MainNavigation";
-import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
+import { useCopanies, useMyStarredCopanies } from "@/hooks/copany";
 
-/**
- * Home page - Responsible for data fetching and page layout
- */
-export default function Home() {
-  const { data: copanies, isLoading } = useCopanies();
+export default function StarsPage() {
+  const { data: allCopanies, isLoading: loadingAll } = useCopanies();
+  const { data: starred, isLoading: loadingIds } = useMyStarredCopanies();
+  const ids = starred?.ids || [];
+  const list = (allCopanies || []).filter((c) => ids.includes(String(c.id)));
+  const isLoading = loadingAll || loadingIds;
   return (
     <main className="h-min-screen">
       <MainNavigation />
@@ -17,7 +18,7 @@ export default function Home() {
           {isLoading ? (
             <LoadingView type="page" />
           ) : (
-            <CopanyListView copanies={copanies || []} />
+            <CopanyListView copanies={list} />
           )}
         </div>
       </div>

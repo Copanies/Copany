@@ -159,6 +159,8 @@ export default function NotificationBell() {
         return "commented in the Issue";
       case "new_issue":
         return "created a new Issue";
+      case "copany_starred":
+        return "starred the Copany";
       case "issue_assigned":
         return "assigned you to the Issue";
       case "issue_state_changed":
@@ -261,6 +263,10 @@ export default function NotificationBell() {
     const withIssue = n as unknown as { issue?: { title?: string | null } };
     const latestTitle = withIssue?.issue?.title || p.issue_title || "";
     switch (n.type) {
+      case "copany_starred": {
+        const name = n.copany_id ? copanies[String(n.copany_id)]?.name : "";
+        return name ? <span className="text-sm">{name}</span> : null;
+      }
       case "issue_assigned":
         return (
           <span className="text-sm">

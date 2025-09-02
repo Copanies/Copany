@@ -19,6 +19,7 @@ export interface Copany {
   github_repository_id: string | null;
   is_connected_github: boolean;
   license: string | null;
+  star_count?: number;
 }
 
 // Table: issue
@@ -161,7 +162,8 @@ export type NotificationType =
   | "assignment_request_accepted"
   | "assignment_request_refused"
   | "review_requested"
-  | "review_approved";
+  | "review_approved"
+  | "copany_starred";
 
 export interface Notification {
   id: string;

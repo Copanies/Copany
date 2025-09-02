@@ -15,6 +15,7 @@ import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
+import StarButton from "@/components/StarButton";
 import {
   BookOpenIcon,
   ScaleIcon,
@@ -125,6 +126,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             <div className="hidden sm:block">
               {copany.license && <LicenseBadge license={copany.license} />}
             </div>
+            <div className="block sm:hidden flex flex-1 justify-end">
+              <StarButton copanyId={copanyId} size="md" />
+            </div>
           </div>
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             {copany.license && (
@@ -133,6 +137,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               </div>
             )}
             <AssetLinksSection copany={copany} />
+            <div className="hidden sm:block">
+              <StarButton copanyId={copanyId} size="md" />
+            </div>
           </div>
         </div>
         <p className="">{copany.description}</p>

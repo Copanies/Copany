@@ -2,13 +2,16 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import logo from "@/app/favicon.ico";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useMemo } from "react";
+import { useCopany } from "@/hooks/copany";
 import { createClient } from "@/utils/supabase/client";
 import { signInWithGitHub, signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
 import CreateCopanyButton from "./CreateCopanyButton";
 import NotificationBell from "./NotificationBell";
+import Link from "next/link";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubIconDark from "@/assets/github_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -17,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function MainNavigation() {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const { data: user, isLoading: loading } = useCurrentUser();
   const isDarkMode = useDarkMode();
@@ -88,12 +92,12 @@ export default function MainNavigation() {
       <Image
         src={user.user_metadata.avatar_url}
         alt={user.user_metadata.name || "User Avatar"}
-        className="w-8 h-8 rounded-full"
+        className="w-6 md:w-8 h-6 md:h-8 rounded-full"
         width={32}
         height={32}
       />
     ) : (
-      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+      <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
         {user.user_metadata?.name?.[0]?.toUpperCase() || "U"}
       </div>
     );
@@ -156,18 +160,67 @@ export default function MainNavigation() {
     );
   };
 
+  // Extract copanyId when pathname like /copany/[id] or deeper
+  const copanyId = useMemo(() => {
+    if (!pathname) return null as string | null;
+    const parts = pathname.split("/").filter(Boolean);
+    const idx = parts.findIndex((p) => p === "copany");
+    if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+    return null as string | null;
+  }, [pathname]);
+
+  const { data: copanyData } = useCopany(String(copanyId || ""), {
+    enabled: !!copanyId,
+  });
+
   return (
-    <div className="flex flex-row items-center justify-between px-5 py-2 border-b border-gray-200 dark:border-gray-800">
-      <Image
-        className="cursor-pointer rounded-md"
-        src={logo}
-        alt="logo"
-        width={32}
-        height={32}
-        onClick={() => router.push("/")}
-      />
-      <div className="flex flex-row items-center gap-3">
-        {user && <CreateCopanyButton />}
+    <div className="flex flex-row items-center justify-between px-5 py-2 gap-3 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex flex-row items-center gap-2 md:gap-4">
+        <Image
+          className="cursor-pointer rounded-md"
+          src={logo}
+          alt="logo"
+          width={32}
+          height={32}
+          onClick={() => router.push("/")}
+        />
+        {pathname === "/" || pathname === "/stars" ? (
+          <>
+            <Link
+              href="/"
+              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm`}
+            >
+              <span>Home</span>
+              {pathname === "/" && (
+                <span className="pointer-events-none absolute left-0 right-0 top-8 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+              )}
+            </Link>
+            <Link
+              href="/stars"
+              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm`}
+            >
+              <span>Stars</span>
+              {pathname.startsWith("/stars") && (
+                <span className="pointer-events-none absolute left-0 right-0 top-8 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+              )}
+            </Link>
+          </>
+        ) : copanyId ? (
+          <div className="ml-1 text-sm truncate max-w-[40vw] md:max-w-[50vw]">
+            {copanyData?.name || ""}
+          </div>
+        ) : (
+          <></>
+        )}
+      </div>
+
+      <div className="flex flex-row items-center h-8 gap-2 md:gap-3">
+        <div className="hidden md:block">
+          {user && <CreateCopanyButton size="md" />}
+        </div>
+        <div className="block md:hidden">
+          {user && <CreateCopanyButton size="sm" />}
+        </div>
         {user && <NotificationBell />}
         {renderUserSection()}
       </div>

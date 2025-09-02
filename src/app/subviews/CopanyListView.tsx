@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import ContributorAvatarStack from "@/components/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
+import StarButton from "@/components/StarButton";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -44,7 +45,10 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                     <LicenseBadge license={copany.license} />
                   </div>
                 )}
-                <ContributorAvatarStack copany={copany} className="ml-auto" />
+                <div className="ml-auto flex items-center gap-2">
+                  <ContributorAvatarStack copany={copany} />
+                  <StarButton copanyId={String(copany.id)} size="sm" />
+                </div>
               </div>
               <div className="">{copany.description || "No description"}</div>
               {copany.license && (

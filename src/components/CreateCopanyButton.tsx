@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { getOrgAndReposAction } from "@/actions/github.action";
-import { RestEndpointMethodTypes } from "@octokit/rest";
 import Button from "./commons/Button";
 import LoadingView from "./commons/LoadingView";
 import Modal from "./commons/Modal";
@@ -20,10 +19,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useCreateCopany } from "@/hooks/copany";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 
-type _RepoData =
-  RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
-
-export default function CreateCopanyButton() {
+export default function CreateCopanyButton({
+  size = "md",
+}: {
+  size?: "sm" | "md";
+}) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -280,16 +280,31 @@ export default function CreateCopanyButton() {
 
   return (
     <>
-      <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
-        <div className="flex flex-row items-center gap-1">
-          <PlusIcon
-            strokeWidth={2}
-            className="w-4 h-4 text-gray-900 dark:text-gray-100"
-          />
-          New copany
-        </div>
-      </Button>
+      {size === "md" && (
+        <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="sm">
+          <div className="flex flex-row items-center gap-1">
+            <PlusIcon
+              strokeWidth={2}
+              className="w-4 h-4 text-gray-900 dark:text-gray-100"
+            />
+            New copany
+          </div>
+        </Button>
+      )}
 
+      {size === "sm" && (
+        <Button
+          size="sm"
+          variant="ghost"
+          shape="square"
+          className="p-1 -ml-1"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <PlusIcon
+            className="w-5 h-5 text-gray-900 dark:text-gray-100"
+          />
+        </Button>
+      )}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="md">
         <div className="p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -526,11 +541,7 @@ export default function CreateCopanyButton() {
   function actionButtonsSection() {
     return (
       <div className="flex gap-2 pt-4 justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleCloseModal}
-        >
+        <Button type="button" variant="secondary" onClick={handleCloseModal}>
           Cancel
         </Button>
         <Button
