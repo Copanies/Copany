@@ -39,7 +39,7 @@ export default function StarButton({
 
   const iconClass = `
     ${size === "sm" ? "w-4 h-4" : "w-4 h-4"}
-    ${isStarred ? "text-[#FF9D0B]" : "text-gray-700"}
+    ${isStarred ? "text-[#FF9D0B]" : "text-gray-700 dark:text-gray-300"}
   `;
   const labelClass = size === "sm" ? "text-xs" : "text-sm";
 
