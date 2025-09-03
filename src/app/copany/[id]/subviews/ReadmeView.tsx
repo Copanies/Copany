@@ -80,7 +80,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
       }
     },
     enabled: !!githubUrl,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 30 * 1000, // 30 seconds
     refetchIntervalInBackground: true,
   });

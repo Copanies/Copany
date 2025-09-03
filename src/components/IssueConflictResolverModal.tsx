@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
 import MilkdownEditor from "@/components/MilkdownEditor";
@@ -73,6 +73,23 @@ export default function IssueConflictResolverModal({
   }, [isOpen, localTitle, localDescription, serverTitle, serverDesc]);
 
   const updater = conflict?.updater;
+  const leftTitleRef = useRef<HTMLTextAreaElement>(null);
+  const rightTitleRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize title textareas
+  useEffect(() => {
+    const el = leftTitleRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [leftTitle]);
+
+  useEffect(() => {
+    const el = rightTitleRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [rightTitle]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
@@ -117,10 +134,20 @@ export default function IssueConflictResolverModal({
             </div>
 
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <input
-                className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0"
+              <textarea
+                ref={leftTitleRef}
+                className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0 resize-none overflow-hidden break-words"
                 value={leftTitle}
-                onChange={(e) => setLeftTitle(e.target.value)}
+                onChange={(e) =>
+                  setLeftTitle(e.target.value.replace(/\r?\n/g, " "))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                rows={1}
                 placeholder="Title"
               />
               <div className="mt-2 flex-1 min-h-0 overflow-auto">
@@ -168,10 +195,20 @@ export default function IssueConflictResolverModal({
             </div>
 
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <input
-                className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0"
+              <textarea
+                ref={rightTitleRef}
+                className="w-full bg-transparent text-lg font-semibold focus:outline-none focus:ring-0 resize-none overflow-hidden break-words"
                 value={rightTitle}
-                onChange={(e) => setRightTitle(e.target.value)}
+                onChange={(e) =>
+                  setRightTitle(e.target.value.replace(/\r?\n/g, " "))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                rows={1}
                 placeholder="Title"
               />
               <div className="mt-2 flex-1 min-h-0 overflow-auto">

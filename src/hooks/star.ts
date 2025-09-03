@@ -9,7 +9,7 @@ import {
   unstarAction,
 } from "@/actions/star.actions";
 
-function starCountKey(copanyId: string) {
+export function starCountKey(copanyId: string) {
   return ["starCount", copanyId] as const;
 }
 function hasStarredKey(copanyId: string) {
@@ -19,18 +19,24 @@ function myStarredListKey() {
   return ["myStarredCopanyIds"] as const;
 }
 
-export function useStarState(copanyId: string) {
+export function useStarState(
+  copanyId: string,
+  options?: { countInitialData?: number; enableCountQuery?: boolean }
+) {
+  const enableCountQuery = options?.enableCountQuery ?? true;
   const countQuery = useQuery<number>({
     queryKey: starCountKey(copanyId),
     queryFn: () => getStarCountAction(copanyId),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    enabled: enableCountQuery,
+    initialData: options?.countInitialData,
   });
   const flagQuery = useQuery<boolean>({
     queryKey: hasStarredKey(copanyId),
     queryFn: () => hasStarredAction(copanyId),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
   });
   return { countQuery, flagQuery } as const;
 }
@@ -91,8 +97,8 @@ export function useMyStarredCopanyIds() {
   return useQuery<string[]>({
     queryKey: myStarredListKey(),
     queryFn: () => listMyStarredCopanyIdsAction(),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
   });
 }
 

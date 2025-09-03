@@ -84,14 +84,15 @@ export default function IssueLevelSelector({
 
   const levelOptions = allLevels.map((level) => ({
     value: level,
-    label: renderLevelLabel(level, true),
+    label: renderLevelLabel(level, true, true),
     disabled: readOnly,
     tooltip: readOnly ? "No permission to edit" : undefined,
   }));
 
   return (
     <Dropdown
-      trigger={renderLevelLabel(currentLevel, showText)}
+      size="lg"
+      trigger={renderLevelLabel(currentLevel, showText, false)}
       options={levelOptions}
       selectedValue={currentLevel}
       onSelect={handleLevelChange}
@@ -101,25 +102,49 @@ export default function IssueLevelSelector({
   );
 }
 
-export function renderLevelLabel(level: number | null, showText: boolean) {
+export function renderLevelLabel(
+  level: number | null,
+  showText: boolean,
+  showDescription: boolean = false
+) {
   const getLevelDisplay = (level: number | null) => {
     switch (level) {
       case IssueLevel.level_None:
-        return { symbol: "?", text: "Pending" };
+        return {
+          symbol: "?",
+          text: "Pending",
+          description: "To be determined",
+        };
       case IssueLevel.level_C:
-        return { symbol: "C", text: "Level C" };
+        return {
+          symbol: "C",
+          text: "Level C",
+          description: "Small fixes / docs updates",
+        };
       case IssueLevel.level_B:
-        return { symbol: "B", text: "Level B" };
+        return {
+          symbol: "B",
+          text: "Level B",
+          description: "Regular feature development",
+        };
       case IssueLevel.level_A:
-        return { symbol: "A", text: "Level A" };
+        return {
+          symbol: "A",
+          text: "Level A",
+          description: "Core module or design",
+        };
       case IssueLevel.level_S:
-        return { symbol: "S", text: "Level S" };
+        return {
+          symbol: "S",
+          text: "Level S",
+          description: "Architecture / core development",
+        };
       default:
-        return { symbol: "?", text: "Pending" };
+        return { symbol: "?", text: "Pending", description: "Unknown level" };
     }
   };
 
-  const { symbol, text } = getLevelDisplay(level);
+  const { symbol, text, description } = getLevelDisplay(level);
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -129,9 +154,16 @@ export function renderLevelLabel(level: number | null, showText: boolean) {
         </span>
       </div>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
-          {text}
-        </span>
+        <div className="flex flex-col gap-0">
+          <span className="text-base text-gray-900 dark:text-gray-100">
+            {text}
+          </span>
+          {showDescription && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {description}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

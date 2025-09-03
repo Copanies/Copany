@@ -45,7 +45,7 @@ export function useIssue(copanyId: string, issueId: string) {
       return found ?? null;
     },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days (align with list)
-    refetchInterval: 10_000, // 10 seconds
+    refetchInterval: 60_000, // 1 minute
   });
 }
 

@@ -10,11 +10,16 @@ type Size = "sm" | "md";
 export default function StarButton({
   copanyId,
   size = "md",
+  count: upstreamCount,
 }: {
   copanyId: string;
   size?: Size;
+  count?: number;
 }) {
-  const { countQuery, flagQuery } = useStarState(copanyId);
+  const { countQuery, flagQuery } = useStarState(copanyId, {
+    enableCountQuery: upstreamCount == null,
+    countInitialData: upstreamCount ?? undefined,
+  });
   const toggle = useToggleStar(copanyId);
   const isStarred = !!flagQuery.data;
   const count = countQuery.data ?? 0;
