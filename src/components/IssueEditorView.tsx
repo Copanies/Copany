@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import IssueConflictResolverModal, {
   type ConflictPayload,
@@ -58,6 +57,7 @@ export default function IssueEditorView({
   const mutateRef = useRef<
     (vars: { id: string; title: string; description: string }) => void
   >(() => {});
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Versioning & base snapshot for optimistic locking and three-way merge
   const versionRef = useRef<number>(issueData.version ?? 1);
@@ -277,9 +277,9 @@ export default function IssueEditorView({
 
   // Handle title changes
   const handleTitleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       if (isReadonly) return;
-      const newTitle = e.target.value;
+      const newTitle = e.target.value.replace(/\r?\n/g, " ");
       console.log("📝 Title changed:", newTitle);
       setTitle(newTitle);
       setSaveError(null);
@@ -311,6 +311,14 @@ export default function IssueEditorView({
   useEffect(() => {
     isReadonlyRef.current = isReadonly;
   }, [isReadonly]);
+
+  // Auto-resize title textarea to fit content height
+  useEffect(() => {
+    const el = titleTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [title]);
 
   // Mark if there are unsaved changes
   const hasUnsavedChangesRef = useRef(false);
@@ -404,20 +412,21 @@ export default function IssueEditorView({
       <div className="space-y-0">
         {/* Title */}
         <div className="relative">
-          <input
-            type="text"
+          <textarea
+            ref={titleTextareaRef}
             value={title}
             onChange={handleTitleChange}
-            className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            rows={1}
+            className="w-full bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-2xl font-semibold resize-none overflow-hidden break-words"
             placeholder="Issue title"
             disabled={isReadonly}
           />
-          {/* Save status indicator */}
-          {isSaving && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-sm text-gray-500">
-              <ArrowPathIcon className="w-5 h-5 animate-spin" />
-            </div>
-          )}
         </div>
 
         {/* Error message */}

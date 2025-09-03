@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import MilkdownEditor from "@/components/MilkdownEditor";
 
 import { useCreateIssue } from "@/hooks/issues";
@@ -46,6 +46,7 @@ export default function IssueCreateForm({
 
   const editorDivRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleContentChange = useCallback((content: string) => {
     console.log("content", content);
@@ -58,6 +59,19 @@ export default function IssueCreateForm({
     },
     []
   );
+
+  // Auto-resize title textarea to fit content height
+  useEffect(() => {
+    const el = titleTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [title]);
+
+  // Focus title textarea on mount
+  useEffect(() => {
+    titleTextareaRef.current?.focus();
+  }, []);
 
   const handlePriorityChange = useCallback(
     (_issueId: string, newPriority: number) => {
@@ -128,12 +142,25 @@ export default function IssueCreateForm({
     <div>
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-1">
         <div className="px-3 py-3">
-          <input
-            type="text"
+          <textarea
+            ref={titleTextareaRef}
             name="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 focus:ring-blue-500 text-xl font-semibold"
+            onChange={(e) => setTitle(e.target.value.replace(/\r?\n/g, " "))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                // Submit when Cmd/Ctrl + Enter
+                if (e.metaKey || e.ctrlKey) {
+                  if (formRef.current) {
+                    formRef.current.requestSubmit();
+                  }
+                }
+              }
+            }}
+            rows={1}
+            className="w-full bg-transparent pl-3 pr-10 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-xl font-semibold resize-none overflow-hidden break-words"
             disabled={isSubmitting}
             placeholder="Issue title"
           />
