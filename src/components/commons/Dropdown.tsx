@@ -225,7 +225,13 @@ export default function Dropdown({
           <div
             ref={dropdownContentRef}
             className={`fixed invisible px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
-              size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+              size === "sm"
+                ? "w-32"
+                : size === "md"
+                ? "w-48"
+                : size === "lg"
+                ? "w-64"
+                : "w-48"
             }`}
             style={{ top: "-9999px", left: "-9999px" }}
           >
@@ -244,7 +250,9 @@ export default function Dropdown({
                       ? "text-sm"
                       : size === "md"
                       ? "text-sm"
-                      : "text-base"
+                      : size === "lg"
+                      ? "text-sm"
+                      : "text-sm"
                   } ${
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
@@ -304,7 +312,13 @@ export default function Dropdown({
           {shouldShowDropdown && (
             <div
               className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
-                size === "sm" ? "w-32" : size === "md" ? "w-48" : "w-64"
+                size === "sm"
+                  ? "w-32"
+                  : size === "md"
+                  ? "w-48"
+                  : size === "lg"
+                  ? "w-64"
+                  : "w-48"
               }`}
               style={{
                 top: `${dropdownPosition.top}px`,
@@ -332,7 +346,9 @@ export default function Dropdown({
                         ? "text-sm"
                         : size === "md"
                         ? "text-sm"
-                        : "text-base"
+                        : size === "lg"
+                        ? "text-sm"
+                        : "text-sm"
                     } ${
                       option.disabled
                         ? "opacity-50 cursor-not-allowed"
