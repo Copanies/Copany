@@ -23,12 +23,14 @@ export function useIssueReviewers(issueId: string) {
 }
 
 export function useMultipleIssueReviewers(issueIds: string[]) {
+  // Create a stable, order-insensitive, deduplicated key component
+  const stableIds = Array.from(new Set(issueIds.map((id) => String(id)))).sort();
   return useQuery<Record<string, IssueReviewer[]>>({
-    queryKey: ["multipleIssueReviewers", issueIds],
+    queryKey: ["multipleIssueReviewers", stableIds],
     queryFn: async () => {
       try {
         const results = await Promise.all(
-          issueIds.map(async (id) => {
+          stableIds.map(async (id) => {
             try {
               const res = await fetch(`/api/issue-reviewers?issueId=${encodeURIComponent(id)}`);
               if (!res.ok) throw new Error("request failed");
@@ -51,9 +53,8 @@ export function useMultipleIssueReviewers(issueIds: string[]) {
         return {};
       }
     },
-    enabled: issueIds.length > 0,
+    enabled: stableIds.length > 0,
     refetchInterval: 1 * 60 * 1000, // 1 minute 
-    refetchIntervalInBackground: true,
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }

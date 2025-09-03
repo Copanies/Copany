@@ -19,7 +19,7 @@ export function useDistributes(copanyId: string) {
   return useQuery<DistributeRow[]>({
     queryKey: distributesKey(copanyId),
     queryFn: () => getDistributesAction(copanyId),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 60 * 1000,
     enabled: !!copanyId,
   });
@@ -53,7 +53,7 @@ export function useTransactions(copanyId: string) {
   return useQuery<TransactionRow[]>({
     queryKey: transactionsKey(copanyId),
     queryFn: () => getTransactionsAction(copanyId),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 60 * 1000,
     enabled: !!copanyId,
   });

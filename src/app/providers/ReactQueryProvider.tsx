@@ -14,7 +14,7 @@ export default function ReactQueryProvider({ children }: Props) {
     const client = new QueryClient({
       defaultOptions: {
         queries: {
-          // Match current long-lived local cache behavior
+          // Keep data fresh for a long time to leverage persistence
           staleTime: 30 * 24 * 60 * 60 * 1000,
           gcTime: 31 * 24 * 60 * 60 * 1000,
           refetchOnWindowFocus: true,
@@ -32,8 +32,9 @@ export default function ReactQueryProvider({ children }: Props) {
     return { client, persister };
   }, []);
 
+  // SSR fallback: without window/localStorage, just render without persistence
   if (!persister) {
-    // SSR: render children without persistence; client will re-mount with persistence
+    // No window/localStorage available (e.g., SSR). Render without persistence.
     return (
       <QueryClientProvider client={client}>
         {children}
@@ -42,8 +43,12 @@ export default function ReactQueryProvider({ children }: Props) {
     );
   }
 
+  // Use PersistQueryClientProvider as the single provider. It wraps QueryClientProvider internally in v5
   return (
-    <PersistQueryClientProvider client={client} persistOptions={{ persister }}>
+    <PersistQueryClientProvider
+      client={client}
+      persistOptions={{ persister, maxAge: 30 * 24 * 60 * 60 * 1000 }}
+    >
       <QueryClientProvider client={client}>
         {children}
         <ReactQueryDevtools initialIsOpen={false} />
