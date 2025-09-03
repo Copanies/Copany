@@ -137,7 +137,7 @@ export function renderLevelLabel(
         return {
           symbol: "S",
           text: "Level S",
-          description: "Architecture / core development	",
+          description: "Architecture / core development",
         };
       default:
         return { symbol: "?", text: "Pending", description: "Unknown level" };
