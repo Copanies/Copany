@@ -49,10 +49,8 @@ export default function ReactQueryProvider({ children }: Props) {
       client={client}
       persistOptions={{ persister, maxAge: 30 * 24 * 60 * 60 * 1000 }}
     >
-      <QueryClientProvider client={client}>
-        {children}
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
     </PersistQueryClientProvider>
   );
 }
