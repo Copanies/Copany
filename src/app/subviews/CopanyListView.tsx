@@ -6,6 +6,7 @@ import AssetLinksSection from "@/components/AssetLinksSection";
 import ContributorAvatarStack from "@/components/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import StarButton from "@/components/StarButton";
+import { useCurrentUser } from "@/hooks/currentUser";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -16,6 +17,7 @@ interface CopanyListViewProps {
  */
 export default function CopanyListView({ copanies }: CopanyListViewProps) {
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
   return (
     <ul className="space-y-6">
       {copanies.map((copany, index) => (
@@ -42,7 +44,10 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 <AssetLinksSection copany={copany} size="sm" />
                 {copany.license && (
                   <div className="hidden sm:block">
-                    <LicenseBadge license={copany.license} />
+                    <LicenseBadge
+                      license={copany.license}
+                      isOwner={copany.created_by === currentUser?.id}
+                    />
                   </div>
                 )}
                 <div className="ml-auto flex items-center gap-2">
@@ -53,7 +58,10 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
               <div className="">{copany.description || "No description"}</div>
               {copany.license && (
                 <div className="block sm:hidden">
-                  <LicenseBadge license={copany.license} />
+                  <LicenseBadge
+                    license={copany.license}
+                    isOwner={copany.created_by === currentUser?.id}
+                  />
                 </div>
               )}
             </div>
