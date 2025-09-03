@@ -52,7 +52,11 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 )}
                 <div className="ml-auto flex items-center gap-2">
                   <ContributorAvatarStack copany={copany} />
-                  <StarButton copanyId={String(copany.id)} size="sm" />
+                  <StarButton
+                    copanyId={String(copany.id)}
+                    size="sm"
+                    count={copany.star_count}
+                  />
                 </div>
               </div>
               <div className="">{copany.description || "No description"}</div>

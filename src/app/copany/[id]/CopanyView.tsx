@@ -129,7 +129,11 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               )}
             </div>
             <div className="block sm:hidden flex flex-1 justify-end">
-              <StarButton copanyId={copanyId} size="md" />
+              <StarButton
+                copanyId={copanyId}
+                size="md"
+                count={copany.star_count}
+              />
             </div>
           </div>
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
@@ -140,7 +144,11 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             )}
             <AssetLinksSection copany={copany} />
             <div className="hidden sm:block">
-              <StarButton copanyId={copanyId} size="md" />
+              <StarButton
+                copanyId={copanyId}
+                size="md"
+                count={copany.star_count}
+              />
             </div>
           </div>
         </div>
