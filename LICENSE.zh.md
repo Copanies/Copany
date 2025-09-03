@@ -1,4 +1,4 @@
-Copany 开源协议（COSL）v0.1.1
+Copany Open Source License (COSL) v0.1
 
 版权所有 (c) 2025 Copany 贡献者
 

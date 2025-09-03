@@ -124,7 +124,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
             <div className="hidden sm:block">
-              {copany.license && <LicenseBadge license={copany.license} />}
+              {copany.license && (
+                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
+              )}
             </div>
             <div className="block sm:hidden flex flex-1 justify-end">
               <StarButton copanyId={copanyId} size="md" />
@@ -133,7 +135,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             {copany.license && (
               <div className="block sm:hidden">
-                <LicenseBadge license={copany.license} />
+                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
               </div>
             )}
             <AssetLinksSection copany={copany} />

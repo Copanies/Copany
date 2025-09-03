@@ -230,6 +230,8 @@ export default function MainNavigation() {
               {copanyData?.name || ""}
             </div>
           </Button>
+        ) : pathname === "/uselicense" ? (
+          <span className="text-sm font-semibold">How to use COSL License</span>
         ) : (
           <></>
         )}

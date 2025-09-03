@@ -28,7 +28,7 @@ export default function Button({
     secondary:
       "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100",
     ghost:
-      "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent dark:border-transparent text-gray-700 dark:text-gray-300",
+      "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent dark:border-transparent text-gray-900 dark:text-gray-100",
     danger:
       "hover:bg-red-700 dark:hover:bg-red-700 border-gray-300 hover:border-red-700 dark:border-gray-700 dark:hover:border-red-700 text-red-600 dark:text-red-400 hover:text-white dark:hover:text-white",
     approve:

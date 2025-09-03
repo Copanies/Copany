@@ -40,7 +40,7 @@ export default function LoadingView({
         shouldShow ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="flex flex-col items-center text-gray-800 dark:text-gray-200 gap-4 py-6">
+      <div className="flex flex-col items-center text-gray-800 dark:text-gray-200 gap-4 py-8">
         <svg
           width={type === "page" ? "60" : "40"}
           height={type === "page" ? "60" : "40"}
