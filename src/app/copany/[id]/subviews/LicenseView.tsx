@@ -10,6 +10,8 @@ import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { Copany } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
+import { useRouter } from "next/navigation";
+import CoslLicenseTip from "@/components/CoslLicenseTip";
 
 interface LicenseViewProps {
   githubUrl?: string | null;
@@ -17,36 +19,9 @@ interface LicenseViewProps {
   onCopanyUpdate?: (copany: Copany) => void;
 }
 
-/**
- * Generate a link to create a new License file from GitHub URL
- * @param githubUrl GitHub repository URL
- * @returns Link to create a new License file, or null if parsing fails
- */
-const generateNewLicenseUrl = (githubUrl: string): string | null => {
-  try {
-    const url = new URL(githubUrl);
-    const pathSegments = url.pathname.split("/").filter(Boolean);
-
-    if (pathSegments.length >= 2) {
-      const [owner, repo] = pathSegments;
-      // Remove possible .git suffix
-      const cleanRepo = repo.replace(/\.git$/, "");
-      // Construct URL for creating a new License file
-      return `https://github.com/${owner}/${cleanRepo}/community/license/new`;
-    }
-    return null;
-  } catch (error) {
-    console.error("Failed to generate new License URL:", error);
-    return null;
-  }
-};
-
-export default function LicenseView({
-  githubUrl,
-  copany,
-}: LicenseViewProps) {
+export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
   const queryClient = useQueryClient();
-
+  const router = useRouter();
   // 使用 React Query hooks 替代 cacheManager
   const { data: currentUser } = useCurrentUser();
   const { data: licenseData, isLoading: isLicenseLoading } =
@@ -132,8 +107,7 @@ export default function LicenseView({
   }
 
   if (notFound) {
-    const newLicenseUrl = githubUrl ? generateNewLicenseUrl(githubUrl) : null;
-    const isLoggedIn = !!currentUser;
+    const isOwner = currentUser?.id === copany.created_by;
 
     return (
       <EmptyPlaceholderView
@@ -145,25 +119,28 @@ export default function LicenseView({
         }
         title="Add License"
         description={
-          isLoggedIn
+          isOwner
             ? "Help protect your Copany by adding a License — choose how others can use, modify, and distribute your work."
-            : "This repository does not have a License yet. Log in to add a License file."
+            : "This repository does not have a License yet."
         }
         buttonIcon={
-          isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
+          isOwner ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
         }
-        buttonTitle={isLoggedIn ? "Add License" : undefined}
-        buttonAction={
-          isLoggedIn && newLicenseUrl
-            ? () => window.open(newLicenseUrl, "_blank")
-            : undefined
-        }
+        buttonTitle={isOwner ? "How to use COSL License" : undefined}
+        buttonAction={() => router.push("/uselicense")}
       />
     );
   }
 
+  const isOwner = currentUser?.id === copany.created_by;
+
   return (
     <div className="space-y-4">
+      {licenseType !== "COSL" && (
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+          <CoslLicenseTip isOwner={isOwner} />
+        </div>
+      )}
       <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
         {licenseContent}
       </pre>

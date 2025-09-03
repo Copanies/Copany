@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 
 interface LoadingViewProps {
   type?: "page" | "label";
+  label?: string;
   delay?: number;
 }
 
@@ -11,6 +12,7 @@ const SVG_PATH_D =
 
 export default function LoadingView({
   type = "page",
+  label,
   delay = 2000,
 }: LoadingViewProps) {
   const [shouldShow, setShouldShow] = useState(false);
@@ -38,7 +40,7 @@ export default function LoadingView({
         shouldShow ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="flex flex-col items-center text-gray-800 dark:text-gray-200 py-6">
+      <div className="flex flex-col items-center text-gray-800 dark:text-gray-200 gap-4 py-8">
         <svg
           width={type === "page" ? "60" : "40"}
           height={type === "page" ? "60" : "40"}
@@ -56,6 +58,7 @@ export default function LoadingView({
             className={pathLength ? "draw-and-erase" : undefined}
           />
         </svg>
+        {label ? <div className="text-base font-medium">{label}</div> : null}
       </div>
 
       <style jsx global>{`
@@ -67,16 +70,16 @@ export default function LoadingView({
 
         @keyframes drawErase {
           0% {
-            stroke-dashoffset: ${pathLength};
+            stroke-dashoffset: ${3 * pathLength};
           }
           50% {
-            stroke-dashoffset: 0;
+            stroke-dashoffset: ${2 * pathLength};
           }
           95% {
-            stroke-dashoffset: ${-pathLength};
+            stroke-dashoffset: ${pathLength};
           }
           100% {
-            stroke-dashoffset: ${-pathLength};
+            stroke-dashoffset: ${pathLength};
           }
         }
       `}</style>

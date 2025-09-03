@@ -559,7 +559,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="min-h-screen w-full min-w-0 flex flex-col gap-3">
-      <div className="flex w-full min-w-0 items-center justify-between md:pl-4 px-0 gap-3 md:pt-2">
+      <div className="flex w-full min-w-0 items-center justify-between px-0 gap-3">
         {newIssueButton()}
         <input
           type="text"
