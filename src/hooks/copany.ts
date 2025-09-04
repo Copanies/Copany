@@ -17,7 +17,7 @@ export function useCopany(
     queryKey: copanyKey(copanyId),
     queryFn: () => getCopanyByIdAction(copanyId),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: options?.enabled ?? true,
   });
 }
@@ -27,7 +27,7 @@ export function useCopanies() {
     queryKey: copaniesKey(),
     queryFn: () => getCopaniesAction(),
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -36,7 +36,7 @@ export function useMyStarredCopanies() {
     queryKey: myStarredCopanyIdsKey(),
     queryFn: async () => ({ ids: await listMyStarredCopanyIdsAction() }),
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 

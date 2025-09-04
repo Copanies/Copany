@@ -26,7 +26,7 @@ export function useNotifications(params?: { before?: string; limit?: number }) {
         return { items, unread };
       }
     },
-    refetchInterval: 60_000, // 1 minute
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }

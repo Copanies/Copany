@@ -23,7 +23,7 @@ export function useContributors(copanyId: string) {
       }
     },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 
