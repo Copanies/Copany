@@ -46,7 +46,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     return tabs.map((tab) => (
       <div
         key={tab.label}
-        className="mt-4 mx-6"
+        className="mt-4 mx-5"
         style={{ display: activeTab === tab.label ? "block" : "none" }}
       >
         {tab.content}
@@ -56,7 +56,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
 
   return (
     <div className="flex w-full min-w-0 flex-col h-full min-h-screen">
-      <div className="mx-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="mx-5 border-b border-gray-200 dark:border-gray-700">
         <div className="flex w-full min-w-0 gap-2 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap">
           {tabs.map((tab) => (
             <button
