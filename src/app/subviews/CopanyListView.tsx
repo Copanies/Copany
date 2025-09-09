@@ -44,10 +44,7 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 <AssetLinksSection copany={copany} size="sm" />
                 {copany.license && (
                   <div className="hidden sm:block">
-                    <LicenseBadge
-                      license={copany.license}
-                      isOwner={copany.created_by === currentUser?.id}
-                    />
+                    <LicenseBadge license={copany.license} />
                   </div>
                 )}
                 <div className="ml-auto flex items-center gap-2">
@@ -62,10 +59,7 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
               <div className="">{copany.description || "No description"}</div>
               {copany.license && (
                 <div className="block sm:hidden">
-                  <LicenseBadge
-                    license={copany.license}
-                    isOwner={copany.created_by === currentUser?.id}
-                  />
+                  <LicenseBadge license={copany.license} />
                 </div>
               )}
             </div>

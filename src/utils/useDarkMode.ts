@@ -20,19 +20,17 @@ function checkDarkMode(): boolean {
  * Uses lazy initialization to avoid delay issues
  */
 export function useDarkMode(): boolean {
-  // Use lazy initialization to get the correct value on first render
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Return false during server-side rendering to avoid hydration mismatch
-    if (typeof window === "undefined") return false;
-    return checkDarkMode();
-  });
+  // Always start with false to ensure server and client render the same initially
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Immediately sync state after client-side mount to ensure correctness
+    // Mark as client-side after mount
+    setIsClient(true);
+    
+    // Set the correct dark mode value after client-side mount
     const currentDarkMode = checkDarkMode();
-    if (currentDarkMode !== isDarkMode) {
-      setIsDarkMode(currentDarkMode);
-    }
+    setIsDarkMode(currentDarkMode);
 
     // Listen for system preference changes
     const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -52,7 +50,8 @@ export function useDarkMode(): boolean {
       darkModeQuery.removeEventListener("change", handleChange);
       observer.disconnect();
     };
-  }, [isDarkMode]);
+  }, []);
 
-  return isDarkMode;
+  // Return false during SSR and initial client render to avoid hydration mismatch
+  return isClient ? isDarkMode : false;
 }

@@ -57,7 +57,7 @@ export default function Home() {
         <div>
           <div className="flex flex-col items-center justify-center p-8 gap-3">
             <p className="text-3xl font-normal text-center">
-              Let’s start our own Company
+              Freer creation, fairer rewards.
             </p>
           </div>
           <CopanyGridView copanies={copanies || []} />

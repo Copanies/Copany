@@ -74,7 +74,7 @@ export default function MainNavigation() {
 
     if (!user) {
       return (
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-5">
           <Link
             href="/signup"
             className="relative cursor-pointer flex-shrink-0 text-base"
@@ -176,8 +176,9 @@ export default function MainNavigation() {
   });
 
   return (
-    <div className="flex flex-row items-center justify-between px-8 py-3 gap-3 border-b border-gray-200 dark:border-gray-800">
-      <div className="flex flex-row items-center gap-2 md:gap-4 min-w-60">
+    <div className="flex flex-row items-center px-4 sm:px-6 lg:px-8 py-3 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800">
+      {/* Left section - Logo and company name */}
+      <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
           className="cursor-pointer rounded-md"
           src={logo}
@@ -194,22 +195,25 @@ export default function MainNavigation() {
             className="!px-1"
             onClick={() => router.push(`/copany/${copanyId}`)}
           >
-            <div className="text-sm truncate max-w-[40vw] md:max-w-[50vw] font-semibold text-gray-900 dark:text-gray-100">
+            <div className="text-base truncate max-w-[30vw] sm:max-w-[40vw] md:max-w-[50vw] font-semibold text-gray-900 dark:text-gray-100">
               {copanyData?.name || ""}
             </div>
           </Button>
         ) : pathname === "/uselicense" ? (
-          <span className="text-sm font-semibold">How to use COSL License</span>
+          <span className="text-sm font-semibold hidden sm:inline">
+            How to use COSL License
+          </span>
         ) : (
           <></>
         )}
       </div>
 
+      {/* Center section - Navigation links (only on home and stars pages) */}
       {pathname === "/" || pathname === "/stars" ? (
-        <div className="flex flex-row gap-8">
+        <div className="flex flex-row gap-4 sm:gap-6 lg:gap-8 flex-1 justify-start sm:justify-center">
           <Link
             href="/"
-            className={`relative cursor-pointer mx-2 flex-shrink-0 text-base ${
+            className={`relative cursor-pointer flex-shrink-0 text-base ${
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
@@ -220,7 +224,7 @@ export default function MainNavigation() {
           </Link>
           <Link
             href="/stars"
-            className={`relative cursor-pointer mx-2 flex-shrink-0 text-base ${
+            className={`relative cursor-pointer flex-shrink-0 text-base ${
               pathname.startsWith("/stars") ? "font-semibold" : ""
             }`}
           >
@@ -231,14 +235,15 @@ export default function MainNavigation() {
           </Link>
         </div>
       ) : (
-        <></>
+        <div className="flex-1"></div>
       )}
 
-      <div className="flex flex-row items-center justify-end h-8 gap-2 md:gap-3  min-w-60">
-        <div className="hidden md:block">
+      {/* Right section - User actions */}
+      <div className="flex flex-row items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+        <div className="hidden sm:block">
           {user && <CreateCopanyButton size="md" />}
         </div>
-        <div className="block md:hidden">
+        <div className="block sm:hidden">
           {user && <CreateCopanyButton size="sm" />}
         </div>
         {user && <NotificationBell />}

@@ -1,4 +1,5 @@
 "use client";
+
 import CopanyListView from "@/app/subviews/CopanyListView";
 import MainNavigation from "@/components/MainNavigation";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";

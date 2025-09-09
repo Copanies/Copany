@@ -93,10 +93,7 @@ export default function CopanyGridView({ copanies }: CopanyGridViewProps) {
               <div className="">{copany.description || "No description"}</div>
               {copany.license && (
                 <div className="">
-                  <LicenseBadge
-                    license={copany.license}
-                    isOwner={copany.created_by === currentUser?.id}
-                  />
+                  <LicenseBadge license={copany.license} />
                 </div>
               )}
             </div>

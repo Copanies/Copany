@@ -1,6 +1,6 @@
 "use client";
 import Button from "@/components/commons/Button";
-import MainNavigation from "@/components/MainNavigation";
+import BasicNavigation from "@/components/commons/BasicNavigation";
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 
 export default function UseLicensePage() {
@@ -42,7 +42,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
   return (
     <main className="h-min-screen">
-      <MainNavigation />
+      <BasicNavigation />
       <div className="p-6 max-w-screen-lg mx-auto flex flex-col gap-4 pb-20">
         <Button
           variant="secondary"

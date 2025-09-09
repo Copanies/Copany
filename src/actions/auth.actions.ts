@@ -80,11 +80,13 @@ export async function signUpWithEmail(email: string, password: string, name: str
   console.log("📝 Starting email sign up for:", email);
 
   const supabase = await createSupabaseClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
       data: {
         full_name: name,
       },
@@ -97,6 +99,32 @@ export async function signUpWithEmail(email: string, password: string, name: str
   }
 
   console.log("✅ Email sign up successful");
+  return data;
+}
+
+/**
+ * Resend email verification for signup
+ */
+export async function resendVerificationEmail(email: string) {
+  console.log("📧 Resending verification email to:", email);
+
+  const supabase = await createSupabaseClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  const { data, error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
+    },
+  });
+
+  if (error) {
+    console.error("❌ Resend verification email failed:", error.message);
+    throw new Error(`Resend verification email failed: ${error.message}`);
+  }
+
+  console.log("✅ Verification email resent");
   return data;
 }
 

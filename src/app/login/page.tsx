@@ -5,7 +5,7 @@ import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import Image from "next/image";
-import copanylogo from "@/assets/copany_logo.svg";
+import BasicNavigation from "@/components/commons/BasicNavigation";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
   signInWithEmail,
@@ -92,16 +92,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center bg-gray-50 dark:bg-gray-900">
-      <header className="flex h-16 items-center justify-center px-8 py-3 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <Image
-          className="w-9 h-9"
-          alt="Copany Logo"
-          src={copanylogo}
-          width={36}
-          height={36}
-        />
-      </header>
+    <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
+      <BasicNavigation />
 
       <div className="flex flex-col w-full max-w-md items-center justify-center gap-16 pt-8 pb-16 px-6 flex-1">
         <div className="flex flex-col items-center gap-5 py-8 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
