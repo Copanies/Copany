@@ -1,33 +1,39 @@
 "use client";
 import { useEffect, useState } from "react";
-import CopanyListView from "@/app/subviews/CopanyListView";
+import CopanyGridView from "@/app/subviews/CopanyGridView";
 import MainNavigation from "@/components/MainNavigation";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { SquaresPlusIcon } from "@heroicons/react/24/outline";
 import CreateCopanyButton from "@/components/CreateCopanyButton";
+import Image from "next/image";
+import copanyLogo from "@/assets/copany_logo.svg";
+import copanyLogoDark from "@/assets/copany_logo_dark.svg";
+import { useRouter } from "next/navigation";
 
 /**
  * Home page - Responsible for data fetching and page layout
  */
 export default function Home() {
   const { data: copanies, isLoading } = useCopanies();
+  const router = useRouter();
   // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
   const safeIsLoading = isLoading || !isMounted;
+
   return (
     <main className="h-min-screen">
       <MainNavigation />
-      <div className="p-6 max-w-screen-lg mx-auto flex flex-col">
-        <div className="flex flex-col gap-4 pt-2">
+      <div className="px-6 max-w-screen-lg mx-auto flex flex-col">
+        <div className="flex flex-col gap-4">
           {safeIsLoading ? (
             <LoadingView type="page" />
           ) : copanies && copanies.length > 0 ? (
-            <CopanyListView copanies={copanies || []} />
+            homeView()
           ) : (
             <div className="flex flex-col items-center">
               <EmptyPlaceholderView
@@ -44,4 +50,19 @@ export default function Home() {
       </div>
     </main>
   );
+
+  function homeView() {
+    return (
+      <div className="flex flex-col">
+        <div>
+          <div className="flex flex-col items-center justify-center p-8 gap-3">
+            <p className="text-3xl font-normal text-center">
+              Let’s start our own Company
+            </p>
+          </div>
+          <CopanyGridView copanies={copanies || []} />
+        </div>
+      </div>
+    );
+  }
 }

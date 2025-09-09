@@ -9,10 +9,12 @@ import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 interface ContributorAvatarStackProps {
   copany: Copany;
   className?: string;
+  size?: "md" | "lg";
 }
 
 export default function ContributorAvatarStack({
   copany,
+  size = "md",
   className = "",
 }: ContributorAvatarStackProps) {
   const { data: contributorsData } = useContributors(copany.id);
@@ -45,6 +47,20 @@ export default function ContributorAvatarStack({
     [contributors, copany.created_by]
   ); // only show users with avatar
 
+  const sizeClasses = {
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
+  };
+
+  const width = {
+    md: 20,
+    lg: 24,
+  };
+  const height = {
+    md: 20,
+    lg: 24,
+  };
+
   return (
     <div className={`flex -space-x-[6px] ${className}`}>
       {allContributors.map((contributor, index) => (
@@ -58,9 +74,9 @@ export default function ContributorAvatarStack({
           <Image
             src={contributor.avatar_url}
             alt={`${contributor.isCreator ? "Creator" : "Contributor"}`}
-            width={20}
-            height={20}
-            className="rounded-full"
+            width={width[size]}
+            height={height[size]}
+            className={`rounded-full ${sizeClasses[size]}`}
           />
         </div>
       ))}

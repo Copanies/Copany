@@ -6,15 +6,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useCopany } from "@/hooks/copany";
 import { createClient } from "@/utils/supabase/client";
-import { signInWithGitHub, signOut } from "@/actions/auth.actions";
+import { signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
 import CreateCopanyButton from "./CreateCopanyButton";
 import NotificationBell from "./NotificationBell";
 import Link from "next/link";
-import GithubIcon from "@/assets/github_logo.svg";
-import GithubIconDark from "@/assets/github_logo_dark.svg";
-import { useDarkMode } from "@/utils/useDarkMode";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -23,9 +20,7 @@ export default function MainNavigation() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { data: user, isLoading: loading } = useCurrentUser();
-  const isDarkMode = useDarkMode();
 
-  // 使用 useRef 稳定 queryClient 的引用，避免 effect 依赖整个对象
   const queryClientRef = useRef(queryClient);
   useEffect(() => {
     queryClientRef.current = queryClient;
@@ -78,26 +73,24 @@ export default function MainNavigation() {
     }
 
     if (!user) {
-      // 未登录状态 - 显示 Login 按钮
       return (
-        <form action={signInWithGitHub}>
-          <Button type="submit" variant="secondary" size="sm">
-            <div className="flex items-center gap-2">
-              <Image
-                src={isDarkMode ? GithubIconDark : GithubIcon}
-                alt="GitHub"
-                className="w-4 h-4"
-                width={16}
-                height={16}
-              />
-              <p>Login with GitHub</p>
-            </div>
-          </Button>
-        </form>
+        <div className="flex flex-row gap-4">
+          <Link
+            href="/signup"
+            className="relative cursor-pointer flex-shrink-0 text-base"
+          >
+            <span>Sign up</span>
+          </Link>
+          <Link
+            href="/login"
+            className="relative cursor-pointer flex-shrink-0 text-base"
+          >
+            <span>Log in</span>
+          </Link>
+        </div>
       );
     }
 
-    // 已登录状态 - 显示用户头像下拉菜单
     const userAvatar = user.user_metadata?.avatar_url ? (
       <Image
         src={user.user_metadata.avatar_url}
@@ -112,7 +105,6 @@ export default function MainNavigation() {
       </div>
     );
 
-    // 用户信息头部容器
     const userHeader = (
       <div className="flex items-center space-x-3">
         {user.user_metadata?.avatar_url ? (
@@ -184,42 +176,18 @@ export default function MainNavigation() {
   });
 
   return (
-    <div className="flex flex-row items-center justify-between px-5 py-2 gap-3 border-b border-gray-200 dark:border-gray-800">
-      <div className="flex flex-row items-center gap-2 md:gap-4">
+    <div className="flex flex-row items-center justify-between px-8 py-3 gap-3 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex flex-row items-center gap-2 md:gap-4 min-w-60">
         <Image
           className="cursor-pointer rounded-md"
           src={logo}
           alt="logo"
-          width={32}
-          height={32}
+          width={36}
+          height={36}
           onClick={() => router.push("/")}
         />
-        {pathname === "/" || pathname === "/stars" ? (
-          <>
-            <Link
-              href="/"
-              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm ${
-                pathname === "/" ? "font-semibold" : ""
-              }`}
-            >
-              <span>Home</span>
-              {pathname === "/" && (
-                <span className="pointer-events-none absolute left-0 right-0 top-8 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
-              )}
-            </Link>
-            <Link
-              href="/stars"
-              className={`relative cursor-pointer mx-2 flex-shrink-0 text-sm ${
-                pathname.startsWith("/stars") ? "font-semibold" : ""
-              }`}
-            >
-              <span>Stars</span>
-              {pathname.startsWith("/stars") && (
-                <span className="pointer-events-none absolute left-0 right-0 top-8 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
-              )}
-            </Link>
-          </>
-        ) : copanyId ? (
+
+        {copanyId ? (
           <Button
             variant="ghost"
             size="sm"
@@ -237,7 +205,36 @@ export default function MainNavigation() {
         )}
       </div>
 
-      <div className="flex flex-row items-center h-8 gap-2 md:gap-3">
+      {pathname === "/" || pathname === "/stars" ? (
+        <div className="flex flex-row gap-8">
+          <Link
+            href="/"
+            className={`relative cursor-pointer mx-2 flex-shrink-0 text-base ${
+              pathname === "/" ? "font-semibold" : ""
+            }`}
+          >
+            <span>Home</span>
+            {pathname === "/" && (
+              <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+            )}
+          </Link>
+          <Link
+            href="/stars"
+            className={`relative cursor-pointer mx-2 flex-shrink-0 text-base ${
+              pathname.startsWith("/stars") ? "font-semibold" : ""
+            }`}
+          >
+            <span>Stars</span>
+            {pathname.startsWith("/stars") && (
+              <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+            )}
+          </Link>
+        </div>
+      ) : (
+        <></>
+      )}
+
+      <div className="flex flex-row items-center justify-end h-8 gap-2 md:gap-3  min-w-60">
         <div className="hidden md:block">
           {user && <CreateCopanyButton size="md" />}
         </div>
