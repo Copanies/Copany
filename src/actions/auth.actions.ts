@@ -74,6 +74,96 @@ export async function signOut() {
 }
 
 /**
+ * Sign up with email and password
+ */
+export async function signUpWithEmail(email: string, password: string, name: string) {
+  console.log("📝 Starting email sign up for:", email);
+
+  const supabase = await createSupabaseClient();
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name,
+      },
+    },
+  });
+
+  if (error) {
+    console.error("❌ Email sign up failed:", error.message);
+    throw new Error(`Sign up failed: ${error.message}`);
+  }
+
+  console.log("✅ Email sign up successful");
+  return data;
+}
+
+/**
+ * Sign in with email and password
+ */
+export async function signInWithEmail(email: string, password: string) {
+  console.log("🔑 Starting email sign in for:", email);
+
+  const supabase = await createSupabaseClient();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error("❌ Email sign in failed:", error.message);
+    throw new Error(`Sign in failed: ${error.message}`);
+  }
+
+  console.log("✅ Email sign in successful");
+  return data;
+}
+
+/**
+ * Google OAuth login
+ */
+export async function signInWithGoogle() {
+  console.log("🚀 Starting Google OAuth login");
+
+  const supabase = await createSupabaseClient();
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  // Check required environment variables
+  if (!siteUrl) {
+    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+    );
+  }
+
+  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${siteUrl!}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("❌ Google login failed:", error.message);
+    throw new Error(`Google login failed: ${error.message}`);
+  }
+
+  if (data.url) {
+    console.log("↗️ Redirecting to Google authorization page");
+    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
+  } else {
+    console.log("⚠️ Failed to get Google authorization URL");
+    throw new Error("Failed to get Google authorization URL");
+  }
+}
+
+/**
  * Get current user information
  * Note: In SSR environment, if there's no authentication session, returns null instead of throwing an error
  */

@@ -7,9 +7,16 @@ import githubIconWhite from "@/assets/github_logo_dark.svg";
 import Image from "next/image";
 import copanylogo from "@/assets/copany_logo.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
+import {
+  signUpWithEmail,
+  signInWithGitHub,
+  signInWithGoogle,
+} from "@/actions/auth.actions";
+import { useRouter } from "next/navigation";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,27 +25,83 @@ export default function Signup() {
     confirmPassword: "",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      setError("请输入姓名");
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError("请输入邮箱地址");
+      return false;
+    }
+    if (!formData.password) {
+      setError("请输入密码");
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError("密码长度至少为6位");
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("两次输入的密码不一致");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await signUpWithEmail(formData.email, formData.password, formData.name);
+      // 注册成功后跳转到主页
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "注册失败，请重试");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGitHubLogin = () => {
-    // Handle GitHub login
-    console.log("GitHub login clicked");
+  const handleGitHubLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await signInWithGitHub();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "GitHub 登录失败，请重试");
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Handle Google login
-    console.log("Google login clicked");
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google 登录失败，请重试");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,6 +128,14 @@ export default function Signup() {
                 Let&apos;s start our own Company
               </p>
             </div>
+
+            {error && (
+              <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
+              </div>
+            )}
 
             <form
               onSubmit={handleSubmit}
@@ -140,9 +211,12 @@ export default function Signup() {
 
               <button
                 type="submit"
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer"
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="whitespace-nowrap">Sign up</span>
+                <span className="whitespace-nowrap">
+                  {isLoading ? "注册中..." : "Sign up"}
+                </span>
               </button>
             </form>
 
@@ -186,7 +260,8 @@ export default function Signup() {
             <button
               type="button"
               onClick={handleGitHubLogin}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer"
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"
@@ -196,13 +271,16 @@ export default function Signup() {
                 height={16}
               />
 
-              <span className="whitespace-nowrap">Login with GitHub</span>
+              <span className="whitespace-nowrap">
+                {isLoading ? "登录中..." : "Login with GitHub"}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer"
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"
@@ -212,7 +290,9 @@ export default function Signup() {
                 height={16}
               />
 
-              <span className="whitespace-nowrap">Login with Google</span>
+              <span className="whitespace-nowrap">
+                {isLoading ? "登录中..." : "Login with Google"}
+              </span>
             </button>
           </div>
         </div>
