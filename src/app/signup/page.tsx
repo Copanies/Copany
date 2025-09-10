@@ -26,7 +26,10 @@ export default function Signup() {
     confirmPassword: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isResendLoading, setIsResendLoading] = useState(false);
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
@@ -42,23 +45,23 @@ export default function Signup() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      setError("请输入姓名");
+      setError("Please enter your name");
       return false;
     }
     if (!formData.email.trim()) {
-      setError("请输入邮箱地址");
+      setError("Please enter your email address");
       return false;
     }
     if (!formData.password) {
-      setError("请输入密码");
+      setError("Please enter your password");
       return false;
     }
     if (formData.password.length < 6) {
-      setError("密码长度至少为6位");
+      setError("Password must be at least 6 characters long");
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError("两次输入的密码不一致");
+      setError("Passwords do not match");
       return false;
     }
     return true;
@@ -69,7 +72,7 @@ export default function Signup() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsEmailLoading(true);
     setError("");
 
     try {
@@ -78,46 +81,62 @@ export default function Signup() {
       setPendingEmail(formData.email);
       setPendingConfirm(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "注册失败，请重试");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed, please try again"
+      );
     } finally {
-      setIsLoading(false);
+      setIsEmailLoading(false);
     }
   };
 
   const handleResendEmail = async () => {
     if (!pendingEmail) return;
-    setIsLoading(true);
+    setIsResendLoading(true);
     setError("");
     try {
       await resendVerificationEmail(pendingEmail);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "重发失败，请稍后再试");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to resend, please try again later"
+      );
     } finally {
-      setIsLoading(false);
+      setIsResendLoading(false);
     }
   };
 
-  const handleGitHubLogin = async () => {
-    setIsLoading(true);
+  const handleGitHubSignup = async () => {
+    setIsGitHubLoading(true);
     setError("");
 
     try {
       await signInWithGitHub();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "GitHub 登录失败，请重试");
-      setIsLoading(false);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "GitHub signup failed, please try again"
+      );
+      setIsGitHubLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
+  const handleGoogleSignup = async () => {
+    setIsGoogleLoading(true);
     setError("");
 
     try {
       await signInWithGoogle();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google 登录失败，请重试");
-      setIsLoading(false);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Google signup failed, please try again"
+      );
+      setIsGoogleLoading(false);
     }
   };
 
@@ -150,25 +169,33 @@ export default function Signup() {
               <div className="flex flex-col items-start gap-4 w-full">
                 <div className="w-full p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    我们已向 {pendingEmail}{" "}
-                    发送确认邮件。请前往邮箱点击确认链接以完成注册。
+                    We have sent a confirmation email to {pendingEmail}. Please
+                    check your email and click the confirmation link to complete
+                    your registration.
                   </p>
                 </div>
                 <div className="flex items-center gap-3 w-full">
                   <button
                     type="button"
                     onClick={handleResendEmail}
-                    disabled={isLoading}
+                    disabled={
+                      isResendLoading ||
+                      isEmailLoading ||
+                      isGitHubLoading ||
+                      isGoogleLoading
+                    }
                     className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? "发送中..." : "重发确认邮件"}
+                    {isResendLoading
+                      ? "Sending..."
+                      : "Resend confirmation email"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPendingConfirm(false)}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    返回修改邮箱
+                    Back to edit email
                   </button>
                 </div>
               </div>
@@ -251,11 +278,16 @@ export default function Signup() {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={
+                    isEmailLoading ||
+                    isResendLoading ||
+                    isGitHubLoading ||
+                    isGoogleLoading
+                  }
                   className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="whitespace-nowrap">
-                    {isLoading ? "注册中..." : "Sign up"}
+                    {isEmailLoading ? "Signing up..." : "Sign up"}
                   </span>
                 </button>
               </form>
@@ -300,8 +332,13 @@ export default function Signup() {
           <div className="flex flex-col items-center gap-3 px-8 w-full">
             <button
               type="button"
-              onClick={handleGitHubLogin}
-              disabled={isLoading}
+              onClick={handleGitHubSignup}
+              disabled={
+                isEmailLoading ||
+                isResendLoading ||
+                isGitHubLoading ||
+                isGoogleLoading
+              }
               className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
@@ -313,14 +350,19 @@ export default function Signup() {
               />
 
               <span className="whitespace-nowrap">
-                {isLoading ? "登录中..." : "Login with GitHub"}
+                {isGitHubLoading ? "Signing up..." : "Sign up with GitHub"}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
+              onClick={handleGoogleSignup}
+              disabled={
+                isEmailLoading ||
+                isResendLoading ||
+                isGitHubLoading ||
+                isGoogleLoading
+              }
               className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
@@ -332,7 +374,7 @@ export default function Signup() {
               />
 
               <span className="whitespace-nowrap">
-                {isLoading ? "登录中..." : "Login with Google"}
+                {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
               </span>
             </button>
           </div>

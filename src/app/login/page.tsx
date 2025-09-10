@@ -24,7 +24,9 @@ export default function Login() {
     password: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleInputChange = (field: string, value: string) => {
@@ -38,11 +40,11 @@ export default function Login() {
 
   const validateForm = () => {
     if (!formData.email.trim()) {
-      setError("请输入邮箱地址");
+      setError("Please enter your email address");
       return false;
     }
     if (!formData.password) {
-      setError("请输入密码");
+      setError("Please enter your password");
       return false;
     }
     return true;
@@ -53,7 +55,7 @@ export default function Login() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsEmailLoading(true);
     setError("");
 
     try {
@@ -61,33 +63,43 @@ export default function Login() {
       // 登录成功后跳转到主页
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "登录失败，请重试");
+      setError(
+        err instanceof Error ? err.message : "Login failed, please try again"
+      );
     } finally {
-      setIsLoading(false);
+      setIsEmailLoading(false);
     }
   };
 
   const handleGitHubLogin = async () => {
-    setIsLoading(true);
+    setIsGitHubLoading(true);
     setError("");
 
     try {
       await signInWithGitHub();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "GitHub 登录失败，请重试");
-      setIsLoading(false);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "GitHub login failed, please try again"
+      );
+      setIsGitHubLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     setError("");
 
     try {
       await signInWithGoogle();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google 登录失败，请重试");
-      setIsLoading(false);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Google login failed, please try again"
+      );
+      setIsGoogleLoading(false);
     }
   };
 
@@ -156,11 +168,11 @@ export default function Login() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="whitespace-nowrap">
-                  {isLoading ? "登录中..." : "Sign in"}
+                  {isEmailLoading ? "Signing in..." : "Sign in"}
                 </span>
               </button>
             </form>
@@ -186,7 +198,7 @@ export default function Login() {
             <button
               type="button"
               onClick={handleGitHubLogin}
-              disabled={isLoading}
+              disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
               className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
@@ -198,14 +210,14 @@ export default function Login() {
               />
 
               <span className="whitespace-nowrap">
-                {isLoading ? "登录中..." : "Login with GitHub"}
+                {isGitHubLoading ? "Signing in..." : "Login with GitHub"}
               </span>
             </button>
 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
               className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
@@ -217,7 +229,7 @@ export default function Login() {
               />
 
               <span className="whitespace-nowrap">
-                {isLoading ? "登录中..." : "Login with Google"}
+                {isGoogleLoading ? "Signing in..." : "Login with Google"}
               </span>
             </button>
           </div>
