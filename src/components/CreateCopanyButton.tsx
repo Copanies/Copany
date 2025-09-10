@@ -281,11 +281,7 @@ export default function CreateCopanyButton({
   return (
     <>
       {size === "lg" && (
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          variant="secondary"
-          size="md"
-        >
+        <Button onClick={() => setIsModalOpen(true)} variant="ghost" size="md">
           <div className="flex flex-row items-center gap-1">
             <PlusIcon className="w-4 h-4 text-gray-900 dark:text-gray-100" />
             New copany

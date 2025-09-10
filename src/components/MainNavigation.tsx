@@ -176,7 +176,7 @@ export default function MainNavigation() {
   });
 
   return (
-    <div className="flex flex-row items-center px-4 sm:px-6 lg:px-8 py-3 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800">
+    <div className="relative flex flex-row items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 h-[62px]">
       {/* Left section - Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
@@ -210,7 +210,7 @@ export default function MainNavigation() {
 
       {/* Center section - Navigation links (only on home and stars pages) */}
       {pathname === "/" || pathname === "/stars" ? (
-        <div className="flex flex-row gap-4 sm:gap-6 lg:gap-8 flex-1 justify-start sm:justify-center">
+        <div className="absolute left-0 ml-18 sm:ml-6 lg:ml-8 sm:left-1/2 sm:transform sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
           <Link
             href="/"
             className={`relative cursor-pointer flex-shrink-0 text-base ${
@@ -234,17 +234,15 @@ export default function MainNavigation() {
             )}
           </Link>
         </div>
-      ) : (
-        <div className="flex-1"></div>
-      )}
+      ) : null}
 
       {/* Right section - User actions */}
-      <div className="flex flex-row items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+      <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2 md:gap-3">
         <div className="hidden sm:block">
-          {user && <CreateCopanyButton size="md" />}
+          {user && <CreateCopanyButton size="lg" />}
         </div>
         <div className="block sm:hidden">
-          {user && <CreateCopanyButton size="sm" />}
+          {user && <CreateCopanyButton size="lg" />}
         </div>
         {user && <NotificationBell />}
         {renderUserSection()}
