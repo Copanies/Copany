@@ -66,6 +66,17 @@ export default function SettingsView({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cover image related states
+  const [uploadedCoverImageUrl, setUploadedCoverImageUrl] = useState<
+    string | null
+  >(null);
+  const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
+  const [isCoverImageLoading, setIsCoverImageLoading] = useState(false);
+  const [coverImageUploadError, setCoverImageUploadError] = useState<
+    string | null
+  >(null);
+  const coverImageFileInputRef = useRef<HTMLInputElement>(null);
+
   // Delete Copany related states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] =
@@ -260,7 +271,7 @@ export default function SettingsView({
     if (!file) return;
 
     // Check file size
-    const maxSize = storageService.getMaxFileSize();
+    const maxSize = storageService.getMaxLogoFileSize();
     if (file.size > maxSize) {
       setUploadError(
         `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`
@@ -319,6 +330,75 @@ export default function SettingsView({
     }
   };
 
+  // Handle cover image file selection and upload
+  const handleCoverImageFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size
+    const maxSize = storageService.getMaxCoverImageFileSize();
+    if (file.size > maxSize) {
+      setCoverImageUploadError(
+        `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`
+      );
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      setCoverImageUploadError("Please select an image file");
+      return;
+    }
+
+    // Clear errors and start upload
+    setCoverImageUploadError(null);
+    setIsUploadingCoverImage(true);
+
+    try {
+      // Upload new cover image first
+      const result = await storageService.uploadCoverImage(file, copany.name);
+
+      if (result.success && result.url) {
+        // After successful upload, delete old cover image
+        if (uploadedCoverImageUrl) {
+          try {
+            const filePath = storageService.extractCoverImagePathFromUrl(
+              uploadedCoverImageUrl
+            );
+            if (filePath) {
+              await storageService.deleteCoverImage(filePath);
+            }
+          } catch (deleteError) {
+            console.warn("Failed to delete previous cover image:", deleteError);
+          }
+        }
+
+        setIsCoverImageLoading(true);
+        setUploadedCoverImageUrl(result.url);
+
+        // Immediately update copany's cover_image_url
+        const updatedCopany = {
+          ...copany,
+          cover_image_url: result.url,
+        };
+        await updateCopanyMutateRef.current(updatedCopany);
+      } else {
+        setCoverImageUploadError(result.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Cover image upload failed:", error);
+      setCoverImageUploadError("Upload failed");
+    } finally {
+      setIsUploadingCoverImage(false);
+      // Clear file input to allow reselecting the same file
+      if (coverImageFileInputRef.current) {
+        coverImageFileInputRef.current.value = "";
+      }
+    }
+  };
+
   // Handle delete Copany
   async function handleDeleteCopany() {
     setIsDeleting(true);
@@ -344,6 +424,7 @@ export default function SettingsView({
         <div className="flex flex-col gap-2">{renameSection()}</div>
         <div className="flex flex-col gap-2">{descriptionSection()}</div>
         <div className="flex flex-col gap-2">{logoSection()}</div>
+        <div className="flex flex-col gap-2">{coverImageSection()}</div>
       </div>
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold">Assest links</h1>
@@ -530,6 +611,76 @@ export default function SettingsView({
             {uploadError && (
               <div className="text-sm text-red-600 dark:text-red-400 text-center">
                 {uploadError}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function coverImageSection() {
+    const currentCoverImageUrl =
+      uploadedCoverImageUrl || copany.cover_image_url;
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-sm font-semibold">Cover image</label>
+
+        <div className="flex flex-col space-y-3">
+          {/* Cover image display area */}
+          <div className="relative">
+            {currentCoverImageUrl ? (
+              <div className="relative w-full max-w-md h-32">
+                {(isUploadingCoverImage || isCoverImageLoading) && (
+                  <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex justify-center z-10"></div>
+                )}
+                <Image
+                  src={currentCoverImageUrl}
+                  alt="Cover Image"
+                  width={400}
+                  height={128}
+                  className="w-full h-32 object-cover rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  onLoad={() => setIsCoverImageLoading(false)}
+                  onError={() => setIsCoverImageLoading(false)}
+                />
+              </div>
+            ) : (
+              <div className="w-full max-w-md h-32 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                <span className="text-gray-400 text-sm">No Cover Image</span>
+              </div>
+            )}
+          </div>
+
+          {/* Upload button */}
+          <div className="flex flex-col w-fit space-y-2">
+            <input
+              ref={coverImageFileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+              onChange={handleCoverImageFileChange}
+              className="hidden"
+            />
+
+            <Button
+              type="button"
+              onClick={() => coverImageFileInputRef.current?.click()}
+              disabled={isUploadingCoverImage || isCoverImageLoading}
+              className="w-fit"
+            >
+              {isUploadingCoverImage || isCoverImageLoading
+                ? "Uploading..."
+                : "Upload cover image"}
+            </Button>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              PNG, JPG, JPEG, GIF, WebP • Max 5MB
+            </p>
+
+            {/* Error message */}
+            {coverImageUploadError && (
+              <div className="text-sm text-red-600 dark:text-red-400 text-center">
+                {coverImageUploadError}
               </div>
             )}
           </div>

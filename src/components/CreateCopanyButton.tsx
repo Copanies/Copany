@@ -145,7 +145,7 @@ export default function CreateCopanyButton({
     if (!file) return;
 
     // 检查文件大小
-    const maxSize = storageService.getMaxFileSize();
+    const maxSize = storageService.getMaxLogoFileSize();
     if (file.size > maxSize) {
       setUploadError(
         `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`

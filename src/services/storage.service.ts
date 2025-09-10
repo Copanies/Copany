@@ -9,6 +9,7 @@ export interface UploadResult {
 export class StorageService {
   private supabase = createClient();
   private bucketName = "copany-logos";
+  private coverImageBucket = "copany-cover-images";
   private financeBucket = "finance-evidence";
 
   /**
@@ -88,6 +89,82 @@ export class StorageService {
   }
 
   /**
+   * Upload copany cover image to Supabase Storage
+   */
+  async uploadCoverImage(file: File, copanyName: string): Promise<UploadResult> {
+    try {
+      // Validate file type
+      if (!this.isValidImageFile(file)) {
+        return {
+          success: false,
+          error: "Please select a valid image file (PNG, JPG, JPEG, GIF, WebP)",
+        };
+      }
+
+      // Generate unique filename
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `${copanyName}-cover-${Date.now()}.${fileExtension}`;
+      const filePath = `covers/${fileName}`;
+
+      // Upload file to Supabase Storage
+      const { error } = await this.supabase.storage
+        .from(this.coverImageBucket)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Cover image upload failed:", error);
+        return {
+          success: false,
+          error: `Upload failed: ${error.message}`,
+        };
+      }
+
+      // Get public URL
+      const { data: urlData } = this.supabase.storage
+        .from(this.coverImageBucket)
+        .getPublicUrl(filePath);
+
+      return {
+        success: true,
+        url: urlData.publicUrl,
+      };
+    } catch (error) {
+      console.error("Error occurred during cover image upload:", error);
+      return {
+        success: false,
+        error: "Unknown error occurred during upload",
+      };
+    }
+  }
+
+  /**
+   * Delete copany cover image
+   */
+  async deleteCoverImage(filePath: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase.storage
+        .from(this.coverImageBucket)
+        .remove([filePath]);
+
+      if (error) {
+        console.error(`❌ StorageService.deleteCoverImage: Deletion failed`, error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error(
+        `💥 StorageService.deleteCoverImage: Error occurred during deletion`,
+        error
+      );
+      return false;
+    }
+  }
+
+  /**
    * Validate if file is a valid image file
    */
   private isValidImageFile(file: File): boolean {
@@ -105,8 +182,15 @@ export class StorageService {
   /**
    * Get file size limit (1MB)
    */
-  getMaxFileSize(): number {
+  getMaxLogoFileSize(): number {
     return 1 * 1024 * 1024; // 1MB
+  }
+
+    /**
+   * Get file size limit (20MB)
+   */
+  getMaxCoverImageFileSize(): number {
+    return 20 * 1024 * 1024; // 20MB
   }
 
   /**
@@ -170,6 +254,23 @@ export class StorageService {
       const u = new URL(url);
       const parts = u.pathname.split("/");
       const idx = parts.findIndex((p) => p === this.financeBucket);
+      if (idx >= 0 && idx < parts.length - 1) {
+        return parts.slice(idx + 1).join("/");
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Extract path from public URL for cover image bucket
+   */
+  extractCoverImagePathFromUrl(url: string): string | null {
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split("/");
+      const idx = parts.findIndex((p) => p === this.coverImageBucket);
       if (idx >= 0 && idx < parts.length - 1) {
         return parts.slice(idx + 1).join("/");
       }

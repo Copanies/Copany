@@ -112,21 +112,37 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   return (
     <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative mb-8">
-      <div className="flex flex-col gap-4 px-5 pt-6">
+      <div
+        className={`flex flex-col gap-4 px-5 ${
+          copany.cover_image_url ? "pt-0" : "pt-6"
+        }`}
+      >
+        {/* Cover image section */}
+        {copany.cover_image_url && (
+          <div className="relative w-full aspect-[5]">
+            <Image
+              src={copany.cover_image_url}
+              alt={`${copany.name} cover image`}
+              fill
+              className="object-cover w-full h-full"
+              style={{ objectPosition: "center" }}
+              sizes="100vw"
+              priority
+            />
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             <Image
               src={copany.logo_url || EMPTY_STRING}
               alt={copany.name || EMPTY_STRING}
-              width={40}
-              height={40}
+              width={64}
+              height={64}
               className="rounded-md"
             />
             <h1 className="text-2xl font-bold">{copany.name}</h1>
             <div className="hidden sm:block">
-              {copany.license && (
-                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
-              )}
+              {copany.license && <LicenseBadge license={copany.license} />}
             </div>
             <div className="block sm:hidden flex flex-1 justify-end">
               <StarButton
@@ -139,7 +155,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             {copany.license && (
               <div className="block sm:hidden">
-                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
+                <LicenseBadge license={copany.license} />
               </div>
             )}
             <AssetLinksSection copany={copany} />
