@@ -72,18 +72,26 @@ export default function CopanyGridView({ copanies }: CopanyGridViewProps) {
                         src={copany.logo_url}
                         alt="Organization Background"
                         fill
-                        className="object-contain w-full h-full blur-[100px]"
+                        className="object-contain w-full h-full blur-[30px]"
                         style={{ objectPosition: "center", opacity: 0.7 }}
                         sizes="200vw"
                         priority
                       />
                     </div>
+                    {/* White gradient overlay to highlight logo */}
+                    <div
+                      className="absolute inset-0 z-5 blur-[30px]"
+                      style={{
+                        background:
+                          "radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 50%, transparent 100%)",
+                      }}
+                    ></div>
                     {/* Foreground logo, centered */}
                     <div className="relative z-10 flex items-center justify-center w-full h-auto max-h-32">
                       <Image
                         src={copany.logo_url}
                         alt="Organization Avatar"
-                        className="rounded-lg object-contain"
+                        className="rounded-xl object-contain"
                         width={128}
                         height={128}
                         priority
