@@ -239,10 +239,22 @@ export default function MainNavigation() {
       {/* Right section - User actions */}
       <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2 md:gap-3">
         <div className="hidden sm:block">
-          {user && <CreateCopanyButton size="lg" />}
+          {/* {user && <CreateCopanyButton size="lg" />} */}
+          <Link
+            href="/new"
+            className={`relative cursor-pointer flex-shrink-0 text-base`}
+          >
+            <span>New copany</span>
+          </Link>
         </div>
         <div className="block sm:hidden">
-          {user && <CreateCopanyButton size="lg" />}
+          {/* {user && <CreateCopanyButton size="lg" />} */}
+          <Link
+            href="/new"
+            className={`relative cursor-pointer flex-shrink-0 text-base`}
+          >
+            <span>New copany</span>
+          </Link>
         </div>
         {user && <NotificationBell />}
         {renderUserSection()}
