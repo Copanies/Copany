@@ -286,3 +286,38 @@ export interface TransactionRow {
   occurred_at: string; // when the income/expense happened
   evidence_url: string | null;
 }
+
+// Table: discussion
+export interface Discussion {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  title: string;
+  description: string | null;
+  creator_id: string | null;
+  labels: string[];
+  issue_id: string | null;
+  vote_up_count: number;
+  comment_count: number;
+}
+
+// Table: discussion_comment
+export interface DiscussionComment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  discussion_id: string;
+  content: string | null;
+  created_by: string | null;
+  is_edited: boolean;
+  parent_id: string | null;
+}
+
+// Table: discussion_vote
+export interface DiscussionVoteRow {
+  id: string;
+  created_at: string;
+  discussion_id: string;
+  user_id: string;
+}

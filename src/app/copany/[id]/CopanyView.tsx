@@ -11,6 +11,7 @@ import CooperateView from "./subviews/CooperateView";
 import ContributionView from "./subviews/ContributionView";
 import FinanceView from "./subviews/finance/FinanceView";
 import SettingsView from "./subviews/settings/SettingsView";
+import DiscussionView from "./subviews/DiscussionView";
 import AssetLinksSection from "@/components/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
@@ -76,6 +77,11 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       label: "Cooperate",
       icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
       content: <CooperateView copanyId={copanyId} />,
+    },
+    {
+      label: "Discussion",
+      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+      content: <DiscussionView copanyId={copanyId} />,
     },
     {
       label: "Contribution",
