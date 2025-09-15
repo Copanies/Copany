@@ -296,10 +296,22 @@ export interface Discussion {
   title: string;
   description: string | null;
   creator_id: string | null;
-  labels: string[];
+  labels: string[]; // Array of discussion_label IDs
   issue_id: string | null;
   vote_up_count: number;
   comment_count: number;
+}
+
+// Table: discussion_label
+export interface DiscussionLabel {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  creator_id: string;
+  name: string;
+  color: string;
+  description: string | null;
 }
 
 // Table: discussion_comment

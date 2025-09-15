@@ -24,6 +24,7 @@ import {
   ChartPieIcon,
   ReceiptPercentIcon,
   Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 interface CopanyViewProps {
@@ -63,26 +64,55 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   // Build tabs array, only include Settings tab if user is creator
   const tabs = [
-    {
-      label: "README",
-      icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <ReadmeView githubUrl={copany.github_url} />,
-    },
-    {
-      label: "LICENSE",
-      icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
-    },
-    {
-      label: "Cooperate",
-      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <CooperateView copanyId={copanyId} />,
-    },
-    {
-      label: "Discussion",
-      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <DiscussionView copanyId={copanyId} />,
-    },
+    ...(copany.github_url
+      ? [
+          {
+            label: "README",
+            icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <ReadmeView githubUrl={copany.github_url} />,
+          },
+        ]
+      : []),
+    ...(copany.github_url
+      ? [
+          {
+            label: "LICENSE",
+            icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
+            content: (
+              <LicenseView githubUrl={copany.github_url} copany={copany} />
+            ),
+          },
+        ]
+      : []),
+    ...(copany.github_url
+      ? [
+          {
+            label: "Cooperate",
+            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <CooperateView copanyId={copanyId} />,
+          },
+          {
+            label: "Discussion",
+            icon: (
+              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
+            ),
+            content: <DiscussionView copanyId={copanyId} />,
+          },
+        ]
+      : [
+          {
+            label: "Discussion",
+            icon: (
+              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
+            ),
+            content: <DiscussionView copanyId={copanyId} />,
+          },
+          {
+            label: "Cooperate",
+            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <CooperateView copanyId={copanyId} />,
+          },
+        ]),
     {
       label: "Contribution",
       icon: <ChartPieIcon strokeWidth={2} className="w-4 h-4" />,
@@ -139,13 +169,15 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
         )}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
-            <Image
-              src={copany.logo_url || EMPTY_STRING}
-              alt={copany.name || EMPTY_STRING}
-              width={64}
-              height={64}
-              className="rounded-md"
-            />
+            {copany.logo_url && (
+              <Image
+                src={copany.logo_url || EMPTY_STRING}
+                alt={copany.name || EMPTY_STRING}
+                width={64}
+                height={64}
+                className="rounded-md"
+              />
+            )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>
             <div className="hidden sm:block">
               {copany.license && <LicenseBadge license={copany.license} />}

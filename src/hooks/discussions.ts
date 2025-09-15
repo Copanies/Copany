@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
 import {
   listDiscussionsAction,
+  getDiscussionAction,
   createDiscussionAction,
   updateDiscussionAction,
   deleteDiscussionAction,
@@ -11,12 +12,22 @@ import {
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
+function discussionKey(discussionId: string) { return ["discussion", discussionId] as const; }
 function voteCountKey(discussionId: string) { return ["discussionVoteCount", discussionId] as const; }
 
 export function useDiscussions(copanyId: string) {
   return useQuery<Discussion[]>({
     queryKey: listKey(copanyId),
     queryFn: () => listDiscussionsAction(copanyId),
+    staleTime: 30 * 24 * 60 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+  });
+}
+
+export function useDiscussion(discussionId: string) {
+  return useQuery<Discussion>({
+    queryKey: discussionKey(discussionId),
+    queryFn: () => getDiscussionAction(discussionId),
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });

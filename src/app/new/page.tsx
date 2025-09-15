@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import BasicNavigation from "@/components/commons/BasicNavigation";
@@ -21,11 +21,12 @@ import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
+import MilkdownEditor from "@/components/MilkdownEditor";
 
 export default function New() {
   const router = useRouter();
   const [projectType, setProjectType] = useState("existing");
-  const [selectedRepo, setSelectedRepo] = useState("");
+  const [_selectedRepo, setSelectedRepo] = useState("");
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
@@ -42,6 +43,12 @@ export default function New() {
   const isDarkMode = useDarkMode();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorDivRef = useRef<HTMLDivElement>(null);
+
+  // 处理编辑器内容变化的回调函数
+  const handleIdeaDescriptionChange = useCallback((content: string) => {
+    setIdeaDescription(content);
+  }, []);
 
   // 使用 React Query 获取仓库数据
   const {
@@ -59,29 +66,44 @@ export default function New() {
   const createCopanyMutation = useCreateCopany(async (result) => {
     if (result.success && result.copany) {
       if (projectType === "new") {
-        // 如果是新想法，创建 discussion 后再跳转
+        // 如果是新想法，需要创建初始讨论
         try {
-          // 直接调用 action，避免 hook 的 copanyId 初始化问题
-          const { createDiscussionAction } = await import(
-            "@/actions/discussion.actions"
+          // 等待一下确保数据库触发器完成默认标签创建
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // 获取 "Begin idea" 标签
+          const { getDiscussionLabelsByCopanyIdAction } = await import(
+            "@/actions/discussionLabel.actions"
           );
-          await createDiscussionAction({
-            copanyId: result.copany.id,
-            title: ideaSummary,
-            description: ideaDescription,
-            labels: ["Begin idea"],
-          });
-          // discussion 创建成功后跳转
-          router.push(`/copany/${result.copany.id}`);
+          const labelsResult = await getDiscussionLabelsByCopanyIdAction(
+            result.copany.id
+          );
+
+          if (labelsResult.success && labelsResult.labels) {
+            const beginIdeaLabel = labelsResult.labels.find(
+              (label) => label.name === "Begin idea"
+            );
+
+            if (beginIdeaLabel) {
+              // 创建初始讨论
+              const { createDiscussionAction } = await import(
+                "@/actions/discussion.actions"
+              );
+              await createDiscussionAction({
+                copanyId: result.copany.id,
+                title: ideaSummary, // 一句话描述作为标题
+                description: ideaDescription, // 详细描述作为内容
+                labels: [beginIdeaLabel.id], // 使用标签ID而不是名称
+              });
+            }
+          }
         } catch (error) {
           console.error("Failed to create discussion:", error);
-          // 即使 discussion 创建失败，也跳转到 copany 页面
-          router.push(`/copany/${result.copany.id}`);
         }
-      } else {
-        // 如果是已存在项目，直接跳转
-        router.push(`/copany/${result.copany.id}`);
       }
+
+      // 跳转到 copany 页面
+      router.push(`/copany/${result.copany.id}`);
     }
   });
 
@@ -679,13 +701,16 @@ export default function New() {
                     </label>
 
                     <div className="flex flex-col items-start gap-2.5 w-full">
-                      <textarea
-                        id="idea-description"
-                        value={ideaDescription}
-                        onChange={(e) => setIdeaDescription(e.target.value)}
-                        placeholder="### 这个想法想要解决什么问题？ ### 如果要做最小可行版本（MVP），我会怎么做？"
-                        className="w-full h-24 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none resize-none bg-white dark:bg-gray-800"
-                      />
+                      <div
+                        ref={editorDivRef}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:border-gray-800 dark:focus-within:border-gray-200"
+                      >
+                        <MilkdownEditor
+                          onContentChange={handleIdeaDescriptionChange}
+                          placeholder="### 这个想法想要解决什么问题？ ### 如果要做最小可行版本（MVP），我会怎么做？"
+                          className="min-h-[96px]"
+                        />
+                      </div>
                     </div>
                   </div>
 

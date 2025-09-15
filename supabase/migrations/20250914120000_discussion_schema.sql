@@ -1,5 +1,6 @@
--- 0) Discussion feature schema: discussion, discussion_vote, discussion_comment
--- This migration follows existing conventions (RLS, constraints, counters, triggers)
+-- Discussion feature schema with labels support
+-- This migration creates discussion, discussion_vote, discussion_comment, and discussion_label tables
+-- It also includes the necessary triggers and functions
 
 -- 1) discussion table
 create table if not exists public.discussion (
@@ -10,13 +11,13 @@ create table if not exists public.discussion (
   title           text not null,
   description     text,
   creator_id      uuid,
-  labels          text[] not null default '{}'::text[],
+  labels          bigint[] not null default '{}'::bigint[],
   issue_id        bigint,
   vote_up_count   integer not null default 0,
   comment_count   integer not null default 0
 );
 
--- FKs
+-- FKs for discussion
 alter table public.discussion
   drop constraint if exists discussion_copany_fkey,
   add constraint discussion_copany_fkey
@@ -32,11 +33,11 @@ alter table public.discussion
   add constraint discussion_creator_fkey
   foreign key (creator_id) references auth.users(id) on update cascade on delete set null;
 
--- Indexes
+-- Indexes for discussion
 create index if not exists idx_discussion_copany on public.discussion(copany_id);
 create index if not exists idx_discussion_issue on public.discussion(issue_id);
 
--- RLS & policies
+-- RLS & policies for discussion
 alter table public.discussion enable row level security;
 
 drop policy if exists discussion_select_all on public.discussion;
@@ -77,7 +78,7 @@ create table if not exists public.discussion_vote (
   user_id        uuid not null
 );
 
--- FKs
+-- FKs for discussion_vote
 alter table public.discussion_vote
   drop constraint if exists discussion_vote_discussion_fkey,
   add constraint discussion_vote_discussion_fkey
@@ -88,13 +89,13 @@ alter table public.discussion_vote
   add constraint discussion_vote_user_fkey
   foreign key (user_id) references auth.users(id) on update cascade on delete cascade;
 
--- Indexes & unique
+-- Indexes & unique for discussion_vote
 create unique index if not exists idx_discussion_vote_unique
   on public.discussion_vote(discussion_id, user_id);
 create index if not exists idx_discussion_vote_discussion
   on public.discussion_vote(discussion_id);
 
--- RLS & policies
+-- RLS & policies for discussion_vote
 alter table public.discussion_vote enable row level security;
 
 drop policy if exists discussion_vote_select_own on public.discussion_vote;
@@ -134,7 +135,7 @@ create table if not exists public.discussion_comment (
   parent_id    bigint
 );
 
--- FKs
+-- FKs for discussion_comment
 alter table public.discussion_comment
   drop constraint if exists discussion_comment_discussion_fkey,
   add constraint discussion_comment_discussion_fkey
@@ -150,11 +151,11 @@ alter table public.discussion_comment
   add constraint discussion_comment_parent_fkey
   foreign key (parent_id) references public.discussion_comment(id) on update cascade on delete cascade;
 
--- Index
+-- Index for discussion_comment
 create index if not exists idx_discussion_comment_discussion on public.discussion_comment(discussion_id);
 create index if not exists idx_discussion_comment_parent on public.discussion_comment(parent_id);
 
--- RLS & policies
+-- RLS & policies for discussion_comment
 alter table public.discussion_comment enable row level security;
 
 drop policy if exists discussion_comment_select_all on public.discussion_comment;
@@ -187,7 +188,70 @@ grant all on table public.discussion_comment to anon;
 grant all on table public.discussion_comment to authenticated;
 grant all on table public.discussion_comment to service_role;
 
--- 4) Counter trigger functions
+-- 4) discussion_label table
+create table if not exists public.discussion_label (
+  id              bigserial primary key,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  copany_id       bigint not null,
+  creator_id      uuid not null,
+  name            text not null,
+  color           text not null default '#6B7280', -- Default gray color
+  description     text
+);
+
+-- FKs
+alter table public.discussion_label
+  drop constraint if exists discussion_label_copany_fkey,
+  add constraint discussion_label_copany_fkey
+  foreign key (copany_id) references public.copany(id) on update cascade on delete cascade;
+
+alter table public.discussion_label
+  drop constraint if exists discussion_label_creator_fkey,
+  add constraint discussion_label_creator_fkey
+  foreign key (creator_id) references auth.users(id) on update cascade on delete cascade;
+
+-- Indexes
+create index if not exists idx_discussion_label_copany on public.discussion_label(copany_id);
+create unique index if not exists idx_discussion_label_copany_name 
+  on public.discussion_label(copany_id, name);
+
+-- RLS & policies
+alter table public.discussion_label enable row level security;
+
+drop policy if exists discussion_label_select_all on public.discussion_label;
+create policy discussion_label_select_all
+on public.discussion_label
+for select
+using (true);
+
+drop policy if exists discussion_label_insert_auth on public.discussion_label;
+create policy discussion_label_insert_auth
+on public.discussion_label
+for insert
+to authenticated
+with check (true);
+
+drop policy if exists discussion_label_update_auth on public.discussion_label;
+create policy discussion_label_update_auth
+on public.discussion_label
+for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists discussion_label_delete_auth on public.discussion_label;
+create policy discussion_label_delete_auth
+on public.discussion_label
+for delete
+to authenticated
+using (true);
+
+grant all on table public.discussion_label to anon;
+grant all on table public.discussion_label to authenticated;
+grant all on table public.discussion_label to service_role;
+
+-- 5) Counter trigger functions for discussion voting and commenting
 
 -- Vote count ++ on discussion_vote insert
 create or replace function public.fn_inc_discussion_vote_count()
@@ -265,4 +329,38 @@ after delete on public.discussion_comment
 for each row
 execute function public.fn_dec_discussion_comment_count();
 
+-- 6) Function to create default discussion labels for a new copany
+create or replace function public.fn_create_default_discussion_labels(
+  p_copany_id bigint,
+  p_creator_id uuid
+)
+returns void
+language plpgsql
+as $$
+begin
+  -- Create default discussion labels
+  insert into public.discussion_label (copany_id, creator_id, name, color, description)
+  values 
+    (p_copany_id, p_creator_id, 'Begin idea', '#10B981', 'Ideas for starting new features or projects'),
+    (p_copany_id, p_creator_id, 'New idea', '#3B82F6', 'Fresh ideas and suggestions'),
+    (p_copany_id, p_creator_id, 'BUG', '#EF4444', 'Bug reports and issues');
+end;
+$$;
 
+-- 7) Trigger to automatically create default labels when a copany is created
+create or replace function public.fn_trigger_create_default_discussion_labels()
+returns trigger
+language plpgsql
+as $$
+begin
+  perform public.fn_create_default_discussion_labels(new.id, new.created_by);
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_create_default_discussion_labels on public.copany;
+drop trigger if exists trg_create_default_discussion_content on public.copany;
+create trigger trg_create_default_discussion_labels
+after insert on public.copany
+for each row
+execute function public.fn_trigger_create_default_discussion_labels();

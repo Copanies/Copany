@@ -239,6 +239,18 @@ const nordThemeStyles = `
     margin-top: 16px;
   }
 
+  /* ===== Small title mode restrictions ===== */
+  .milkdown-editor.max-title-sm .ProseMirror h1,
+  .milkdown-editor.max-title-sm .ProseMirror h2,
+  .milkdown-editor.max-title-sm .ProseMirror h3,
+  .milkdown-editor.max-title-sm .ProseMirror h4,
+  .milkdown-editor.max-title-sm .ProseMirror h6 {
+    font-size: 18px !important;
+    line-height: 28px !important;
+    margin-top: 16px !important;
+    font-weight: 700 !important;
+  }
+
   /* ===== Paragraph and text styles ===== */
   .milkdown-editor.milkdown .ProseMirror p {
     font-size: 16px;
@@ -486,6 +498,7 @@ export default function MilkdownEditor({
   placeholder = "Add description...",
   className = "",
   focusSignal,
+  maxSizeTitle = "normal",
 }: {
   onContentChange?: (content: string) => void;
   initialContent?: string;
@@ -493,6 +506,7 @@ export default function MilkdownEditor({
   placeholder?: string;
   className?: string;
   focusSignal?: number;
+  maxSizeTitle?: "normal" | "sm";
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
@@ -653,7 +667,9 @@ export default function MilkdownEditor({
       <div className={`relative`}>
         <div
           ref={divRef}
-          className={`milkdown-editor milkdown prose prose-sm max-w-none ${className}`}
+          className={`milkdown-editor milkdown prose prose-sm max-w-none ${
+            maxSizeTitle === "sm" ? "max-title-sm" : ""
+          } ${className}`}
         />
         {isReadonly && !initialContent && (
           <div className="absolute left-[12px] top-[12px] text-base pointer-events-none select-none text-gray-400 dark:text-gray-500">

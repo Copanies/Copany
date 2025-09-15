@@ -7,6 +7,7 @@ import ContributorAvatarStack from "@/components/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import StarButton from "@/components/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
+import { useDiscussionLabels } from "@/hooks/discussionLabels";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -22,10 +23,13 @@ interface CopanyCardProps {
 function CopanyCard({ copany }: CopanyCardProps) {
   const router = useRouter();
   const { data: discussions } = useDiscussions(copany.id);
+  const { data: labels } = useDiscussionLabels(copany.id);
 
   // Find the "Begin idea" discussion
   const beginIdeaDiscussion = discussions?.find((discussion) =>
-    discussion.labels.includes("Begin idea")
+    discussion.labels.includes(
+      labels?.find((label) => label.name === "Begin idea")?.id || ""
+    )
   );
 
   return (
@@ -39,8 +43,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
       <div className="flex flex-col gap-4 h-full">
         <div className="flex flex-col gap-2">
           {/* Different layouts based on whether cover image exists */}
-          <div className="relative flex flex-col items-center justify-center gap-2 p-8 rounded-[20px] overflow-hidden aspect-[1.8]">
-            {copany.cover_image_url ? (
+          <div className="relative flex flex-col items-center justify-center gap-2 p-5 rounded-[20px] overflow-hidden aspect-[1.8]">
+            {copany.cover_image_url && copany.logo_url ? (
               <>
                 {/* Cover image layout: fill the space, no blur, logo in top-left */}
                 <Image
@@ -112,11 +116,11 @@ function CopanyCard({ copany }: CopanyCardProps) {
               <>
                 {/* No logo layout: show Begin idea discussion description with #FBF9F5 background */}
                 <div className="absolute inset-0 bg-[#FBF9F5] dark:bg-[#FBF9F5]"></div>
-                <div className="relative z-10 flex items-center justify-center w-full h-full p-6">
-                  <div className="text-center text-gray-800 text-sm leading-relaxed max-w-full overflow-hidden line-clamp-6">
-                    {beginIdeaDiscussion?.description ||
-                      copany.description ||
-                      "No description available"}
+                <div className="relative z-10 flex items-center justify-center w-full h-full">
+                  <div className="text-center text-gray-800 text-sm leading-relaxed w-full overflow-hidden">
+                    <div className="line-clamp-6 text-ellipsis">
+                      {beginIdeaDiscussion?.description || "Loading..."}
+                    </div>
                   </div>
                 </div>
               </>
