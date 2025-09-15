@@ -1,6 +1,6 @@
 "use client";
 
-import CopanyListView from "@/app/subviews/CopanyListView";
+import CopanyGridView from "@/app/subviews/CopanyGridView";
 import MainNavigation from "@/components/MainNavigation";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";
@@ -23,7 +23,7 @@ export default function StarsPage() {
           {isLoading ? (
             <LoadingView type="page" />
           ) : list.length > 0 ? (
-            <CopanyListView copanies={list} />
+            <CopanyGridView copanies={list} />
           ) : (
             <EmptyPlaceholderView
               icon={<SparklesIcon className="w-16 h-16 text-gray-500" />}

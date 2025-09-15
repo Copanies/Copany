@@ -244,10 +244,11 @@ const nordThemeStyles = `
   .milkdown-editor.max-title-sm .ProseMirror h2,
   .milkdown-editor.max-title-sm .ProseMirror h3,
   .milkdown-editor.max-title-sm .ProseMirror h4,
+  .milkdown-editor.max-title-sm .ProseMirror h5,
   .milkdown-editor.max-title-sm .ProseMirror h6 {
     font-size: 18px !important;
     line-height: 28px !important;
-    margin-top: 16px !important;
+    margin-top: 0px !important;
     font-weight: 700 !important;
   }
 

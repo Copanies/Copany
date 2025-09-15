@@ -4,20 +4,19 @@ import { useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeftIcon,
-  ArrowLongUpIcon,
   ChatBubbleBottomCenterIcon,
+  ChevronLeftIcon,
 } from "@heroicons/react/24/outline";
+import arrowshape_up from "@/assets/arrowshape_up.svg";
+import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import { useDiscussion } from "@/hooks/discussions";
 import {
   useDiscussionVoteState,
   useToggleDiscussionVote,
 } from "@/hooks/discussionVotes";
-import { useDiscussionVoteCount } from "@/hooks/discussions";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Button from "@/components/commons/Button";
-import MarkdownView from "@/components/MarkdownView";
 import DiscussionLabelChips from "@/components/DiscussionLabelChips";
 import DiscussionCommentTimeline from "./DiscussionCommentTimeline";
 import { formatRelativeTime } from "@/utils/time";
@@ -36,9 +35,10 @@ export default function DiscussionPageClient({
   const router = useRouter();
   const { data: discussion, isLoading } = useDiscussion(discussionId);
   const { data: currentUser } = useCurrentUser();
-  const voteState = useDiscussionVoteState(discussionId);
+  const { countQuery, flagQuery } = useDiscussionVoteState(discussionId, {
+    countInitialData: discussion?.vote_up_count,
+  });
   const voteToggle = useToggleDiscussionVote(discussionId);
-  const voteCount = useDiscussionVoteCount(discussionId);
 
   // 获取作者信息
   const creatorIds = useMemo(() => {
@@ -68,13 +68,12 @@ export default function DiscussionPageClient({
       {/* Header with back button */}
       <div className="mb-6 flex items-center gap-3">
         <Button
-          variant="ghost"
-          size="sm"
+          variant="secondary"
+          size="md"
+          shape="square"
           onClick={() => router.back()}
-          className="flex items-center gap-1"
         >
-          <ArrowLeftIcon className="w-4 h-4" />
-          Back
+          <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
       </div>
 
@@ -111,35 +110,41 @@ export default function DiscussionPageClient({
             </span>
           </div>
         </div>
+        <div className="flex flex-col gap-2">
+          {/* Title */}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {discussion.title}
+          </h1>
 
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {discussion.title}
-        </h1>
-
-        {/* Description */}
-        {discussion.description && (
-          <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2">
-            <MilkdownEditor
-              initialContent={discussion.description}
-              maxSizeTitle="sm"
-              isReadonly={true}
-            />
-          </div>
-        )}
+          {/* Description */}
+          {discussion.description && (
+            <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2">
+              <MilkdownEditor
+                initialContent={discussion.description}
+                maxSizeTitle="sm"
+                isReadonly={true}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Vote button */}
         <div className="flex items-center gap-3 mt-3">
           <Button
             size="sm"
-            variant={voteState.data ? "primary" : "secondary"}
-            onClick={() => voteToggle.mutate({ toVote: !voteState.data })}
+            variant={"secondary"}
+            onClick={() => voteToggle.mutate({ toVote: !flagQuery.data })}
             disabled={voteToggle.isPending || !currentUser}
             disableTooltipConent={!currentUser ? "Sign in to vote" : undefined}
           >
             <div className="flex items-center gap-2">
-              <ArrowLongUpIcon className="w-4 h-4" strokeWidth={2} />
-              <span>{voteCount.data ?? discussion.vote_up_count}</span>
+              <Image
+                src={flagQuery.data ? arrowshape_up_fill : arrowshape_up}
+                alt="Vote"
+                width={16}
+                height={16}
+              />
+              <span>{countQuery.data ?? 0}</span>
             </div>
           </Button>
           <Button size="sm" variant="secondary" onClick={() => {}}>

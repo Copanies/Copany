@@ -1,25 +1,22 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import {
-  useDiscussions,
-  useDeleteDiscussion,
-  useDiscussionVoteCount,
-} from "@/hooks/discussions";
+import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
 import {
   useDiscussionVoteState,
   useToggleDiscussionVote,
 } from "@/hooks/discussionVotes";
-import type { Discussion, DiscussionComment } from "@/types/database.types";
+import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import {
   ChatBubbleBottomCenterIcon,
   PlusIcon,
-  ArrowLongUpIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import arrowshape_up from "@/assets/arrowshape_up.svg";
+import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
@@ -93,7 +90,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     <div className="flex gap-5">
       <div className="w-44 shrink-0">
         <div className="sticky top-4 flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-base font-normal text-gray-900 dark:text-gray-100">
             Label
           </h3>
           <div className="flex flex-col gap-2">
@@ -133,7 +130,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
       </div>
 
-      <section className="flex-1 flex flex-col gap-5 border-l border-gray-200 dark:border-gray-700 pl-5 mb-[200px] min-h-[calc(100vh-200px)] mx-auto">
+      <section className="flex-1 flex flex-col gap-3 border-l border-gray-200 dark:border-gray-700 pl-5 mb-[200px] min-h-[calc(100vh-200px)] mx-auto">
         <div className="flex items-center">
           <Button
             onClick={() => setIsModalOpen(true)}
@@ -170,7 +167,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             description="Try another label or clear the filter."
           />
         ) : (
-          <ul className="flex flex-col gap-5">
+          <ul className="flex flex-col gap-3">
             {filtered.map((d) => (
               <li key={d.id} className="">
                 <DiscussionItem
@@ -214,13 +211,16 @@ function DiscussionItem({
   creator?: UserInfo;
 }) {
   const router = useRouter();
-  const remove = useDeleteDiscussion(copanyId);
-  const voteState = useDiscussionVoteState(discussion.id);
+  const _remove = useDeleteDiscussion(copanyId);
+  const { countQuery: voteCount, flagQuery: voteState } =
+    useDiscussionVoteState(discussion.id, {
+      enableCountQuery: discussion.vote_up_count == null,
+      countInitialData: discussion.vote_up_count ?? undefined,
+    });
   const voteToggle = useToggleDiscussionVote(discussion.id);
-  const voteCount = useDiscussionVoteCount(discussion.id);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-5">
+    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3">
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex-1 hover:cursor-pointer"
@@ -286,13 +286,18 @@ function DiscussionItem({
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          variant={voteState.data ? "primary" : "secondary"}
+          variant="secondary"
           onClick={() => voteToggle.mutate({ toVote: !voteState.data })}
           disabled={voteToggle.isPending}
         >
           <div className="flex items-center gap-2">
-            <ArrowLongUpIcon className="w-4 h-4" strokeWidth={1.5} />
-            <span>{voteCount.data ?? discussion.vote_up_count}</span>
+            <Image
+              src={voteState.data ? arrowshape_up_fill : arrowshape_up}
+              alt="Vote"
+              width={16}
+              height={16}
+            />
+            <span>{voteCount.data ?? 0}</span>
           </div>
         </Button>
 

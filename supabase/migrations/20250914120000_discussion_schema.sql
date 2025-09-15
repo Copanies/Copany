@@ -257,12 +257,15 @@ grant all on table public.discussion_label to service_role;
 create or replace function public.fn_inc_discussion_vote_count()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
   update public.discussion
-  set vote_up_count = vote_up_count + 1
+  set vote_up_count = vote_up_count + 1,
+      updated_at = now()
   where id = new.discussion_id;
-  return null;
+  return new;
 end;
 $$;
 
@@ -270,12 +273,15 @@ $$;
 create or replace function public.fn_dec_discussion_vote_count()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
   update public.discussion
-  set vote_up_count = greatest(vote_up_count - 1, 0)
+  set vote_up_count = greatest(vote_up_count - 1, 0),
+      updated_at = now()
   where id = old.discussion_id;
-  return null;
+  return old;
 end;
 $$;
 
@@ -341,9 +347,9 @@ begin
   -- Create default discussion labels
   insert into public.discussion_label (copany_id, creator_id, name, color, description)
   values 
-    (p_copany_id, p_creator_id, 'Begin idea', '#10B981', 'Ideas for starting new features or projects'),
-    (p_copany_id, p_creator_id, 'New idea', '#3B82F6', 'Fresh ideas and suggestions'),
-    (p_copany_id, p_creator_id, 'BUG', '#EF4444', 'Bug reports and issues');
+    (p_copany_id, p_creator_id, 'Begin idea', '#323231', 'Ideas for starting the copany'),
+    (p_copany_id, p_creator_id, 'New idea', '#447FFF', 'Fresh ideas and suggestions'),
+    (p_copany_id, p_creator_id, 'BUG', '#D1401C', 'Bug reports and issues');
 end;
 $$;
 

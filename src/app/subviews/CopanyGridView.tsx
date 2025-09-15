@@ -8,6 +8,8 @@ import LicenseBadge from "@/components/commons/LicenseBadge";
 import StarButton from "@/components/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
+import MilkdownEditor from "@/components/MilkdownEditor";
+import { EMPTY_STRING } from "@/utils/constants";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -116,12 +118,20 @@ function CopanyCard({ copany }: CopanyCardProps) {
               <>
                 {/* No logo layout: show Begin idea discussion description with #FBF9F5 background */}
                 <div className="absolute inset-0 bg-[#FBF9F5] dark:bg-[#FBF9F5]"></div>
-                <div className="relative z-10 flex items-center justify-center w-full h-full">
-                  <div className="text-center text-gray-800 text-sm leading-relaxed w-full overflow-hidden">
-                    <div className="line-clamp-6 text-ellipsis">
-                      {beginIdeaDiscussion?.description || "Loading..."}
-                    </div>
+                <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
+                  <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
+                    <MilkdownEditor
+                      initialContent={
+                        beginIdeaDiscussion?.description || "Loading..."
+                      }
+                      isReadonly={true}
+                      maxSizeTitle="sm"
+                      placeholder={EMPTY_STRING}
+                      className="w-full"
+                    />
                   </div>
+                  {/* Gradient shadow overlay at the bottom - fixed position */}
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] to-transparent pointer-events-none z-20"></div>
                 </div>
               </>
             )}

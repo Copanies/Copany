@@ -114,13 +114,20 @@ export default function New() {
   }, [createCopanyMutation.mutate]);
 
   const projectTypeOptions = [
-    { value: "new", label: "全新的想法" },
-    { value: "existing", label: "已存在的项目" },
+    { value: "new", label: "Brand new idea" },
+    { value: "existing", label: "Existing project" },
   ];
 
   const coslOptions = [
-    { value: true, label: "是，我愿意按照贡献比例分享收益" },
-    { value: false, label: "否，我不愿意按照贡献比例分享收益" },
+    {
+      value: true,
+      label: "Yes, I want to share the benefits according to my contribution",
+    },
+    {
+      value: false,
+      label:
+        "No, I don't want to share the benefits according to my contribution",
+    },
   ];
 
   // 点击外部关闭下拉菜单
@@ -366,7 +373,7 @@ export default function New() {
             <div className="flex flex-col items-start gap-5 w-full">
               <fieldset className="flex flex-col items-start gap-3 w-full">
                 <p className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                  它是一个:
+                  It is a:
                 </p>
 
                 <div className="flex flex-col items-start gap-4 w-full">
@@ -410,7 +417,7 @@ export default function New() {
                       htmlFor="github-repo"
                       className="text-sm font-normal text-gray-900 dark:text-gray-100"
                     >
-                      关联这个项目的 GitHub 仓库
+                      Select GitHub repository
                     </label>
 
                     <div className="flex items-center gap-2.5 w-full">
@@ -423,7 +430,7 @@ export default function New() {
                                 e.stopPropagation();
                                 setIsDropdownOpen(!isDropdownOpen);
                               }}
-                              className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none"
+                              className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                             >
                               {getSelectedRepoDisplay() ? (
                                 <div className="flex items-center gap-2">
@@ -571,7 +578,7 @@ export default function New() {
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="Name"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none bg-white dark:bg-gray-800"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
                     </div>
                   </div>
@@ -590,7 +597,7 @@ export default function New() {
                         value={companyDescription}
                         onChange={(e) => setCompanyDescription(e.target.value)}
                         placeholder="Description"
-                        className="w-full h-24 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none resize-none bg-white dark:bg-gray-800"
+                        className="w-full h-24 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 resize-none bg-white dark:bg-gray-800"
                       />
                     </div>
                   </div>
@@ -677,7 +684,7 @@ export default function New() {
                       htmlFor="idea-summary"
                       className="text-sm font-normal text-gray-900 dark:text-gray-100"
                     >
-                      一句话描述这个想法
+                      One-line description of this idea
                     </label>
 
                     <div className="flex flex-col items-start gap-2.5 w-full">
@@ -687,7 +694,7 @@ export default function New() {
                         value={ideaSummary}
                         onChange={(e) => setIdeaSummary(e.target.value)}
                         placeholder="New idea"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none bg-white dark:bg-gray-800"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
                     </div>
                   </div>
@@ -697,18 +704,26 @@ export default function New() {
                       htmlFor="idea-description"
                       className="text-sm font-normal text-gray-900 dark:text-gray-100"
                     >
-                      详细的描述这个想法
+                      Describe this idea in detail
                     </label>
 
                     <div className="flex flex-col items-start gap-2.5 w-full">
                       <div
                         ref={editorDivRef}
-                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:border-gray-800 dark:focus-within:border-gray-200"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                       >
                         <MilkdownEditor
+                          initialContent={`* *What is the problem you want to solve?*
+
+<br />
+
+* *If you want to do a minimum viable product (MVP), how would you do it?*
+
+`}
                           onContentChange={handleIdeaDescriptionChange}
-                          placeholder="### 这个想法想要解决什么问题？ ### 如果要做最小可行版本（MVP），我会怎么做？"
+                          placeholder="Description"
                           className="min-h-[96px]"
+                          maxSizeTitle="sm"
                         />
                       </div>
                     </div>
@@ -719,7 +734,7 @@ export default function New() {
                       htmlFor="product-name"
                       className="text-sm font-normal text-gray-900 dark:text-gray-100"
                     >
-                      产品代号/名称
+                      Product name
                     </label>
 
                     <div className="flex flex-col items-start gap-2.5 w-full">
@@ -729,7 +744,7 @@ export default function New() {
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
                         placeholder="Name"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-gray-800 dark:focus:border-gray-200 focus:outline-none bg-white dark:bg-gray-800"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
                     </div>
                   </div>
@@ -739,7 +754,7 @@ export default function New() {
               <fieldset className="flex flex-col items-start gap-3 w-full">
                 <div className="flex items-center gap-3">
                   <legend className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                    是否愿意使用 Copany Open Source License (COSL)
+                    Do you want to use Copany Open Source License (COSL)?
                   </legend>
 
                   <div className="w-5 h-5">
@@ -806,7 +821,7 @@ export default function New() {
                     !ideaDescription.trim())) ||
                 createCopanyMutation.isPending
               }
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-gray-900"
             >
               <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
                 {createCopanyMutation.isPending ? "Creating..." : "Create"}

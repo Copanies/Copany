@@ -57,14 +57,14 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   return (
     <div className="flex w-full min-w-0 flex-col h-full min-h-screen">
       <div className="mx-5 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex w-full min-w-0 gap-2 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap">
+        <div className="flex w-full min-w-0 gap-5 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap">
           {tabs.map((tab) => (
             <button
               key={tab.label}
               className={`${
                 activeTab === tab.label
-                  ? "cursor-pointer mx-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
-                  : "cursor-pointer mx-2 pb-[10px] flex-shrink-0"
+                  ? "cursor-pointer px-0 pb-2 flex-shrink-0 border-b-2 border-secondary"
+                  : "cursor-pointer px-0 pb-[10px] flex-shrink-0"
               }`}
               onClick={() => handleTabClick(tab.label)}
             >

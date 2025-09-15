@@ -50,10 +50,15 @@ export class StarService {
 
   static async unstar(copanyId: string) {
     const supabase = await createSupabaseClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error(userError?.message || "Unauthorized");
+    }
     const { error } = await supabase
       .from("stars")
       .delete()
-      .eq("copany_id", copanyId);
+      .eq("copany_id", copanyId)
+      .eq("user_id", user.id);
     if (error) throw new Error(error.message);
   }
 }

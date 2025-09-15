@@ -46,9 +46,4 @@ export async function deleteDiscussionAction(discussionId: string): Promise<void
   return DiscussionService.remove(discussionId);
 }
 
-export async function getDiscussionVoteCountAction(discussionId: string): Promise<number> {
-  const d = await DiscussionService.get(discussionId);
-  return d.vote_up_count || 0;
-}
-
 

@@ -8,12 +8,10 @@ import {
   createDiscussionAction,
   updateDiscussionAction,
   deleteDiscussionAction,
-  getDiscussionVoteCountAction,
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
 function discussionKey(discussionId: string) { return ["discussion", discussionId] as const; }
-function voteCountKey(discussionId: string) { return ["discussionVoteCount", discussionId] as const; }
 
 export function useDiscussions(copanyId: string) {
   return useQuery<Discussion[]>({
@@ -79,13 +77,5 @@ export function useDeleteDiscussion(copanyId: string) {
   });
 }
 
-export function useDiscussionVoteCount(discussionId: string) {
-  return useQuery<number>({
-    queryKey: voteCountKey(discussionId),
-    queryFn: () => getDiscussionVoteCountAction(discussionId),
-    staleTime: 30 * 24 * 60 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-  });
-}
 
 

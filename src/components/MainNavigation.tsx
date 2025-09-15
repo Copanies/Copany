@@ -14,6 +14,7 @@ import NotificationBell from "./NotificationBell";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -176,7 +177,7 @@ export default function MainNavigation() {
   });
 
   return (
-    <div className="relative flex flex-row items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 h-[62px]">
+    <div className="relative flex flex-row items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 h-[60px]">
       {/* Left section - Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
@@ -217,7 +218,7 @@ export default function MainNavigation() {
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
-            <span>Home</span>
+            <span>Explore</span>
             {pathname === "/" && (
               <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
@@ -238,24 +239,34 @@ export default function MainNavigation() {
 
       {/* Right section - User actions */}
       <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2 md:gap-3">
-        <div className="hidden sm:block">
-          {/* {user && <CreateCopanyButton size="lg" />} */}
-          <Link
-            href="/new"
-            className={`relative cursor-pointer flex-shrink-0 text-base`}
-          >
-            <span>New copany</span>
-          </Link>
-        </div>
-        <div className="block sm:hidden">
-          {/* {user && <CreateCopanyButton size="lg" />} */}
-          <Link
-            href="/new"
-            className={`relative cursor-pointer flex-shrink-0 text-base`}
-          >
-            <span>New copany</span>
-          </Link>
-        </div>
+        {user && (
+          <div className="hidden sm:block">
+            {/* {user && <CreateCopanyButton size="lg" />} */}
+            <Link
+              href="/new"
+              className={`relative cursor-pointer flex-shrink-0 text-base`}
+            >
+              <div className="flex items-center gap-1">
+                <PlusIcon className="w-4 h-4" />
+                <span>New copany</span>
+              </div>
+            </Link>
+          </div>
+        )}
+        {user && (
+          <div className="block sm:hidden">
+            {/* {user && <CreateCopanyButton size="lg" />} */}
+            <Link
+              href="/new"
+              className={`relative cursor-pointer flex-shrink-0 text-base`}
+            >
+              <div className="flex items-center gap-1">
+                <PlusIcon className="w-4 h-4" />
+                <span>New copany</span>
+              </div>
+            </Link>
+          </div>
+        )}
         {user && <NotificationBell />}
         {renderUserSection()}
       </div>

@@ -105,22 +105,18 @@ export default function DiscussionCreateForm({
           <div ref={editorDivRef}>
             <MilkdownEditor
               onContentChange={handleContentChange}
-              placeholder="Description (optional)"
+              placeholder="Add description..."
               className="min-h-[200px]"
             />
           </div>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-5 py-2">
           <div className="space-y-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Labels:
-            </span>
             <DiscussionLabelSelector
               copanyId={copanyId}
               selectedLabelIds={selectedLabelIds}
               onLabelChange={setSelectedLabelIds}
               readOnly={isSubmitting}
-              placeholder="Select discussion labels..."
             />
           </div>
         </div>

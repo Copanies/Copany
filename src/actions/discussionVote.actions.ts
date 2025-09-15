@@ -20,4 +20,8 @@ export async function unvoteDiscussionAction(discussionId: string) {
   return { success: true } as const;
 }
 
+export async function getDiscussionVoteCountAction(discussionId: string): Promise<number> {
+  return await DiscussionVoteService.getVoteCount(discussionId);
+}
+
 

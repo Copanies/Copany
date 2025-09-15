@@ -324,6 +324,7 @@ export interface DiscussionComment {
   created_by: string | null;
   is_edited: boolean;
   parent_id: string | null;
+  vote_up_count: number;
 }
 
 // Table: discussion_vote
@@ -331,5 +332,13 @@ export interface DiscussionVoteRow {
   id: string;
   created_at: string;
   discussion_id: string;
+  user_id: string;
+}
+
+// Table: discussion_comment_vote
+export interface DiscussionCommentVoteRow {
+  id: string;
+  created_at: string;
+  comment_id: string;
   user_id: string;
 }
