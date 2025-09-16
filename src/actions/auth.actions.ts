@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { clearGithubTokenCookie } from "@/services/github.service";
+import { saveUserMetadataToCache } from "@/services/userMetadataProtection.service";
 
 /**
  * Authentication related Server Actions
@@ -14,6 +15,14 @@ import { clearGithubTokenCookie } from "@/services/github.service";
  */
 export async function signInWithGitHub() {
   console.log("🚀 Starting GitHub OAuth login");
+
+  // Save current user metadata to cache before linking (if user is already logged in)
+  try {
+    await saveUserMetadataToCache();
+  } catch (error) {
+    console.warn("⚠️ Failed to save user metadata to cache:", error);
+    // Don't block the OAuth flow if caching fails
+  }
 
   const supabase = await createSupabaseClient();
 
@@ -155,6 +164,14 @@ export async function signInWithEmail(email: string, password: string) {
  */
 export async function signInWithGoogle() {
   console.log("🚀 Starting Google OAuth login");
+
+  // Save current user metadata to cache before linking (if user is already logged in)
+  try {
+    await saveUserMetadataToCache();
+  } catch (error) {
+    console.warn("⚠️ Failed to save user metadata to cache:", error);
+    // Don't block the OAuth flow if caching fails
+  }
 
   const supabase = await createSupabaseClient();
 

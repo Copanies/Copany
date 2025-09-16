@@ -54,6 +54,7 @@ export default function AccountView({ userId }: { userId: string }) {
       setIsGoogleLoading(false);
     }
   };
+
   if (isLoading || providersLoading) {
     return <LoadingView type="label" />;
   }
