@@ -96,14 +96,14 @@ export default function MainNavigation() {
     const userAvatar = user.user_metadata?.avatar_url ? (
       <Image
         src={user.user_metadata.avatar_url}
-        alt={user.user_metadata.name || "User Avatar"}
+        alt={user.user_metadata.full_name || "User Avatar"}
         className="w-6 md:w-8 h-6 md:h-8 rounded-full"
         width={32}
         height={32}
       />
     ) : (
       <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-        {user.user_metadata?.name?.[0]?.toUpperCase() || "U"}
+        {user.user_metadata?.full_name?.[0]?.toUpperCase() || "U"}
       </div>
     );
 
@@ -112,19 +112,19 @@ export default function MainNavigation() {
         {user.user_metadata?.avatar_url ? (
           <Image
             src={user.user_metadata.avatar_url}
-            alt={user.user_metadata.name || "User Avatar"}
+            alt={user.user_metadata.full_name || "User Avatar"}
             className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600"
             width={40}
             height={40}
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-            {user.user_metadata?.name?.[0]?.toUpperCase() || "U"}
+            {user.user_metadata?.full_name?.[0]?.toUpperCase() || "U"}
           </div>
         )}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {user.user_metadata?.name || "No name set"}
+            {user.user_metadata?.full_name || "No name set"}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
             {user.email}
@@ -135,6 +135,11 @@ export default function MainNavigation() {
 
     const dropdownOptions = [
       {
+        value: 0,
+        label: "Profile",
+        href: `/user/${user.id}`,
+      },
+      {
         value: 1,
         label: "Logout",
       },
@@ -144,6 +149,9 @@ export default function MainNavigation() {
       switch (value) {
         case 1:
           handleLogout();
+          break;
+        case 0:
+          router.push(`/user/${user.id}`);
           break;
         default:
           break;

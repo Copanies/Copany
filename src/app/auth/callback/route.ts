@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseClient } from "@/utils/supabase/server";
+import { initializeUserAvatarIfNeeded } from "@/services/avatar.service";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -36,6 +37,12 @@ export async function GET(request: Request) {
         if (userError || !user) {
           console.warn("⚠️ User verification failed, cannot set Cookie");
         } else {
+          // Initialize avatar for email users if needed
+          if (user.email_confirmed_at) {
+            console.log("🎨 Initializing avatar for verified user:", user.id);
+            await initializeUserAvatarIfNeeded(user.id);
+          }
+          
           // After user identity verification, get provider_token from session
           const {
             data: { session },
