@@ -6,14 +6,12 @@ import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { SquaresPlusIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
 
 /**
  * Home page - Responsible for data fetching and page layout
  */
 export default function Home() {
   const { data: copanies, isLoading } = useCopanies();
-  const router = useRouter();
   // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {

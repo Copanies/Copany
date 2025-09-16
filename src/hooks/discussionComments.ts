@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DiscussionComment, Discussion } from "@/types/database.types";
+import type { DiscussionComment } from "@/types/database.types";
 import { getDiscussionCommentsAction, createDiscussionCommentAction, updateDiscussionCommentAction, deleteDiscussionCommentAction } from "@/actions/discussionComment.actions";
 
 function key(discussionId: string) { return ["discussionComments", discussionId] as const; }

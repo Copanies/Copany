@@ -12,13 +12,10 @@ import {
   signInWithGitHub,
   signInWithGoogle,
 } from "@/actions/auth.actions";
-import { useRouter } from "next/navigation";
 import { resendVerificationEmail } from "@/actions/auth.actions";
-import Link from "next/link";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
-  const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",

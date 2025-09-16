@@ -128,8 +128,9 @@ export default function CookiesPolicyPage() {
           function properly.
         </p>
         <p>
-          If You'd like to delete Cookies or instruct your web browser to delete
-          or refuse Cookies, please visit the help pages of your web browser.
+          If You&apos;d like to delete Cookies or instruct your web browser to
+          delete or refuse Cookies, please visit the help pages of your web
+          browser.
         </p>
         <ul>
           <li>
@@ -183,8 +184,8 @@ export default function CookiesPolicyPage() {
           </li>
         </ul>
         <p>
-          For any other web browser, please visit your web browser's official
-          web pages.
+          For any other web browser, please visit your web browser&apos;s
+          official web pages.
         </p>
         <h3>More Information about Cookies</h3>
         <p>

@@ -73,7 +73,7 @@ export default function DiscussionPageClient({
     if (discussion && (discussion.comment_count ?? 0) === 0) {
       setShowCommentInput(true);
     }
-  }, [discussion?.comment_count]);
+  }, [discussion]);
 
   // 获取作者信息
   const creatorIds = useMemo(() => {

@@ -32,8 +32,9 @@ export default function TermsPage() {
             the Company, downloaded by You on any electronic device.
           </li>
           <li>
-            <strong>Company</strong> (referred to as either "the Company", "We",
-            "Us" or "Our") refers to Copany.
+            <strong>Company</strong> (referred to as either &quot;the
+            Company&quot;, &quot;We&quot;, &quot;Us&quot; or &quot;Our&quot;)
+            refers to Copany.
           </li>
           <li>
             <strong>Country</strong> refers to China.
@@ -46,9 +47,10 @@ export default function TermsPage() {
             .
           </li>
           <li>
-            <strong>Terms and Conditions</strong> (also referred to as "Terms")
-            mean these Terms and Conditions that form the entire agreement
-            between You and the Company regarding the use of the Service.
+            <strong>Terms and Conditions</strong> (also referred to as
+            &quot;Terms&quot;) mean these Terms and Conditions that form the
+            entire agreement between You and the Company regarding the use of
+            the Service.
           </li>
           <li>
             <strong>You</strong> means the individual accessing or using the

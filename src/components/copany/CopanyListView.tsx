@@ -6,7 +6,6 @@ import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
-import { useCurrentUser } from "@/hooks/currentUser";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -17,7 +16,6 @@ interface CopanyListViewProps {
  */
 export default function CopanyListView({ copanies }: CopanyListViewProps) {
   const router = useRouter();
-  const { data: currentUser } = useCurrentUser();
   return (
     <ul className="space-y-6">
       {copanies.map((copany, index) => (

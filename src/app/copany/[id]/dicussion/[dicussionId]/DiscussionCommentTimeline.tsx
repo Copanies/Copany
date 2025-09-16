@@ -138,7 +138,6 @@ function CommentNode({
   );
 
   const author = comment.created_by ? userInfos[comment.created_by] : undefined;
-  const indentLevel = Math.min(level, 6); // Maximum 6 levels of indentation
 
   // Check if this comment has children
   const hasChildren = useMemo(() => {

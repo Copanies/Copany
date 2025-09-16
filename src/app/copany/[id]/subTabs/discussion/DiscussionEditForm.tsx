@@ -30,9 +30,6 @@ export default function DiscussionEditForm({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateDiscussion = useUpdateDiscussion(copanyId);
-  const [descriptionInitial, setDescriptionInitial] = useState(
-    discussion.description
-  );
 
   const editorDivRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -110,7 +107,7 @@ export default function DiscussionEditForm({
           />
           <div ref={editorDivRef}>
             <MilkdownEditor
-              initialContent={descriptionInitial ?? EMPTY_STRING}
+              initialContent={discussion.description ?? EMPTY_STRING}
               onContentChange={handleContentChange}
               placeholder="Description (optional)"
               className="min-h-[200px]"
