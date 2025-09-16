@@ -10,9 +10,10 @@ create table if not exists public.discussion_comment_vote (
   user_id          uuid not null
 );
 
--- Add vote_up_count column to discussion_comment table if not exists
+-- Add vote_up_count and deleted_at columns to discussion_comment table if not exists
 alter table public.discussion_comment 
-  add column if not exists vote_up_count integer not null default 0;
+  add column if not exists vote_up_count integer not null default 0,
+  add column if not exists deleted_at timestamptz;
 
 -- FKs for discussion_comment_vote
 alter table public.discussion_comment_vote

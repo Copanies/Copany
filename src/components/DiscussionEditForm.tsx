@@ -30,6 +30,9 @@ export default function DiscussionEditForm({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateDiscussion = useUpdateDiscussion(copanyId);
+  const [descriptionInitial, setDescriptionInitial] = useState(
+    discussion.description
+  );
 
   const editorDivRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -107,24 +110,20 @@ export default function DiscussionEditForm({
           />
           <div ref={editorDivRef}>
             <MilkdownEditor
-              initialContent={description}
+              initialContent={descriptionInitial ?? EMPTY_STRING}
               onContentChange={handleContentChange}
               placeholder="Description (optional)"
               className="min-h-[200px]"
             />
           </div>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-5 py-2">
           <div className="space-y-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Labels:
-            </span>
             <DiscussionLabelSelector
               copanyId={copanyId}
               selectedLabelIds={selectedLabelIds}
               onLabelChange={setSelectedLabelIds}
               readOnly={isSubmitting}
-              placeholder="Select discussion labels..."
             />
           </div>
         </div>

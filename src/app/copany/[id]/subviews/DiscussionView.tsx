@@ -30,6 +30,8 @@ import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
 
 import MilkdownEditor from "@/components/MilkdownEditor";
+import Dropdown from "@/components/commons/Dropdown";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const { data: discussions, isLoading } = useDiscussions(copanyId);
@@ -42,6 +44,50 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const allLabels = useMemo(() => {
     return labels.map((label) => label.name).sort();
   }, [labels]);
+
+  // Create dropdown options
+  const dropdownOptions = useMemo(() => {
+    const options = [{ value: -1, label: "All" as React.ReactNode }];
+
+    labels.forEach((label, index) => {
+      options.push({
+        value: index,
+        label: (
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: label.color }}
+            />
+            {label.name}
+          </div>
+        ) as React.ReactNode,
+      });
+    });
+
+    return options;
+  }, [labels]);
+
+  // Get selected dropdown value
+  const selectedDropdownValue = useMemo(() => {
+    if (activeLabel === "all") return -1;
+    const labelIndex = labels.findIndex((label) => label.name === activeLabel);
+    return labelIndex >= 0 ? labelIndex : -1;
+  }, [activeLabel, labels]);
+
+  // Handle dropdown selection
+  const handleDropdownSelect = useCallback(
+    (value: number) => {
+      if (value === -1) {
+        setActiveLabel("all");
+      } else {
+        const selectedLabel = labels[value];
+        if (selectedLabel) {
+          setActiveLabel(selectedLabel.name);
+        }
+      }
+    },
+    [labels]
+  );
 
   const filtered = useMemo(() => {
     if (!discussions) return [] as Discussion[];
@@ -86,9 +132,26 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     [copanyId, queryClient]
   );
 
+  if (isLoading) {
+    return <LoadingView type="label" />;
+  }
+  if (!discussions || discussions.length === 0) {
+    return (
+      <EmptyPlaceholderView
+        icon={<ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />}
+        title="No discussions yet"
+        description="Create the first discussion to kick off the conversation."
+        buttonIcon={<PlusIcon className="w-4 h-4" />}
+        buttonTitle="New discussion"
+        buttonAction={() => setIsModalOpen(true)}
+      />
+    );
+  }
+
   return (
-    <div className="flex gap-5">
-      <div className="w-44 shrink-0">
+    <div className="flex flex-col md:flex-row gap-5">
+      {/* Desktop sidebar */}
+      <div className="hidden md:block w-44 shrink-0">
         <div className="sticky top-4 flex flex-col gap-3">
           <h3 className="text-base font-normal text-gray-900 dark:text-gray-100">
             Label
@@ -130,8 +193,8 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
       </div>
 
-      <section className="flex-1 flex flex-col gap-3 border-l border-gray-200 dark:border-gray-700 pl-5 mb-[200px] min-h-[calc(100vh-200px)] mx-auto">
-        <div className="flex items-center">
+      <section className="flex-1 flex flex-col gap-3 lg:border-l border-gray-200 dark:border-gray-700 lg:pl-5 mb-[200px] min-h-[calc(100vh-200px)]">
+        <div className="flex flex-row gap-2 justify-between items-center">
           <Button
             onClick={() => setIsModalOpen(true)}
             className="min-w-fit"
@@ -143,28 +206,46 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               <span className="text-base">New Discussion</span>
             </div>
           </Button>
+          <div className="md:hidden flex flex-col gap-3">
+            <Dropdown
+              trigger={
+                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px] h-[34px]">
+                  <span>
+                    {activeLabel === "all" ? (
+                      "All"
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            backgroundColor: labels.find(
+                              (label) => label.name === activeLabel
+                            )?.color,
+                          }}
+                        />
+                        {activeLabel}
+                      </div>
+                    )}
+                  </span>
+                  <ChevronDownIcon className="w-4 h-4" />
+                </div>
+              }
+              options={dropdownOptions}
+              selectedValue={selectedDropdownValue}
+              onSelect={handleDropdownSelect}
+              showBackground={false}
+              size="md"
+            />
+          </div>
         </div>
 
-        {isLoading ? (
-          <LoadingView type="label" />
-        ) : !discussions || discussions.length === 0 ? (
+        {filtered.length === 0 ? (
           <EmptyPlaceholderView
             icon={
-              <ChatBubbleLeftRightIcon className="w-10 h-10 text-gray-400" />
-            }
-            title="No discussions yet"
-            description="Create the first discussion to kick off the conversation."
-            buttonIcon={<PlusIcon className="w-4 h-4" />}
-            buttonTitle="New discussion"
-            buttonAction={() => setIsModalOpen(true)}
-          />
-        ) : filtered.length === 0 ? (
-          <EmptyPlaceholderView
-            icon={
-              <ChatBubbleLeftRightIcon className="w-10 h-10 text-gray-400" />
+              <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
             }
             title="No discussions for this label"
-            description="Try another label or clear the filter."
+            description="Try another label."
           />
         ) : (
           <ul className="flex flex-col gap-3">
@@ -271,16 +352,6 @@ function DiscussionItem({
             </div>
           </div>
         </div>
-        {/* <div className="flex flex-row gap-2">
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => remove.mutate({ discussionId: discussion.id })}
-            disabled={remove.isPending}
-          >
-            Delete
-          </Button>
-        </div> */}
       </div>
 
       <div className="flex items-center gap-2">

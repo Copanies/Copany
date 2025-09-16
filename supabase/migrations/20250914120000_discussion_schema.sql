@@ -132,7 +132,8 @@ create table if not exists public.discussion_comment (
   content      text,
   created_by   uuid,
   is_edited    boolean not null default false,
-  parent_id    bigint
+  parent_id    bigint,
+  deleted_at   timestamptz
 );
 
 -- FKs for discussion_comment
@@ -149,7 +150,7 @@ alter table public.discussion_comment
 alter table public.discussion_comment
   drop constraint if exists discussion_comment_parent_fkey,
   add constraint discussion_comment_parent_fkey
-  foreign key (parent_id) references public.discussion_comment(id) on update cascade on delete cascade;
+  foreign key (parent_id) references public.discussion_comment(id) on update cascade on delete set null;
 
 -- Index for discussion_comment
 create index if not exists idx_discussion_comment_discussion on public.discussion_comment(discussion_id);
@@ -297,43 +298,57 @@ after delete on public.discussion_vote
 for each row
 execute function public.fn_dec_discussion_vote_count();
 
--- Comment count ++ on discussion_comment insert
-create or replace function public.fn_inc_discussion_comment_count()
+-- Function to update discussion comment count based on soft delete status
+-- This function counts only non-deleted comments (where deleted_at IS NULL)
+create or replace function public.fn_update_discussion_comment_count()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
+declare
+  v_discussion_id bigint;
+  v_total_count integer;
 begin
+  -- Get the discussion_id from either NEW or OLD record
+  if TG_OP = 'INSERT' then
+    v_discussion_id := NEW.discussion_id;
+  elsif TG_OP = 'UPDATE' then
+    v_discussion_id := COALESCE(NEW.discussion_id, OLD.discussion_id);
+  else
+    v_discussion_id := OLD.discussion_id;
+  end if;
+  
+  -- Count all non-deleted comments for this discussion (including nested replies)
+  select count(*)
+  into v_total_count
+  from public.discussion_comment
+  where discussion_id = v_discussion_id 
+    and deleted_at IS NULL;
+  
+  -- Update the discussion table with the correct count
   update public.discussion
-  set comment_count = comment_count + 1
-  where id = new.discussion_id;
-  return null;
+  set comment_count = v_total_count,
+      updated_at = now()
+  where id = v_discussion_id;
+  
+  if TG_OP = 'INSERT' then
+    return NEW;
+  elsif TG_OP = 'UPDATE' then
+    return NEW;
+  else
+    return OLD;
+  end if;
 end;
 $$;
 
--- Comment count -- on discussion_comment delete
-create or replace function public.fn_dec_discussion_comment_count()
-returns trigger
-language plpgsql
-as $$
-begin
-  update public.discussion
-  set comment_count = greatest(comment_count - 1, 0)
-  where id = old.discussion_id;
-  return null;
-end;
-$$;
-
+-- Create triggers that handle insert, update (for soft delete), and physical delete
 drop trigger if exists trg_inc_discussion_comment_count on public.discussion_comment;
-create trigger trg_inc_discussion_comment_count
-after insert on public.discussion_comment
-for each row
-execute function public.fn_inc_discussion_comment_count();
-
 drop trigger if exists trg_dec_discussion_comment_count on public.discussion_comment;
-create trigger trg_dec_discussion_comment_count
-after delete on public.discussion_comment
+create trigger trg_update_discussion_comment_count
+after insert or update or delete on public.discussion_comment
 for each row
-execute function public.fn_dec_discussion_comment_count();
+execute function public.fn_update_discussion_comment_count();
 
 -- 6) Function to create default discussion labels for a new copany
 create or replace function public.fn_create_default_discussion_labels(
@@ -370,3 +385,13 @@ create trigger trg_create_default_discussion_labels
 after insert on public.copany
 for each row
 execute function public.fn_trigger_create_default_discussion_labels();
+
+-- 8) Update existing discussions to have correct comment counts (only non-deleted comments)
+-- This ensures any existing data has the correct counts
+update public.discussion
+set comment_count = (
+  select count(*)
+  from public.discussion_comment dc
+  where dc.discussion_id = discussion.id
+    and dc.deleted_at IS NULL
+);

@@ -59,15 +59,51 @@ export class DiscussionCommentService {
     return data as DiscussionComment;
   }
 
-  static async remove(commentId: string): Promise<void> {
+  static async remove(commentId: string): Promise<DiscussionComment | null> {
     const supabase = await createSupabaseClient();
-    const { error } = await supabase
+    
+    // First, check if this comment has any child comments (including deleted ones)
+    const { data: childComments, error: checkError } = await supabase
       .from("discussion_comment")
-      .delete()
-      .eq("id", commentId);
-    if (error) {
-      console.error("Error deleting discussion comment:", error);
-      throw new Error(`Failed to delete discussion comment: ${error.message}`);
+      .select("id")
+      .eq("parent_id", commentId);
+    
+    if (checkError) {
+      console.error("Error checking child comments:", checkError);
+      throw new Error(`Failed to check child comments: ${checkError.message}`);
+    }
+    
+    const hasChildren = childComments && childComments.length > 0;
+    
+    if (hasChildren) {
+      // Soft delete: has child comments
+      const { data, error } = await supabase
+        .from("discussion_comment")
+        .update({
+          deleted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", commentId)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error soft deleting discussion comment:", error);
+        throw new Error(`Failed to soft delete discussion comment: ${error.message}`);
+      }
+      return data as DiscussionComment;
+    } else {
+      // Hard delete: no child comments
+      const { error } = await supabase
+        .from("discussion_comment")
+        .delete()
+        .eq("id", commentId);
+      
+      if (error) {
+        console.error("Error hard deleting discussion comment:", error);
+        throw new Error(`Failed to hard delete discussion comment: ${error.message}`);
+      }
+      return null; // Indicate hard delete
     }
   }
 }

@@ -56,7 +56,10 @@ export function useUpdateDiscussion(copanyId: string) {
       return updateDiscussionAction(vars.discussionId, vars.updates);
     },
     onSuccess: (updated) => {
+      // Update the discussions list cache
       qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => (prev || []).map((d) => String(d.id) === String(updated.id) ? updated : d));
+      // Update the single discussion cache
+      qc.setQueryData<Discussion>(discussionKey(updated.id), updated);
     },
   });
 }

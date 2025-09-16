@@ -12,7 +12,11 @@ import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
-import { PlusIcon, PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import Button from "./commons/Button";
 
 interface DiscussionLabelSelectorProps {
@@ -66,6 +70,13 @@ export default function DiscussionLabelSelector({
 
   const handleLabelRemove = (labelId: string) => {
     if (readOnly) return;
+
+    // Find the label to check if it's "Begin idea"
+    const labelToRemove = labels.find((label) => label.id === labelId);
+    if (labelToRemove && labelToRemove.name === "Begin idea") {
+      // Prevent removal of "Begin idea" label
+      return;
+    }
 
     const newSelectedIds = selectedLabelIds.filter((id) => id !== labelId);
     onLabelChange?.(newSelectedIds);
@@ -151,48 +162,53 @@ export default function DiscussionLabelSelector({
   };
 
   const startCreatingLabel = () => {
+    console.log("startCreatingLabel called");
     setNewLabelName("");
     setNewLabelColor("#6B7280");
     setNewLabelDescription("");
     setShowCreateModal(true);
   };
 
-  const renderLabelChip = (label: DiscussionLabel, isSelected: boolean) => (
-    <div
-      key={label.id}
-      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium cursor-pointer transition-all duration-200 ${
-        isSelected
-          ? "text-white"
-          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-      }`}
-      style={{
-        backgroundColor: isSelected ? label.color : undefined,
-      }}
-      onClick={() => handleLabelToggle(label.id)}
-    >
-      <span>{label.name}</span>
-      {!readOnly && isSelected && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            handleLabelRemove(label.id); // Remove from selection
-          }}
-          className="p-0.5 hover:bg-white/20 dark:hover:bg-black/20 rounded text-white cursor-pointer ml-1"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
+  const renderLabelChip = (label: DiscussionLabel, isSelected: boolean) => {
+    const isBeginIdea = label.name === "Begin idea";
+
+    return (
+      <div
+        key={label.id}
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium cursor-pointer transition-all duration-200 ${
+          isSelected
+            ? "text-white"
+            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+        }`}
+        style={{
+          backgroundColor: isSelected ? label.color : undefined,
+        }}
+        onClick={() => handleLabelToggle(label.id)}
+      >
+        <span>{label.name}</span>
+        {!readOnly && isSelected && !isBeginIdea && (
+          <div
+            onClick={(e) => {
               e.stopPropagation();
-              handleLabelRemove(label.id);
-            }
-          }}
-        >
-          <XMarkIcon className="w-3 h-3" />
-        </div>
-      )}
-    </div>
-  );
+              handleLabelRemove(label.id); // Remove from selection
+            }}
+            className="p-0.5 hover:bg-white/20 dark:hover:bg-black/20 rounded text-white cursor-pointer ml-1"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                handleLabelRemove(label.id);
+              }
+            }}
+          >
+            <XMarkIcon className="w-3 h-3" />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderSelectedLabels = () => {
     if (selectedLabels.length === 0) {
@@ -210,78 +226,83 @@ export default function DiscussionLabelSelector({
     );
   };
 
-  const dropdownOptions = labels.map((label, index) => ({
-    value: index, // Use index as number value
-    label: (
-      <div className="flex items-center justify-between w-full">
-        <div className="flex flex-col gap-1 flex-1">
-          <div className="flex items-center gap-2">
-            <div
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium text-white"
-              style={{ backgroundColor: label.color }}
-            >
-              <span>{label.name}</span>
+  const dropdownOptions = labels
+    .filter((label) => label.name !== "Begin idea") // Filter out "Begin idea" from dropdown options
+    .map((label, index) => ({
+      value: index, // Use index as number value
+      label: (
+        <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col gap-1 flex-1">
+            <div className="flex items-center gap-2">
+              <div
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium text-white"
+                style={{ backgroundColor: label.color }}
+              >
+                <span>{label.name}</span>
+              </div>
             </div>
+            {label.description && (
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                {label.description}
+              </span>
+            )}
           </div>
-          {label.description && (
-            <span className="text-xs text-gray-700 dark:text-gray-300">
-              {label.description}
-            </span>
-          )}
-        </div>
-        {isCopanyOwner && !readOnly && (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              startEditingLabel(label);
-            }}
-            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer ml-2"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
+          {isCopanyOwner && !readOnly && (
+            <div
+              onClick={(e) => {
                 e.stopPropagation();
                 startEditingLabel(label);
-              }
-            }}
-          >
-            <PencilIcon className="w-4 h-4" />
-          </div>
-        )}
-      </div>
-    ),
-    disabled: readOnly,
-  }));
+              }}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer ml-2"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  startEditingLabel(label);
+                }
+              }}
+            >
+              <PencilSquareIcon className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+      ),
+      disabled: readOnly,
+    }));
+
+  // Get filtered labels for dropdown (excluding "Begin idea")
+  const filteredLabels = labels.filter((label) => label.name !== "Begin idea");
 
   // Add "Create new label" option
   if (isCopanyOwner && !readOnly) {
     dropdownOptions.push({
-      value: labels.length, // Use labels.length as the "create new" value
+      value: filteredLabels.length, // Use filteredLabels.length as the "create new" value
       label: (
-        <Button
-          variant="ghost"
-          onClick={startCreatingLabel}
-          size="sm"
-          className="-mx-2 -my-1"
-        >
-          <div className="flex items-center gap-2">
-            <PlusIcon className="w-4 h-4" />
-            <span>Create new label</span>
-          </div>
-        </Button>
+        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md px-0 py-1 cursor-pointer">
+          <PlusIcon className="w-4 h-4" />
+          <span>Create new label</span>
+        </div>
       ),
       disabled: false,
     });
   }
 
   const handleDropdownSelect = (value: number) => {
-    if (value === labels.length) {
+    console.log(
+      "handleDropdownSelect called with value:",
+      value,
+      "filteredLabels.length:",
+      filteredLabels.length
+    );
+    if (value === filteredLabels.length) {
       // This is the "create new" option
+      console.log("Calling startCreatingLabel");
       startCreatingLabel();
     } else {
-      // Toggle the label at the given index
-      const label = labels[value];
+      // Toggle the label at the given index from filtered labels
+      const label = filteredLabels[value];
       if (label) {
         handleLabelToggle(label.id);
       }

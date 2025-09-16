@@ -260,7 +260,7 @@ export default function MainNavigation() {
               href="/new"
               className={`relative cursor-pointer flex-shrink-0 text-base`}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 mr-1">
                 <PlusIcon className="w-4 h-4" />
                 <span>New copany</span>
               </div>

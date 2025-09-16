@@ -31,7 +31,7 @@ export async function updateDiscussionCommentAction(
   return DiscussionCommentService.update(commentId, content);
 }
 
-export async function deleteDiscussionCommentAction(commentId: string): Promise<void> {
+export async function deleteDiscussionCommentAction(commentId: string): Promise<DiscussionComment | null> {
   const user = await getCurrentUser();
   if (!user) throw new Error("User not found");
   return DiscussionCommentService.remove(commentId);

@@ -76,17 +76,6 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
     ...(copany.github_url
       ? [
           {
-            label: "LICENSE",
-            icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
-            content: (
-              <LicenseView githubUrl={copany.github_url} copany={copany} />
-            ),
-          },
-        ]
-      : []),
-    ...(copany.github_url
-      ? [
-          {
             label: "Cooperate",
             icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
             content: <CooperateView copanyId={copanyId} />,
@@ -123,6 +112,17 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
       content: <FinanceView copanyId={copanyId} />,
     },
+    ...(copany.github_url
+      ? [
+          {
+            label: "LICENSE",
+            icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
+            content: (
+              <LicenseView githubUrl={copany.github_url} copany={copany} />
+            ),
+          },
+        ]
+      : []),
     ...(isCreator
       ? [
           {

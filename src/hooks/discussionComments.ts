@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DiscussionComment } from "@/types/database.types";
+import type { DiscussionComment, Discussion } from "@/types/database.types";
 import { getDiscussionCommentsAction, createDiscussionCommentAction, updateDiscussionCommentAction, deleteDiscussionCommentAction } from "@/actions/discussionComment.actions";
 
 function key(discussionId: string) { return ["discussionComments", discussionId] as const; }
@@ -22,7 +22,11 @@ export function useCreateDiscussionComment(discussionId: string) {
       return createDiscussionCommentAction(discussionId, vars.content, vars.parentId);
     },
     onSuccess: (created) => {
+      // Update comments list
       qc.setQueryData<DiscussionComment[]>(key(discussionId), (prev) => ([...(prev || []), created]));
+      
+      // Refetch discussion data to get updated comment_count from database triggers
+      qc.invalidateQueries({ queryKey: ["discussion", discussionId] });
     },
   });
 }
@@ -43,15 +47,40 @@ export function useDeleteDiscussionComment(discussionId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { commentId: string }) => {
-      await deleteDiscussionCommentAction(vars.commentId);
+      return deleteDiscussionCommentAction(vars.commentId);
     },
     onMutate: async ({ commentId }) => {
       await qc.cancelQueries({ queryKey: key(discussionId) });
       const prev = qc.getQueryData<DiscussionComment[]>(key(discussionId));
-      if (prev) qc.setQueryData<DiscussionComment[]>(key(discussionId), prev.filter((c) => String(c.id) !== String(commentId)));
+      
+      // Optimistically remove from cache (will be restored if needed based on result)
+      if (prev) {
+        qc.setQueryData<DiscussionComment[]>(key(discussionId), 
+          prev.filter((c) => String(c.id) !== String(commentId))
+        );
+      }
+      
       return { prev } as { prev?: DiscussionComment[] };
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(key(discussionId), ctx.prev); },
+    onSuccess: (result, { commentId }) => {
+      if (result) {
+        // Soft delete: update cache with soft-deleted comment
+        qc.setQueryData<DiscussionComment[]>(key(discussionId), (prev) => {
+          if (!prev) return prev;
+          const filtered = prev.filter((c) => String(c.id) !== String(commentId));
+          return [...filtered, result];
+        });
+      } else {
+        // Hard delete: comment is already removed from cache in onMutate
+        // No additional action needed
+      }
+      
+      // Refetch discussion data to get updated comment_count from database triggers
+      qc.invalidateQueries({ queryKey: ["discussion", discussionId] });
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(key(discussionId), ctx.prev);
+    },
   });
 }
 

@@ -325,6 +325,7 @@ export interface DiscussionComment {
   is_edited: boolean;
   parent_id: string | null;
   vote_up_count: number;
+  deleted_at: string | null;
 }
 
 // Table: discussion_vote

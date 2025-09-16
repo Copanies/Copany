@@ -31,7 +31,7 @@ export default function DiscussionLabelChips({
   }
 
   return (
-    <div className={`flex flex-wrap gap-1 ${className}`}>
+    <div className={`flex flex-wrap gap-2 ${className}`}>
       {labels.map((label) => (
         <div
           key={label.id}

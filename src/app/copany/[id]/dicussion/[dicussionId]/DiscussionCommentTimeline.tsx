@@ -16,10 +16,7 @@ import type { DiscussionComment } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
-import {
-  ArrowUpIcon,
-  ChatBubbleBottomCenterIcon,
-} from "@heroicons/react/24/outline";
+import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
@@ -99,6 +96,7 @@ interface CommentNodeProps {
   isSubmitting: boolean;
   isLoggedIn: boolean;
   level: number;
+  isThisLevelLastComment: boolean;
 }
 
 function CommentNode({
@@ -119,6 +117,7 @@ function CommentNode({
   isSubmitting,
   isLoggedIn,
   level,
+  isThisLevelLastComment,
 }: CommentNodeProps) {
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.id ?? null;
@@ -129,11 +128,30 @@ function CommentNode({
   const author = comment.created_by ? userInfos[comment.created_by] : undefined;
   const indentLevel = Math.min(level, 6); // Maximum 6 levels of indentation
 
+  // Check if this comment has children
+  const hasChildren = useMemo(() => {
+    return allComments.some((c) => String(c.parent_id) === String(comment.id));
+  }, [allComments, comment.id]);
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-0 relative">
+      {!isThisLevelLastComment && level > 0 && (
+        <div className="absolute top-0 -bottom-2 left-[-12px] w-px bg-gray-200 dark:bg-gray-700" />
+      )}
+
       {/* Author info and actions */}
-      <div className="flex justify-between items-start">
-        <div className="flex items-center space-x-2">
+      <div className="flex justify-between items-start relative">
+        <div className="flex items-center space-x-2 relative z-10">
+          {/* Arc curve for nested comments */}
+          {level > 0 && (
+            <div
+              className="absolute left-[-12px] top-2 w-2 h-2 border-l-1 border-b-1 border-gray-200 dark:border-gray-700 rounded-bl-[8px]"
+              style={{
+                borderTopColor: "transparent",
+                borderRightColor: "transparent",
+              }}
+            />
+          )}
+
           {author?.avatar_url ? (
             <>
               <Image
@@ -141,7 +159,7 @@ function CommentNode({
                 alt={author.name || "User"}
                 width={32}
                 height={32}
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full relative z-10"
               />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {author.name}
@@ -149,7 +167,7 @@ function CommentNode({
             </>
           ) : (
             <>
-              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 relative z-10">
                 {(author?.name || "U")[0]?.toUpperCase()}
               </div>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -165,7 +183,8 @@ function CommentNode({
         {/* Edit/Delete Menu */}
         {isLoggedIn &&
           comment.created_by &&
-          String(comment.created_by) === String(currentUserId) && (
+          String(comment.created_by) === String(currentUserId) &&
+          !comment.deleted_at && (
             <Dropdown
               trigger={
                 <div className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 -m-1 cursor-pointer">
@@ -194,12 +213,20 @@ function CommentNode({
           )}
       </div>
 
-      <div className="flex flex-col gap-0 ml-4 border-l mt-1 border-gray-200 dark:border-gray-800">
+      <div className="flex flex-col gap-0 ml-10 relative">
+        {/* Vertical line from avatar center */}
+        {hasChildren && (
+          <div
+            className="absolute left-[-24px] top-1 -bottom-5 w-px bg-gray-200 dark:bg-gray-700"
+            style={{ left: "-24px" }}
+          />
+        )}
+
         {/* Content or editor */}
         {editingCommentId === String(comment.id) &&
         comment.created_by &&
         String(comment.created_by) === String(currentUserId) ? (
-          <div className="ml-6 mb-3 border border-gray-200 dark:border-gray-800 rounded-lg">
+          <div className="mb-3 border border-gray-200 dark:border-gray-800 rounded-lg">
             <div className="px-1 -mb-1">
               <MilkdownEditor
                 onContentChange={setEditingContent}
@@ -231,8 +258,14 @@ function CommentNode({
               </Button>
             </div>
           </div>
+        ) : comment.deleted_at ? (
+          <div className="-mt-2">
+            <div className="text-gray-500 dark:text-gray-400 italic py-2">
+              This comment has been deleted
+            </div>
+          </div>
         ) : (
-          <div className="pl-6 -mx-3 -mt-2">
+          <div className="-mx-3 -mt-2">
             <MilkdownEditor
               initialContent={comment.content || EMPTY_STRING}
               isReadonly={true}
@@ -242,33 +275,37 @@ function CommentNode({
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 pl-6">
-          <VoteButton
-            commentId={String(comment.id)}
-            initialVoteCount={comment.vote_up_count}
-            isLoggedIn={isLoggedIn}
-          />
-          <Button
-            onClick={() => setReplyingToCommentId(String(comment.id))}
-            variant="secondary"
-            size="sm"
-            disabled={!isLoggedIn}
-            disableTooltipConent={!isLoggedIn ? "Sign in to reply" : undefined}
-          >
-            <div className="flex items-center gap-2">
-              <ChatBubbleBottomCenterIcon
-                className="w-4 h-4"
-                strokeWidth={1.5}
-              />
-              <span>Reply</span>
-            </div>
-          </Button>
-        </div>
+        {/* Action buttons - only show for non-deleted comments */}
+        {!comment.deleted_at && (
+          <div className="flex items-center gap-2">
+            <VoteButton
+              commentId={String(comment.id)}
+              initialVoteCount={comment.vote_up_count}
+              isLoggedIn={isLoggedIn}
+            />
+            <Button
+              onClick={() => setReplyingToCommentId(String(comment.id))}
+              variant="secondary"
+              size="sm"
+              disabled={!isLoggedIn}
+              disableTooltipConent={
+                !isLoggedIn ? "Sign in to reply" : undefined
+              }
+            >
+              <div className="flex items-center gap-2">
+                <ChatBubbleBottomCenterIcon
+                  className="w-4 h-4"
+                  strokeWidth={1.5}
+                />
+                <span>Reply</span>
+              </div>
+            </Button>
+          </div>
+        )}
 
         {/* Reply input */}
         {replyingToCommentId === String(comment.id) && (
-          <div className="ml-6 mt-3 border border-gray-200 dark:border-gray-800 rounded-lg">
+          <div className="mt-3 border border-gray-200 dark:border-gray-800 rounded-lg">
             <div className="h-fit px-1">
               <MilkdownEditor
                 key={`reply-${comment.id}`}
@@ -315,46 +352,49 @@ function CommentNode({
             </div>
           </div>
         )}
+      </div>
 
-        {/* Child comments */}
-        <div className="flex flex-col gap-0 pt-3">
-          {(() => {
-            const directChildren = buildCommentTree(
-              allComments,
-              String(comment.id)
-            );
-            return (
-              directChildren.length > 0 && (
-                <div className={`${indentLevel < 6 ? "pl-3" : "pl-2"}`}>
-                  <div className="space-y-0">
-                    {directChildren.map((child) => (
-                      <CommentNode
-                        key={child.id}
-                        comment={child}
-                        allComments={allComments}
-                        userInfos={userInfos}
-                        editingCommentId={editingCommentId}
-                        setEditingCommentId={setEditingCommentId}
-                        editingContent={editingContent}
-                        setEditingContent={setEditingContent}
-                        replyingToCommentId={replyingToCommentId}
-                        setReplyingToCommentId={setReplyingToCommentId}
-                        replyContent={replyContent}
-                        setReplyContent={setReplyContent}
-                        onSubmitReply={onSubmitReply}
-                        onSaveEdit={onSaveEdit}
-                        onDelete={onDelete}
-                        isSubmitting={isSubmitting}
-                        isLoggedIn={isLoggedIn}
-                        level={level + 1}
-                      />
-                    ))}
-                  </div>
+      {/* Child comments */}
+      <div className="flex flex-col gap-0 pt-3 ml-4">
+        {(() => {
+          const directChildren = buildCommentTree(
+            allComments,
+            String(comment.id)
+          );
+          return (
+            directChildren.length > 0 && (
+              <div className="pl-3">
+                <div className="space-y-0">
+                  {directChildren.map((child, index) => (
+                    <CommentNode
+                      key={child.id}
+                      comment={child}
+                      allComments={allComments}
+                      userInfos={userInfos}
+                      editingCommentId={editingCommentId}
+                      setEditingCommentId={setEditingCommentId}
+                      editingContent={editingContent}
+                      setEditingContent={setEditingContent}
+                      replyingToCommentId={replyingToCommentId}
+                      setReplyingToCommentId={setReplyingToCommentId}
+                      replyContent={replyContent}
+                      setReplyContent={setReplyContent}
+                      onSubmitReply={onSubmitReply}
+                      onSaveEdit={onSaveEdit}
+                      onDelete={onDelete}
+                      isSubmitting={isSubmitting}
+                      isLoggedIn={isLoggedIn}
+                      level={level + 1}
+                      isThisLevelLastComment={
+                        index === directChildren.length - 1
+                      }
+                    />
+                  ))}
                 </div>
-              )
-            );
-          })()}
-        </div>
+              </div>
+            )
+          );
+        })()}
       </div>
     </div>
   );
@@ -396,8 +436,6 @@ export default function DiscussionCommentTimeline({
     null
   );
   const [replyContent, setReplyContent] = useState<string>("");
-  const [newCommentContent, setNewCommentContent] = useState<string>("");
-  const [newCommentKey, setNewCommentKey] = useState<number>(Math.random());
 
   // Collect user IDs from comments
   const userIds = useMemo(() => {
@@ -486,10 +524,9 @@ export default function DiscussionCommentTimeline({
     deleteCommentMutation.isPending;
 
   return (
-    <div className="flex flex-col gap-1">
-      {/* Comments */}
+    <div className="flex flex-col gap-1 pb-[200px]">
       <div className="flex flex-col gap-1">
-        {rootComments.map((comment) => (
+        {rootComments.map((comment, index) => (
           <CommentNode
             key={comment.id}
             comment={comment}
@@ -509,62 +546,9 @@ export default function DiscussionCommentTimeline({
             isSubmitting={isSubmitting}
             isLoggedIn={!!currentUser}
             level={0}
+            isThisLevelLastComment={index === rootComments.length - 1}
           />
         ))}
-      </div>
-
-      {/* New comment composer */}
-      <div className="border rounded-lg border-gray-200 dark:border-gray-800 flex flex-col h-fit">
-        <div className="h-fit px-1">
-          <MilkdownEditor
-            key={`${newCommentKey}-${currentUser ? "logged-in" : "logged-out"}`}
-            onContentChange={setNewCommentContent}
-            initialContent=""
-            maxSizeTitle="sm"
-            placeholder={
-              currentUser
-                ? "Leave a comment..."
-                : "Sign in to join the discussion"
-            }
-            isReadonly={!currentUser}
-          />
-        </div>
-        <div className="flex justify-end p-2">
-          {currentUser ? (
-            <Button
-              onClick={async () => {
-                if (!newCommentContent.trim()) return;
-                try {
-                  await createCommentMutation.mutateAsync({
-                    content: newCommentContent,
-                  });
-                  setNewCommentContent("");
-                  setNewCommentKey(Math.random());
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              disabled={
-                createCommentMutation.isPending || !newCommentContent.trim()
-              }
-              shape="square"
-              size="sm"
-              className="!p-1"
-            >
-              <ArrowUpIcon className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button
-              disabled
-              shape="square"
-              size="sm"
-              className="!p-1"
-              disableTooltipConent="Sign in to join the discussion"
-            >
-              <ArrowUpIcon className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );
