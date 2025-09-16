@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { renderUserLabel } from "./IssueAssigneeSelector";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { formatRelativeTime } from "@/utils/time";

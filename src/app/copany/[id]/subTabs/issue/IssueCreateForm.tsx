@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 
 import { useCreateIssue } from "@/hooks/issues";
 import {
@@ -11,11 +11,11 @@ import {
   CopanyContributor,
   AssigneeUser,
 } from "@/types/database.types";
-import IssueStateSelector from "@/components/IssueStateSelector";
-import IssuePrioritySelector from "@/components/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
+import IssueStateSelector from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
-import IssueLevelSelector from "@/components/IssueLevelSelector";
+import IssueLevelSelector from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
 

@@ -9,16 +9,16 @@ import {
   IssueState,
   AssigneeUser,
 } from "@/types/database.types";
-import IssueStateSelector from "@/components/IssueStateSelector";
-import IssuePrioritySelector from "@/components/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
+import IssueStateSelector from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
-import { renderStateLabel } from "@/components/IssueStateSelector";
+import { renderStateLabel } from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
-import IssueLevelSelector from "@/components/IssueLevelSelector";
-import IssueCreateForm from "@/components/IssueCreateForm";
+import IssueLevelSelector from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
+import IssueCreateForm from "@/app/copany/[id]/subTabs/issue/IssueCreateForm";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
@@ -26,7 +26,7 @@ import Image from "next/image";
 import type { AssignmentRequest } from "@/types/database.types";
 import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
 
-import AssignmentRequestModal from "@/components/AssignmentRequestModal";
+import AssignmentRequestModal from "@/app/copany/[id]/subTabs/issue/AssignmentRequestModal";
 import { useIssues, useDeleteIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/currentUser";

@@ -2,10 +2,10 @@
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import AssetLinksSection from "@/components/AssetLinksSection";
-import ContributorAvatarStack from "@/components/ContributorAvatarStack";
+import AssetLinksSection from "@/components/copany/AssetLinksSection";
+import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
-import StarButton from "@/components/StarButton";
+import StarButton from "@/components/copany/StarButton";
 import { useCurrentUser } from "@/hooks/currentUser";
 
 interface CopanyListViewProps {

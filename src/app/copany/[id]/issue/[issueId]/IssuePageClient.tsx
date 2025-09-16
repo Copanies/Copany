@@ -9,19 +9,19 @@ import {
   AssigneeUser,
 } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import IssueStateSelector from "@/components/IssueStateSelector";
-import IssuePrioritySelector from "@/components/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/components/IssueAssigneeSelector";
-import { renderUserLabel } from "@/components/IssueAssigneeSelector";
-import IssueEditorView from "@/components/IssueEditorView";
+import IssueStateSelector from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
+import { renderUserLabel } from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
+import IssueEditorView from "@/app/copany/[id]/subTabs/issue/IssueEditorView";
 
-import AssignmentRequestModal from "@/components/AssignmentRequestModal";
-import IssueActivityTimeline from "@/components/IssueActivityTimeline";
+import AssignmentRequestModal from "@/app/copany/[id]/subTabs/issue/AssignmentRequestModal";
+import IssueActivityTimeline from "@/app/copany/[id]/subTabs/issue/IssueActivityTimeline";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
 
-import IssueLevelSelector from "@/components/IssueLevelSelector";
+import IssueLevelSelector from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
 import {
   ChevronLeftIcon,
   ArrowRightIcon,

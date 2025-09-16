@@ -22,7 +22,7 @@ import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { EMPTY_ARRAY, EMPTY_OBJECT, EMPTY_STRING } from "@/utils/constants";
 
 interface DiscussionCommentTimelineProps {

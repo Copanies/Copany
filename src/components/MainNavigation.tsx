@@ -9,7 +9,6 @@ import { createClient } from "@/utils/supabase/client";
 import { signOut } from "@/actions/auth.actions";
 import Button from "./commons/Button";
 import Dropdown from "./commons/Dropdown";
-import CreateCopanyButton from "./CreateCopanyButton";
 import NotificationBell from "./NotificationBell";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";

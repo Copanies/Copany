@@ -2,7 +2,7 @@
 
 import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
-import Button from "./commons/Button";
+import Button from "../commons/Button";
 import { useStarState, useToggleStar } from "@/hooks/star";
 
 type Size = "sm" | "md";

@@ -21,15 +21,15 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
 import { formatRelativeTime } from "@/utils/time";
-import DiscussionCreateForm from "@/components/DiscussionCreateForm";
-import DiscussionLabelChips from "@/components/DiscussionLabelChips";
+import DiscussionCreateForm from "@/app/copany/[id]/subTabs/discussion/DiscussionCreateForm";
+import DiscussionLabelChips from "@/app/copany/[id]/subTabs/discussion/DiscussionLabelChips";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
 
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 

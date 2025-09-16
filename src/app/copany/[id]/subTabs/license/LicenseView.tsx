@@ -11,7 +11,7 @@ import { Copany } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useRouter } from "next/navigation";
-import CoslLicenseTip from "@/components/CoslLicenseTip";
+import CoslLicenseTip from "@/components/copany/CoslLicenseTip";
 
 interface LicenseViewProps {
   githubUrl?: string | null;

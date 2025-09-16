@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { updateIssueTitleAndDescriptionAction } from "@/actions/issue.actions";
 import { IssueWithAssignee } from "@/types/database.types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import IssueConflictResolverModal, {
   type ConflictPayload,
-} from "@/components/IssueConflictResolverModal";
+} from "@/app/copany/[id]/subTabs/issue/IssueConflictResolverModal";
 
 type UpdaterInfo = {
   id: string;

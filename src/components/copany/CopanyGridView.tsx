@@ -2,13 +2,13 @@
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import AssetLinksSection from "@/components/AssetLinksSection";
-import ContributorAvatarStack from "@/components/ContributorAvatarStack";
+import AssetLinksSection from "@/components/copany/AssetLinksSection";
+import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
 import LicenseBadge from "@/components/commons/LicenseBadge";
-import StarButton from "@/components/StarButton";
+import StarButton from "@/components/copany/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { EMPTY_STRING } from "@/utils/constants";
 
 interface CopanyGridViewProps {

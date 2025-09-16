@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import MarkdownView from "@/components/MarkdownView";
+import MarkdownView from "@/components/commons/MarkdownView";
 import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";

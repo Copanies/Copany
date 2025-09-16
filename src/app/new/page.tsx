@@ -21,7 +21,7 @@ import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 
 export default function New() {
   const router = useRouter();

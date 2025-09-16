@@ -1,38 +1,26 @@
 "use client";
-
 import { useState, useRef, useCallback, useEffect } from "react";
-import MilkdownEditor from "@/components/MilkdownEditor";
-import { useUpdateDiscussion } from "@/hooks/discussions";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import { useCreateDiscussion } from "@/hooks/discussions";
 import Button from "@/components/commons/Button";
 import { EMPTY_STRING } from "@/utils/constants";
 import type { Discussion } from "@/types/database.types";
-import DiscussionLabelSelector from "@/components/DiscussionLabelSelector";
+import DiscussionLabelSelector from "@/app/copany/[id]/subTabs/discussion/DiscussionLabelSelector";
 
-interface DiscussionEditFormProps {
-  copanyId: string;
-  discussion: Discussion;
-  onDiscussionUpdated: (updatedDiscussion: Discussion) => void;
-  onClose: () => void;
-}
-
-export default function DiscussionEditForm({
+export default function DiscussionCreateForm({
   copanyId,
-  discussion,
-  onDiscussionUpdated,
+  onDiscussionCreated,
   onClose,
-}: DiscussionEditFormProps) {
-  const [title, setTitle] = useState<string>(discussion.title);
-  const [description, setDescription] = useState<string>(
-    discussion.description || EMPTY_STRING
-  );
-  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>(
-    discussion.labels || []
-  );
+}: {
+  copanyId: string;
+  onDiscussionCreated: (newDiscussion: Discussion) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState<string>(EMPTY_STRING);
+  const [description, setDescription] = useState<string>(EMPTY_STRING);
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const updateDiscussion = useUpdateDiscussion(copanyId);
-  const [descriptionInitial, setDescriptionInitial] = useState(
-    discussion.description
-  );
+  const createDiscussion = useCreateDiscussion(copanyId);
 
   const editorDivRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -63,20 +51,26 @@ export default function DiscussionEditForm({
     setIsSubmitting(true);
 
     try {
-      const updatedDiscussion = await updateDiscussion.mutateAsync({
-        discussionId: discussion.id,
-        updates: {
-          title: title.trim(),
-          description: description || null,
-          labels: selectedLabelIds,
-        },
+      const newDiscussion = await createDiscussion.mutateAsync({
+        title: title.trim(),
+        description: description || null,
+        labels: selectedLabelIds,
       });
 
-      // Notify parent component
-      onDiscussionUpdated(updatedDiscussion);
+      // Reset form
+      setTitle(EMPTY_STRING);
+      setDescription(EMPTY_STRING);
+      setSelectedLabelIds([]);
+
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+
+      // Notify parent component to refresh data and close modal
+      onDiscussionCreated(newDiscussion);
       onClose();
     } catch (error) {
-      console.error("Error updating discussion:", error);
+      console.error("Error creating discussion:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -110,9 +104,8 @@ export default function DiscussionEditForm({
           />
           <div ref={editorDivRef}>
             <MilkdownEditor
-              initialContent={descriptionInitial ?? EMPTY_STRING}
               onContentChange={handleContentChange}
-              placeholder="Description (optional)"
+              placeholder="Add description..."
               className="min-h-[200px]"
             />
           </div>
@@ -127,21 +120,36 @@ export default function DiscussionEditForm({
             />
           </div>
         </div>
-        <div className="flex justify-end gap-2 px-3 py-3 border-t border-gray-200 dark:border-gray-800">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
+        <div className="flex justify-end px-3 py-3 border-t border-gray-200 dark:border-gray-800">
           <Button
             type="submit"
             variant="primary"
             disabled={!title.trim() || isSubmitting}
           >
-            {isSubmitting ? "Updating..." : "Update Discussion"}
+            <div>
+              {isSubmitting ? (
+                <div className="text-gray-500 dark:text-gray-400">
+                  Creating Discussion
+                  <span className="inline-block">
+                    <span className="animate-pulse">.</span>
+                    <span
+                      className="animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    >
+                      .
+                    </span>
+                    <span
+                      className="animate-pulse"
+                      style={{ animationDelay: "0.4s" }}
+                    >
+                      .
+                    </span>
+                  </span>
+                </div>
+              ) : (
+                "Create Discussion"
+              )}
+            </div>
           </Button>
         </div>
       </form>

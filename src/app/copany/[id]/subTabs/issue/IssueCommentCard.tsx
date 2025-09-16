@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import { ArrowTurnUpLeftIcon } from "@heroicons/react/24/outline";

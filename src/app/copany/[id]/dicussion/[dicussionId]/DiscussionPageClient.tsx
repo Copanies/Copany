@@ -23,14 +23,14 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
-import DiscussionLabelChips from "@/components/DiscussionLabelChips";
+import DiscussionLabelChips from "@/app/copany/[id]/subTabs/discussion/DiscussionLabelChips";
 import DiscussionCommentTimeline from "./DiscussionCommentTimeline";
 import { formatRelativeTime } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
-import MilkdownEditor from "@/components/MilkdownEditor";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
-import DiscussionEditForm from "@/components/DiscussionEditForm";
+import DiscussionEditForm from "@/app/copany/[id]/subTabs/discussion/DiscussionEditForm";
 
 interface DiscussionPageClientProps {
   copanyId: string;

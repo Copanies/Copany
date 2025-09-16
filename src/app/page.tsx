@@ -1,15 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import CopanyGridView from "@/app/subviews/CopanyGridView";
+import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/MainNavigation";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { SquaresPlusIcon } from "@heroicons/react/24/outline";
-import CreateCopanyButton from "@/components/CreateCopanyButton";
-import Image from "next/image";
-import copanyLogo from "@/assets/copany_logo.svg";
-import copanyLogoDark from "@/assets/copany_logo_dark.svg";
 import { useRouter } from "next/navigation";
 
 /**
@@ -41,9 +37,6 @@ export default function Home() {
                 title="No copanies yet"
                 description="Create a new copany to get started."
               />
-              <div className="-mt-3">
-                <CreateCopanyButton size="lg" />
-              </div>
             </div>
           )}
         </div>

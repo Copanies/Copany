@@ -1,6 +1,6 @@
 "use client";
 
-import CopanyGridView from "@/app/subviews/CopanyGridView";
+import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/MainNavigation";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";

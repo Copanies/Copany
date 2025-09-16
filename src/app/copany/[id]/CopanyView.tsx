@@ -3,20 +3,20 @@
 import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import TabView from "@/components/commons/TabView";
-import ReadmeView from "./subviews/ReadmeView";
-import LicenseView from "./subviews/LicenseView";
+import ReadmeView from "./subTabs/readme/ReadmeView";
+import LicenseView from "./subTabs/license/LicenseView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
-import CooperateView from "./subviews/CooperateView";
-import ContributionView from "./subviews/ContributionView";
-import FinanceView from "./subviews/finance/FinanceView";
-import SettingsView from "./subviews/settings/SettingsView";
-import DiscussionView from "./subviews/DiscussionView";
-import AssetLinksSection from "@/components/AssetLinksSection";
+import CooperateView from "./subTabs/CooperateView";
+import ContributionView from "./subTabs/contribution/ContributionView";
+import FinanceView from "./subTabs/finance/FinanceView";
+import SettingsView from "./subTabs/settings/SettingsView";
+import DiscussionView from "./subTabs/discussion/DiscussionView";
+import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
-import StarButton from "@/components/StarButton";
+import StarButton from "@/components/copany/StarButton";
 import {
   BookOpenIcon,
   ScaleIcon,
