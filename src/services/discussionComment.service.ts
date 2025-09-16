@@ -8,7 +8,7 @@ export class DiscussionCommentService {
       .from("discussion_comment")
       .select("*")
       .eq("discussion_id", discussionId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
     if (error) {
       console.error("Error fetching discussion comments:", error);
       throw new Error(`Failed to fetch discussion comments: ${error.message}`);

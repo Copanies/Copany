@@ -44,7 +44,7 @@ export function useCreateDiscussion(copanyId: string) {
       });
     },
     onSuccess: (created) => {
-      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => ([...(prev || []), created]));
+      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => ([created, ...(prev || [])]));
     },
   });
 }

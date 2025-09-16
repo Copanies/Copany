@@ -8,7 +8,7 @@ export class DiscussionService {
       .from("discussion")
       .select("*")
       .eq("copany_id", copanyId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
     if (error) {
       console.error("Error fetching discussions:", error);
       throw new Error(`Failed to fetch discussions: ${error.message}`);

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import logo from "@/app/favicon.ico";
+import copany_logo from "@/assets/copany_logo.svg";
+import copany_logo_dark from "@/assets/copany_logo_dark.svg";
 import { useRouter, usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useCopany } from "@/hooks/copany";
@@ -14,13 +15,14 @@ import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 export default function MainNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { data: user, isLoading: loading } = useCurrentUser();
-
+  const isDarkMode = useDarkMode();
   const queryClientRef = useRef(queryClient);
   useEffect(() => {
     queryClientRef.current = queryClient;
@@ -181,7 +183,7 @@ export default function MainNavigation() {
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
           className="cursor-pointer rounded-md"
-          src={logo}
+          src={isDarkMode ? copany_logo_dark : copany_logo}
           alt="logo"
           width={36}
           height={36}
@@ -210,7 +212,8 @@ export default function MainNavigation() {
 
       {/* Center section - Navigation links (only on home and stars pages) */}
       {pathname === "/" || pathname === "/stars" ? (
-        <div className="absolute left-0 ml-18 sm:ml-6 lg:ml-8 sm:left-1/2 sm:transform sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
+        // absolute left-1/2 transform -translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8
+        <div className="absolute left-0 ml-18 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
           <Link
             href="/"
             className={`relative cursor-pointer flex-shrink-0 text-base ${

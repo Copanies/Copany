@@ -45,7 +45,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
       <div className="flex flex-col gap-4 h-full">
         <div className="flex flex-col gap-2">
           {/* Different layouts based on whether cover image exists */}
-          <div className="relative flex flex-col items-center justify-center gap-2 p-5 rounded-[20px] overflow-hidden aspect-[1.8]">
+          <div className="relative flex flex-col items-center justify-center gap-2 px-5 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
             {copany.cover_image_url && copany.logo_url ? (
               <>
                 {/* Cover image layout: fill the space, no blur, logo in top-left */}
@@ -117,36 +117,35 @@ function CopanyCard({ copany }: CopanyCardProps) {
             ) : (
               <>
                 {/* No logo layout: show Begin idea discussion description with #FBF9F5 background */}
-                <div className="absolute inset-0 bg-[#FBF9F5] dark:bg-[#FBF9F5]"></div>
-                <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
-                  <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
-                    <MilkdownEditor
-                      initialContent={
-                        beginIdeaDiscussion?.description || "Loading..."
-                      }
-                      isReadonly={true}
-                      maxSizeTitle="sm"
-                      placeholder={EMPTY_STRING}
-                      className="w-full"
-                    />
+                <div
+                  className={`absolute inset-0 bg-[#FBF9F5] dark:bg-[#222221] ${
+                    beginIdeaDiscussion?.description ? "" : "animate-pulse"
+                  } `}
+                ></div>
+                {beginIdeaDiscussion?.description && (
+                  <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
+                    <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
+                      <MilkdownEditor
+                        initialContent={
+                          beginIdeaDiscussion?.description || "Loading..."
+                        }
+                        isReadonly={true}
+                        maxSizeTitle="sm"
+                        placeholder={EMPTY_STRING}
+                        className="w-full"
+                      />
+                    </div>
+                    {/* Gradient shadow overlay at the bottom - fixed position */}
+                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
+                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
                   </div>
-                  {/* Gradient shadow overlay at the bottom - fixed position */}
-                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] to-transparent pointer-events-none z-20"></div>
-                </div>
+                )}
               </>
             )}
           </div>
           <div className="flex flex-row items-center gap-2">
             <div className="font-semibold text-lg">{copany.name}</div>
             <AssetLinksSection copany={copany} size="sm" />
-            {/* {copany.license && (
-              <div className="hidden sm:block">
-                <LicenseBadge
-                  license={copany.license}
-                  isOwner={copany.created_by === currentUser?.id}
-                />
-              </div>
-            )} */}
             <div className="ml-auto flex items-center gap-2">
               <ContributorAvatarStack copany={copany} size="lg" />
               <StarButton

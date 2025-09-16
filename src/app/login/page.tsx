@@ -133,7 +133,7 @@ export default function Login() {
               className="flex flex-col items-start gap-4 w-full"
             >
               <div className="flex flex-col items-start gap-2.5 w-full">
-                <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                   <input
                     type="email"
                     id="email"
@@ -149,7 +149,7 @@ export default function Login() {
               </div>
 
               <div className="flex flex-col items-start gap-2.5 w-full">
-                <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                   <input
                     type="password"
                     id="password"
@@ -218,7 +218,7 @@ export default function Login() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"

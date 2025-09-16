@@ -14,6 +14,7 @@ import {
 } from "@/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { resendVerificationEmail } from "@/actions/auth.actions";
+import Link from "next/link";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
@@ -184,7 +185,7 @@ export default function Signup() {
                       isGitHubLoading ||
                       isGoogleLoading
                     }
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isResendLoading
                       ? "Sending..."
@@ -205,7 +206,7 @@ export default function Signup() {
                 className="flex flex-col items-start gap-4 w-full"
               >
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
                       type="text"
                       id="name"
@@ -223,7 +224,7 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
                       type="email"
                       id="email"
@@ -241,7 +242,7 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
                       type="password"
                       id="password"
@@ -259,7 +260,7 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
                       type="password"
                       id="confirmPassword"
@@ -363,7 +364,7 @@ export default function Signup() {
                 isGitHubLoading ||
                 isGoogleLoading
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"

@@ -350,6 +350,339 @@ export default function New() {
     }
   };
 
+  const existRepoForm = () => {
+    return (
+      <>
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="github-repo"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            Select GitHub repository
+          </label>
+
+          <div className="flex items-center gap-2.5 w-full">
+            <div className="relative flex-1" ref={dropdownRef}>
+              {isGitHubConnected ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDropdownOpen(!isDropdownOpen);
+                    }}
+                    className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                  >
+                    {getSelectedRepoDisplay() ? (
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={getSelectedRepoDisplay()!.avatarUrl}
+                          alt="Repository Owner Avatar"
+                          width={20}
+                          height={20}
+                          className="rounded-sm w-5 h-5"
+                        />
+                        <span>{getSelectedRepoDisplay()!.fullName}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Select repo
+                      </span>
+                    )}
+
+                    <ChevronDownIcon
+                      className={`w-4 h-4 text-gray-900 dark:text-gray-100 ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <div
+                      className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-120 overflow-y-auto"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {status === "pending" && (
+                        <div className="py-8">
+                          <LoadingView type="label" delay={500} />
+                        </div>
+                      )}
+                      {status === "error" && (
+                        <div className="px-4 py-3 text-red-600 dark:text-red-400">
+                          {repoError?.message || "Failed to load repositories"}
+                        </div>
+                      )}
+                      {status === "success" && repoData?.data && (
+                        <>
+                          {(repoData.data || EMPTY_ARRAY).length === 0 ? (
+                            <div className="p-4">
+                              <EmptyPlaceholderView
+                                icon={
+                                  <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
+                                }
+                                title="No available public repositories"
+                                description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
+                                buttonTitle="Create GitHub Repository"
+                                buttonIcon={
+                                  <ArrowUpRightIcon className="w-4 h-4" />
+                                }
+                                buttonAction={() =>
+                                  window.open(
+                                    "https://github.com/new",
+                                    "_blank"
+                                  )
+                                }
+                                size="md"
+                              />
+                            </div>
+                          ) : (
+                            (repoData.data || EMPTY_ARRAY).map((repo) => (
+                              <div
+                                key={repo.id}
+                                className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRepoSelection(repo.id);
+                                }}
+                              >
+                                <Image
+                                  src={repo.owner.avatar_url}
+                                  alt={`${repo.owner.login} Avatar`}
+                                  width={24}
+                                  height={24}
+                                  className="w-6 h-6 rounded-sm"
+                                />
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {repo.full_name}
+                                  </span>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                    {repo.description || "No description"}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800">
+                  <span>Please connect with GitHub first</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleConnectGitHub}
+            disabled={isGitHubConnected}
+            className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Image
+              src={isDarkMode ? githubIconBlack : githubIconWhite}
+              alt="GitHub Logo"
+              className="w-4 h-4"
+              width={16}
+              height={16}
+            />
+
+            <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
+              {isGitHubConnected ? "Connected" : "Connect with GitHub"}
+            </span>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="copany-name"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            Copany name
+          </label>
+
+          <div className="flex flex-col items-start gap-2.5 w-full">
+            <input
+              type="text"
+              id="copany-name"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Name"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 dark:bg-gray-800"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="copany-description"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            Copany description
+          </label>
+
+          <div className="flex flex-col items-start gap-2.5 w-full">
+            <textarea
+              id="copany-description"
+              value={companyDescription}
+              onChange={(e) => setCompanyDescription(e.target.value)}
+              placeholder="Description"
+              className="w-full h-24 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 resize-none bg-white dark:bg-gray-800"
+            />
+          </div>
+        </div>
+
+        {/* Logo 上传部分 */}
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label className="text-sm font-normal text-gray-900 dark:text-gray-100">
+            Copany logo
+          </label>
+
+          <div className="flex flex-col items-center space-y-3 w-full">
+            {/* Logo 展示区域 */}
+            <div className="relative">
+              {(() => {
+                const currentLogoUrl = uploadedLogoUrl || getDefaultLogoUrl();
+                return currentLogoUrl ? (
+                  <div className="relative w-24 h-24">
+                    {(isUploading || isImageLoading) && (
+                      <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10"></div>
+                    )}
+                    <Image
+                      src={currentLogoUrl}
+                      alt="Copany Logo"
+                      width={96}
+                      height={96}
+                      className="w-24 h-24 rounded-lg border border-gray-300 dark:border-gray-700"
+                      onLoad={() => setIsImageLoading(false)}
+                      onError={() => setIsImageLoading(false)}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                    <span className="text-gray-400 text-sm">No Logo</span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 上传按钮 */}
+            <div className="flex flex-col items-center w-fit space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                onChange={handleLogoFileChange}
+                className="hidden"
+              />
+
+              <Button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || isImageLoading || !getSelectedRepo()}
+                size="sm"
+                variant="secondary"
+              >
+                {isUploading || isImageLoading
+                  ? "Uploading..."
+                  : "Upload new picture"}
+              </Button>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                PNG, JPG, JPEG, GIF, WebP • Max 1MB
+              </p>
+
+              {/* 错误提示 */}
+              {uploadError && (
+                <div className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  const newIdeaForm = () => {
+    return (
+      <>
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="idea-summary"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            One-line description of this idea
+          </label>
+
+          <div className="flex flex-col items-start gap-2.5 w-full">
+            <input
+              type="text"
+              id="idea-summary"
+              value={ideaSummary}
+              onChange={(e) => setIdeaSummary(e.target.value)}
+              placeholder="New idea"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 dark:bg-gray-800"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="idea-description"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            Describe this idea in detail
+          </label>
+
+          <div className="flex flex-col items-start gap-2.5 w-full">
+            <div
+              ref={editorDivRef}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:bg-gray-800"
+            >
+              <MilkdownEditor
+                initialContent={`* *What is the problem you want to solve?*
+
+<br />
+
+* *If you want to do a minimum viable product (MVP), how would you do it?*
+
+`}
+                onContentChange={handleIdeaDescriptionChange}
+                placeholder="Description"
+                className="min-h-[96px]"
+                maxSizeTitle="sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start gap-3 w-full">
+          <label
+            htmlFor="product-name"
+            className="text-sm font-normal text-gray-900 dark:text-gray-100"
+          >
+            Product name
+          </label>
+
+          <div className="flex flex-col items-start gap-2.5 w-full">
+            <input
+              type="text"
+              id="product-name"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              placeholder="Name"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 dark:bg-gray-800"
+            />
+          </div>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
@@ -410,346 +743,7 @@ export default function New() {
                 </div>
               </fieldset>
 
-              {projectType === "existing" ? (
-                <>
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="github-repo"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      Select GitHub repository
-                    </label>
-
-                    <div className="flex items-center gap-2.5 w-full">
-                      <div className="relative flex-1" ref={dropdownRef}>
-                        {isGitHubConnected ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsDropdownOpen(!isDropdownOpen);
-                              }}
-                              className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                            >
-                              {getSelectedRepoDisplay() ? (
-                                <div className="flex items-center gap-2">
-                                  <Image
-                                    src={getSelectedRepoDisplay()!.avatarUrl}
-                                    alt="Repository Owner Avatar"
-                                    width={20}
-                                    height={20}
-                                    className="rounded-sm w-5 h-5"
-                                  />
-                                  <span>
-                                    {getSelectedRepoDisplay()!.fullName}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  Select repo
-                                </span>
-                              )}
-
-                              <ChevronDownIcon
-                                className={`w-4 h-4 text-gray-900 dark:text-gray-100 ${
-                                  isDropdownOpen ? "rotate-180" : ""
-                                }`}
-                              />
-                            </button>
-                            {isDropdownOpen && (
-                              <div
-                                className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {status === "pending" && (
-                                  <div className="py-8">
-                                    <LoadingView type="label" delay={500} />
-                                  </div>
-                                )}
-                                {status === "error" && (
-                                  <div className="px-4 py-3 text-red-600 dark:text-red-400">
-                                    {repoError?.message ||
-                                      "Failed to load repositories"}
-                                  </div>
-                                )}
-                                {status === "success" && repoData?.data && (
-                                  <>
-                                    {(repoData.data || EMPTY_ARRAY).length ===
-                                    0 ? (
-                                      <div className="p-4">
-                                        <EmptyPlaceholderView
-                                          icon={
-                                            <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
-                                          }
-                                          title="No available public repositories"
-                                          description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                                          buttonTitle="Create GitHub Repository"
-                                          buttonIcon={
-                                            <ArrowUpRightIcon className="w-4 h-4" />
-                                          }
-                                          buttonAction={() =>
-                                            window.open(
-                                              "https://github.com/new",
-                                              "_blank"
-                                            )
-                                          }
-                                          size="md"
-                                        />
-                                      </div>
-                                    ) : (
-                                      (repoData.data || EMPTY_ARRAY).map(
-                                        (repo) => (
-                                          <div
-                                            key={repo.id}
-                                            className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleRepoSelection(repo.id);
-                                            }}
-                                          >
-                                            <Image
-                                              src={repo.owner.avatar_url}
-                                              alt={`${repo.owner.login} Avatar`}
-                                              width={24}
-                                              height={24}
-                                              className="w-6 h-6 rounded-sm"
-                                            />
-                                            <div className="flex flex-col flex-1 min-w-0">
-                                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                {repo.full_name}
-                                              </span>
-                                              <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                                {repo.description ||
-                                                  "No description"}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )
-                                      )
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
-                            <span>Please connect with GitHub first</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleConnectGitHub}
-                      disabled={isGitHubConnected}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Image
-                        src={isDarkMode ? githubIconBlack : githubIconWhite}
-                        alt="GitHub Logo"
-                        className="w-4 h-4"
-                        width={16}
-                        height={16}
-                      />
-
-                      <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-                        {isGitHubConnected
-                          ? "Connected"
-                          : "Connect with GitHub"}
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="company-name"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      Copany name
-                    </label>
-
-                    <div className="flex flex-col items-start gap-2.5 w-full">
-                      <input
-                        type="text"
-                        id="company-name"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Name"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="company-description"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      Copany description
-                    </label>
-
-                    <div className="flex flex-col items-start gap-2.5 w-full">
-                      <textarea
-                        id="company-description"
-                        value={companyDescription}
-                        onChange={(e) => setCompanyDescription(e.target.value)}
-                        placeholder="Description"
-                        className="w-full h-24 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 resize-none bg-white dark:bg-gray-800"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Logo 上传部分 */}
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                      Copany logo
-                    </label>
-
-                    <div className="flex flex-col items-center space-y-3 w-full">
-                      {/* Logo 展示区域 */}
-                      <div className="relative">
-                        {(() => {
-                          const currentLogoUrl =
-                            uploadedLogoUrl || getDefaultLogoUrl();
-                          return currentLogoUrl ? (
-                            <div className="relative w-24 h-24">
-                              {(isUploading || isImageLoading) && (
-                                <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-lg flex items-center justify-center z-10"></div>
-                              )}
-                              <Image
-                                src={currentLogoUrl}
-                                alt="Copany Logo"
-                                width={96}
-                                height={96}
-                                className="w-24 h-24 rounded-lg border border-gray-300 dark:border-gray-700"
-                                onLoad={() => setIsImageLoading(false)}
-                                onError={() => setIsImageLoading(false)}
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                              <span className="text-gray-400 text-sm">
-                                No Logo
-                              </span>
-                            </div>
-                          );
-                        })()}
-                      </div>
-
-                      {/* 上传按钮 */}
-                      <div className="flex flex-col items-center w-fit space-y-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                          onChange={handleLogoFileChange}
-                          className="hidden"
-                        />
-
-                        <Button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={
-                            isUploading || isImageLoading || !getSelectedRepo()
-                          }
-                          size="sm"
-                          variant="secondary"
-                        >
-                          {isUploading || isImageLoading
-                            ? "Uploading..."
-                            : "Upload new picture"}
-                        </Button>
-
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                          PNG, JPG, JPEG, GIF, WebP • Max 1MB
-                        </p>
-
-                        {/* 错误提示 */}
-                        {uploadError && (
-                          <div className="text-sm text-red-600 dark:text-red-400 text-center">
-                            {uploadError}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="idea-summary"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      One-line description of this idea
-                    </label>
-
-                    <div className="flex flex-col items-start gap-2.5 w-full">
-                      <input
-                        type="text"
-                        id="idea-summary"
-                        value={ideaSummary}
-                        onChange={(e) => setIdeaSummary(e.target.value)}
-                        placeholder="New idea"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="idea-description"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      Describe this idea in detail
-                    </label>
-
-                    <div className="flex flex-col items-start gap-2.5 w-full">
-                      <div
-                        ref={editorDivRef}
-                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                      >
-                        <MilkdownEditor
-                          initialContent={`* *What is the problem you want to solve?*
-
-<br />
-
-* *If you want to do a minimum viable product (MVP), how would you do it?*
-
-`}
-                          onContentChange={handleIdeaDescriptionChange}
-                          placeholder="Description"
-                          className="min-h-[96px]"
-                          maxSizeTitle="sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-3 w-full">
-                    <label
-                      htmlFor="product-name"
-                      className="text-sm font-normal text-gray-900 dark:text-gray-100"
-                    >
-                      Product name
-                    </label>
-
-                    <div className="flex flex-col items-start gap-2.5 w-full">
-                      <input
-                        type="text"
-                        id="product-name"
-                        value={productName}
-                        onChange={(e) => setProductName(e.target.value)}
-                        placeholder="Name"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+              {projectType === "existing" ? existRepoForm() : newIdeaForm()}
 
               <fieldset className="flex flex-col items-start gap-3 w-full">
                 <div className="flex items-center gap-3">
@@ -821,7 +815,7 @@ export default function New() {
                     !ideaDescription.trim())) ||
                 createCopanyMutation.isPending
               }
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-gray-900"
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-gray-900"
             >
               <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
                 {createCopanyMutation.isPending ? "Creating..." : "Create"}

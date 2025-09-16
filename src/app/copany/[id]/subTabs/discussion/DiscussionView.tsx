@@ -17,6 +17,8 @@ import {
 } from "@heroicons/react/24/outline";
 import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
+import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
+import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
@@ -32,6 +34,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const { data: discussions, isLoading } = useDiscussions(copanyId);
@@ -125,7 +128,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             ? base.map((it) =>
                 String(it.id) === String(newDiscussion.id) ? newDiscussion : it
               )
-            : [...base, newDiscussion];
+            : [newDiscussion, ...base];
         }
       );
     },
@@ -193,7 +196,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
       </div>
 
-      <section className="flex-1 flex flex-col gap-3 lg:border-l border-gray-200 dark:border-gray-700 lg:pl-5 mb-[200px] min-h-[calc(100vh-200px)]">
+      <section className="flex-1 flex flex-col gap-3 md:border-l border-gray-200 dark:border-gray-700 md:pl-5 pb-[200px] min-h-[calc(100vh-200px)]">
         <div className="flex flex-row gap-2 justify-between items-center">
           <Button
             onClick={() => setIsModalOpen(true)}
@@ -291,6 +294,7 @@ function DiscussionItem({
   discussion: Discussion;
   creator?: UserInfo;
 }) {
+  const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
   const { countQuery: voteCount, flagQuery: voteState } =
@@ -363,7 +367,15 @@ function DiscussionItem({
         >
           <div className="flex items-center gap-2">
             <Image
-              src={voteState.data ? arrowshape_up_fill : arrowshape_up}
+              src={
+                voteState.data
+                  ? isDarkMode
+                    ? arrowshape_up_fill_dark
+                    : arrowshape_up_fill
+                  : isDarkMode
+                  ? arrowshape_up_dark
+                  : arrowshape_up
+              }
               alt="Vote"
               width={16}
               height={16}

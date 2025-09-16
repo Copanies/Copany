@@ -11,6 +11,8 @@ import {
 } from "@heroicons/react/24/outline";
 import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
+import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
+import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useDiscussion } from "@/hooks/discussions";
 import {
   useDiscussionVoteState,
@@ -31,6 +33,7 @@ import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
 import DiscussionEditForm from "@/app/copany/[id]/subTabs/discussion/DiscussionEditForm";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface DiscussionPageClientProps {
   copanyId: string;
@@ -41,6 +44,7 @@ export default function DiscussionPageClient({
   copanyId,
   discussionId,
 }: DiscussionPageClientProps) {
+  const isDarkMode = useDarkMode();
   const router = useRouter();
   const { data: discussion, isLoading } = useDiscussion(discussionId);
   const { data: currentUser } = useCurrentUser();
@@ -139,7 +143,7 @@ export default function DiscussionPageClient({
       </div>
 
       {/* Discussion header */}
-      <div className="bg-white dark:bg-gray-900 mb-5">
+      <div className="mb-5">
         {/* Labels */}
         {discussion.labels && discussion.labels.length > 0 && (
           <div className="mb-3">
@@ -241,7 +245,15 @@ export default function DiscussionPageClient({
           >
             <div className="flex items-center gap-2">
               <Image
-                src={flagQuery.data ? arrowshape_up_fill : arrowshape_up}
+                src={
+                  flagQuery.data
+                    ? isDarkMode
+                      ? arrowshape_up_fill_dark
+                      : arrowshape_up_fill
+                    : isDarkMode
+                    ? arrowshape_up_dark
+                    : arrowshape_up
+                }
                 alt="Vote"
                 width={16}
                 height={16}

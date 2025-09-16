@@ -19,11 +19,14 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
+import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
+import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { EMPTY_ARRAY, EMPTY_OBJECT, EMPTY_STRING } from "@/utils/constants";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface DiscussionCommentTimelineProps {
   discussionId: string;
@@ -41,6 +44,7 @@ function VoteButton({
   initialVoteCount,
   isLoggedIn,
 }: VoteButtonProps) {
+  const isDarkMode = useDarkMode();
   const { countQuery, flagQuery } = useDiscussionCommentVoteState(commentId, {
     enableCountQuery: initialVoteCount == null,
     countInitialData: initialVoteCount ?? undefined,
@@ -64,7 +68,15 @@ function VoteButton({
     >
       <div className="flex items-center gap-2">
         <Image
-          src={hasVoted ? arrowshape_up_fill : arrowshape_up}
+          src={
+            hasVoted
+              ? isDarkMode
+                ? arrowshape_up_fill_dark
+                : arrowshape_up_fill
+              : isDarkMode
+              ? arrowshape_up_dark
+              : arrowshape_up
+          }
           alt="Vote"
           width={16}
           height={16}
