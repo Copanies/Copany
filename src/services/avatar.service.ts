@@ -1,6 +1,5 @@
-import { createBrowserClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
-import { createAdminSupabaseClient } from '@/utils/supabase/server';
+import { createAdminSupabaseClient, createSupabaseClient } from '@/utils/supabase/server';
 
 // Random color generation for avatar parts
 // Generate a completely random color in hex format
@@ -27,21 +26,6 @@ const generateRandomLightColor = () => {
   const toHex = (n: number) => n.toString(16).padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
-
-// const colors = [
-//   '#FFE0A6', '#FFB6C1', '#FFA07A', '#F0E68C', '#DDA0DD',
-//   '#87CEEB', '#98FB98', '#F5DEB3', '#FFC0CB', '#E6E6FA',
-//   '#B0E0E6', '#FFE4E1', '#F0FFF0', '#FFFACD', '#E0FFFF'
-// ];
-// return colors[Math.floor(Math.random() * colors.length)];
-
-// const generateRandomSkinColor = () => {
-//   const skinColors = [
-//     '#A2665C', '#D2691E', '#CD853F', '#DEB887', '#F5DEB3',
-//     '#FFDAB9', '#FFDBAC', '#FFE4C4', '#FFF8DC', '#FAEBD7'
-//   ];
-//   return skinColors[Math.floor(Math.random() * skinColors.length)];
-// };
 
 // Generate random cat avatar with custom colors
 export const generateRandomCatAvatar = () => {
@@ -125,10 +109,7 @@ export const uploadAvatarToStorage = async (userId: string, svgContent: string) 
 
 // Client-side version for component usage
 export const uploadAvatarToStorageClient = async (userId: string, svgContent: string) => {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = await createSupabaseClient();
   
   // Convert SVG to blob
   const blob = new Blob([svgContent], { type: 'image/svg+xml' });
@@ -166,6 +147,103 @@ export const generateAndUploadUserAvatar = async (userId: string) => {
   const avatarUrl = await uploadAvatarToStorage(userId, avatarSvg);
   return avatarUrl;
 };
+
+/**
+ * Update user avatar with SVG content
+ */
+export async function updateUserAvatarWithSvg(userId: string, svgContent: string) {
+  try {
+    console.log('🎨 Starting avatar update with SVG for user:', userId);
+    
+    // Upload SVG to storage
+    const avatarUrl = await uploadAvatarToStorageClient(userId, svgContent);
+    
+    if (!avatarUrl) {
+      console.error('❌ Failed to upload SVG avatar');
+      return { success: false, error: 'Failed to upload avatar' };
+    }
+
+    // Update user metadata using admin client
+    const adminSupabase = await createAdminSupabaseClient();
+    const { error: updateError } = await adminSupabase.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        avatar_url: avatarUrl,
+      }
+    });
+
+    if (updateError) {
+      console.error('❌ Failed to update user metadata with avatar:', updateError);
+      return { success: false, error: 'Failed to update user profile' };
+    }
+
+    console.log('✅ Avatar updated successfully for user:', userId, avatarUrl);
+    return { success: true, avatar_url: avatarUrl };
+  } catch (error) {
+    console.error('💥 Exception during avatar update:', error);
+    return { success: false, error: 'Internal server error' };
+  }
+}
+
+/**
+ * Update user avatar with uploaded file
+ */
+export async function updateUserAvatarWithFile(userId: string, file: File) {
+  try {
+    console.log('📁 Starting avatar update with file for user:', userId);
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      return { success: false, error: 'Invalid file type. Only images are allowed.' };
+    }
+
+    // Create Supabase client
+    const supabase = await createSupabaseClient();
+    
+    // Convert file to blob and upload
+    const arrayBuffer = await file.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: file.type });
+    const fileName = `${userId}/avatar_${Date.now()}.${file.name.split('.').pop()}`;
+    
+    // Upload to avatars bucket
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, blob, {
+        contentType: file.type,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('❌ Failed to upload file:', uploadError);
+      return { success: false, error: 'Failed to upload file' };
+    }
+
+    // Get public URL
+    const { data: publicData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    const avatarUrl = publicData.publicUrl;
+
+    // Update user metadata using admin client
+    const adminSupabase = await createAdminSupabaseClient();
+    const { error: updateError } = await adminSupabase.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        avatar_url: avatarUrl,
+      }
+    });
+
+    if (updateError) {
+      console.error('❌ Failed to update user metadata with avatar:', updateError);
+      return { success: false, error: 'Failed to update user profile' };
+    }
+
+    console.log('✅ Avatar updated successfully for user:', userId, avatarUrl);
+    return { success: true, avatar_url: avatarUrl };
+  } catch (error) {
+    console.error('💥 Exception during avatar update:', error);
+    return { success: false, error: 'Internal server error' };
+  }
+}
 
 /**
  * Check if user needs avatar initialization and generate one if needed

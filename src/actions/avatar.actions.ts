@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/actions/auth.actions";
-import { generateAndUploadUserAvatar, generateRandomCatAvatar } from "@/services/avatar.service";
+import { generateAndUploadUserAvatar, generateRandomCatAvatar, updateUserAvatarWithSvg, updateUserAvatarWithFile } from "@/services/avatar.service";
 
 /**
  * Generate and upload a new avatar for the current user
@@ -24,3 +24,12 @@ export async function generateRandomCatAvatarAction() : Promise<string> {
   const avatarSVG = generateRandomCatAvatar();
   return avatarSVG;
 }
+
+export async function updateUserAvatarWithSvgAction(userId: string, avatarUrl: string) {
+  return await updateUserAvatarWithSvg(userId, avatarUrl);
+}
+
+export async function updateUserAvatarWithFileAction(userId: string, file: File) {
+  return await updateUserAvatarWithFile(userId, file);
+}
+

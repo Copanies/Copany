@@ -12,6 +12,10 @@ import { signInWithGitHub, signInWithGoogle } from "@/actions/auth.actions";
 import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
+import Button from "@/components/commons/Button";
+import { updateUserNameAction } from "@/actions/user.actions";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export default function AccountView({ userId }: { userId: string }) {
   const { data: user, isLoading } = useUserInfo(userId);
@@ -22,6 +26,10 @@ export default function AccountView({ userId }: { userId: string }) {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isEmailLoading] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [userName, setUserName] = useState("");
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Check if current user is viewing their own profile
   const isOwnProfile = currentUser?.id === userId;
@@ -32,6 +40,35 @@ export default function AccountView({ userId }: { userId: string }) {
   // const hasEmail = providersInfo?.hasEmail || false; // Unused for now
   const linkedProviders = providersInfo?.allProviders || [];
   const providersData = providersInfo?.providersData || [];
+
+  // Initialize user name when user data is loaded
+  if (user && !userName) {
+    setUserName(user.name);
+  }
+
+  const handleRenameUser = async () => {
+    if (!userName.trim()) return;
+
+    setIsRenaming(true);
+    try {
+      const result = await updateUserNameAction(userId, userName.trim());
+      if (result.success) {
+        // Refresh user data
+        queryClient.invalidateQueries({ queryKey: ["userInfo", userId] });
+        // Refresh the page to ensure the name is updated everywhere
+        router.refresh();
+      } else {
+        alert(
+          result.error || "Failed to update user name, please try again later"
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update user name:", error);
+      alert("Failed to update user name, please try again later");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
 
   const handleGitHubLogin = async () => {
     if (!isOwnProfile) return;
@@ -65,6 +102,25 @@ export default function AccountView({ userId }: { userId: string }) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-5">
         <p className="text-2xl font-bold">General</p>
+        {/* Rename User Section */}
+        <div className="flex flex-col gap-3 max-w-full">
+          <label htmlFor="userName" className="text-sm font-semibold">
+            User name
+          </label>
+          <div className="flex flex-row gap-3 max-w-full">
+            <input
+              type="text"
+              id="userName"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="border border-gray-300 dark:border-gray-700 max-w-full rounded-md px-2 py-1"
+              placeholder="Enter new name"
+            />
+            <Button onClick={handleRenameUser} disabled={isRenaming}>
+              {isRenaming ? "Renaming..." : "Rename"}
+            </Button>
+          </div>
+        </div>
         <div className="flex flex-col gap-2">
           <p className="text-base font-semibold">Email</p>
           <p>{user.email}</p>

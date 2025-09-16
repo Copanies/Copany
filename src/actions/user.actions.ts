@@ -1,5 +1,6 @@
 "use server";
 
+import { UserService } from "@/services/user.service";
 import { createAdminSupabaseClient } from "@/utils/supabase/server";
 
 export interface UserInfo {
@@ -72,4 +73,8 @@ export async function getUsersByIdsWithCacheAction(userIds: string[]): Promise<R
   // 这个函数将在客户端使用缓存管理器，所以这里保持原有的实现
   // 客户端会直接调用 userInfoManager.getMultipleUserInfo()
   return getUsersByIdsAction(userIds);
+}
+
+export async function updateUserNameAction(userId: string, newName: string) {
+  return await UserService.updateUserName(userId, newName);
 } 
