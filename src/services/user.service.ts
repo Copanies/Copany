@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import { createAdminSupabaseClient } from "@/utils/supabase/server";
 
 export interface UserInfo {
   id: string;
@@ -74,4 +75,37 @@ export class UserService {
       return users;
     }
   }
+
+  static async updateUserName(userId: string, newName: string) {
+    try {
+      const adminSupabase = await createAdminSupabaseClient();
+      
+      // Update user metadata with new name
+      const { data, error } = await adminSupabase.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          user_name: newName,
+        },
+      });
+  
+      if (error) {
+        console.error(`Error updating user name for ${userId}:`, error);
+        return {
+          success: false,
+          error: error.message || "Failed to update user name",
+        };
+      }
+  
+      return {
+        success: true,
+        user: data.user,
+      };
+    } catch (error) {
+      console.error(`Error updating user name for ${userId}:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+  
 } 

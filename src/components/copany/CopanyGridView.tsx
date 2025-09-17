@@ -1,0 +1,181 @@
+"use client";
+import { Copany } from "@/types/database.types";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import AssetLinksSection from "@/components/copany/AssetLinksSection";
+import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
+import LicenseBadge from "@/components/commons/LicenseBadge";
+import StarButton from "@/components/copany/StarButton";
+import { useDiscussions } from "@/hooks/discussions";
+import { useDiscussionLabels } from "@/hooks/discussionLabels";
+import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import { EMPTY_STRING } from "@/utils/constants";
+
+interface CopanyGridViewProps {
+  copanies: Copany[];
+}
+
+interface CopanyCardProps {
+  copany: Copany;
+}
+
+/**
+ * Individual copany card component that can use hooks
+ */
+function CopanyCard({ copany }: CopanyCardProps) {
+  const router = useRouter();
+  const { data: discussions } = useDiscussions(copany.id);
+  const { data: labels } = useDiscussionLabels(copany.id);
+
+  // Find the "Begin idea" discussion
+  const beginIdeaDiscussion = discussions?.find((discussion) =>
+    discussion.labels.includes(
+      labels?.find((label) => label.name === "Begin idea")?.id || ""
+    )
+  );
+
+  return (
+    <li
+      key={copany.id}
+      className="cursor-pointer sm:mx-0"
+      onClick={() => {
+        router.push(`/copany/${copany.id}`);
+      }}
+    >
+      <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-2">
+          {/* Different layouts based on whether cover image exists */}
+          <div className="relative flex flex-col items-center justify-center gap-2 px-5 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
+            {copany.cover_image_url && copany.logo_url ? (
+              <>
+                {/* Cover image layout: fill the space, no blur, logo in top-left */}
+                <Image
+                  src={copany.cover_image_url}
+                  alt="Organization Cover"
+                  fill
+                  className="object-cover w-full h-full"
+                  style={{ objectPosition: "center" }}
+                  sizes="100vw"
+                  priority
+                />
+                {/* Foreground logo in top-left corner */}
+                {copany.logo_url && (
+                  <div className="absolute top-3 left-3 z-10">
+                    <Image
+                      src={copany.logo_url}
+                      alt="Organization Avatar"
+                      className="rounded-lg object-contain"
+                      width={64}
+                      height={64}
+                      priority
+                    />
+                  </div>
+                )}
+              </>
+            ) : copany.logo_url ? (
+              <>
+                {/* Logo-only layout: 200% width, blur background */}
+                <div
+                  className="absolute left-1/2 top-0 z-0 pointer-events-none select-none"
+                  style={{
+                    width: "200%",
+                    height: "200%",
+                    transform: "translateX(-50%) translateY(-25%)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Image
+                    src={copany.logo_url}
+                    alt="Organization Background"
+                    fill
+                    className="object-contain w-full h-full blur-[30px]"
+                    style={{ objectPosition: "center", opacity: 0.7 }}
+                    sizes="200vw"
+                    priority
+                  />
+                </div>
+                {/* White gradient overlay to highlight logo */}
+                <div
+                  className="absolute inset-0 z-5 blur-[30px]"
+                  style={{
+                    background:
+                      "radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 50%, transparent 100%)",
+                  }}
+                ></div>
+                {/* Foreground logo, centered */}
+                <div className="relative z-10 flex items-center justify-center w-full h-auto max-h-32">
+                  <Image
+                    src={copany.logo_url}
+                    alt="Organization Avatar"
+                    className="rounded-xl object-contain"
+                    width={128}
+                    height={128}
+                    priority
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* No logo layout: show Begin idea discussion description with #FBF9F5 background */}
+                <div
+                  className={`absolute inset-0 bg-[#FBF9F5] dark:bg-[#222221] ${
+                    beginIdeaDiscussion?.description ? "" : "animate-pulse"
+                  } `}
+                ></div>
+                {beginIdeaDiscussion?.description && (
+                  <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
+                    <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
+                      <MilkdownEditor
+                        initialContent={
+                          beginIdeaDiscussion?.description || "Loading..."
+                        }
+                        isReadonly={true}
+                        maxSizeTitle="sm"
+                        placeholder={EMPTY_STRING}
+                        className="w-full"
+                      />
+                    </div>
+                    {/* Gradient shadow overlay at the bottom - fixed position */}
+                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
+                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <div className="flex flex-row items-center gap-2">
+            <div className="font-semibold text-lg">{copany.name}</div>
+            <AssetLinksSection copany={copany} size="sm" />
+            <div className="ml-auto flex items-center gap-2">
+              <ContributorAvatarStack copany={copany} size="lg" />
+              <StarButton
+                copanyId={String(copany.id)}
+                size="sm"
+                count={copany.star_count}
+              />
+            </div>
+          </div>
+          <div className="">{copany.description || "No description"}</div>
+          {copany.license && (
+            <div className="">
+              <LicenseBadge license={copany.license} />
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Copany grid view component - Pure rendering component
+ */
+export default function CopanyGridView({ copanies }: CopanyGridViewProps) {
+  return (
+    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto">
+      {copanies.map((copany) => (
+        <CopanyCard key={copany.id} copany={copany} />
+      ))}
+    </ul>
+  );
+}

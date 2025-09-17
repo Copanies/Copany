@@ -40,6 +40,7 @@ export async function createCopanyAction(
       github_repository_id: null,
       is_connected_github: false,
       license: null,
+      cover_image_url: null,
       ...copanyData, // 用户提供的数据会覆盖默认值
     };
 
@@ -104,9 +105,19 @@ export async function getCopanyByIdAction(copanyId: string) {
 /**
  * Get copanies list - Server Action
  */
-export async function getCopaniesAction() {
+export async function getCopaniesAction(): Promise<Copany[]> {
   try {
     const copanies = await CopanyService.getCopanies();
+    return copanies;
+  } catch (error) {
+    console.error("❌ Failed to get copanies:", error);
+    throw error;
+  }
+}
+
+export async function getCopaniesWhereUserIsContributorAction(userId: string): Promise<Copany[]> {
+  try {
+    const copanies = await CopanyService.getCopaniesWhereUserIsContributor(userId);
     return copanies;
   } catch (error) {
     console.error("❌ Failed to get copanies:", error);

@@ -28,7 +28,7 @@ export function useStarState(
     queryKey: starCountKey(copanyId),
     queryFn: () => getStarCountAction(copanyId),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: enableCountQuery,
     initialData: options?.countInitialData,
   });
@@ -36,7 +36,7 @@ export function useStarState(
     queryKey: hasStarredKey(copanyId),
     queryFn: () => hasStarredAction(copanyId),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
   return { countQuery, flagQuery } as const;
 }
@@ -98,7 +98,7 @@ export function useMyStarredCopanyIds() {
     queryKey: myStarredListKey(),
     queryFn: () => listMyStarredCopanyIdsAction(),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 

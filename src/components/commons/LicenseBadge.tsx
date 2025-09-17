@@ -1,16 +1,5 @@
 "use client";
-
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import CoslLicenseTip from "@/components/CoslLicenseTip";
-import MobileTooltip from "./MobileTooltip";
-
-export default function LicenseBadge({
-  license,
-  isOwner = false,
-}: {
-  license: string;
-  isOwner?: boolean;
-}) {
+export default function LicenseBadge({ license }: { license: string }) {
   // Handle display text
   const displayText = license === "NOASSERTION" ? "Other" : license;
 
@@ -35,23 +24,6 @@ export default function LicenseBadge({
           {displayText}
         </span>
       </div>
-      {license !== "COSL" && (
-        <MobileTooltip
-          content={<CoslLicenseTip isOwner={isOwner} />}
-          side="bottom"
-          sideOffset={8}
-          className="tooltip-surface w-[420px] !max-w-[92vw] !p-4"
-          delayDuration={150}
-          skipDelayDuration={300}
-        >
-          <div className="ml-2 inline-flex items-center hover:cursor-pointer p-1 bg-gray-100 dark:bg-gray-800 rounded-md">
-            <ExclamationTriangleIcon
-              className="w-4 h-4 text-yellow-600"
-              strokeWidth={2}
-            />
-          </div>
-        </MobileTooltip>
-      )}
     </div>
   );
 }

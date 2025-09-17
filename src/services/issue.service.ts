@@ -80,10 +80,7 @@ export class IssueService {
         if (!userError && userData.user) {
           assigneeUsers[assigneeId] = {
             id: userData.user.id,
-            name:
-              userData.user.user_metadata?.name ||
-              userData.user.email ||
-              "Unknown User",
+            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
             email: userData.user.email || "",
             avatar_url: userData.user.user_metadata?.avatar_url || "",
           };

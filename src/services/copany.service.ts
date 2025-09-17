@@ -13,7 +13,7 @@ export class CopanyService {
     const { data, error } = await supabase
       .from("copany")
       .select("*")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching copanies:", error);
@@ -40,6 +40,30 @@ export class CopanyService {
     }
 
     return data as Copany;
+  }
+
+  /**
+   * Get all companies where user is a contributor
+   * @param userId User ID to search for
+   */
+  static async getCopaniesWhereUserIsContributor(userId: string): Promise<Copany[]> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("copany_contributor")
+      .select(`
+        copany:copany!inner(*)
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .overrideTypes<{ copany: Copany }[]>();
+
+    if (error) {
+      console.error("Error fetching user's contributed copanies:", error);
+      throw new Error(`Failed to fetch user's contributed copanies: ${error.message}`);
+    }
+
+    // Extract copany data from the nested structure
+    return data.map(item => item.copany);
   }
 
   /**

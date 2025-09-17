@@ -22,7 +22,7 @@ export function useAssignmentRequests(issueId: string) {
     queryFn: () => listAssignmentRequestsAction(issueId),
     enabled: /^\d+$/.test(String(issueId)),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -32,7 +32,7 @@ export function useAssignmentRequestsByCopany(copanyId: string) {
     queryFn: () => listAssignmentRequestsByCopanyAction(copanyId),
     enabled: !!copanyId,
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 

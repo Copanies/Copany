@@ -2,11 +2,12 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Copany } from "@/types/database.types";
-import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction } from "@/actions/copany.actions";
+import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction,  getCopaniesWhereUserIsContributorAction } from "@/actions/copany.actions";
 import { listMyStarredCopanyIdsAction } from "@/actions/star.actions";
 
 function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
 function copaniesKey() { return ["copanies"] as const; }
+function copaniesWhereUserIsContributorKey(userId: string) { return ["copanies", userId] as const; }
 function myStarredCopanyIdsKey() { return ["myStarredCopanyIds"] as const; }
 
 export function useCopany(
@@ -17,7 +18,7 @@ export function useCopany(
     queryKey: copanyKey(copanyId),
     queryFn: () => getCopanyByIdAction(copanyId),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: options?.enabled ?? true,
   });
 }
@@ -27,7 +28,16 @@ export function useCopanies() {
     queryKey: copaniesKey(),
     queryFn: () => getCopaniesAction(),
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+export function useCopaniesWhereUserIsContributor(userId: string) {
+  return useQuery<Copany[]>({
+    queryKey: copaniesWhereUserIsContributorKey(userId),
+    queryFn: () => getCopaniesWhereUserIsContributorAction(userId),
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -36,7 +46,7 @@ export function useMyStarredCopanies() {
     queryKey: myStarredCopanyIdsKey(),
     queryFn: async () => ({ ids: await listMyStarredCopanyIdsAction() }),
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 5 * 60 * 1000, // 5 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 

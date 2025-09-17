@@ -22,7 +22,7 @@ export function useIssues(copanyId: string) {
       }
     },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 60_000, // 1 minute
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -45,7 +45,7 @@ export function useIssue(copanyId: string, issueId: string) {
       return found ?? null;
     },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days (align with list)
-    refetchInterval: 60_000, // 1 minute
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
 

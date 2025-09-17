@@ -1,15 +1,26 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import { createSupabaseClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { getProviderToken } from "./userAuth.service";
 
 /**
  * Get current user's GitHub access token
- * Priority: fetch from Supabase session first, if not available then from Cookie (for SSR scenarios)
+ * Priority: fetch from new userAuth service first, if not available then from legacy session/Cookie
  * @returns GitHub access token, or null if not found
  */
 export async function getGithubAccessToken(): Promise<string | null> {
   try {
     console.log("🔍 Starting to get GitHub access token...");
+    
+    // Try to get token from new userAuth service first
+    const tokenFromAuth = await getProviderToken('github');
+    if (tokenFromAuth) {
+      console.log("✅ Successfully retrieved GitHub access token from userAuth service");
+      return tokenFromAuth;
+    }
+
+    // Fallback to legacy method for backward compatibility
+    console.log("⚠️ No token from userAuth service, trying legacy method...");
     const supabase = await createSupabaseClient();
 
     // Get current user and verify identity
@@ -58,7 +69,7 @@ export async function getGithubAccessToken(): Promise<string | null> {
     // Note: Cannot modify Cookies in page components, only update in Server Action or Route Handler
     // Cookie update logic has been moved to OAuth callback handler
 
-    console.log("✅ Successfully retrieved GitHub access token from session");
+    console.log("✅ Successfully retrieved GitHub access token from legacy session");
     return accessToken;
   } catch (error) {
     console.error("❌ Exception when getting GitHub access token:", error);

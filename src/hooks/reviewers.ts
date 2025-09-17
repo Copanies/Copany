@@ -17,7 +17,7 @@ export function useIssueReviewers(issueId: string) {
         return await listIssueReviewersAction(issueId);
       }
     },
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }
@@ -54,7 +54,7 @@ export function useMultipleIssueReviewers(issueIds: string[]) {
       }
     },
     enabled: stableIds.length > 0,
-    refetchInterval: 1 * 60 * 1000, // 1 minute 
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 }

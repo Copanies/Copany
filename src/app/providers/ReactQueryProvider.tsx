@@ -4,7 +4,7 @@
 import { ReactNode, useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 type Props = { children: ReactNode };
@@ -26,7 +26,13 @@ export default function ReactQueryProvider({ children }: Props) {
 
     const persister =
       typeof window !== "undefined"
-        ? createSyncStoragePersister({ storage: window.localStorage })
+        ? createAsyncStoragePersister({
+            storage: {
+              getItem: async (key) => localStorage.getItem(key),
+              setItem: async (key, value) => localStorage.setItem(key, value),
+              removeItem: async (key) => localStorage.removeItem(key),
+            },
+          })
         : null;
 
     return { client, persister };

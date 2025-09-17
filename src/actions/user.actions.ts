@@ -1,5 +1,6 @@
 "use server";
 
+import { UserService } from "@/services/user.service";
 import { createAdminSupabaseClient } from "@/utils/supabase/server";
 
 export interface UserInfo {
@@ -22,7 +23,7 @@ export async function getUserByIdAction(userId: string): Promise<UserInfo | null
 
     return {
       id: userData.user.id,
-      name: userData.user.user_metadata?.name || userData.user.email || "Unknown User",
+      name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
       email: userData.user.email || "",
       avatar_url: userData.user.user_metadata?.avatar_url || "",
     };
@@ -51,7 +52,7 @@ export async function getUsersByIdsAction(userIds: string[]): Promise<Record<str
         if (!userError && userData.user) {
           users[userId] = {
             id: userData.user.id,
-            name: userData.user.user_metadata?.name || userData.user.email || "Unknown User",
+            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
             email: userData.user.email || "",
             avatar_url: userData.user.user_metadata?.avatar_url || "",
           };
@@ -72,4 +73,8 @@ export async function getUsersByIdsWithCacheAction(userIds: string[]): Promise<R
   // 这个函数将在客户端使用缓存管理器，所以这里保持原有的实现
   // 客户端会直接调用 userInfoManager.getMultipleUserInfo()
   return getUsersByIdsAction(userIds);
+}
+
+export async function updateUserNameAction(userId: string, newName: string) {
+  return await UserService.updateUserName(userId, newName);
 } 

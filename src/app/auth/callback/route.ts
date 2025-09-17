@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseClient } from "@/utils/supabase/server";
+import { initializeUserAvatarIfNeeded } from "@/services/avatar.service";
+import { restoreUserMetadataFromCache } from "@/services/userMetadataProtection.service";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -36,6 +38,12 @@ export async function GET(request: Request) {
         if (userError || !user) {
           console.warn("⚠️ User verification failed, cannot set Cookie");
         } else {
+          // Initialize avatar for email users if needed
+          if (user.email_confirmed_at) {
+            console.log("🎨 Initializing avatar for verified user:", user.id);
+            await initializeUserAvatarIfNeeded(user.id);
+          }
+          
           // After user identity verification, get provider_token from session
           const {
             data: { session },
@@ -63,8 +71,13 @@ export async function GET(request: Request) {
           redirectUrl = `${origin}${next}`;
         }
 
-        console.log("↗️ Redirecting to:", redirectUrl);
-        const response = NextResponse.redirect(redirectUrl);
+        // Add metadata protection trigger to the redirect URL
+        const urlObj = new URL(redirectUrl);
+        urlObj.searchParams.set('trigger_metadata_protection', 'true');
+        const finalRedirectUrl = urlObj.toString();
+        
+        console.log("↗️ Redirecting to:", finalRedirectUrl);
+        const response = NextResponse.redirect(finalRedirectUrl);
 
         // If user verification passes and provider_token exists, set it in a Cookie
         if (!userError && user && providerToken) {
@@ -78,6 +91,18 @@ export async function GET(request: Request) {
           });
           console.log("✅ GitHub access token saved to Cookie");
         }
+
+        // Schedule metadata protection with a 2-second delay
+        // This runs in the background after the response is sent
+        setTimeout(async () => {
+          try {
+            console.log("🛡️ Callback: Triggering delayed metadata protection...");
+            await restoreUserMetadataFromCache();
+            console.log("✅ Callback: Delayed metadata protection completed");
+          } catch (error) {
+            console.error("❌ Callback: Error in delayed metadata protection:", error);
+          }
+        }, 2000);
 
         return response;
       } else {

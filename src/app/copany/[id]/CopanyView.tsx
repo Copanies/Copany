@@ -3,19 +3,20 @@
 import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import TabView from "@/components/commons/TabView";
-import ReadmeView from "./subviews/ReadmeView";
-import LicenseView from "./subviews/LicenseView";
+import ReadmeView from "./subTabs/readme/ReadmeView";
+import LicenseView from "./subTabs/license/LicenseView";
 import Image from "next/image";
 import LoadingView from "@/components/commons/LoadingView";
-import CooperateView from "./subviews/CooperateView";
-import ContributionView from "./subviews/ContributionView";
-import FinanceView from "./subviews/finance/FinanceView";
-import SettingsView from "./subviews/settings/SettingsView";
-import AssetLinksSection from "@/components/AssetLinksSection";
+import CooperateView from "./subTabs/CooperateView";
+import ContributionView from "./subTabs/contribution/ContributionView";
+import FinanceView from "./subTabs/finance/FinanceView";
+import SettingsView from "./subTabs/settings/SettingsView";
+import DiscussionView from "./subTabs/discussion/DiscussionView";
+import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import LicenseBadge from "@/components/commons/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
-import StarButton from "@/components/StarButton";
+import StarButton from "@/components/copany/StarButton";
 import {
   BookOpenIcon,
   ScaleIcon,
@@ -23,6 +24,7 @@ import {
   ChartPieIcon,
   ReceiptPercentIcon,
   Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 interface CopanyViewProps {
@@ -62,21 +64,44 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   // Build tabs array, only include Settings tab if user is creator
   const tabs = [
-    {
-      label: "README",
-      icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <ReadmeView githubUrl={copany.github_url} />,
-    },
-    {
-      label: "LICENSE",
-      icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
-    },
-    {
-      label: "Cooperate",
-      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <CooperateView copanyId={copanyId} />,
-    },
+    ...(copany.github_url
+      ? [
+          {
+            label: "README",
+            icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <ReadmeView githubUrl={copany.github_url} />,
+          },
+        ]
+      : []),
+    ...(copany.github_url
+      ? [
+          {
+            label: "Cooperate",
+            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <CooperateView copanyId={copanyId} />,
+          },
+          {
+            label: "Discussion",
+            icon: (
+              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
+            ),
+            content: <DiscussionView copanyId={copanyId} />,
+          },
+        ]
+      : [
+          {
+            label: "Discussion",
+            icon: (
+              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
+            ),
+            content: <DiscussionView copanyId={copanyId} />,
+          },
+          {
+            label: "Cooperate",
+            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <CooperateView copanyId={copanyId} />,
+          },
+        ]),
     {
       label: "Contribution",
       icon: <ChartPieIcon strokeWidth={2} className="w-4 h-4" />,
@@ -87,6 +112,17 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
       content: <FinanceView copanyId={copanyId} />,
     },
+    ...(copany.github_url
+      ? [
+          {
+            label: "LICENSE",
+            icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
+            content: (
+              <LicenseView githubUrl={copany.github_url} copany={copany} />
+            ),
+          },
+        ]
+      : []),
     ...(isCreator
       ? [
           {
@@ -112,21 +148,39 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   return (
     <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative mb-8">
-      <div className="flex flex-col gap-4 px-5 pt-6">
+      <div
+        className={`flex flex-col gap-4 px-5 ${
+          copany.cover_image_url ? "pt-0" : "pt-6"
+        }`}
+      >
+        {/* Cover image section */}
+        {copany.cover_image_url && (
+          <div className="relative w-full aspect-[5]">
+            <Image
+              src={copany.cover_image_url}
+              alt={`${copany.name} cover image`}
+              fill
+              className="object-cover w-full h-full"
+              style={{ objectPosition: "center" }}
+              sizes="100vw"
+              priority
+            />
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
-            <Image
-              src={copany.logo_url || EMPTY_STRING}
-              alt={copany.name || EMPTY_STRING}
-              width={40}
-              height={40}
-              className="rounded-md"
-            />
+            {copany.logo_url && (
+              <Image
+                src={copany.logo_url || EMPTY_STRING}
+                alt={copany.name || EMPTY_STRING}
+                width={64}
+                height={64}
+                className="rounded-md"
+              />
+            )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>
             <div className="hidden sm:block">
-              {copany.license && (
-                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
-              )}
+              {copany.license && <LicenseBadge license={copany.license} />}
             </div>
             <div className="block sm:hidden flex flex-1 justify-end">
               <StarButton
@@ -139,7 +193,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             {copany.license && (
               <div className="block sm:hidden">
-                <LicenseBadge license={copany.license} isOwner={!!isCreator} />
+                <LicenseBadge license={copany.license} />
               </div>
             )}
             <AssetLinksSection copany={copany} />

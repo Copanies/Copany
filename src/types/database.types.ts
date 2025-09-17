@@ -10,6 +10,7 @@ export interface Copany {
   telegram_url: string | null;
   discord_url: string | null;
   logo_url: string | null;
+  cover_image_url: string | null;
   website_url: string | null;
   apple_app_store_url: string | null;
   google_play_store_url: string | null;
@@ -142,6 +143,7 @@ export interface NotificationPayload {
   from_level?: number | null;
   to_level?: number | null;
   issue_title?: string | null;
+  discussion_title?: string | null;
   preview?: string | null;
   // Allow forward-compat fields without using `any`
   [key: string]: unknown;
@@ -163,7 +165,12 @@ export type NotificationType =
   | "assignment_request_refused"
   | "review_requested"
   | "review_approved"
-  | "copany_starred";
+  | "copany_starred"
+  | "discussion_created"
+  | "discussion_voted"
+  | "discussion_comment_created"
+  | "discussion_comment_voted"
+  | "discussion_comment_reply";
 
 export interface Notification {
   id: string;
@@ -173,6 +180,8 @@ export interface Notification {
   copany_id: string | null;
   issue_id: string | null;
   comment_id: string | null;
+  discussion_id: string | null;
+  discussion_comment_id: string | null;
   type: NotificationType;
   payload: NotificationPayload;
   read_at: string | null;
@@ -284,4 +293,61 @@ export interface TransactionRow {
   status: TransactionReviewStatus;
   occurred_at: string; // when the income/expense happened
   evidence_url: string | null;
+}
+
+// Table: discussion
+export interface Discussion {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  title: string;
+  description: string | null;
+  creator_id: string | null;
+  labels: string[]; // Array of discussion_label IDs
+  issue_id: string | null;
+  vote_up_count: number;
+  comment_count: number;
+}
+
+// Table: discussion_label
+export interface DiscussionLabel {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  copany_id: string;
+  creator_id: string;
+  name: string;
+  color: string;
+  description: string | null;
+}
+
+// Table: discussion_comment
+export interface DiscussionComment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  discussion_id: string;
+  content: string | null;
+  created_by: string | null;
+  is_edited: boolean;
+  parent_id: string | null;
+  vote_up_count: number;
+  deleted_at: string | null;
+}
+
+// Table: discussion_vote
+export interface DiscussionVoteRow {
+  id: string;
+  created_at: string;
+  discussion_id: string;
+  user_id: string;
+}
+
+// Table: discussion_comment_vote
+export interface DiscussionCommentVoteRow {
+  id: string;
+  created_at: string;
+  comment_id: string;
+  user_id: string;
 }

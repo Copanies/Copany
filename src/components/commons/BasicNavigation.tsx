@@ -1,0 +1,24 @@
+"use client";
+
+import Image from "next/image";
+import copanylogo from "@/assets/copany_logo.svg";
+import copanylogoDark from "@/assets/copany_logo_dark.svg";
+import { useDarkMode } from "@/utils/useDarkMode";
+import { useRouter } from "next/navigation";
+
+export default function BasicNavigation() {
+  const isDarkMode = useDarkMode();
+  const router = useRouter();
+  return (
+    <header className="flex h-16 items-center justify-center px-8 w-full bg-white dark:bg-transparent border-b border-gray-200 dark:border-gray-800 h-[62px]">
+      <Image
+        className="w-9 h-9 cursor-pointer hover:opacity-80"
+        alt="Copany Logo"
+        src={isDarkMode ? copanylogoDark : copanylogo}
+        width={36}
+        height={36}
+        onClick={() => router.push("/")}
+      />
+    </header>
+  );
+}

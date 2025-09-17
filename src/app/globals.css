@@ -67,3 +67,56 @@ pre[class*="language-"] {
 .dark .tooltip-surface {
   @apply bg-gray-900 text-gray-100 border-gray-800;
 }
+
+/* Pure HTML content styles - only apply within .pure_html main elements */
+.pure_html main h1,
+main.pure_html h1 {
+  @apply text-4xl font-bold;
+}
+
+.pure_html main h2,
+main.pure_html h2 {
+  @apply text-2xl font-semibold;
+}
+
+.pure_html main h3,
+main.pure_html h3 {
+  @apply text-xl font-semibold;
+}
+
+.pure_html main h4,
+main.pure_html h4 {
+  @apply text-lg font-semibold;
+}
+
+.pure_html main h5,
+main.pure_html h5 {
+  @apply text-base font-semibold;
+}
+
+.pure_html main h6,
+main.pure_html h6 {
+  @apply text-sm font-semibold;
+}
+
+/* Pure HTML link styles */
+.pure_html main a,
+main.pure_html a {
+  @apply text-blue-600 dark:text-blue-400 hover:underline;
+}
+
+/* Pure HTML list styles */
+.pure_html main ul,
+main.pure_html ul {
+  @apply space-y-3 list-disc pl-6;
+}
+
+.pure_html main ol,
+main.pure_html ol {
+  @apply space-y-3 list-decimal pl-6;
+}
+
+.pure_html main li,
+main.pure_html li {
+  @apply leading-relaxed;
+}
