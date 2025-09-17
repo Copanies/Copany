@@ -193,7 +193,7 @@ export default function MainNavigation() {
   });
 
   return (
-    <div className="relative flex flex-row items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 h-[60px]">
+    <div className="relative flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 h-[60px]">
       {/* Left section - Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
@@ -219,6 +219,10 @@ export default function MainNavigation() {
         ) : pathname === "/uselicense" ? (
           <span className="text-sm font-semibold hidden sm:inline">
             How to use COSL License
+          </span>
+        ) : pathname === "/new" ? (
+          <span className="text-sm font-semibold hidden sm:inline">
+            Create new copany
           </span>
         ) : (
           <></>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import BasicNavigation from "@/components/commons/BasicNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
@@ -685,7 +685,7 @@ export default function New() {
 
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
-      <BasicNavigation />
+      <MainNavigation />
 
       <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-6 flex-1">
         <form

@@ -143,6 +143,7 @@ export interface NotificationPayload {
   from_level?: number | null;
   to_level?: number | null;
   issue_title?: string | null;
+  discussion_title?: string | null;
   preview?: string | null;
   // Allow forward-compat fields without using `any`
   [key: string]: unknown;
@@ -164,7 +165,12 @@ export type NotificationType =
   | "assignment_request_refused"
   | "review_requested"
   | "review_approved"
-  | "copany_starred";
+  | "copany_starred"
+  | "discussion_created"
+  | "discussion_voted"
+  | "discussion_comment_created"
+  | "discussion_comment_voted"
+  | "discussion_comment_reply";
 
 export interface Notification {
   id: string;
@@ -174,6 +180,8 @@ export interface Notification {
   copany_id: string | null;
   issue_id: string | null;
   comment_id: string | null;
+  discussion_id: string | null;
+  discussion_comment_id: string | null;
   type: NotificationType;
   payload: NotificationPayload;
   read_at: string | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type {
   Notification,
@@ -17,17 +17,20 @@ import type { UserInfo } from "@/actions/user.actions";
 import { useNotifications, useMarkNotifications } from "@/hooks/notifications";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { listNotificationsAction } from "@/actions/notification.actions";
+import { formatAbbreviatedCount } from "@/utils/number";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 
-function BellIcon({ hasUnread }: { hasUnread: boolean }) {
+function BellIcon({ unreadCount }: { unreadCount: number }) {
   return (
-    <div className="relative">
+    <div className="relative flex flex-row gap-2">
       <BellAlertIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-      {hasUnread && (
-        <span className="absolute -top-0.5 -right-0.5 inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+      {unreadCount > 0 && (
+        <div className="absolute -top-2 -right-2 inline-flex px-[4.2px] h-[19px] items-center justify-center bg-red-500 border-2 border-white text-white rounded-full text-xs font-medium">
+          {formatAbbreviatedCount(unreadCount)}
+        </div>
       )}
     </div>
   );
@@ -183,6 +186,16 @@ export default function NotificationBell() {
         return "requested you to review";
       case "review_approved":
         return "approved the review";
+      case "discussion_created":
+        return "created a new Discussion";
+      case "discussion_voted":
+        return "voted on your Discussion";
+      case "discussion_comment_created":
+        return "commented on your Discussion";
+      case "discussion_comment_voted":
+        return "voted on your comment";
+      case "discussion_comment_reply":
+        return "replied to your comment";
       default:
         return "Notification";
     }
@@ -193,6 +206,13 @@ export default function NotificationBell() {
     if (n.issue_id) {
       const anchor = n.comment_id ? `#comment-${n.comment_id}` : "";
       router.push(`/copany/${n.copany_id}/issue/${n.issue_id}${anchor}`);
+    } else if (n.discussion_id) {
+      const anchor = n.discussion_comment_id
+        ? `#comment-${n.discussion_comment_id}`
+        : "";
+      router.push(
+        `/copany/${n.copany_id}/discussion/${n.discussion_id}${anchor}`
+      );
     } else if (n.copany_id) {
       router.push(`/copany/${n.copany_id}`);
     }
@@ -258,10 +278,11 @@ export default function NotificationBell() {
     }
   };
 
-  const renderSecondaryLine = (n: Notification) => {
+  const renderSecondaryLine = (n: Notification): React.ReactNode => {
     const p = n.payload || ({} as NotificationPayload);
     const withIssue = n as unknown as { issue?: { title?: string | null } };
-    const latestTitle = withIssue?.issue?.title || p.issue_title || "";
+    const latestTitle =
+      withIssue?.issue?.title || p.issue_title || p.discussion_title || "";
     switch (n.type) {
       case "copany_starred": {
         const name = n.copany_id ? copanies[String(n.copany_id)]?.name : "";
@@ -270,21 +291,21 @@ export default function NotificationBell() {
       case "issue_assigned":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}
+            {latestTitle ? `"${latestTitle}": ` : ""}
             {`@${p.from_user_name}`} → {`@${p.to_user_name}`}
           </span>
         );
       case "issue_state_changed":
         return (
           <span className="text-sm ">
-            {latestTitle ? `“${latestTitle}”: ` : ""}
+            {latestTitle ? `"${latestTitle}": ` : ""}
             {getStateName(p.from_state)} → {getStateName(p.to_state)}
           </span>
         );
       case "issue_priority_changed":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}
+            {latestTitle ? `"${latestTitle}": ` : ""}
             {getPriorityName(p.from_priority)} →{" "}
             {getPriorityName(p.to_priority)}
           </span>
@@ -292,7 +313,7 @@ export default function NotificationBell() {
       case "issue_level_changed":
         return (
           <span className="text-sm">
-            {latestTitle ? `“${latestTitle}”: ` : ""}
+            {latestTitle ? `"${latestTitle}": ` : ""}
             {getLevelName(p.from_level)} → {getLevelName(p.to_level)}
           </span>
         );
@@ -326,6 +347,16 @@ export default function NotificationBell() {
             {latestTitle ? `${latestTitle}: ` : ""}Review approved
           </span>
         );
+      case "discussion_created":
+        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+      case "discussion_voted":
+        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+      case "discussion_comment_created":
+        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+      case "discussion_comment_voted":
+        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+      case "discussion_comment_reply":
+        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
       default:
         return latestTitle ? (
           <span className="text-sm">{latestTitle}</span>
@@ -475,7 +506,7 @@ export default function NotificationBell() {
           togglePanel();
         }}
       >
-        <BellIcon hasUnread={unreadCount > 0} />
+        <BellIcon unreadCount={unreadCount} />
       </Button>
 
       {isOpen && panelPosition && (

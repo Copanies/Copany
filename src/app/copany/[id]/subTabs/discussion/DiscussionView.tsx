@@ -140,14 +140,17 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   }
   if (!discussions || discussions.length === 0) {
     return (
-      <EmptyPlaceholderView
-        icon={<ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />}
-        title="No discussions yet"
-        description="Create the first discussion to kick off the conversation."
-        buttonIcon={<PlusIcon className="w-4 h-4" />}
-        buttonTitle="New discussion"
-        buttonAction={() => setIsModalOpen(true)}
-      />
+      <div>
+        <EmptyPlaceholderView
+          icon={<ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />}
+          title="No discussions yet"
+          description="Create the first discussion to kick off the conversation."
+          buttonIcon={<PlusIcon className="w-4 h-4" />}
+          buttonTitle="New discussion"
+          buttonAction={() => setIsModalOpen(true)}
+        />
+        {createDiscussionModal()}
+      </div>
     );
   }
 
@@ -269,20 +272,26 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         )}
 
         {/* Create Discussion modal */}
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          size="lg"
-        >
-          <DiscussionCreateForm
-            copanyId={copanyId}
-            onDiscussionCreated={handleDiscussionCreated}
-            onClose={() => setIsModalOpen(false)}
-          />
-        </Modal>
+        {createDiscussionModal()}
       </section>
     </div>
   );
+
+  function createDiscussionModal() {
+    return (
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        size="lg"
+      >
+        <DiscussionCreateForm
+          copanyId={copanyId}
+          onDiscussionCreated={handleDiscussionCreated}
+          onClose={() => setIsModalOpen(false)}
+        />
+      </Modal>
+    );
+  }
 }
 
 function DiscussionItem({

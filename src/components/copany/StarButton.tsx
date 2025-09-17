@@ -4,6 +4,7 @@ import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import Button from "../commons/Button";
 import { useStarState, useToggleStar } from "@/hooks/star";
+import { formatAbbreviatedCount } from "@/utils/number";
 
 type Size = "sm" | "md";
 
@@ -24,19 +25,7 @@ export default function StarButton({
   const isStarred = !!flagQuery.data;
   const count = countQuery.data ?? 0;
 
-  const formatAbbreviatedCount = (value: number): string => {
-    if (value < 1000) return String(value);
-    const units = ["k", "M", "B", "T"] as const;
-    let v = value;
-    let i = -1;
-    while (v >= 1000 && i < units.length - 1) {
-      v = v / 1000;
-      i++;
-    }
-    const fixed = v.toFixed(1);
-    const trimmed = fixed.endsWith(".0") ? fixed.slice(0, -2) : fixed;
-    return `${trimmed}${units[i]}`;
-  };
+  const abbreviatedCount = formatAbbreviatedCount(count);
 
   const handleClick = () => {
     toggle.mutate({ toStar: !isStarred });
@@ -63,7 +52,7 @@ export default function StarButton({
         ) : (
           <StarIcon className={iconClass} />
         )}
-        <span className={labelClass}>{formatAbbreviatedCount(count)}</span>
+        <span className={labelClass}>{abbreviatedCount}</span>
       </div>
     </Button>
   );

@@ -23,7 +23,9 @@ export default function StarsPage() {
           {isLoading ? (
             <LoadingView type="page" />
           ) : list.length > 0 ? (
-            <CopanyGridView copanies={list} />
+            <div className="">
+              <CopanyGridView copanies={list} />
+            </div>
           ) : (
             <EmptyPlaceholderView
               icon={<SparklesIcon className="w-16 h-16 text-gray-500" />}
