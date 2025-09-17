@@ -106,11 +106,6 @@ public = true
 file_size_limit = "1MiB"
 allowed_mime_types = ["image/*"]
 
-[storage.buckets."copany-cover-images"]
-public = true
-file_size_limit = "20MiB"
-allowed_mime_types = ["image/*"]
-
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used

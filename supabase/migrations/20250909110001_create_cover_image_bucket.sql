@@ -1,8 +1,8 @@
 -- Create cover image storage bucket and policies
 
 -- 1) Create storage bucket for cover images
-insert into storage.buckets (id, name, public)
-values ('copany-cover-images', 'copany-cover-images', true)
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('copany-cover-images', 'copany-cover-images', true, 20971520)
 on conflict (id) do nothing;
 
 -- 2) Storage policies for copany-cover-images (allow authenticated users to upload/read/update/delete)

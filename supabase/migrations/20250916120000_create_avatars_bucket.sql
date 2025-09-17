@@ -2,8 +2,8 @@
 -- This bucket will store random cat avatars for users who sign up with email
 
 -- Create the bucket
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true);
+INSERT INTO storage.buckets (id, name, public, file_size_limit)
+VALUES ('avatars', 'avatars', true, 5242880);
 
 -- Set up RLS policies for the avatars bucket
 -- Allow authenticated users to upload their own avatars

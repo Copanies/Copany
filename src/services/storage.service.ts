@@ -183,7 +183,7 @@ export class StorageService {
    * Get file size limit (1MB)
    */
   getMaxLogoFileSize(): number {
-    return 1 * 1024 * 1024; // 1MB
+    return 5 * 1024 * 1024; // 5MB
   }
 
     /**
