@@ -178,7 +178,7 @@ function CommentNode({
             </>
           ) : (
             <>
-              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 relative z-10 font-semibold">
                 {(author?.name || "U")[0]?.toUpperCase()}
               </div>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">

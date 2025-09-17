@@ -211,8 +211,8 @@ export default function IssueReviewPanel({
                         className="w-4 h-4 rounded-full"
                       />
                     ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                        {name?.[0]?.toUpperCase() || "U"}
+                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+                        {name?.slice(0, 2).toUpperCase() || "U"}
                       </div>
                     )}
                     <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">

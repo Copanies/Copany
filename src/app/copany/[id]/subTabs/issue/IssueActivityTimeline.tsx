@@ -407,10 +407,10 @@ export default function IssueActivityTimeline({
           />
         );
       return (
-        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
+        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
           {(item.actor_id &&
-            userInfos[item.actor_id]?.name?.[0]?.toUpperCase()) ||
-            "S"}
+            userInfos[item.actor_id]?.name?.slice(0, 2).toUpperCase()) ||
+            "U"}
         </div>
       );
     }

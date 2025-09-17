@@ -430,7 +430,7 @@ export function renderUserLabelSm(
           className="w-5 h-5 rounded-full"
         />
       ) : (
-        <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300">
+        <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300 font-semibold">
           {name.slice(0, 1).toUpperCase()}
         </div>
       )}

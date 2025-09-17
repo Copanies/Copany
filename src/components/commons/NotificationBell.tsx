@@ -10,7 +10,22 @@ import type {
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
 import Button from "./Button";
 import { useRouter } from "next/navigation";
-import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  BellAlertIcon,
+  UserIcon,
+  XMarkIcon,
+  HandRaisedIcon,
+} from "@heroicons/react/24/outline";
+import {
+  StarIcon,
+  InboxArrowDownIcon,
+  BugAntIcon,
+} from "@heroicons/react/24/solid";
+import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
+import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
+import { renderStateLabel } from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
+import { renderPriorityLabel } from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
+import { renderLevelLabel } from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { formatRelativeTime } from "@/utils/time";
 import type { UserInfo } from "@/actions/user.actions";
@@ -18,6 +33,7 @@ import { useNotifications, useMarkNotifications } from "@/hooks/notifications";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { listNotificationsAction } from "@/actions/notification.actions";
 import { formatAbbreviatedCount } from "@/utils/number";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -54,7 +70,7 @@ export default function NotificationBell() {
   } | null>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-
+  const isDarkMode = useDarkMode();
   // Local list for pagination-append
   const [list, setList] = useState<Notification[]>(EMPTY_NOTIFICATIONS);
   useEffect(() => {
@@ -291,21 +307,21 @@ export default function NotificationBell() {
       case "issue_assigned":
         return (
           <span className="text-sm">
-            {latestTitle ? `"${latestTitle}": ` : ""}
+            {latestTitle ? `${latestTitle}: ` : ""}
             {`@${p.from_user_name}`} → {`@${p.to_user_name}`}
           </span>
         );
       case "issue_state_changed":
         return (
           <span className="text-sm ">
-            {latestTitle ? `"${latestTitle}": ` : ""}
+            {latestTitle ? `${latestTitle}: ` : ""}
             {getStateName(p.from_state)} → {getStateName(p.to_state)}
           </span>
         );
       case "issue_priority_changed":
         return (
           <span className="text-sm">
-            {latestTitle ? `"${latestTitle}": ` : ""}
+            {latestTitle ? `${latestTitle}: ` : ""}
             {getPriorityName(p.from_priority)} →{" "}
             {getPriorityName(p.to_priority)}
           </span>
@@ -313,7 +329,7 @@ export default function NotificationBell() {
       case "issue_level_changed":
         return (
           <span className="text-sm">
-            {latestTitle ? `"${latestTitle}": ` : ""}
+            {latestTitle ? `${latestTitle}: ` : ""}
             {getLevelName(p.from_level)} → {getLevelName(p.to_level)}
           </span>
         );
@@ -364,69 +380,157 @@ export default function NotificationBell() {
     }
   };
 
-  const renderItem = (n: Notification) => (
-    <button
-      key={n.id}
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        openTarget(n);
-      }}
-      className="w-full text-left px-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
-    >
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-col md:flex-row md:items-center md:gap-2 gap-1 w-full">
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative w-9 h-8">
-              {n.actor_id && actorUsers[n.actor_id]?.avatar_url ? (
-                <Image
-                  src={actorUsers[n.actor_id]!.avatar_url}
-                  alt={actorUsers[n.actor_id]!.name || "User"}
-                  className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
-                  width={24}
-                  height={24}
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                  {actorUsers[n.actor_id || ""]?.name?.[0]?.toUpperCase() ||
-                    "S"}
-                </div>
-              )}
-              {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
-                <Image
-                  src={copanies[String(n.copany_id)]!.logo_url as string}
-                  alt="Copany"
-                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-1 border-white dark:border-gray-700"
-                  width={20}
-                  height={20}
-                />
-              ) : null}
-            </div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              {n.actor_id && actorUsers[n.actor_id]
-                ? actorUsers[n.actor_id].name
-                : "System"}
-            </span>
-            <span className="ml-auto text-sm text-gray-400 md:hidden">
-              {formatRelativeTime(n.created_at)}
-            </span>
+  const renderActionIcon = (n: Notification): React.ReactNode => {
+    switch (n.type) {
+      case "copany_starred":
+        return <StarIcon className="w-6 h-6 text-[#FF9D0B]" />;
+      case "issue_assigned":
+        return null;
+      case "issue_state_changed":
+        return (
+          <div className="w-6 h-6 flex items-center justify-center scale-125">
+            {renderStateLabel(n.payload?.to_state ?? null, false, true)}
           </div>
-          <div className="flex items-center gap-2 md:flex-1">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {simpleText(n)}
-            </span>
-            <span className="hidden md:inline md:ml-auto text-sm text-gray-400">
-              {formatRelativeTime(n.created_at)}
-            </span>
+        );
+      case "issue_priority_changed":
+        return (
+          <div className="w-6 h-6 flex items-center justify-center scale-125">
+            {renderPriorityLabel(n.payload?.to_priority ?? null, false)}
+          </div>
+        );
+      case "issue_level_changed":
+        return (
+          <div className="w-6 h-6 flex items-center justify-center scale-125">
+            {renderLevelLabel(n.payload?.to_level ?? null, false, false)}
+          </div>
+        );
+      case "issue_closed":
+        return <XMarkIcon className="w-6 h-6 text-gray-400" />;
+      case "assignment_request_received":
+        return (
+          <HandRaisedIcon className="w-6 h-6 text-gray-900 dark:text-gray-100 -rotate-30 " />
+        );
+      case "assignment_request_accepted":
+        return null;
+      case "assignment_request_refused":
+        return null;
+      case "review_requested":
+        return null;
+      case "review_approved":
+        return null;
+      case "discussion_created":
+        return null;
+      case "discussion_voted":
+        return isDarkMode ? (
+          <Image
+            src={arrowshape_up_fill_dark}
+            alt="Arrow Up"
+            className="w-6 h-6"
+          />
+        ) : (
+          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+        );
+      case "discussion_comment_created":
+        return null;
+      case "discussion_comment_voted":
+        return isDarkMode ? (
+          <Image
+            src={arrowshape_up_fill_dark}
+            alt="Arrow Up"
+            className="w-6 h-6"
+          />
+        ) : (
+          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+        );
+      case "discussion_comment_reply":
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const renderItem = (n: Notification) => {
+    const actionIcon: React.ReactNode = renderActionIcon(n);
+
+    const avator: React.ReactNode = (
+      <div className="relative w-8 h-8">
+        {n.actor_id && actorUsers[n.actor_id]?.avatar_url ? (
+          <div className="flex w-8 h-8">
+            <Image
+              src={actorUsers[n.actor_id]!.avatar_url}
+              alt={actorUsers[n.actor_id]!.name || "User"}
+              className=" w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
+              width={32}
+              height={32}
+            />
+          </div>
+        ) : (
+          <div className=" w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+            {actorUsers[n.actor_id || ""]?.name?.slice(0, 2) || "U"}
+          </div>
+        )}
+        {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
+          <Image
+            src={copanies[String(n.copany_id)]!.logo_url as string}
+            alt="Copany"
+            className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-1 border-white dark:border-gray-700"
+            width={20}
+            height={20}
+          />
+        ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
+          <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+            {copanies[String(n.copany_id)]?.name?.slice(0, 2) || "Co"}
+          </div>
+        ) : null}
+      </div>
+    );
+
+    return (
+      <button
+        key={n.id}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          openTarget(n);
+        }}
+        className="w-full text-left px-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
+      >
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-2 gap-1 w-full">
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center justify-center w-8 h-8">
+                <div className="flex items-center w-8 h-8 justify-center">
+                  {actionIcon ? actionIcon : avator}
+                </div>
+              </div>
+              {actionIcon ? avator : null}
+              <div className="flex flex-col gap-0 w-full">
+                <div className="flex flex-row gap-2 justify-between w-full">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {n.actor_id && actorUsers[n.actor_id]
+                      ? actorUsers[n.actor_id].name
+                      : ""}
+                  </span>
+                  <span className="ml-auto text-sm text-gray-400">
+                    {formatRelativeTime(n.created_at)}
+                  </span>
+                </div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {simpleText(n)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col pl-10">
+            {renderSecondaryLine(n)}
+            {n.payload?.preview && (
+              <span className="text-sm line-clamp-2">{n.payload.preview}</span>
+            )}
           </div>
         </div>
-        {renderSecondaryLine(n)}
-        {n.payload?.preview && (
-          <span className="text-sm line-clamp-2">{n.payload.preview}</span>
-        )}
-      </div>
-    </button>
-  );
+      </button>
+    );
+  };
 
   const computePanelGeometry = (): {
     top: number;
