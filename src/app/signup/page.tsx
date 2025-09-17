@@ -13,6 +13,8 @@ import {
   signInWithGoogle,
 } from "@/actions/auth.actions";
 import { resendVerificationEmail } from "@/actions/auth.actions";
+import Button from "@/components/commons/Button";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
@@ -31,6 +33,8 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -173,8 +177,10 @@ export default function Signup() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 w-full">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    shape="rectangle"
                     onClick={handleResendEmail}
                     disabled={
                       isResendLoading ||
@@ -182,19 +188,21 @@ export default function Signup() {
                       isGitHubLoading ||
                       isGoogleLoading
                     }
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="!p-2"
                   >
                     {isResendLoading
                       ? "Sending..."
                       : "Resend confirmation email"}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    shape="rectangle"
                     onClick={() => setPendingConfirm(false)}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="!p-2"
                   >
                     Back to edit email
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -239,9 +247,9 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <div className="flex items-center gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       id="password"
                       name="password"
                       value={formData.password}
@@ -249,17 +257,31 @@ export default function Signup() {
                         handleInputChange("password", e.target.value)
                       }
                       placeholder="Password"
-                      className="w-full text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                      className="flex-1 text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       required
                       aria-label="Password"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="flex items-center justify-center p-0 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors hover:cursor-pointer"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <div className="flex items-center gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       id="confirmPassword"
                       name="confirmPassword"
                       value={formData.confirmPassword}
@@ -267,10 +289,26 @@ export default function Signup() {
                         handleInputChange("confirmPassword", e.target.value)
                       }
                       placeholder="Re-enter password"
-                      className="w-full text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                      className="flex-1 text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       required
                       aria-label="Re-enter password"
                     />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="flex items-center justify-center p-0 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors hover:cursor-pointer"
+                      aria-label={
+                        showConfirmPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
