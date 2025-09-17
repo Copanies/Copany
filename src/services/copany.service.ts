@@ -62,7 +62,7 @@ export class CopanyService {
     }
 
     // Extract copany data from the nested structure
-    return data.map((item: any) => item.copany) as Copany[];
+    return data.map((item: { copany: Copany }) => item.copany) as Copany[];
   }
 
   /**

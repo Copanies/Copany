@@ -12,15 +12,10 @@ import Button from "./Button";
 import { useRouter } from "next/navigation";
 import {
   BellAlertIcon,
-  UserIcon,
   XMarkIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
-import {
-  StarIcon,
-  InboxArrowDownIcon,
-  BugAntIcon,
-} from "@heroicons/react/24/solid";
+import { StarIcon } from "@heroicons/react/24/solid";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
 import { renderStateLabel } from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";

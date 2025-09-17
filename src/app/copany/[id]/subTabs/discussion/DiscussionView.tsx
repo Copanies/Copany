@@ -319,7 +319,7 @@ function DiscussionItem({
         <div
           className="flex-1 hover:cursor-pointer"
           onClick={() =>
-            router.push(`/copany/${copanyId}/dicussion/${discussion.id}`)
+            router.push(`/copany/${copanyId}/discussion/${discussion.id}`)
           }
         >
           <div className="flex flex-col gap-3">
@@ -397,7 +397,7 @@ function DiscussionItem({
           size="sm"
           variant="secondary"
           onClick={() =>
-            router.push(`/copany/${copanyId}/dicussion/${discussion.id}`)
+            router.push(`/copany/${copanyId}/discussion/${discussion.id}`)
           }
         >
           <div className="flex items-center gap-2">
