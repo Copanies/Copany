@@ -1,7 +1,7 @@
 "use client";
 
 import CopanyGridView from "@/components/copany/CopanyGridView";
-import MainNavigation from "@/components/MainNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";
 import { useCopanies, useMyStarredCopanies } from "@/hooks/copany";

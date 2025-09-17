@@ -1,4 +1,4 @@
-import MainNavigation from "@/components/MainNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import IssuePageClient from "./IssuePageClient";
 
 export default async function CopanyIssueView({

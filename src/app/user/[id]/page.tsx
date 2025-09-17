@@ -1,4 +1,4 @@
-import MainNavigation from "@/components/MainNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import UserView from "./UserView";
 
 export default async function UserDetailView({

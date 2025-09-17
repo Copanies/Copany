@@ -1,4 +1,4 @@
-import MainNavigation from "@/components/MainNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import DiscussionPageClient from "./DiscussionPageClient";
 
 export default async function CopanyDiscussionView({

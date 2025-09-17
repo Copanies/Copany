@@ -8,8 +8,8 @@ import { useMemo } from "react";
 import { useCopany } from "@/hooks/copany";
 import { createClient } from "@/utils/supabase/client";
 import { signOut } from "@/actions/auth.actions";
-import Button from "./commons/Button";
-import Dropdown from "./commons/Dropdown";
+import Button from "./Button";
+import Dropdown from "./Dropdown";
 import NotificationBell from "./NotificationBell";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -197,7 +197,7 @@ export default function MainNavigation() {
       {/* Left section - Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         <Image
-          className="cursor-pointer rounded-md"
+          className="cursor-pointer rounded-md hover:opacity-80"
           src={isDarkMode ? copany_logo_dark : copany_logo}
           alt="logo"
           width={36}
@@ -231,7 +231,7 @@ export default function MainNavigation() {
         <div className="absolute left-0 ml-18 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
           <Link
             href="/"
-            className={`relative cursor-pointer flex-shrink-0 text-base ${
+            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
@@ -242,7 +242,7 @@ export default function MainNavigation() {
           </Link>
           <Link
             href="/stars"
-            className={`relative cursor-pointer flex-shrink-0 text-base ${
+            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
               pathname.startsWith("/stars") ? "font-semibold" : ""
             }`}
           >
@@ -255,7 +255,7 @@ export default function MainNavigation() {
       ) : null}
 
       {/* Right section - User actions */}
-      <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2 md:gap-3">
+      <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2">
         {user && (
           <div className="hidden sm:block">
             {/* {user && <CreateCopanyButton size="lg" />} */}
@@ -263,7 +263,7 @@ export default function MainNavigation() {
               href="/new"
               className={`relative cursor-pointer flex-shrink-0 text-base`}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-2">
                 <PlusIcon className="w-4 h-4" />
                 <span>New copany</span>
               </div>
@@ -277,9 +277,8 @@ export default function MainNavigation() {
               href="/new"
               className={`relative cursor-pointer flex-shrink-0 text-base`}
             >
-              <div className="flex items-center gap-1 mr-1">
-                <PlusIcon className="w-4 h-4" />
-                <span>New copany</span>
+              <div className="flex items-center gap-1 mr-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-2">
+                <PlusIcon className="w-5 h-5" />
               </div>
             </Link>
           </div>

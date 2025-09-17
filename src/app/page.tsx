@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
-import MainNavigation from "@/components/MainNavigation";
+import MainNavigation from "@/components/commons/MainNavigation";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { SquaresPlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, SquaresPlusIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 
 /**
  * Home page - Responsible for data fetching and page layout
@@ -18,7 +19,7 @@ export default function Home() {
     setIsMounted(true);
   }, []);
   const safeIsLoading = isLoading || !isMounted;
-
+  const router = useRouter();
   return (
     <main className="h-min-screen">
       <MainNavigation />
@@ -29,11 +30,16 @@ export default function Home() {
           ) : copanies && copanies.length > 0 ? (
             homeView()
           ) : (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center p-6">
               <EmptyPlaceholderView
                 icon={<SquaresPlusIcon className="w-16 h-16 text-gray-500" />}
                 title="No copanies yet"
                 description="Create a new copany to get started."
+                buttonIcon={<PlusIcon className="w-4 h-4" />}
+                buttonTitle="New copany"
+                buttonAction={() => {
+                  router.push(`/new`);
+                }}
               />
             </div>
           )}

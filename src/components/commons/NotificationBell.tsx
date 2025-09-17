@@ -8,7 +8,7 @@ import type {
   Copany,
 } from "@/types/database.types";
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
-import Button from "./commons/Button";
+import Button from "./Button";
 import { useRouter } from "next/navigation";
 import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
