@@ -259,7 +259,7 @@ create or replace function public.fn_inc_discussion_vote_count()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   update public.discussion
@@ -275,7 +275,7 @@ create or replace function public.fn_dec_discussion_vote_count()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   update public.discussion
@@ -304,7 +304,7 @@ create or replace function public.fn_update_discussion_comment_count()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_discussion_id bigint;
@@ -372,6 +372,8 @@ $$;
 create or replace function public.fn_trigger_create_default_discussion_labels()
 returns trigger
 language plpgsql
+security definer
+set search_path = ''
 as $$
 begin
   perform public.fn_create_default_discussion_labels(new.id, new.created_by);

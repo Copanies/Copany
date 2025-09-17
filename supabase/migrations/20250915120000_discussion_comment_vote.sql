@@ -65,7 +65,7 @@ create or replace function public.update_discussion_comment_vote_count()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   if TG_OP = 'INSERT' then

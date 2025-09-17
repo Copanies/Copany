@@ -48,7 +48,7 @@ create or replace function public.fn_notify_on_discussion_vote()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_discussion_creator uuid;
@@ -93,7 +93,7 @@ create or replace function public.fn_notify_on_discussion_comment()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_discussion_creator uuid;
@@ -178,7 +178,7 @@ create or replace function public.fn_notify_on_discussion_comment_vote()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_comment_author uuid;
@@ -235,7 +235,7 @@ create or replace function public.fn_notify_on_discussion_create()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_copany_owner uuid;

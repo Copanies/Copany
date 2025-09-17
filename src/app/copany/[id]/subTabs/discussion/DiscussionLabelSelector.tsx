@@ -213,8 +213,8 @@ export default function DiscussionLabelSelector({
   const renderSelectedLabels = () => {
     if (selectedLabels.length === 0) {
       return (
-        <span className="text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
-          Add label
+        <span className="text-sm text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
+          Labels
         </span>
       );
     }
@@ -343,7 +343,7 @@ export default function DiscussionLabelSelector({
                 placeholder="Enter label name"
                 value={newLabelName}
                 onChange={(e) => setNewLabelName(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 autoFocus
               />
             </div>
@@ -361,7 +361,7 @@ export default function DiscussionLabelSelector({
                   placeholder="#6B7280"
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
@@ -374,7 +374,7 @@ export default function DiscussionLabelSelector({
                 placeholder="Enter description"
                 value={newLabelDescription}
                 onChange={(e) => setNewLabelDescription(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">

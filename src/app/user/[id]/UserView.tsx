@@ -74,7 +74,10 @@ export default function UserView({ userId }: UserViewProps) {
     if (value === 1) {
       handleRandomAvatar();
     } else if (value === 2) {
-      handleUploadImage();
+      // 使用 setTimeout 确保 Dropdown 关闭后再触发文件选择
+      setTimeout(() => {
+        handleUploadImage();
+      }, 10);
     }
   };
 
@@ -111,6 +114,11 @@ export default function UserView({ userId }: UserViewProps) {
     } catch (error) {
       console.error("Failed to update avatar:", error);
       alert("Failed to update avatar, please try again later");
+    } finally {
+      // 清空文件输入，允许重新选择相同文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -153,7 +161,7 @@ export default function UserView({ userId }: UserViewProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-4 max-w-[820px] mx-auto py-6">
+    <div className="flex flex-col gap-4 max-w-[840px] mx-auto py-6 px-5">
       <div className="flex flex-row gap-4 items-center">
         {/* Avatar with hover effect and dropdown */}
         <div className="relative inline-block group">
@@ -198,7 +206,7 @@ export default function UserView({ userId }: UserViewProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
         onChange={handleFileSelect}
         className="hidden"
       />

@@ -54,7 +54,8 @@ export class CopanyService {
         copany:copany!inner(*)
       `)
       .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .overrideTypes<{ copany: Copany }[]>();
 
     if (error) {
       console.error("Error fetching user's contributed copanies:", error);
@@ -62,7 +63,7 @@ export class CopanyService {
     }
 
     // Extract copany data from the nested structure
-    return data.map((item: { copany: Copany }) => item.copany) as Copany[];
+    return data.map(item => item.copany);
   }
 
   /**

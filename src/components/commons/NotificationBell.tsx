@@ -39,7 +39,7 @@ function BellIcon({ unreadCount }: { unreadCount: number }) {
     <div className="relative flex flex-row gap-2">
       <BellAlertIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
       {unreadCount > 0 && (
-        <div className="absolute -top-2 -right-2 inline-flex px-[4.2px] h-[19px] items-center justify-center bg-red-500 border-2 border-white text-white rounded-full text-xs font-medium">
+        <div className="absolute -top-2 -right-2 inline-flex px-[4.2px] h-[19px] items-center justify-center bg-red-500 border-2 border-white dark:border-[#0a0a0a] text-white rounded-full text-xs font-medium">
           {formatAbbreviatedCount(unreadCount)}
         </div>
       )}
@@ -400,7 +400,7 @@ export default function NotificationBell() {
           </div>
         );
       case "issue_closed":
-        return <XMarkIcon className="w-6 h-6 text-gray-400" />;
+        return null;
       case "assignment_request_received":
         return (
           <HandRaisedIcon className="w-6 h-6 text-gray-900 dark:text-gray-100 -rotate-30 " />
