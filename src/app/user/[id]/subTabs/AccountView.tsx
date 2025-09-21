@@ -8,14 +8,20 @@ import { useHasProviders } from "@/hooks/userAuth";
 import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
 import { AtSymbolIcon } from "@heroicons/react/24/outline";
-import { signInWithGitHub, signInWithGoogle } from "@/actions/auth.actions";
+import {
+  signInWithGitHub,
+  signInWithGoogle,
+  signInWithFigma,
+} from "@/actions/auth.actions";
 import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
+import figmaIcon from "@/assets/figma_logo.svg";
 import Button from "@/components/commons/Button";
 import { updateUserNameAction } from "@/actions/user.actions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AccountView({ userId }: { userId: string }) {
   const { data: user, isLoading } = useUserInfo(userId);
@@ -25,6 +31,7 @@ export default function AccountView({ userId }: { userId: string }) {
   const isDarkMode = useDarkMode();
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFigmaLoading, setIsFigmaLoading] = useState(false);
   const [isEmailLoading] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [userName, setUserName] = useState("");
@@ -37,6 +44,7 @@ export default function AccountView({ userId }: { userId: string }) {
   // Get user's linked providers info
   const hasGitHub = providersInfo?.hasGitHub || false;
   const hasGoogle = providersInfo?.hasGoogle || false;
+  const hasFigma = providersInfo?.hasFigma || false;
   // const hasEmail = providersInfo?.hasEmail || false; // Unused for now
   const linkedProviders = providersInfo?.allProviders || [];
   const providersData = providersInfo?.providersData || [];
@@ -89,6 +97,17 @@ export default function AccountView({ userId }: { userId: string }) {
     } catch (error) {
       console.error("Google login failed:", error);
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleFigmaLogin = async () => {
+    if (!isOwnProfile) return;
+    setIsFigmaLoading(true);
+    try {
+      await signInWithFigma();
+    } catch (error) {
+      console.error("Figma login failed:", error);
+      setIsFigmaLoading(false);
     }
   };
 
@@ -147,9 +166,12 @@ export default function AccountView({ userId }: { userId: string }) {
                         <span className="font-semibold">GitHub Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
-                            <span className="text-gray-500">
+                            <Link
+                              href={`https://github.com/${providerData.user_name}`}
+                              className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
+                            >
                               @{providerData.user_name}
-                            </span>
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -164,6 +186,25 @@ export default function AccountView({ userId }: { userId: string }) {
                           height={16}
                         />
                         <span className="font-semibold">Google Account</span>
+                        <div className="flex flex-row gap-1 items-center pl-2">
+                          {providerData.user_name && (
+                            <span className="text-gray-500">
+                              @{providerData.user_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {providerData.provider === "figma" && (
+                      <div className="flex flex-row gap-1 items-center">
+                        <Image
+                          className="w-4 h-4"
+                          alt="Figma Logo"
+                          src={figmaIcon}
+                          width={16}
+                          height={16}
+                        />
+                        <span className="font-semibold">Figma Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <span className="text-gray-500">
@@ -196,15 +237,26 @@ export default function AccountView({ userId }: { userId: string }) {
         </div>
       </div>
 
-      {isOwnProfile && !(hasGitHub && hasGoogle) && (
+      {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma) && (
         <div className="flex flex-col gap-5">
-          <p className="text-2xl font-bold">Link to Accounts</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-2xl font-bold">Link to Accounts</p>
+            <p className="text-gray-500 text-sm">
+              Only supports linking to GitHub, Google, or Figma accounts with
+              the same email address
+            </p>
+          </div>
           <div className="flex flex-col gap-3 max-w-[240px]">
             {!hasGitHub && (
               <button
                 type="button"
                 onClick={handleGitHubLogin}
-                disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
+                disabled={
+                  isEmailLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
@@ -224,7 +276,12 @@ export default function AccountView({ userId }: { userId: string }) {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                disabled={isEmailLoading || isGitHubLoading || isGoogleLoading}
+                disabled={
+                  isEmailLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
@@ -239,10 +296,30 @@ export default function AccountView({ userId }: { userId: string }) {
                 </span>
               </button>
             )}
-            {hasGitHub && hasGoogle && (
-              <p className="text-green-600 text-sm text-center mt-2">
-                All supported accounts are linked
-              </p>
+
+            {!hasFigma && (
+              <button
+                type="button"
+                onClick={handleFigmaLogin}
+                disabled={
+                  isEmailLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="Figma Logo"
+                  src={figmaIcon}
+                  width={16}
+                  height={16}
+                />
+                <span className="whitespace-nowrap">
+                  {isFigmaLoading ? "Linking..." : "Link with Figma"}
+                </span>
+              </button>
             )}
           </div>
         </div>

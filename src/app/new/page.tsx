@@ -22,6 +22,9 @@ import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import { useHasProviders } from "@/hooks/userAuth";
+import { signInWithGitHub } from "@/actions/auth.actions";
+import Link from "next/link";
 
 export default function New() {
   const router = useRouter();
@@ -36,14 +39,19 @@ export default function New() {
   const [isUploading, setIsUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isGitHubConnected, setIsGitHubConnected] = useState(false);
-  const [ideaSummary, setIdeaSummary] = useState(""); // 一句话描述这个想法
-  const [ideaDescription, setIdeaDescription] = useState(""); // 详细的描述这个想法
-  const [productName, setProductName] = useState(""); // 产品代号/名称
+  const [ideaSummary, setIdeaSummary] = useState("");
+  const [ideaDescription, setIdeaDescription] = useState("");
+  const [productName, setProductName] = useState("");
+  const [isGitHubBinding, setIsGitHubBinding] = useState(false);
   const isDarkMode = useDarkMode();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorDivRef = useRef<HTMLDivElement>(null);
+
+  // Check GitHub binding status
+  const { data: providersInfo, isLoading: providersLoading } =
+    useHasProviders();
+  const hasGitHub = providersInfo?.hasGitHub || false;
 
   // 处理编辑器内容变化的回调函数
   const handleIdeaDescriptionChange = useCallback((content: string) => {
@@ -55,11 +63,26 @@ export default function New() {
     data: repoData,
     status,
     error: repoError,
+    refetch,
   } = useQuery({
     queryKey: ["github", "repos"],
     queryFn: getOrgAndReposAction,
-    enabled: isGitHubConnected && projectType === "existing",
+    enabled: hasGitHub && projectType === "existing",
     staleTime: 5 * 60 * 1000, // 5分钟
+    retry: (failureCount, error) => {
+      // 如果是认证错误，不自动重试
+      // if (
+      //   error?.message?.includes("Bad credentials") ||
+      //   error?.message?.includes("401") ||
+      //   error?.message?.includes("Unauthorized") ||
+      //   error?.message?.includes("authentication failed")
+      // ) {
+      //   return false;
+      // }
+      // 其他错误最多重试3次
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 指数退避，最大30秒
   });
 
   // 使用 React Query 创建 copany
@@ -155,7 +178,7 @@ export default function New() {
 
   // 获取选中的仓库
   const getSelectedRepo = () => {
-    if (!selectedRepoId || !repoData?.data) return null;
+    if (!selectedRepoId || !repoData?.success || !repoData?.data) return null;
     return repoData.data.find((repo) => repo.id === selectedRepoId);
   };
 
@@ -165,7 +188,10 @@ export default function New() {
     setIsDropdownOpen(false);
 
     // 自动填充 copany 信息
-    const repo = repoData?.data?.find((r) => r.id === repoId);
+    const repo =
+      repoData?.success && repoData?.data
+        ? repoData.data.find((r) => r.id === repoId)
+        : null;
     if (repo) {
       setCompanyName(repo.name);
       setCompanyDescription(repo.description || EMPTY_STRING);
@@ -280,11 +306,35 @@ export default function New() {
     };
   };
 
-  // Connect with GitHub 按钮处理
-  const handleConnectGitHub = () => {
-    // 这里应该触发 GitHub OAuth 流程
-    // 现在先模拟连接成功
-    setIsGitHubConnected(true);
+  // GitHub 绑定处理函数
+  const handleBindGitHub = async () => {
+    setIsGitHubBinding(true);
+    try {
+      await signInWithGitHub();
+    } catch (error) {
+      console.error("GitHub binding failed:", error);
+      setIsGitHubBinding(false);
+    }
+  };
+
+  // GitHub 重新绑定处理函数（当 token 无效时）
+  const handleRebindGitHub = async () => {
+    setIsGitHubBinding(true);
+    try {
+      await signInWithGitHub();
+    } catch (error) {
+      console.error("GitHub rebinding failed:", error);
+      setIsGitHubBinding(false);
+    }
+  };
+
+  // 手动重试获取仓库数据
+  const handleRetryFetch = async () => {
+    try {
+      await refetch();
+    } catch (error) {
+      console.error("Manual retry failed:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -363,7 +413,7 @@ export default function New() {
 
           <div className="flex items-center gap-2.5 w-full">
             <div className="relative flex-1" ref={dropdownRef}>
-              {isGitHubConnected ? (
+              {hasGitHub ? (
                 <>
                   <button
                     type="button"
@@ -386,7 +436,7 @@ export default function New() {
                       </div>
                     ) : (
                       <span className="text-gray-500 dark:text-gray-400">
-                        Select repo
+                        Select repository
                       </span>
                     )}
 
@@ -408,18 +458,140 @@ export default function New() {
                       )}
                       {status === "error" && (
                         <div className="px-4 py-3 text-red-600 dark:text-red-400">
-                          {repoError?.message || "Failed to load repositories"}
+                          <div className="flex flex-col gap-2">
+                            <span>
+                              {repoError?.message ||
+                                "Failed to load repositories"}
+                            </span>
+                            {repoError?.message?.includes("Bad credentials") ||
+                            repoError?.message?.includes("401") ||
+                            repoError?.message?.includes("Unauthorized") ? (
+                              <div className="flex flex-col gap-2 mt-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                  Your GitHub token may be expired or invalid.
+                                  Please reconnect your GitHub account.
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleRebindGitHub}
+                                  disabled={isGitHubBinding}
+                                  className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                                >
+                                  <Image
+                                    src={
+                                      isDarkMode
+                                        ? githubIconBlack
+                                        : githubIconWhite
+                                    }
+                                    alt="GitHub Logo"
+                                    className="w-4 h-4"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <span>
+                                    {isGitHubBinding
+                                      ? "Reconnecting..."
+                                      : "Reconnect GitHub"}
+                                  </span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-2 mt-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                  This might be a temporary issue. You can try
+                                  again.
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleRetryFetch}
+                                  disabled={false}
+                                  className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                                >
+                                  <span>Try Again</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
-                      {status === "success" && repoData?.data && (
+                      {status === "success" && (
                         <>
-                          {(repoData.data || EMPTY_ARRAY).length === 0 ? (
+                          {!repoData?.success ? (
+                            <div className="px-4 py-3 text-red-600 dark:text-red-400">
+                              <div className="flex flex-col gap-2">
+                                <span>
+                                  Failed to fetch repositories:{" "}
+                                  {repoData?.error || "Unknown error"}
+                                </span>
+                                {repoData?.error?.includes("Bad credentials") ||
+                                repoData?.error?.includes("401") ||
+                                repoData?.error?.includes("Unauthorized") ||
+                                repoData?.error?.includes(
+                                  "authentication failed"
+                                ) ? (
+                                  <div className="flex flex-col gap-2 mt-2">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                      Your GitHub token may be expired or
+                                      invalid. Please reconnect your GitHub
+                                      account.
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={handleRebindGitHub}
+                                      disabled={isGitHubBinding}
+                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                                    >
+                                      <Image
+                                        src={
+                                          isDarkMode
+                                            ? githubIconBlack
+                                            : githubIconWhite
+                                        }
+                                        alt="GitHub Logo"
+                                        className="w-4 h-4"
+                                        width={16}
+                                        height={16}
+                                      />
+                                      <span>
+                                        {isGitHubBinding
+                                          ? "Reconnecting..."
+                                          : "Reconnect GitHub"}
+                                      </span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col gap-2 mt-2">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                      This might be a temporary issue. You can
+                                      try again.
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={handleRetryFetch}
+                                      disabled={false}
+                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                                    >
+                                      <span>Try Again</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : !repoData?.data ? (
+                            <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                              No repository data available
+                            </div>
+                          ) : (repoData.data || EMPTY_ARRAY).length === 0 ? (
                             <div className="p-4">
                               <EmptyPlaceholderView
                                 icon={
                                   <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
                                 }
-                                title="No available public repositories"
+                                title={`@${
+                                  providersInfo?.providersData.find(
+                                    (p) => p.provider === "github"
+                                  )?.user_name
+                                } has no available public repositories`}
                                 description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
                                 buttonTitle="Create GitHub Repository"
                                 buttonIcon={
@@ -475,24 +647,60 @@ export default function New() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleConnectGitHub}
-            disabled={isGitHubConnected}
-            className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Image
-              src={isDarkMode ? githubIconBlack : githubIconWhite}
-              alt="GitHub Logo"
-              className="w-4 h-4"
-              width={16}
-              height={16}
-            />
+          {hasGitHub ? (
+            <div className="flex flex-row items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+              <Image
+                src={isDarkMode ? githubIconWhite : githubIconBlack}
+                alt="GitHub Logo"
+                className="w-4 h-4"
+                width={16}
+                height={16}
+              />
+              <p>Connected</p>
+              <Link
+                href={`https://github.com/${
+                  providersInfo?.providersData.find(
+                    (p) => p.provider === "github"
+                  )?.user_name
+                }`}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
+              >
+                @
+                {
+                  providersInfo?.providersData.find(
+                    (p) => p.provider === "github"
+                  )?.user_name
+                }
+              </Link>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleBindGitHub}
+              disabled={hasGitHub || isGitHubBinding}
+              className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                src={isDarkMode ? githubIconBlack : githubIconWhite}
+                alt="GitHub Logo"
+                className="w-4 h-4"
+                width={16}
+                height={16}
+              />
 
-            <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-              {isGitHubConnected ? "Connected" : "Connect with GitHub"}
-            </span>
-          </button>
+              <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
+                {isGitHubBinding
+                  ? "Binding..."
+                  : hasGitHub
+                  ? `Connected @${
+                      providersInfo?.providersData.find(
+                        (p) => p.provider === "github"
+                      )?.user_name
+                    }`
+                  : "Connect with GitHub"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col items-start gap-3 w-full">
@@ -682,6 +890,22 @@ export default function New() {
       </>
     );
   };
+
+  // 如果正在加载 providers 信息，显示加载状态
+  if (providersLoading) {
+    return (
+      <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
+        <MainNavigation />
+        <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-6 flex-1">
+          <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+            <div className="flex flex-col items-start gap-5 px-8 py-8 w-full">
+              <LoadingView type="label" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">

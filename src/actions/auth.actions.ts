@@ -209,6 +209,55 @@ export async function signInWithGoogle() {
 }
 
 /**
+ * Figma OAuth login
+ */
+export async function signInWithFigma() {
+  console.log("🚀 Starting Figma OAuth login");
+
+  // Save current user metadata to cache before linking (if user is already logged in)
+  try {
+    await saveUserMetadataToCache();
+  } catch (error) {
+    console.warn("⚠️ Failed to save user metadata to cache:", error);
+    // Don't block the OAuth flow if caching fails
+  }
+
+  const supabase = await createSupabaseClient();
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  // Check required environment variables
+  if (!siteUrl) {
+    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+    );
+  }
+
+  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "figma",
+    options: {
+      redirectTo: `${siteUrl!}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("❌ Figma login failed:", error.message);
+    throw new Error(`Figma login failed: ${error.message}`);
+  }
+
+  if (data.url) {
+    console.log("↗️ Redirecting to Figma authorization page");
+    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
+  } else {
+    console.log("⚠️ Failed to get Figma authorization URL");
+    throw new Error("Failed to get Figma authorization URL");
+  }
+}
+
+/**
  * Get current user information
  * Note: In SSR environment, if there's no authentication session, returns null instead of throwing an error
  */
