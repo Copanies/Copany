@@ -168,7 +168,7 @@ export default function Signup() {
       <BasicNavigation />
 
       <div className="flex flex-col w-full max-w-md items-center justify-center gap-16 pt-8 pb-16 flex-1">
-        <div className="flex flex-col items-center gap-5 py-8 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+        <div className="flex flex-col items-center gap-5 py-8 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
           <div className="flex flex-col items-start gap-1 w-full px-8 pb-0">
             <h1 className="text-3xl font-normal text-gray-900 dark:text-gray-100">
               Sign up

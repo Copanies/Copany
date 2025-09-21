@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import MainNavigation from "@/components/commons/MainNavigation";
+import BasicNavigation from "@/components/commons/BasicNavigation";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
@@ -80,6 +80,7 @@ export default function New() {
       //   return false;
       // }
       // 其他错误最多重试3次
+      console.log("failureCount", failureCount, error.message);
       return failureCount < 3;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 指数退避，最大30秒
@@ -895,9 +896,9 @@ export default function New() {
   if (providersLoading) {
     return (
       <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
-        <MainNavigation />
-        <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-6 flex-1">
-          <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+        <BasicNavigation />
+        <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px=0 flex-1">
+          <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
             <div className="flex flex-col items-start gap-5 px-8 py-8 w-full">
               <LoadingView type="label" />
             </div>
@@ -909,12 +910,12 @@ export default function New() {
 
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
-      <MainNavigation />
+      <BasicNavigation />
 
-      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-6 flex-1">
+      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-0 flex-1">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm"
+          className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm"
         >
           <div className="flex flex-col items-start gap-5 px-8 py-8 w-full">
             <div className="flex flex-col items-start gap-1">
