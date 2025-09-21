@@ -457,91 +457,44 @@ export default function New() {
                           <LoadingView type="label" delay={500} />
                         </div>
                       )}
-                      {status === "error" && (
+                      {(status === "error" ||
+                        (status === "success" && !repoData?.success)) && (
                         <div className="px-4 py-3 text-red-600 dark:text-red-400">
                           <div className="flex flex-col gap-2">
                             <span>
                               {repoError?.message ||
+                                repoData?.error ||
                                 "Failed to load repositories"}
                             </span>
-                            {repoError?.message?.includes("Bad credentials") ||
-                            repoError?.message?.includes("401") ||
-                            repoError?.message?.includes("Unauthorized") ? (
-                              <div className="flex flex-col gap-2 mt-2">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  Your GitHub token may be expired or invalid.
-                                  Please reconnect your GitHub account.
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={handleRebindGitHub}
-                                  disabled={isGitHubBinding}
-                                  className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
-                                >
-                                  <Image
-                                    src={
-                                      isDarkMode
-                                        ? githubIconBlack
-                                        : githubIconWhite
-                                    }
-                                    alt="GitHub Logo"
-                                    className="w-4 h-4"
-                                    width={16}
-                                    height={16}
-                                  />
-                                  <span>
-                                    {isGitHubBinding
-                                      ? "Reconnecting..."
-                                      : "Reconnect GitHub"}
+                            {(() => {
+                              const errorMessage =
+                                repoError?.message || repoData?.error || "";
+                              const isAuthError =
+                                errorMessage.includes("Bad credentials") ||
+                                errorMessage.includes("401") ||
+                                errorMessage.includes("Unauthorized") ||
+                                errorMessage.includes("authentication failed");
+
+                              return (
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {isAuthError
+                                      ? "Your GitHub token may be expired or invalid. Please reconnect your GitHub account."
+                                      : "This might be a temporary issue. You can try again."}
                                   </span>
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col gap-2 mt-2">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  This might be a temporary issue. You can try
-                                  again.
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={handleRetryFetch}
-                                  disabled={false}
-                                  className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
-                                >
-                                  <span>Try Again</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {status === "success" && (
-                        <>
-                          {!repoData?.success ? (
-                            <div className="px-4 py-3 text-red-600 dark:text-red-400">
-                              <div className="flex flex-col gap-2">
-                                <span>
-                                  Failed to fetch repositories:{" "}
-                                  {repoData?.error || "Unknown error"}
-                                </span>
-                                {repoData?.error?.includes("Bad credentials") ||
-                                repoData?.error?.includes("401") ||
-                                repoData?.error?.includes("Unauthorized") ||
-                                repoData?.error?.includes(
-                                  "authentication failed"
-                                ) ? (
-                                  <div className="flex flex-col gap-2 mt-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                      Your GitHub token may be expired or
-                                      invalid. Please reconnect your GitHub
-                                      account.
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={handleRebindGitHub}
-                                      disabled={isGitHubBinding}
-                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
-                                    >
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={
+                                      isAuthError
+                                        ? handleRebindGitHub
+                                        : handleRetryFetch
+                                    }
+                                    disabled={
+                                      isAuthError ? isGitHubBinding : false
+                                    }
+                                  >
+                                    {isAuthError && (
                                       <Image
                                         src={
                                           isDarkMode
@@ -553,62 +506,60 @@ export default function New() {
                                         width={16}
                                         height={16}
                                       />
-                                      <span>
-                                        {isGitHubBinding
+                                    )}
+                                    <span>
+                                      {isAuthError
+                                        ? isGitHubBinding
                                           ? "Reconnecting..."
-                                          : "Reconnect GitHub"}
-                                      </span>
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col gap-2 mt-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                      This might be a temporary issue. You can
-                                      try again.
+                                          : "Reconnect GitHub"
+                                        : "Try Again"}
                                     </span>
-                                    <button
-                                      type="button"
-                                      onClick={handleRetryFetch}
-                                      disabled={false}
-                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-fit"
-                                    >
-                                      <span>Try Again</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ) : !repoData?.data ? (
-                            <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                              No repository data available
-                            </div>
-                          ) : (repoData.data || EMPTY_ARRAY).length === 0 ? (
-                            <div className="p-4">
-                              <EmptyPlaceholderView
-                                icon={
-                                  <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
-                                }
-                                title={`@${
-                                  providersInfo?.providersData.find(
-                                    (p) => p.provider === "github"
-                                  )?.user_name
-                                } has no available public repositories`}
-                                description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                                buttonTitle="Create GitHub Repository"
-                                buttonIcon={
-                                  <ArrowUpRightIcon className="w-4 h-4" />
-                                }
-                                buttonAction={() =>
-                                  window.open(
-                                    "https://github.com/new",
-                                    "_blank"
-                                  )
-                                }
-                                size="md"
-                              />
-                            </div>
-                          ) : (
-                            (repoData.data || EMPTY_ARRAY).map((repo) => (
+                                  </Button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                      {status === "success" &&
+                        repoData?.success &&
+                        !repoData?.data && (
+                          <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                            No repository data available
+                          </div>
+                        )}
+                      {status === "success" &&
+                        repoData?.success &&
+                        repoData?.data &&
+                        (repoData.data || EMPTY_ARRAY).length === 0 && (
+                          <div className="p-4">
+                            <EmptyPlaceholderView
+                              icon={
+                                <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
+                              }
+                              title={`@${
+                                providersInfo?.providersData.find(
+                                  (p) => p.provider === "github"
+                                )?.user_name
+                              } has no available public repositories`}
+                              description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
+                              buttonTitle="Create GitHub Repository"
+                              buttonIcon={
+                                <ArrowUpRightIcon className="w-4 h-4" />
+                              }
+                              buttonAction={() =>
+                                window.open("https://github.com/new", "_blank")
+                              }
+                              size="md"
+                            />
+                          </div>
+                        )}
+                      {status === "success" &&
+                        repoData?.success &&
+                        repoData?.data &&
+                        (repoData.data || EMPTY_ARRAY).length > 0 && (
+                          <>
+                            {(repoData.data || EMPTY_ARRAY).map((repo) => (
                               <div
                                 key={repo.id}
                                 className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
@@ -633,10 +584,9 @@ export default function New() {
                                   </span>
                                 </div>
                               </div>
-                            ))
-                          )}
-                        </>
-                      )}
+                            ))}
+                          </>
+                        )}
                     </div>
                   )}
                 </>
