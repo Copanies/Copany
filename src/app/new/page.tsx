@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -15,6 +14,7 @@ import {
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import { getOrgAndReposAction } from "@/actions/github.action";
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import { useCreateCopany } from "@/hooks/copany";
 import { storageService } from "@/services/storage.service";
 import Button from "@/components/commons/Button";
@@ -43,6 +43,13 @@ export default function New() {
   const [ideaDescription, setIdeaDescription] = useState("");
   const [productName, setProductName] = useState("");
   const [isGitHubBinding, setIsGitHubBinding] = useState(false);
+  const [repoData, setRepoData] = useState<{
+    success: boolean;
+    data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
+    error?: string;
+  } | null>(null);
+  const [repoError, setRepoError] = useState<Error | null>(null);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const isDarkMode = useDarkMode();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,33 +65,27 @@ export default function New() {
     setIdeaDescription(content);
   }, []);
 
-  // 使用 React Query 获取仓库数据
-  const {
-    data: repoData,
-    status,
-    error: repoError,
-    refetch,
-  } = useQuery({
-    queryKey: ["github", "repos"],
-    queryFn: getOrgAndReposAction,
-    enabled: hasGitHub && projectType === "existing",
-    staleTime: 5 * 60 * 1000, // 5分钟
-    retry: (failureCount, error) => {
-      // 如果是认证错误，不自动重试
-      // if (
-      //   error?.message?.includes("Bad credentials") ||
-      //   error?.message?.includes("401") ||
-      //   error?.message?.includes("Unauthorized") ||
-      //   error?.message?.includes("authentication failed")
-      // ) {
-      //   return false;
-      // }
-      // 其他错误最多重试3次
-      console.log("failureCount", failureCount, error.message);
-      return failureCount < 3;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 指数退避，最大30秒
-  });
+  // 获取仓库数据的函数
+  const fetchRepos = useCallback(async () => {
+    if (!hasGitHub || projectType !== "existing") return;
+
+    setIsLoadingRepos(true);
+    setRepoError(null);
+
+    try {
+      const result = await getOrgAndReposAction();
+      setRepoData(result);
+    } catch (error) {
+      setRepoError(error as Error);
+    } finally {
+      setIsLoadingRepos(false);
+    }
+  }, [hasGitHub, projectType]);
+
+  // 当条件满足时自动获取仓库数据
+  useEffect(() => {
+    fetchRepos();
+  }, [fetchRepos]);
 
   // 使用 React Query 创建 copany
   const createCopanyMutation = useCreateCopany(async (result) => {
@@ -180,7 +181,11 @@ export default function New() {
   // 获取选中的仓库
   const getSelectedRepo = () => {
     if (!selectedRepoId || !repoData?.success || !repoData?.data) return null;
-    return repoData.data.find((repo) => repo.id === selectedRepoId);
+    return repoData.data.find(
+      (
+        repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+      ) => repo.id === selectedRepoId
+    );
   };
 
   // 处理仓库选择，自动填充表单
@@ -191,7 +196,11 @@ export default function New() {
     // 自动填充 copany 信息
     const repo =
       repoData?.success && repoData?.data
-        ? repoData.data.find((r) => r.id === repoId)
+        ? repoData.data.find(
+            (
+              r: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+            ) => r.id === repoId
+          )
         : null;
     if (repo) {
       setCompanyName(repo.name);
@@ -332,7 +341,7 @@ export default function New() {
   // 手动重试获取仓库数据
   const handleRetryFetch = async () => {
     try {
-      await refetch();
+      await fetchRepos();
     } catch (error) {
       console.error("Manual retry failed:", error);
     }
@@ -452,13 +461,12 @@ export default function New() {
                       className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-120 overflow-y-auto"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {status === "pending" && (
+                      {isLoadingRepos && (
                         <div className="py-8">
                           <LoadingView type="label" delay={500} />
                         </div>
                       )}
-                      {(status === "error" ||
-                        (status === "success" && !repoData?.success)) && (
+                      {(repoError || (repoData && !repoData?.success)) && (
                         <div className="px-4 py-3 text-red-600 dark:text-red-400">
                           <div className="flex flex-col gap-2">
                             <span>
@@ -521,14 +529,16 @@ export default function New() {
                           </div>
                         </div>
                       )}
-                      {status === "success" &&
+                      {!isLoadingRepos &&
+                        !repoError &&
                         repoData?.success &&
                         !repoData?.data && (
                           <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
                             No repository data available
                           </div>
                         )}
-                      {status === "success" &&
+                      {!isLoadingRepos &&
+                        !repoError &&
                         repoData?.success &&
                         repoData?.data &&
                         (repoData.data || EMPTY_ARRAY).length === 0 && (
@@ -554,37 +564,42 @@ export default function New() {
                             />
                           </div>
                         )}
-                      {status === "success" &&
+                      {!isLoadingRepos &&
+                        !repoError &&
                         repoData?.success &&
                         repoData?.data &&
                         (repoData.data || EMPTY_ARRAY).length > 0 && (
                           <>
-                            {(repoData.data || EMPTY_ARRAY).map((repo) => (
-                              <div
-                                key={repo.id}
-                                className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRepoSelection(repo.id);
-                                }}
-                              >
-                                <Image
-                                  src={repo.owner.avatar_url}
-                                  alt={`${repo.owner.login} Avatar`}
-                                  width={24}
-                                  height={24}
-                                  className="w-6 h-6 rounded-sm"
-                                />
-                                <div className="flex flex-col flex-1 min-w-0">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    {repo.full_name}
-                                  </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                    {repo.description || "No description"}
-                                  </span>
+                            {(repoData.data || EMPTY_ARRAY).map(
+                              (
+                                repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+                              ) => (
+                                <div
+                                  key={repo.id}
+                                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRepoSelection(repo.id);
+                                  }}
+                                >
+                                  <Image
+                                    src={repo.owner.avatar_url}
+                                    alt={`${repo.owner.login} Avatar`}
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-sm"
+                                  />
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                      {repo.full_name}
+                                    </span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                      {repo.description || "No description"}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </>
                         )}
                     </div>
@@ -849,7 +864,7 @@ export default function New() {
         <BasicNavigation />
         <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px=0 flex-1">
           <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
-            <div className="flex flex-col items-start gap-5 px-8 py-8 w-full">
+            <div className="flex flex-col items-center gap-5 px-8 py-8 w-full">
               <LoadingView type="label" />
             </div>
           </div>
