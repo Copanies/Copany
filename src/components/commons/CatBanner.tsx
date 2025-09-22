@@ -77,9 +77,9 @@ export default function CatBanner({
             </div>
           ))}
         </div>
-        <div className="flex flex-col items-center justify-center min-h-[252px] w-fit min-w-md">
+        <div className="flex flex-col items-center justify-center min-h-[252px]">
           <div
-            className={`flex flex-col items-center justify-center my-auto transition-all duration-700 ease-out ${
+            className={`flex flex-col items-center justify-center px-8 my-auto max-w-screen-lg transition-all duration-700 ease-out ${
               isVisible
                 ? `opacity-100 translate-y-0`
                 : `opacity-0 translate-y-4`

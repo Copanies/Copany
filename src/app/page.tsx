@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
 import CatBanner from "@/components/commons/CatBanner";
+import MobileCatBanner from "@/components/commons/MobileCatBanner";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 
@@ -30,13 +31,26 @@ export default function Home() {
     return (
       <div className="flex flex-col">
         <div>
-          <CatBanner
-            title="Together, we are free."
-            subtitle={`Anyone can start a project
-              Earn points through collaboration
-              Rewards are shared according to points`}
-            className="mb-8"
-          />
+          {/* Desktop CatBanner */}
+          <div className="hidden sm:block">
+            <CatBanner
+              title="Together, we are free."
+              subtitle={`Anyone can start a project
+                Earn points through collaboration
+                Rewards are shared according to points`}
+              className="mb-8"
+            />
+          </div>
+          {/* Mobile CatBanner */}
+          <div className="block sm:hidden">
+            <MobileCatBanner
+              title="Together, we are free."
+              subtitle={`Anyone can start a project
+                Earn points through collaboration
+                Rewards are shared according to points`}
+              className="mb-8"
+            />
+          </div>
           <div className="px-6 flex flex-col w-full min-h-screen">
             <CopanyGridView copanies={copanies || []} />
           </div>
