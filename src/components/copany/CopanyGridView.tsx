@@ -199,7 +199,7 @@ function NewCopanyCard() {
             {/* Hover cats effect - using absolute positioning with smooth animations */}
             {/* Bottom cats */}
             <div
-              className={`absolute -bottom-10 left-0 right-0 flex justify-between items-end px-20 w-full transition-transform duration-700 ease-out ${
+              className={`absolute -bottom-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-between items-end transition-transform duration-700 ease-out ${
                 isHovered ? "translate-y-0" : "translate-y-20"
               }`}
             >

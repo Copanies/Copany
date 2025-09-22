@@ -33,10 +33,9 @@ export default function Home() {
           <CatBanner
             title="Together, we are free."
             subtitle={`Anyone can start a project
-              Earn points through tasks and collaboration
+              Earn points through collaboration
               Rewards are shared according to points`}
             className="mb-8"
-            includeBody={true}
           />
           <div className="px-6 flex flex-col w-full min-h-screen">
             <CopanyGridView copanies={copanies || []} />
