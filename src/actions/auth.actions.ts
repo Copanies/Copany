@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
-import { clearGithubTokenCookie } from "@/services/github.service";
 import { saveUserMetadataToCache } from "@/services/userMetadataProtection.service";
 
 /**
@@ -41,7 +40,7 @@ export async function signInWithGitHub() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: `${siteUrl!}/auth/callback`,
+      redirectTo: `${siteUrl!}/auth/callback?provider=github`,
       scopes: "read:user read:org",
     },
   });
@@ -58,28 +57,6 @@ export async function signInWithGitHub() {
     console.log("⚠️ Failed to get GitHub authorization URL");
     throw new Error("Failed to get GitHub authorization URL");
   }
-}
-
-/**
- * User sign out
- */
-export async function signOut() {
-  console.log("🔓 Starting user sign out");
-
-  const supabase = await createSupabaseClient();
-
-  const { error } = await supabase.auth.signOut();
-
-  if (error) {
-    console.error("❌ Sign out failed:", error.message);
-    throw new Error(`Sign out failed: ${error.message}`);
-  }
-
-  // Clear GitHub access token Cookie
-  await clearGithubTokenCookie();
-
-  console.log("✅ User sign out successful");
-  redirect("/"); // This will throw NEXT_REDIRECT, which is normal
 }
 
 /**
@@ -190,7 +167,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${siteUrl!}/auth/callback`,
+      redirectTo: `${siteUrl!}/auth/callback?provider=google`,
     },
   });
 

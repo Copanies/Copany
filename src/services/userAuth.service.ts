@@ -63,41 +63,87 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
       avatar_url: identity.identity_data?.avatar_url || ''
     })) || [];
 
-    // Get tokens from session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
+    // Get tokens from our custom table (persistent storage)
     const tokens: { github_token?: string; google_token?: string; figma_token?: string } = {};
     
+    try {
+      // Get GitHub token
+      console.log(`🔍 Attempting to get GitHub token for user: ${detailedUser.id}`);
+      const { data: githubTokenData, error: githubError } = await supabase.rpc('fn_get_user_provider_token', {
+        p_user_id: detailedUser.id,
+        p_provider: 'github'
+      });
+      
+      if (githubError) {
+        console.error("❌ Error calling fn_get_user_provider_token for GitHub:", githubError);
+      } else {
+        console.log("📊 GitHub token query result:", githubTokenData);
+      }
+      
+      if (githubTokenData) {
+        tokens.github_token = githubTokenData;
+        console.log("✅ GitHub token found and stored");
+        console.log(`📊 GitHub token preview: ${githubTokenData.substring(0, 20)}...`);
+      } else {
+        console.log("ℹ️ No GitHub token found in database");
+      }
+      
+      // Get Google token
+      const { data: googleTokenData, error: googleError } = await supabase.rpc('fn_get_user_provider_token', {
+        p_user_id: detailedUser.id,
+        p_provider: 'google'
+      });
+      
+      if (googleError) {
+        console.error("❌ Error calling fn_get_user_provider_token for Google:", googleError);
+      }
+      
+      if (googleTokenData) {
+        tokens.google_token = googleTokenData;
+        console.log("✅ Google token found and stored");
+      }
+      
+      // Get Figma token
+      const { data: figmaTokenData, error: figmaError } = await supabase.rpc('fn_get_user_provider_token', {
+        p_user_id: detailedUser.id,
+        p_provider: 'figma'
+      });
+      
+      if (figmaError) {
+        console.error("❌ Error calling fn_get_user_provider_token for Figma:", figmaError);
+      }
+      
+      if (figmaTokenData) {
+        tokens.figma_token = figmaTokenData;
+        console.log("✅ Figma token found and stored");
+      }
+      
+      console.log("Available tokens:", Object.keys(tokens).filter(key => tokens[key as keyof typeof tokens]));
+    } catch (error) {
+      console.error("Error fetching provider tokens from database:", error);
+    }
+    
+    // Fallback: Get current session token (most recent provider only)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
     if (!sessionError && session?.provider_token) {
-      // Check which providers user has linked
-      const hasGitHub = providers.some(p => p.provider === 'github');
-      const hasGoogle = providers.some(p => p.provider === 'google');
-      const hasFigma = providers.some(p => p.provider === 'figma');
+      // Determine which provider this token belongs to (most recent login)
+      const mostRecentProvider = providers.sort((a, b) => 
+        new Date(b.last_sign_in_at).getTime() - new Date(a.last_sign_in_at).getTime()
+      )[0];
       
-      // Count how many providers user has
-      const providerCount = [hasGitHub, hasGoogle, hasFigma].filter(Boolean).length;
-      
-      if (providerCount === 1) {
-        // If user only has one provider, always set that token
-        if (hasGitHub) {
-          tokens.github_token = session.provider_token;
-        } else if (hasGoogle) {
-          tokens.google_token = session.provider_token;
-        } else if (hasFigma) {
-          tokens.figma_token = session.provider_token;
-        }
-      } else if (providerCount > 1) {
-        // If user has multiple providers, determine token based on most recent login
-        const mostRecentProvider = providers.sort((a, b) => 
-          new Date(b.last_sign_in_at).getTime() - new Date(a.last_sign_in_at).getTime()
-        )[0];
-        
-        if (mostRecentProvider?.provider === 'github') {
-          tokens.github_token = session.provider_token;
-        } else if (mostRecentProvider?.provider === 'google') {
-          tokens.google_token = session.provider_token;
-        } else if (mostRecentProvider?.provider === 'figma') {
-          tokens.figma_token = session.provider_token;
+      if (mostRecentProvider && !tokens[`${mostRecentProvider.provider}_token` as keyof typeof tokens]) {
+        // Only set the token for the most recent provider if we don't already have it
+        switch (mostRecentProvider.provider) {
+          case 'github':
+            tokens.github_token = session.provider_token;
+            break;
+          case 'google':
+            tokens.google_token = session.provider_token;
+            break;
+          case 'figma':
+            tokens.figma_token = session.provider_token;
+            break;
         }
       }
     }
