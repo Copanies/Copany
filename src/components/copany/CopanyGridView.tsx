@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
-import LicenseBadge from "@/components/commons/LicenseBadge";
+import LicenseBadge from "@/components/copany/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
@@ -159,11 +159,14 @@ function CopanyCard({ copany }: CopanyCardProps) {
             </div>
           </div>
           <div className="">{copany.description || "No description"}</div>
-          {copany.license && (
-            <div className="">
-              <LicenseBadge license={copany.license} />
-            </div>
-          )}
+          <div className="">
+            <LicenseBadge
+              license={copany.license}
+              isDefaultUseCOSL={copany.isDefaultUseCOSL}
+              size="sm"
+              copanyId={copany.id}
+            />
+          </div>
         </div>
       </div>
     </li>

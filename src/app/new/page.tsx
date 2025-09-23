@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
   ChevronDownIcon,
-  InformationCircleIcon,
+  QuestionMarkCircleIcon,
   CubeTransparentIcon,
   ArrowUpRightIcon,
 } from "@heroicons/react/24/outline";
@@ -25,6 +25,7 @@ import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { useHasProviders } from "@/hooks/userAuth";
 import { signInWithGitHub } from "@/actions/auth.actions";
 import Link from "next/link";
+import RadioGroup from "@/components/commons/RadioGroup";
 
 export default function New() {
   const router = useRouter();
@@ -146,12 +147,12 @@ export default function New() {
   const coslOptions = [
     {
       value: true,
-      label: "Yes, I want to share the benefits according to my contribution",
+      label:
+        "Yes, I want to use COSL license with contribution tracking and revenue sharing",
     },
     {
       value: false,
-      label:
-        "No, I don't want to share the benefits according to my contribution",
+      label: "No, I prefer not to use COSL license",
     },
   ];
 
@@ -380,6 +381,7 @@ export default function New() {
           logo_url: logoUrl,
           github_url: repo.html_url,
           github_repository_id: repo.id.toString(),
+          isDefaultUseCOSL: useCOSL,
         });
       } catch (error) {
         console.error("Failed to create copany:", error);
@@ -397,12 +399,11 @@ export default function New() {
 
       try {
         // 使用 React Query mutation 创建 copany
-        // 这里不绑定 github_url
         createCopanyMutation.mutate({
-          name: productName, // 产品代号/名称作为 copany 的 name
-          description: ideaSummary, // 一句话描述作为 copany 的 description
-          logo_url: "", // 新想法暂时没有 logo
-          // 不传递 github_url 和 github_repository_id
+          name: productName,
+          description: ideaSummary,
+          logo_url: "",
+          isDefaultUseCOSL: useCOSL,
         });
       } catch (error) {
         console.error("Failed to create copany:", error);
@@ -899,38 +900,12 @@ export default function New() {
                   It is a:
                 </p>
 
-                <div className="flex flex-col items-start gap-4 w-full">
-                  {projectTypeOptions.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="projectType"
-                        value={option.value}
-                        checked={projectType === option.value}
-                        onChange={(e) => setProjectType(e.target.value)}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-5 h-5 rounded-full border-1 border-gray-800 dark:border-gray-200 relative ${
-                          projectType === option.value
-                            ? "bg-gray-800 dark:bg-gray-200"
-                            : "bg-transparent"
-                        }`}
-                      >
-                        {projectType === option.value && (
-                          <div className="w-2 h-2 bg-white dark:bg-gray-900 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-
-                      <span className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <RadioGroup
+                  name="projectType"
+                  options={projectTypeOptions}
+                  value={projectType}
+                  onChange={(value) => setProjectType(value as string)}
+                />
               </fieldset>
 
               {projectType === "existing" ? existRepoForm() : newIdeaForm()}
@@ -941,49 +916,23 @@ export default function New() {
                     Do you want to use Copany Open Source License (COSL)?
                   </legend>
 
-                  <div className="w-5 h-5">
-                    <InformationCircleIcon
+                  <div
+                    className="w-5 h-5 hover:cursor-pointer hover:opacity-80"
+                    onClick={() => router.push("/uselicense")}
+                  >
+                    <QuestionMarkCircleIcon
                       className="w-5 h-5"
                       strokeWidth={1.6}
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-4 w-full">
-                  {coslOptions.map((option) => (
-                    <label
-                      key={option.value.toString()}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="useCOSL"
-                        value={option.value.toString()}
-                        checked={useCOSL === option.value}
-                        onChange={(e) => setUseCOSL(e.target.value === "true")}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 border-gray-800 dark:border-gray-200 relative ${
-                          useCOSL === option.value
-                            ? "bg-gray-800 dark:bg-gray-200"
-                            : "bg-transparent"
-                        }`}
-                      >
-                        {useCOSL === option.value && (
-                          <div className="w-2 h-2 bg-white dark:bg-gray-900 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-
-                      <span
-                        className="text-sm
-                       font-normal text-gray-900 dark:text-gray-100"
-                      >
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <RadioGroup
+                  name="useCOSL"
+                  options={coslOptions}
+                  value={useCOSL}
+                  onChange={(value) => setUseCOSL(value as boolean)}
+                />
               </fieldset>
             </div>
 

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
-import LicenseBadge from "@/components/commons/LicenseBadge";
+import LicenseBadge from "@/components/copany/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
 
 interface CopanyListViewProps {
@@ -40,11 +40,13 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 )}
                 <div className="font-semibold text-base">{copany.name}</div>
                 <AssetLinksSection copany={copany} size="sm" />
-                {copany.license && (
-                  <div className="hidden sm:block">
-                    <LicenseBadge license={copany.license} />
-                  </div>
-                )}
+                <div className="hidden sm:block">
+                  <LicenseBadge
+                    license={copany.license}
+                    isDefaultUseCOSL={copany.isDefaultUseCOSL}
+                    copanyId={String(copany.id)}
+                  />
+                </div>
                 <div className="ml-auto flex items-center gap-2">
                   <ContributorAvatarStack copany={copany} />
                   <StarButton
@@ -55,11 +57,13 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                 </div>
               </div>
               <div className="">{copany.description || "No description"}</div>
-              {copany.license && (
-                <div className="block sm:hidden">
-                  <LicenseBadge license={copany.license} />
-                </div>
-              )}
+              <div className="block sm:hidden">
+                <LicenseBadge
+                  license={copany.license}
+                  isDefaultUseCOSL={copany.isDefaultUseCOSL}
+                  copanyId={String(copany.id)}
+                />
+              </div>
             </div>
             {index !== copanies.length - 1 && (
               <div className="w-full h-px bg-gray-200 dark:bg-gray-800" />

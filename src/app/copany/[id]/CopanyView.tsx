@@ -13,7 +13,7 @@ import FinanceView from "./subTabs/finance/FinanceView";
 import SettingsView from "./subTabs/settings/SettingsView";
 import DiscussionView from "./subTabs/discussion/DiscussionView";
 import AssetLinksSection from "@/components/copany/AssetLinksSection";
-import LicenseBadge from "@/components/commons/LicenseBadge";
+import LicenseBadge from "@/components/copany/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import StarButton from "@/components/copany/StarButton";
@@ -112,17 +112,11 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
       content: <FinanceView copanyId={copanyId} />,
     },
-    ...(copany.github_url
-      ? [
-          {
-            label: "LICENSE",
-            icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
-            content: (
-              <LicenseView githubUrl={copany.github_url} copany={copany} />
-            ),
-          },
-        ]
-      : []),
+    {
+      label: "LICENSE",
+      icon: <ScaleIcon strokeWidth={2} className="w-4 h-4" />,
+      content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
+    },
     ...(isCreator
       ? [
           {
@@ -180,7 +174,11 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>
             <div className="hidden sm:block">
-              {copany.license && <LicenseBadge license={copany.license} />}
+              <LicenseBadge
+                license={copany.license}
+                isDefaultUseCOSL={copany.isDefaultUseCOSL}
+                copanyId={copany.id}
+              />
             </div>
             <div className="block sm:hidden flex flex-1 justify-end">
               <StarButton
@@ -191,11 +189,13 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             </div>
           </div>
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
-            {copany.license && (
-              <div className="block sm:hidden">
-                <LicenseBadge license={copany.license} />
-              </div>
-            )}
+            <div className="block sm:hidden">
+              <LicenseBadge
+                license={copany.license}
+                isDefaultUseCOSL={copany.isDefaultUseCOSL}
+                copanyId={copany.id}
+              />
+            </div>
             <AssetLinksSection copany={copany} />
             <div className="hidden sm:block">
               <StarButton

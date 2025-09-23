@@ -41,6 +41,7 @@ export async function createCopanyAction(
       is_connected_github: false,
       license: null,
       cover_image_url: null,
+      isDefaultUseCOSL: false,
       ...copanyData, // 用户提供的数据会覆盖默认值
     };
 
