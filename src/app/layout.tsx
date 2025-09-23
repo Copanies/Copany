@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import ReactQueryProvider from "./providers/ReactQueryProvider";
+import Footer from "@/components/commons/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <ReactQueryProvider>
+            <div className="min-h-screen flex flex-col">
+              <div className="flex-1">{children}</div>
+              <Footer />
+            </div>
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -69,13 +69,15 @@ async function getUserPublicRepos(): Promise<
   try {
     const accessToken = await getGithubAccessToken();
     if (!accessToken) {
-      throw new Error("Failed to get GitHub access token");
+      throw new Error("Failed to get GitHub access token - user may not be properly authenticated with GitHub");
     }
 
+    console.log("🔑 GitHub access token obtained, creating Octokit client");
     const octokit = new Octokit({
       auth: accessToken,
     });
 
+    console.log("🌐 Making API call to GitHub to fetch repositories");
     const response = await octokit.rest.repos.listForAuthenticatedUser({
       visibility: "public",
       sort: "updated",
@@ -85,9 +87,29 @@ async function getUserPublicRepos(): Promise<
     console.log(
       `✅ Successfully fetched ${response.data.length} user public repositories`
     );
+    
+    // Log repository names for debugging
+    if (response.data.length > 0) {
+      console.log("📁 Available repositories:", response.data.map(repo => repo.full_name).slice(0, 5));
+    } else {
+      console.log("📁 No public repositories found for this user");
+    }
+    
     return response.data;
   } catch (error) {
     console.error("❌ Failed to fetch user's public repositories:", error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Bad credentials")) {
+        throw new Error("GitHub authentication failed - please reconnect your GitHub account");
+      } else if (error.message.includes("403") || error.message.includes("Forbidden")) {
+        throw new Error("GitHub API access denied - insufficient permissions");
+      } else if (error.message.includes("rate limit")) {
+        throw new Error("GitHub API rate limit exceeded - please try again later");
+      }
+    }
+    
     throw error;
   }
 }
@@ -106,7 +128,7 @@ export async function getOrgAndReposAction(): Promise<{
     // Only get all public repositories the user has access to (including personal and organization repos)
     const repos = await getUserPublicRepos();
 
-    console.log("✅ Successfully fetched GitHub data");
+    console.log(`✅ Successfully fetched ${repos.length} GitHub repositories`);
     return {
       success: true,
       data: repos,

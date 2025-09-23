@@ -4,12 +4,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
-import LicenseBadge from "@/components/commons/LicenseBadge";
+import LicenseBadge from "@/components/copany/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { EMPTY_STRING } from "@/utils/constants";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
+import { useState, useEffect } from "react";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -156,11 +159,106 @@ function CopanyCard({ copany }: CopanyCardProps) {
             </div>
           </div>
           <div className="">{copany.description || "No description"}</div>
-          {copany.license && (
-            <div className="">
-              <LicenseBadge license={copany.license} />
+          <div className="">
+            <LicenseBadge
+              license={copany.license}
+              isDefaultUseCOSL={copany.isDefaultUseCOSL}
+              size="sm"
+              copanyId={copany.id}
+            />
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function NewCopanyCard() {
+  const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
+  const [catAvatars, setCatAvatars] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Generate 24 random cat avatars for hover effect (same as CatBanner)
+    const avatars = Array.from({ length: 4 }, () =>
+      generateRandomCatAvatarClient(false, true)
+    );
+    setCatAvatars(avatars);
+  }, []);
+
+  return (
+    <li
+      className="cursor-pointer sm:mx-0"
+      onClick={() => {
+        router.push(`/new`);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-2">
+          {/* Different layouts based on whether cover image exists */}
+          <div className="relative flex flex-row items-center justify-center gap-2 px-5 py-3 rounded-[20px] overflow-hidden aspect-[1.8] bg-[#FBF9F5] dark:bg-[#222221] transition-all duration-500">
+            {/* Hover cats effect - using absolute positioning with smooth animations */}
+            {/* Bottom cats */}
+            <div
+              className={`absolute -bottom-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-between items-end transition-transform duration-700 ease-out ${
+                isHovered ? "translate-y-0" : "translate-y-20"
+              }`}
+            >
+              <div
+                key={`cat-0`}
+                className={`transition-transform duration-700 ease-out ${
+                  isHovered ? "delay-100" : "delay-0"
+                }`}
+                style={{ transform: "scaleX(-1)" }}
+                dangerouslySetInnerHTML={{ __html: catAvatars[0] }}
+              />
+              <div
+                key={`cat-1`}
+                className={`transition-transform duration-700 ease-out ${
+                  isHovered ? "delay-200" : "delay-0"
+                }`}
+                dangerouslySetInnerHTML={{ __html: catAvatars[1] }}
+              />
             </div>
-          )}
+
+            {/* Left cats */}
+            <div
+              className={`absolute -left-5 top-1/2 transform -translate-y-1 transition-transform duration-700 ease-out ${
+                isHovered
+                  ? "translate-x-0 delay-150"
+                  : "-translate-x-20 delay-0"
+              }`}
+            >
+              <div
+                key={`cat-3`}
+                className="transition-transform duration-700 ease-out"
+                style={{ transform: "scaleX(-1)" }}
+                dangerouslySetInnerHTML={{ __html: catAvatars[2] }}
+              />
+            </div>
+
+            {/* Right cats */}
+            <div
+              className={`absolute -right-5 top-1/2 transform -translate-y-1 transition-transform duration-700 ease-out ${
+                isHovered ? "translate-x-0 delay-150" : "translate-x-20 delay-0"
+              }`}
+            >
+              <div
+                key={`cat-4`}
+                className="transition-transform duration-700 ease-out"
+                dangerouslySetInnerHTML={{ __html: catAvatars[3] }}
+              />
+            </div>
+
+            <div className="relative z-10 flex flex-row items-center justify-center gap-2">
+              <PlusIcon className="w-7 h-7 text-gray-900 dark:text-gray-100" />
+              <div className="font-medium text-xl text-gray-900 dark:text-gray-100">
+                Start new copany
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </li>
@@ -172,10 +270,11 @@ function CopanyCard({ copany }: CopanyCardProps) {
  */
 export default function CopanyGridView({ copanies }: CopanyGridViewProps) {
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto">
+    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
       {copanies.map((copany) => (
         <CopanyCard key={copany.id} copany={copany} />
       ))}
+      <NewCopanyCard />
     </ul>
   );
 }

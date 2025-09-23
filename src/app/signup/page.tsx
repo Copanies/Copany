@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
+import figmaIcon from "@/assets/figma_logo.svg";
 import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -11,8 +12,11 @@ import {
   signUpWithEmail,
   signInWithGitHub,
   signInWithGoogle,
+  signInWithFigma,
 } from "@/actions/auth.actions";
 import { resendVerificationEmail } from "@/actions/auth.actions";
+import Button from "@/components/commons/Button";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
@@ -28,9 +32,14 @@ export default function Signup() {
   const [isResendLoading, setIsResendLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFigmaLoading, setIsFigmaLoading] = useState(false);
   const [error, setError] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPasswordField, setShowConfirmPasswordField] =
+    useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -138,31 +147,126 @@ export default function Signup() {
     }
   };
 
+  const handleFigmaSignup = async () => {
+    setIsFigmaLoading(true);
+    setError("");
+
+    try {
+      await signInWithFigma();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Figma signup failed, please try again"
+      );
+      setIsFigmaLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
 
-      <div className="flex flex-col w-full max-w-md items-center justify-center gap-16 pt-8 pb-16 px-6 flex-1">
-        <div className="flex flex-col items-center gap-5 py-8 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-          <div className="flex flex-col items-start gap-5 px-8 w-full">
-            <div className="flex flex-col items-start gap-1">
-              <h1 className="text-3xl font-normal text-gray-900 dark:text-gray-100">
-                Sign up
-              </h1>
+      <div className="flex flex-col w-full max-w-md items-center justify-center gap-16 pt-8 pb-16 flex-1">
+        <div className="flex flex-col items-center gap-5 py-8 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
+          <div className="flex flex-col items-start gap-1 w-full px-8 pb-0">
+            <h1 className="text-3xl font-normal text-gray-900 dark:text-gray-100">
+              Sign up
+            </h1>
 
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Freer creation, fairer rewards.
-              </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Welcome to Copany
+            </p>
+          </div>
+
+          {error && (
+            <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
+          )}
 
-            {error && (
-              <div className="w-full p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </p>
-              </div>
-            )}
+          <div className="flex flex-col items-center gap-3 px-8 w-full">
+            <button
+              type="button"
+              onClick={handleFigmaSignup}
+              disabled={
+                isEmailLoading ||
+                isResendLoading ||
+                isGitHubLoading ||
+                isGoogleLoading ||
+                isFigmaLoading
+              }
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                className="w-4 h-4"
+                alt="Figma Logo"
+                src={figmaIcon}
+                width={16}
+                height={16}
+              />
 
+              <span className="whitespace-nowrap">
+                {isFigmaLoading ? "Signing up..." : "Sign up with Figma"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGitHubSignup}
+              disabled={
+                isEmailLoading ||
+                isResendLoading ||
+                isGitHubLoading ||
+                isGoogleLoading ||
+                isFigmaLoading
+              }
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                className="w-4 h-4"
+                alt="GitHub Logo"
+                src={isDarkMode ? githubIconBlack : githubIconWhite}
+                width={16}
+                height={16}
+              />
+
+              <span className="whitespace-nowrap">
+                {isGitHubLoading ? "Signing up..." : "Sign up with GitHub"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignup}
+              disabled={
+                isEmailLoading ||
+                isResendLoading ||
+                isGitHubLoading ||
+                isGoogleLoading ||
+                isFigmaLoading
+              }
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                className="w-4 h-4"
+                alt="Google Logo"
+                src={googleIcon}
+                width={16}
+                height={16}
+              />
+
+              <span className="whitespace-nowrap">
+                {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 w-full">
+            <div className="text-sm text-gray-600 dark:text-gray-400">or</div>
+          </div>
+
+          <div className="flex flex-col items-start gap-5 px-8 w-full">
             {pendingConfirm ? (
               <div className="flex flex-col items-start gap-4 w-full">
                 <div className="w-full p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
@@ -173,8 +277,10 @@ export default function Signup() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 w-full">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    shape="rectangle"
                     onClick={handleResendEmail}
                     disabled={
                       isResendLoading ||
@@ -182,19 +288,21 @@ export default function Signup() {
                       isGitHubLoading ||
                       isGoogleLoading
                     }
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="!p-2"
                   >
                     {isResendLoading
                       ? "Sending..."
                       : "Resend confirmation email"}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    shape="rectangle"
                     onClick={() => setPendingConfirm(false)}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="!p-2"
                   >
                     Back to edit email
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -203,7 +311,7 @@ export default function Signup() {
                 className="flex flex-col items-start gap-4 w-full"
               >
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 ">
                     <input
                       type="text"
                       id="name"
@@ -221,7 +329,7 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 ">
                     <input
                       type="email"
                       id="email"
@@ -239,40 +347,75 @@ export default function Signup() {
                 </div>
 
                 <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+                  <div className="flex items-center gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 ">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       id="password"
                       name="password"
                       value={formData.password}
                       onChange={(e) =>
                         handleInputChange("password", e.target.value)
                       }
+                      onFocus={() => setShowConfirmPasswordField(true)}
                       placeholder="Password"
-                      className="w-full text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                      className="flex-1 text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       required
                       aria-label="Password"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="flex items-center justify-center p-0 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors hover:cursor-pointer"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-2.5 w-full">
-                  <div className="flex flex-col items-start gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={(e) =>
-                        handleInputChange("confirmPassword", e.target.value)
-                      }
-                      placeholder="Re-enter password"
-                      className="w-full text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                      required
-                      aria-label="Re-enter password"
-                    />
+                {showConfirmPasswordField && (
+                  <div className="flex flex-col items-start gap-2.5 w-full">
+                    <div className="flex items-center gap-2 px-4 py-3 w-full rounded-lg border border-gray-200 dark:border-gray-600 ">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={(e) =>
+                          handleInputChange("confirmPassword", e.target.value)
+                        }
+                        placeholder="Re-enter password"
+                        className="flex-1 text-sm text-gray-700 dark:text-gray-300 bg-transparent border-0 outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        required
+                        aria-label="Re-enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="flex items-center justify-center p-0 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors hover:cursor-pointer"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeSlashIcon className="w-5 h-5" />
+                        ) : (
+                          <EyeIcon className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <button
                   type="submit"
@@ -321,60 +464,6 @@ export default function Signup() {
 
               <span>.</span>
             </p>
-          </div>
-
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div className="text-sm text-gray-600 dark:text-gray-400">or</div>
-          </div>
-
-          <div className="flex flex-col items-center gap-3 px-8 w-full">
-            <button
-              type="button"
-              onClick={handleGitHubSignup}
-              disabled={
-                isEmailLoading ||
-                isResendLoading ||
-                isGitHubLoading ||
-                isGoogleLoading
-              }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                className="w-4 h-4"
-                alt="GitHub Logo"
-                src={isDarkMode ? githubIconBlack : githubIconWhite}
-                width={16}
-                height={16}
-              />
-
-              <span className="whitespace-nowrap">
-                {isGitHubLoading ? "Signing up..." : "Sign up with GitHub"}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignup}
-              disabled={
-                isEmailLoading ||
-                isResendLoading ||
-                isGitHubLoading ||
-                isGoogleLoading
-              }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                className="w-4 h-4"
-                alt="Google Logo"
-                src={googleIcon}
-                width={16}
-                height={16}
-              />
-
-              <span className="whitespace-nowrap">
-                {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
-              </span>
-            </button>
           </div>
         </div>
       </div>

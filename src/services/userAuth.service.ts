@@ -11,6 +11,7 @@ export interface UserAuthInfo {
   tokens: {
     github_token?: string;
     google_token?: string;
+    figma_token?: string;
   };
 }
 
@@ -65,19 +66,39 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
     // Get tokens from session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    const tokens: { github_token?: string; google_token?: string } = {};
+    const tokens: { github_token?: string; google_token?: string; figma_token?: string } = {};
     
     if (!sessionError && session?.provider_token) {
-      // Note: Supabase only stores the token for the most recent login provider
-      // For a complete multi-provider token system, you'd need to store tokens separately
-      const mostRecentProvider = providers.sort((a, b) => 
-        new Date(b.last_sign_in_at).getTime() - new Date(a.last_sign_in_at).getTime()
-      )[0];
+      // Check which providers user has linked
+      const hasGitHub = providers.some(p => p.provider === 'github');
+      const hasGoogle = providers.some(p => p.provider === 'google');
+      const hasFigma = providers.some(p => p.provider === 'figma');
       
-      if (mostRecentProvider?.provider === 'github') {
-        tokens.github_token = session.provider_token;
-      } else if (mostRecentProvider?.provider === 'google') {
-        tokens.google_token = session.provider_token;
+      // Count how many providers user has
+      const providerCount = [hasGitHub, hasGoogle, hasFigma].filter(Boolean).length;
+      
+      if (providerCount === 1) {
+        // If user only has one provider, always set that token
+        if (hasGitHub) {
+          tokens.github_token = session.provider_token;
+        } else if (hasGoogle) {
+          tokens.google_token = session.provider_token;
+        } else if (hasFigma) {
+          tokens.figma_token = session.provider_token;
+        }
+      } else if (providerCount > 1) {
+        // If user has multiple providers, determine token based on most recent login
+        const mostRecentProvider = providers.sort((a, b) => 
+          new Date(b.last_sign_in_at).getTime() - new Date(a.last_sign_in_at).getTime()
+        )[0];
+        
+        if (mostRecentProvider?.provider === 'github') {
+          tokens.github_token = session.provider_token;
+        } else if (mostRecentProvider?.provider === 'google') {
+          tokens.google_token = session.provider_token;
+        } else if (mostRecentProvider?.provider === 'figma') {
+          tokens.figma_token = session.provider_token;
+        }
       }
     }
 
@@ -111,7 +132,23 @@ export async function hasProviderLinked(provider: string): Promise<boolean> {
 /**
  * Get specific provider token
  */
-export async function getProviderToken(provider: 'github' | 'google'): Promise<string | null> {
+export async function getProviderToken(provider: 'github' | 'google' | 'figma'): Promise<string | null> {
+  console.log(`🔍 Getting ${provider} token from userAuth service...`);
   const userAuth = await getUserAuthInfo();
-  return userAuth?.tokens[`${provider}_token`] || null;
+  
+  if (!userAuth) {
+    console.log(`❌ No userAuth info found`);
+    return null;
+  }
+  
+  const token = userAuth.tokens[`${provider}_token`];
+  if (token) {
+    console.log(`✅ Found ${provider} token in userAuth service`);
+  } else {
+    console.log(`❌ No ${provider} token found in userAuth service`);
+    console.log(`Available tokens:`, Object.keys(userAuth.tokens));
+    console.log(`Available providers:`, userAuth.providers.map(p => p.provider));
+  }
+  
+  return token || null;
 }

@@ -1,10 +1,11 @@
 "use server";
 import { CopanyContributorService } from "@/services/copanyContributor.service";
+import { CopanyContributorWithUserInfo } from "@/types/database.types";
 
 /**
  * Get company contributors list - Server Action
  */
-export async function getCopanyContributorsAction(copanyId: string) {
+export async function getCopanyContributorsAction(copanyId: string): Promise<CopanyContributorWithUserInfo[]> {
   console.log("🔍 Action: getCopanyContributorsAction", copanyId);
   try {
     const contributors =

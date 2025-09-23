@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 import CoslLicenseTip from "@/components/copany/CoslLicenseTip";
+import { generateCOSLLicense } from "@/utils/coslLicense";
 
 interface LicenseViewProps {
   githubUrl?: string | null;
@@ -108,6 +109,19 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
 
   if (notFound) {
     const isOwner = currentUser?.id === copany.created_by;
+
+    // 如果 copany 设置了默认使用 COSL，且无法获取到 GitHub license，则显示生成的 COSL license
+    if (copany.isDefaultUseCOSL) {
+      const coslLicenseContent = generateCOSLLicense(copany);
+
+      return (
+        <div className="space-y-4">
+          <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
+            {coslLicenseContent}
+          </pre>
+        </div>
+      );
+    }
 
     return (
       <EmptyPlaceholderView

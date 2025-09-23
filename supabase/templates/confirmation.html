@@ -1,0 +1,128 @@
+<div
+  style="margin: auto; max-width: 600px; padding-top: 32px; background: #fbf9f5"
+  class="email-container"
+>
+  <!-- Header -->
+  <table
+    role="presentation"
+    cellspacing="0"
+    cellpadding="0"
+    width="100%"
+    align="center"
+    style="background: #fbf9f5; border-radius: 3px 3px 0 0; max-width: 600px"
+  >
+    <tr>
+      <td
+        style="
+          background: #fbf9f5;
+          border-radius: 3px 3px 0 0;
+          padding: 20px 0 10px 0;
+          text-align: center;
+        "
+      >
+        <img
+          src="https://zqvuwncemjsdjxudqkpt.supabase.co/storage/v1/object/public/copany-logos/logos/Copany-1752548859517.png"
+          width="80"
+          height="80"
+          alt="Copany Logo"
+          border="0"
+          style="
+            font-family: sans-serif;
+            font-size: 15px;
+            line-height: 140%;
+            color: #ffffff;
+          "
+        />
+      </td>
+    </tr>
+  </table>
+
+  <!-- Body -->
+  <table
+    role="presentation"
+    cellspacing="0"
+    cellpadding="0"
+    width="100%"
+    align="center"
+    style="
+      border: 0;
+      border-bottom: 1px solid #d6d6d6;
+      max-width: 600px;
+      background: #fbf9f5;
+    "
+  >
+    <tr>
+      <td
+        style="
+          background-color: #fbf9f5;
+          color: #444;
+          font-family: 'Helvetica Neue', Roboto, Arial, sans-serif;
+          font-size: 14px;
+          line-height: 140%;
+          padding: 30px 35px;
+          text-align: center;
+        "
+      >
+        <div style="font-weight: bold; font-size: 20px; padding-bottom: 15px">
+          Confirm your email
+        </div>
+        <p
+          style="
+            color: #555;
+            font-size: 14px;
+            line-height: 20px;
+            margin: 0 0 20px 0;
+          "
+        >
+          Thanks for signing up to <b>Copany</b>! Please confirm your email
+          address by clicking the button below:
+        </p>
+
+        <!-- Confirmation Button -->
+        <a
+          href="{{ .ConfirmationURL }}"
+          style="
+            display: inline-block;
+            background: #323231;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 12px 24px;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-decoration: none;
+          "
+        >
+          Confirm Email
+        </a>
+
+        <p style="color: #888; font-size: 12px; margin-top: 20px">
+          If you did not sign up for Copany, you can safely ignore this email.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td
+        style="
+          background-color: #fbf9f5;
+          border-top: 1px solid #e0e0e0;
+          color: #777;
+          font-family: 'Helvetica Neue', Roboto, Arial, sans-serif;
+          font-size: 12px;
+          line-height: 16px;
+          padding: 20px 30px;
+          text-align: center;
+        "
+      >
+        <p style="margin: 0 0 10px 0">
+          This message was sent by Copany (copany.app).
+        </p>
+        <p style="margin: 0; color: #999">
+          © 2025 Copany. All rights reserved.
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>

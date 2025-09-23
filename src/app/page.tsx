@@ -2,11 +2,10 @@
 import { useEffect, useState } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
+import CatBanner from "@/components/commons/CatBanner";
+import MobileCatBanner from "@/components/commons/MobileCatBanner";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
-import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { PlusIcon, SquaresPlusIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
 
 /**
  * Home page - Responsible for data fetching and page layout
@@ -19,31 +18,11 @@ export default function Home() {
     setIsMounted(true);
   }, []);
   const safeIsLoading = isLoading || !isMounted;
-  const router = useRouter();
   return (
     <main className="h-min-screen">
       <MainNavigation />
-      <div className="px-6 max-w-screen-lg mx-auto flex flex-col">
-        <div className="flex flex-col gap-4">
-          {safeIsLoading ? (
-            <LoadingView type="page" />
-          ) : copanies && copanies.length > 0 ? (
-            homeView()
-          ) : (
-            <div className="flex flex-col items-center p-6">
-              <EmptyPlaceholderView
-                icon={<SquaresPlusIcon className="w-16 h-16 text-gray-500" />}
-                title="No copanies yet"
-                description="Create a new copany to get started."
-                buttonIcon={<PlusIcon className="w-4 h-4" />}
-                buttonTitle="New copany"
-                buttonAction={() => {
-                  router.push(`/new`);
-                }}
-              />
-            </div>
-          )}
-        </div>
+      <div className="flex flex-col">
+        {safeIsLoading ? <LoadingView type="page" /> : homeView()}
       </div>
     </main>
   );
@@ -52,12 +31,29 @@ export default function Home() {
     return (
       <div className="flex flex-col">
         <div>
-          <div className="flex flex-col items-center justify-center p-8 gap-3">
-            <p className="text-3xl font-normal text-center">
-              Freer creation, fairer rewards.
-            </p>
+          {/* Desktop CatBanner */}
+          <div className="hidden sm:block">
+            <CatBanner
+              title="Together, we are free."
+              subtitle={`Anyone can start a project
+                Earn points through collaboration
+                Rewards are shared according to points`}
+              className="mb-8"
+            />
           </div>
-          <CopanyGridView copanies={copanies || []} />
+          {/* Mobile CatBanner */}
+          <div className="block sm:hidden">
+            <MobileCatBanner
+              title="Together, we are free."
+              subtitle={`Anyone can start a project
+                Earn points through collaboration
+                Rewards are shared according to points`}
+              className="mb-8"
+            />
+          </div>
+          <div className="px-6 flex flex-col w-full min-h-screen">
+            <CopanyGridView copanies={copanies || []} />
+          </div>
         </div>
       </div>
     );

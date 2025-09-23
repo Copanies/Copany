@@ -2,7 +2,7 @@
 
 // English comments
 import { useQuery } from "@tanstack/react-query";
-import type { CopanyContributor } from "@/types/database.types";
+import type { CopanyContributorWithUserInfo } from "@/types/database.types";
 import { getCopanyContributorsAction } from "@/actions/copanyContributor.actions";
 
 function key(copanyId: string) {
@@ -10,20 +10,20 @@ function key(copanyId: string) {
 }
 
 export function useContributors(copanyId: string) {
-  return useQuery<CopanyContributor[]>({
+  return useQuery<CopanyContributorWithUserInfo[]>({
     queryKey: key(copanyId),
     queryFn: async () => {
       try {
         const res = await fetch(`/api/contributors?copanyId=${encodeURIComponent(copanyId)}`);
         if (!res.ok) throw new Error("request failed");
         const json = await res.json();
-        return json.contributors as CopanyContributor[];
+        return json.contributors as CopanyContributorWithUserInfo[];
       } catch {
         return await getCopanyContributorsAction(copanyId);
       }
     },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: 60 * 60 * 1000, // 60 minutes
   });
 }
 

@@ -20,6 +20,7 @@ export interface Copany {
   github_repository_id: string | null;
   is_connected_github: boolean;
   license: string | null;
+  isDefaultUseCOSL: boolean;
   star_count?: number;
 }
 
@@ -42,17 +43,21 @@ export interface Issue {
   version?: number; // optimistic locking version
 }
 
-// Table: copany_contributor
+// Table: copany_contributor (after migration - removed name and avatar_url)
 export interface CopanyContributor {
   id: string;
   copany_id: string;
   user_id: string;
   created_at: string;
   updated_at: string;
-  name: string;
   email: string;
-  avatar_url: string;
   contribution: number;
+}
+
+// Extended type with user information from auth.users
+export interface CopanyContributorWithUserInfo extends CopanyContributor {
+  name: string;
+  avatar_url: string;
 }
 
 // Table: issue_comment

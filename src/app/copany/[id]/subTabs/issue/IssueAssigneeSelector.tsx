@@ -3,7 +3,10 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { useUpdateIssueAssignee } from "@/hooks/issues";
-import { CopanyContributor, AssigneeUser } from "@/types/database.types";
+import {
+  CopanyContributorWithUserInfo,
+  AssigneeUser,
+} from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
@@ -24,7 +27,7 @@ interface IssueAssigneeSelectorProps {
     assigneeUser: AssigneeUser | null
   ) => void;
   currentUser?: User | null;
-  contributors?: CopanyContributor[];
+  contributors?: CopanyContributorWithUserInfo[];
   showText?: boolean;
   disableServerUpdate?: boolean;
   readOnly?: boolean;

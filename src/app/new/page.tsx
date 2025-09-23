@@ -2,19 +2,19 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import MainNavigation from "@/components/commons/MainNavigation";
+import BasicNavigation from "@/components/commons/BasicNavigation";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
   ChevronDownIcon,
-  InformationCircleIcon,
+  QuestionMarkCircleIcon,
   CubeTransparentIcon,
   ArrowUpRightIcon,
 } from "@heroicons/react/24/outline";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import { getOrgAndReposAction } from "@/actions/github.action";
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import { useCreateCopany } from "@/hooks/copany";
 import { storageService } from "@/services/storage.service";
 import Button from "@/components/commons/Button";
@@ -22,6 +22,10 @@ import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import { useHasProviders } from "@/hooks/userAuth";
+import { signInWithGitHub } from "@/actions/auth.actions";
+import Link from "next/link";
+import RadioGroup from "@/components/commons/RadioGroup";
 
 export default function New() {
   const router = useRouter();
@@ -36,31 +40,53 @@ export default function New() {
   const [isUploading, setIsUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isGitHubConnected, setIsGitHubConnected] = useState(false);
-  const [ideaSummary, setIdeaSummary] = useState(""); // 一句话描述这个想法
-  const [ideaDescription, setIdeaDescription] = useState(""); // 详细的描述这个想法
-  const [productName, setProductName] = useState(""); // 产品代号/名称
+  const [ideaSummary, setIdeaSummary] = useState("");
+  const [ideaDescription, setIdeaDescription] = useState("");
+  const [productName, setProductName] = useState("");
+  const [isGitHubBinding, setIsGitHubBinding] = useState(false);
+  const [repoData, setRepoData] = useState<{
+    success: boolean;
+    data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
+    error?: string;
+  } | null>(null);
+  const [repoError, setRepoError] = useState<Error | null>(null);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const isDarkMode = useDarkMode();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorDivRef = useRef<HTMLDivElement>(null);
+
+  // Check GitHub binding status
+  const { data: providersInfo, isLoading: providersLoading } =
+    useHasProviders();
+  const hasGitHub = providersInfo?.hasGitHub || false;
 
   // 处理编辑器内容变化的回调函数
   const handleIdeaDescriptionChange = useCallback((content: string) => {
     setIdeaDescription(content);
   }, []);
 
-  // 使用 React Query 获取仓库数据
-  const {
-    data: repoData,
-    status,
-    error: repoError,
-  } = useQuery({
-    queryKey: ["github", "repos"],
-    queryFn: getOrgAndReposAction,
-    enabled: isGitHubConnected && projectType === "existing",
-    staleTime: 5 * 60 * 1000, // 5分钟
-  });
+  // 获取仓库数据的函数
+  const fetchRepos = useCallback(async () => {
+    if (!hasGitHub || projectType !== "existing") return;
+
+    setIsLoadingRepos(true);
+    setRepoError(null);
+
+    try {
+      const result = await getOrgAndReposAction();
+      setRepoData(result);
+    } catch (error) {
+      setRepoError(error as Error);
+    } finally {
+      setIsLoadingRepos(false);
+    }
+  }, [hasGitHub, projectType]);
+
+  // 当条件满足时自动获取仓库数据
+  useEffect(() => {
+    fetchRepos();
+  }, [fetchRepos]);
 
   // 使用 React Query 创建 copany
   const createCopanyMutation = useCreateCopany(async (result) => {
@@ -121,12 +147,12 @@ export default function New() {
   const coslOptions = [
     {
       value: true,
-      label: "Yes, I want to share the benefits according to my contribution",
+      label:
+        "Yes, I want to use COSL license with contribution tracking and revenue sharing",
     },
     {
       value: false,
-      label:
-        "No, I don't want to share the benefits according to my contribution",
+      label: "No, I prefer not to use COSL license",
     },
   ];
 
@@ -155,8 +181,12 @@ export default function New() {
 
   // 获取选中的仓库
   const getSelectedRepo = () => {
-    if (!selectedRepoId || !repoData?.data) return null;
-    return repoData.data.find((repo) => repo.id === selectedRepoId);
+    if (!selectedRepoId || !repoData?.success || !repoData?.data) return null;
+    return repoData.data.find(
+      (
+        repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+      ) => repo.id === selectedRepoId
+    );
   };
 
   // 处理仓库选择，自动填充表单
@@ -165,7 +195,14 @@ export default function New() {
     setIsDropdownOpen(false);
 
     // 自动填充 copany 信息
-    const repo = repoData?.data?.find((r) => r.id === repoId);
+    const repo =
+      repoData?.success && repoData?.data
+        ? repoData.data.find(
+            (
+              r: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+            ) => r.id === repoId
+          )
+        : null;
     if (repo) {
       setCompanyName(repo.name);
       setCompanyDescription(repo.description || EMPTY_STRING);
@@ -280,11 +317,35 @@ export default function New() {
     };
   };
 
-  // Connect with GitHub 按钮处理
-  const handleConnectGitHub = () => {
-    // 这里应该触发 GitHub OAuth 流程
-    // 现在先模拟连接成功
-    setIsGitHubConnected(true);
+  // GitHub 绑定处理函数
+  const handleBindGitHub = async () => {
+    setIsGitHubBinding(true);
+    try {
+      await signInWithGitHub();
+    } catch (error) {
+      console.error("GitHub binding failed:", error);
+      setIsGitHubBinding(false);
+    }
+  };
+
+  // GitHub 重新绑定处理函数（当 token 无效时）
+  const handleRebindGitHub = async () => {
+    setIsGitHubBinding(true);
+    try {
+      await signInWithGitHub();
+    } catch (error) {
+      console.error("GitHub rebinding failed:", error);
+      setIsGitHubBinding(false);
+    }
+  };
+
+  // 手动重试获取仓库数据
+  const handleRetryFetch = async () => {
+    try {
+      await fetchRepos();
+    } catch (error) {
+      console.error("Manual retry failed:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -320,6 +381,7 @@ export default function New() {
           logo_url: logoUrl,
           github_url: repo.html_url,
           github_repository_id: repo.id.toString(),
+          isDefaultUseCOSL: useCOSL,
         });
       } catch (error) {
         console.error("Failed to create copany:", error);
@@ -337,12 +399,11 @@ export default function New() {
 
       try {
         // 使用 React Query mutation 创建 copany
-        // 这里不绑定 github_url
         createCopanyMutation.mutate({
-          name: productName, // 产品代号/名称作为 copany 的 name
-          description: ideaSummary, // 一句话描述作为 copany 的 description
-          logo_url: "", // 新想法暂时没有 logo
-          // 不传递 github_url 和 github_repository_id
+          name: productName,
+          description: ideaSummary,
+          logo_url: "",
+          isDefaultUseCOSL: useCOSL,
         });
       } catch (error) {
         console.error("Failed to create copany:", error);
@@ -363,7 +424,7 @@ export default function New() {
 
           <div className="flex items-center gap-2.5 w-full">
             <div className="relative flex-1" ref={dropdownRef}>
-              {isGitHubConnected ? (
+              {hasGitHub ? (
                 <>
                   <button
                     type="button"
@@ -386,7 +447,7 @@ export default function New() {
                       </div>
                     ) : (
                       <span className="text-gray-500 dark:text-gray-400">
-                        Select repo
+                        Select repository
                       </span>
                     )}
 
@@ -401,69 +462,147 @@ export default function New() {
                       className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-120 overflow-y-auto"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {status === "pending" && (
+                      {isLoadingRepos && (
                         <div className="py-8">
                           <LoadingView type="label" delay={500} />
                         </div>
                       )}
-                      {status === "error" && (
+                      {(repoError || (repoData && !repoData?.success)) && (
                         <div className="px-4 py-3 text-red-600 dark:text-red-400">
-                          {repoError?.message || "Failed to load repositories"}
+                          <div className="flex flex-col gap-2">
+                            <span>
+                              {repoError?.message ||
+                                repoData?.error ||
+                                "Failed to load repositories"}
+                            </span>
+                            {(() => {
+                              const errorMessage =
+                                repoError?.message || repoData?.error || "";
+                              const isAuthError =
+                                errorMessage.includes("Bad credentials") ||
+                                errorMessage.includes("401") ||
+                                errorMessage.includes("Unauthorized") ||
+                                errorMessage.includes("authentication failed");
+
+                              return (
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {isAuthError
+                                      ? "Your GitHub token may be expired or invalid. Please reconnect your GitHub account."
+                                      : "This might be a temporary issue. You can try again."}
+                                  </span>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={
+                                      isAuthError
+                                        ? handleRebindGitHub
+                                        : handleRetryFetch
+                                    }
+                                    disabled={
+                                      isAuthError ? isGitHubBinding : false
+                                    }
+                                  >
+                                    {isAuthError && (
+                                      <Image
+                                        src={
+                                          isDarkMode
+                                            ? githubIconBlack
+                                            : githubIconWhite
+                                        }
+                                        alt="GitHub Logo"
+                                        className="w-4 h-4"
+                                        width={16}
+                                        height={16}
+                                      />
+                                    )}
+                                    <span>
+                                      {isAuthError
+                                        ? isGitHubBinding
+                                          ? "Reconnecting..."
+                                          : "Reconnect GitHub"
+                                        : "Try Again"}
+                                    </span>
+                                  </Button>
+                                </div>
+                              );
+                            })()}
+                          </div>
                         </div>
                       )}
-                      {status === "success" && repoData?.data && (
-                        <>
-                          {(repoData.data || EMPTY_ARRAY).length === 0 ? (
-                            <div className="p-4">
-                              <EmptyPlaceholderView
-                                icon={
-                                  <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
-                                }
-                                title="No available public repositories"
-                                description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                                buttonTitle="Create GitHub Repository"
-                                buttonIcon={
-                                  <ArrowUpRightIcon className="w-4 h-4" />
-                                }
-                                buttonAction={() =>
-                                  window.open(
-                                    "https://github.com/new",
-                                    "_blank"
-                                  )
-                                }
-                                size="md"
-                              />
-                            </div>
-                          ) : (
-                            (repoData.data || EMPTY_ARRAY).map((repo) => (
-                              <div
-                                key={repo.id}
-                                className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRepoSelection(repo.id);
-                                }}
-                              >
-                                <Image
-                                  src={repo.owner.avatar_url}
-                                  alt={`${repo.owner.login} Avatar`}
-                                  width={24}
-                                  height={24}
-                                  className="w-6 h-6 rounded-sm"
-                                />
-                                <div className="flex flex-col flex-1 min-w-0">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    {repo.full_name}
-                                  </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                    {repo.description || "No description"}
-                                  </span>
+                      {!isLoadingRepos &&
+                        !repoError &&
+                        repoData?.success &&
+                        !repoData?.data && (
+                          <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                            No repository data available
+                          </div>
+                        )}
+                      {!isLoadingRepos &&
+                        !repoError &&
+                        repoData?.success &&
+                        repoData?.data &&
+                        (repoData.data || EMPTY_ARRAY).length === 0 && (
+                          <div className="p-4">
+                            <EmptyPlaceholderView
+                              icon={
+                                <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
+                              }
+                              title={`@${
+                                providersInfo?.providersData.find(
+                                  (p) => p.provider === "github"
+                                )?.user_name
+                              } has no available public repositories`}
+                              description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
+                              buttonTitle="Create GitHub Repository"
+                              buttonIcon={
+                                <ArrowUpRightIcon className="w-4 h-4" />
+                              }
+                              buttonAction={() =>
+                                window.open("https://github.com/new", "_blank")
+                              }
+                              size="md"
+                            />
+                          </div>
+                        )}
+                      {!isLoadingRepos &&
+                        !repoError &&
+                        repoData?.success &&
+                        repoData?.data &&
+                        (repoData.data || EMPTY_ARRAY).length > 0 && (
+                          <>
+                            {(repoData.data || EMPTY_ARRAY).map(
+                              (
+                                repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
+                              ) => (
+                                <div
+                                  key={repo.id}
+                                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRepoSelection(repo.id);
+                                  }}
+                                >
+                                  <Image
+                                    src={repo.owner.avatar_url}
+                                    alt={`${repo.owner.login} Avatar`}
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-sm"
+                                  />
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                      {repo.full_name}
+                                    </span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                      {repo.description || "No description"}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            ))
-                          )}
-                        </>
-                      )}
+                              )
+                            )}
+                          </>
+                        )}
                     </div>
                   )}
                 </>
@@ -475,24 +614,60 @@ export default function New() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleConnectGitHub}
-            disabled={isGitHubConnected}
-            className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Image
-              src={isDarkMode ? githubIconBlack : githubIconWhite}
-              alt="GitHub Logo"
-              className="w-4 h-4"
-              width={16}
-              height={16}
-            />
+          {hasGitHub ? (
+            <div className="flex flex-row items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+              <Image
+                src={isDarkMode ? githubIconWhite : githubIconBlack}
+                alt="GitHub Logo"
+                className="w-4 h-4"
+                width={16}
+                height={16}
+              />
+              <p>Connected</p>
+              <Link
+                href={`https://github.com/${
+                  providersInfo?.providersData.find(
+                    (p) => p.provider === "github"
+                  )?.user_name
+                }`}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
+              >
+                @
+                {
+                  providersInfo?.providersData.find(
+                    (p) => p.provider === "github"
+                  )?.user_name
+                }
+              </Link>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleBindGitHub}
+              disabled={hasGitHub || isGitHubBinding}
+              className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                src={isDarkMode ? githubIconBlack : githubIconWhite}
+                alt="GitHub Logo"
+                className="w-4 h-4"
+                width={16}
+                height={16}
+              />
 
-            <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-              {isGitHubConnected ? "Connected" : "Connect with GitHub"}
-            </span>
-          </button>
+              <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
+                {isGitHubBinding
+                  ? "Binding..."
+                  : hasGitHub
+                  ? `Connected @${
+                      providersInfo?.providersData.find(
+                        (p) => p.provider === "github"
+                      )?.user_name
+                    }`
+                  : "Connect with GitHub"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col items-start gap-3 w-full">
@@ -683,14 +858,30 @@ export default function New() {
     );
   };
 
+  // 如果正在加载 providers 信息，显示加载状态
+  if (providersLoading) {
+    return (
+      <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
+        <BasicNavigation />
+        <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px=0 flex-1">
+          <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
+            <div className="flex flex-col items-center gap-5 px-8 py-8 w-full">
+              <LoadingView type="label" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
-      <MainNavigation />
+      <BasicNavigation />
 
-      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-6 flex-1">
+      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-0 flex-1">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm"
+          className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm"
         >
           <div className="flex flex-col items-start gap-5 px-8 py-8 w-full">
             <div className="flex flex-col items-start gap-1">
@@ -709,38 +900,12 @@ export default function New() {
                   It is a:
                 </p>
 
-                <div className="flex flex-col items-start gap-4 w-full">
-                  {projectTypeOptions.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="projectType"
-                        value={option.value}
-                        checked={projectType === option.value}
-                        onChange={(e) => setProjectType(e.target.value)}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-5 h-5 rounded-full border-1 border-gray-800 dark:border-gray-200 relative ${
-                          projectType === option.value
-                            ? "bg-gray-800 dark:bg-gray-200"
-                            : "bg-transparent"
-                        }`}
-                      >
-                        {projectType === option.value && (
-                          <div className="w-2 h-2 bg-white dark:bg-gray-900 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-
-                      <span className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <RadioGroup
+                  name="projectType"
+                  options={projectTypeOptions}
+                  value={projectType}
+                  onChange={(value) => setProjectType(value as string)}
+                />
               </fieldset>
 
               {projectType === "existing" ? existRepoForm() : newIdeaForm()}
@@ -751,49 +916,23 @@ export default function New() {
                     Do you want to use Copany Open Source License (COSL)?
                   </legend>
 
-                  <div className="w-5 h-5">
-                    <InformationCircleIcon
+                  <div
+                    className="w-5 h-5 hover:cursor-pointer hover:opacity-80"
+                    onClick={() => router.push("/uselicense")}
+                  >
+                    <QuestionMarkCircleIcon
                       className="w-5 h-5"
                       strokeWidth={1.6}
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-4 w-full">
-                  {coslOptions.map((option) => (
-                    <label
-                      key={option.value.toString()}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="useCOSL"
-                        value={option.value.toString()}
-                        checked={useCOSL === option.value}
-                        onChange={(e) => setUseCOSL(e.target.value === "true")}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 border-gray-800 dark:border-gray-200 relative ${
-                          useCOSL === option.value
-                            ? "bg-gray-800 dark:bg-gray-200"
-                            : "bg-transparent"
-                        }`}
-                      >
-                        {useCOSL === option.value && (
-                          <div className="w-2 h-2 bg-white dark:bg-gray-900 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                        )}
-                      </div>
-
-                      <span
-                        className="text-sm
-                       font-normal text-gray-900 dark:text-gray-100"
-                      >
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <RadioGroup
+                  name="useCOSL"
+                  options={coslOptions}
+                  value={useCOSL}
+                  onChange={(value) => setUseCOSL(value as boolean)}
+                />
               </fieldset>
             </div>
 

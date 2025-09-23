@@ -8,7 +8,7 @@ import {
   IssueLevel,
   IssuePriority,
   IssueState,
-  CopanyContributor,
+  CopanyContributorWithUserInfo,
   AssigneeUser,
 } from "@/types/database.types";
 import IssueStateSelector from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
@@ -31,7 +31,7 @@ export default function IssueCreateForm({
   onIssueCreated: (newIssue: IssueWithAssignee) => void;
   onClose: () => void;
   currentUser: User | null;
-  contributors: CopanyContributor[];
+  contributors: CopanyContributorWithUserInfo[];
 }) {
   const [title, setTitle] = useState<string>(EMPTY_STRING);
   const [description, setDescription] = useState<string>(EMPTY_STRING);
