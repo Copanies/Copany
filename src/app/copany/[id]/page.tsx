@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import MainNavigation from "@/components/commons/MainNavigation";
 import CopanyView from "./CopanyView";
+import LoadingView from "@/components/commons/LoadingView";
 
 export default async function CopanyDetailView({
   params,
@@ -11,7 +13,9 @@ export default async function CopanyDetailView({
   return (
     <main className="h-min-screen">
       <MainNavigation />
-      <CopanyView copanyId={id} />
+      <Suspense fallback={<LoadingView type="page" />}>
+        <CopanyView copanyId={id} />
+      </Suspense>
     </main>
   );
 }

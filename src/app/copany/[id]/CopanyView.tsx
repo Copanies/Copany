@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import TabView from "@/components/commons/TabView";
@@ -208,7 +209,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
         </div>
         <p className="">{copany.description}</p>
       </div>
-      <TabView tabs={tabs} />
+      <Suspense fallback={<LoadingView type="label" label="Loading tabs..." />}>
+        <TabView tabs={tabs} />
+      </Suspense>
     </div>
   );
 }

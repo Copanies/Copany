@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useEffect, useRef } from "react";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useRepoLicense } from "@/hooks/readme";
@@ -155,9 +156,15 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
           <CoslLicenseTip isOwner={isOwner} />
         </div>
       )}
-      <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
-        {licenseContent}
-      </pre>
+      <Suspense
+        fallback={
+          <LoadingView type="label" label="Loading license content..." />
+        }
+      >
+        <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
+          {licenseContent}
+        </pre>
+      </Suspense>
     </div>
   );
 }

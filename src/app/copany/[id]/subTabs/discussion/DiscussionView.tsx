@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
 import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
 import {
@@ -245,31 +246,37 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <EmptyPlaceholderView
-            icon={
-              <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
-            }
-            title="No discussions for this label"
-            description="Try another label."
-          />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {filtered.map((d) => (
-              <li key={d.id} className="">
-                <DiscussionItem
-                  copanyId={copanyId}
-                  discussion={d}
-                  creator={
-                    d.creator_id
-                      ? (usersMap[String(d.creator_id)] as UserInfo | undefined)
-                      : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        <Suspense
+          fallback={<LoadingView type="label" label="Loading discussions..." />}
+        >
+          {filtered.length === 0 ? (
+            <EmptyPlaceholderView
+              icon={
+                <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
+              }
+              title="No discussions for this label"
+              description="Try another label."
+            />
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {filtered.map((d) => (
+                <li key={d.id} className="">
+                  <DiscussionItem
+                    copanyId={copanyId}
+                    discussion={d}
+                    creator={
+                      d.creator_id
+                        ? (usersMap[String(d.creator_id)] as
+                            | UserInfo
+                            | undefined)
+                        : undefined
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Suspense>
 
         {/* Create Discussion modal */}
         {createDiscussionModal()}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
@@ -585,24 +586,36 @@ export default function IssuePageClient({
         </div>
 
         <div className="flex-1 mb-100 md:w-2/3">
-          <IssueEditorView
-            issueData={issueData}
-            onTitleChange={handleTitleChange}
-            onDescriptionChange={handleDescriptionChange}
-            isReadonly={!canEdit}
-          />
+          <Suspense
+            fallback={
+              <LoadingView type="label" label="Loading issue editor..." />
+            }
+          >
+            <IssueEditorView
+              issueData={issueData}
+              onTitleChange={handleTitleChange}
+              onDescriptionChange={handleDescriptionChange}
+              isReadonly={!canEdit}
+            />
+          </Suspense>
           <div className="flex flex-col gap-3 pt-8 pr-3 md:pr-0">
             <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
               Activity
             </p>
             {/* Issue activity timeline (includes comments) */}
-            <IssueActivityTimeline
-              issueId={issueData.id}
-              copanyId={copanyId}
-              canEdit={canEdit}
-              issueState={issueData.state}
-              issueLevel={issueData.level}
-            />
+            <Suspense
+              fallback={
+                <LoadingView type="label" label="Loading activity..." />
+              }
+            >
+              <IssueActivityTimeline
+                issueId={issueData.id}
+                copanyId={copanyId}
+                canEdit={canEdit}
+                issueState={issueData.state}
+                issueLevel={issueData.level}
+              />
+            </Suspense>
           </div>
         </div>
         <div className="hidden md:flex flex-col">

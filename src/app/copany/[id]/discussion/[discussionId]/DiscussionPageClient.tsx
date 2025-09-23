@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -359,10 +360,14 @@ export default function DiscussionPageClient({
       )}
 
       {/* Comments Timeline */}
-      <DiscussionCommentTimeline
-        discussionId={discussionId}
-        canEdit={!!currentUser}
-      />
+      <Suspense
+        fallback={<LoadingView type="label" label="Loading comments..." />}
+      >
+        <DiscussionCommentTimeline
+          discussionId={discussionId}
+          canEdit={!!currentUser}
+        />
+      </Suspense>
 
       {/* Edit Discussion Modal */}
       <Modal
