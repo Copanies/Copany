@@ -9,8 +9,9 @@ import {
   useDeleteDiscussionComment,
 } from "@/hooks/discussionComments";
 import {
-  useDiscussionCommentVoteState,
   useToggleDiscussionCommentVote,
+  useDiscussionCommentVoteCounts,
+  useMyVotedDiscussionCommentIds,
 } from "@/hooks/discussionCommentVotes";
 import type { DiscussionComment } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
@@ -37,20 +38,20 @@ interface VoteButtonProps {
   commentId: string;
   initialVoteCount: number;
   isLoggedIn: boolean;
+  voteCounts: Record<string, number>;
+  votedCommentIds: string[];
 }
 
 function VoteButton({
   commentId,
   initialVoteCount,
   isLoggedIn,
+  voteCounts,
+  votedCommentIds,
 }: VoteButtonProps) {
   const isDarkMode = useDarkMode();
-  const { countQuery, flagQuery } = useDiscussionCommentVoteState(commentId, {
-    enableCountQuery: initialVoteCount == null,
-    countInitialData: initialVoteCount ?? undefined,
-  });
-  const hasVoted = flagQuery.data;
-  const voteCount = countQuery.data ?? initialVoteCount ?? 0;
+  const hasVoted = votedCommentIds.includes(commentId);
+  const voteCount = voteCounts[commentId] ?? initialVoteCount ?? 0;
   const toggleVoteMutation = useToggleDiscussionCommentVote(commentId);
 
   const handleVote = async () => {
@@ -109,6 +110,8 @@ interface CommentNodeProps {
   isLoggedIn: boolean;
   level: number;
   isThisLevelLastComment: boolean;
+  voteCounts: Record<string, number>;
+  votedCommentIds: string[];
 }
 
 function CommentNode({
@@ -130,6 +133,8 @@ function CommentNode({
   isLoggedIn,
   level,
   isThisLevelLastComment,
+  voteCounts,
+  votedCommentIds,
 }: CommentNodeProps) {
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.id ?? null;
@@ -293,6 +298,8 @@ function CommentNode({
               commentId={String(comment.id)}
               initialVoteCount={comment.vote_up_count}
               isLoggedIn={isLoggedIn}
+              voteCounts={voteCounts}
+              votedCommentIds={votedCommentIds}
             />
             <Button
               onClick={() => setReplyingToCommentId(String(comment.id))}
@@ -399,6 +406,8 @@ function CommentNode({
                       isThisLevelLastComment={
                         index === directChildren.length - 1
                       }
+                      voteCounts={voteCounts}
+                      votedCommentIds={votedCommentIds}
                     />
                   ))}
                 </div>
@@ -435,11 +444,21 @@ export default function DiscussionCommentTimeline({
   discussionId,
   canEdit: _canEdit,
 }: DiscussionCommentTimelineProps) {
-  const { data: comments = EMPTY_ARRAY } = useDiscussionComments(discussionId);
+  const { data: comments = EMPTY_ARRAY, isLoading: commentsLoading } =
+    useDiscussionComments(discussionId);
   const { data: currentUser } = useCurrentUser();
   const createCommentMutation = useCreateDiscussionComment(discussionId);
   const updateCommentMutation = useUpdateDiscussionComment(discussionId);
   const deleteCommentMutation = useDeleteDiscussionComment(discussionId);
+
+  // Collect comment IDs for batch vote queries
+  const commentIds = useMemo(() => {
+    return comments.map((comment) => String(comment.id));
+  }, [comments]);
+
+  // Batch fetch vote counts and voted status
+  const { data: voteCounts = {} } = useDiscussionCommentVoteCounts(commentIds);
+  const { data: votedCommentIds = [] } = useMyVotedDiscussionCommentIds();
 
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
@@ -534,6 +553,24 @@ export default function DiscussionCommentTimeline({
     updateCommentMutation.isPending ||
     deleteCommentMutation.isPending;
 
+  // Show loading state if comments are still loading
+  if (commentsLoading) {
+    return (
+      <div className="flex flex-col gap-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+            </div>
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-1 pb-[200px]">
       <div className="flex flex-col gap-1">
@@ -558,6 +595,8 @@ export default function DiscussionCommentTimeline({
             isLoggedIn={!!currentUser}
             level={0}
             isThisLevelLastComment={index === rootComments.length - 1}
+            voteCounts={voteCounts}
+            votedCommentIds={votedCommentIds}
           />
         ))}
       </div>

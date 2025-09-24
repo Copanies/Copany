@@ -4,8 +4,9 @@ import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
 import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
 import {
-  useDiscussionVoteState,
   useToggleDiscussionVote,
+  useDiscussionVoteCounts,
+  useMyVotedDiscussionIds,
 } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
@@ -114,6 +115,15 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     return Array.from(set);
   }, [filtered]);
   const { data: usersMap = {} } = useUsersInfo(creatorIds);
+
+  // Collect discussion IDs for batch vote queries
+  const discussionIds = useMemo(() => {
+    return (filtered || []).map((discussion) => String(discussion.id));
+  }, [filtered]);
+
+  // Batch fetch vote counts and voted status
+  const { data: voteCounts = {} } = useDiscussionVoteCounts(discussionIds);
+  const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
   // Handle discussion creation callback
   const handleDiscussionCreated = useCallback(
@@ -247,7 +257,20 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
 
         <Suspense
-          fallback={<LoadingView type="label" label="Loading discussions..." />}
+          fallback={
+            <div className="flex flex-col gap-4 py-8">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                  </div>
+                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </div>
+            </div>
+          }
         >
           {filtered.length === 0 ? (
             <EmptyPlaceholderView
@@ -271,6 +294,8 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                             | undefined)
                         : undefined
                     }
+                    voteCounts={voteCounts}
+                    votedDiscussionIds={votedDiscussionIds}
                   />
                 </li>
               ))}
@@ -305,19 +330,23 @@ function DiscussionItem({
   copanyId,
   discussion,
   creator,
+  voteCounts,
+  votedDiscussionIds,
 }: {
   copanyId: string;
   discussion: Discussion;
   creator?: UserInfo;
+  voteCounts: Record<string, number>;
+  votedDiscussionIds: string[];
 }) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
-  const { countQuery: voteCount, flagQuery: voteState } =
-    useDiscussionVoteState(discussion.id, {
-      enableCountQuery: discussion.vote_up_count == null,
-      countInitialData: discussion.vote_up_count ?? undefined,
-    });
+
+  // Use batch fetched data instead of individual queries
+  const hasVoted = votedDiscussionIds.includes(String(discussion.id));
+  const voteCount =
+    voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
   const voteToggle = useToggleDiscussionVote(discussion.id);
 
   return (
@@ -378,13 +407,13 @@ function DiscussionItem({
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => voteToggle.mutate({ toVote: !voteState.data })}
+          onClick={() => voteToggle.mutate({ toVote: !hasVoted })}
           disabled={voteToggle.isPending}
         >
           <div className="flex items-center gap-2">
             <Image
               src={
-                voteState.data
+                hasVoted
                   ? isDarkMode
                     ? arrowshape_up_fill_dark
                     : arrowshape_up_fill
@@ -396,7 +425,7 @@ function DiscussionItem({
               width={16}
               height={16}
             />
-            <span>{voteCount.data ?? 0}</span>
+            <span>{voteCount}</span>
           </div>
         </Button>
 

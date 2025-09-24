@@ -23,3 +23,7 @@ export async function unvoteDiscussionCommentAction(commentId: string) {
 export async function getDiscussionCommentVoteCountAction(commentId: string): Promise<number> {
   return await DiscussionCommentVoteService.getVoteCount(commentId);
 }
+
+export async function getDiscussionCommentVoteCountsAction(commentIds: string[]): Promise<Record<string, number>> {
+  return await DiscussionCommentVoteService.getVoteCounts(commentIds);
+}

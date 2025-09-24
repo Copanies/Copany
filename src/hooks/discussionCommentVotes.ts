@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  hasVotedDiscussionCommentAction,
   listMyVotedDiscussionCommentIdsAction,
   voteDiscussionCommentAction,
   unvoteDiscussionCommentAction,
-  getDiscussionCommentVoteCountAction,
+  getDiscussionCommentVoteCountsAction,
 } from "@/actions/discussionCommentVote.actions";
 
 export function discussionCommentHasVotedKey(commentId: string) {
@@ -17,28 +16,6 @@ function myVotedCommentListKey() {
 
 function discussionCommentVoteCountKey(commentId: string) {
   return ["discussionCommentVote", "count", commentId];
-}
-
-export function useDiscussionCommentVoteState(
-  commentId: string,
-  options?: { countInitialData?: number; enableCountQuery?: boolean }
-) {
-  const enableCountQuery = options?.enableCountQuery ?? true;
-  const countQuery = useQuery({
-    queryKey: discussionCommentVoteCountKey(commentId),
-    queryFn: () => getDiscussionCommentVoteCountAction(commentId),
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
-    enabled: enableCountQuery,
-    initialData: options?.countInitialData,
-  });
-  const flagQuery = useQuery({
-    queryKey: discussionCommentHasVotedKey(commentId),
-    queryFn: () => hasVotedDiscussionCommentAction(commentId),
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
-  });
-  return { countQuery, flagQuery } as const;
 }
 
 export function useToggleDiscussionCommentVote(commentId: string) {
@@ -127,5 +104,19 @@ export function useMyVotedDiscussionCommentIds() {
     queryKey: myVotedCommentListKey(),
     queryFn: listMyVotedDiscussionCommentIdsAction,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+function discussionCommentVoteCountsKey(commentIds: string[]) {
+  return ["discussionCommentVote", "counts", commentIds.sort()];
+}
+
+export function useDiscussionCommentVoteCounts(commentIds: string[]) {
+  return useQuery({
+    queryKey: discussionCommentVoteCountsKey(commentIds),
+    queryFn: () => getDiscussionCommentVoteCountsAction(commentIds),
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    enabled: commentIds.length > 0,
   });
 }
