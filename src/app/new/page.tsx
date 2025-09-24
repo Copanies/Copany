@@ -995,7 +995,7 @@ export default function New() {
                     !ideaDescription.trim())) ||
                 createCopanyMutation.isPending
               }
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-gray-900"
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-gray-900 flex items-center justify-center gap-2"
             >
               <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
                 {createCopanyMutation.isPending ? "Creating..." : "Create"}

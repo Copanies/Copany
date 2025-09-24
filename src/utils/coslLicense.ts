@@ -1,15 +1,12 @@
-import { Copany } from "@/types/database.types";
-
 /**
  * Generate COSL license content for a copany
  */
-export function generateCOSLLicense(copany: Copany): string {
+export function generateCOSLLicense(copanyName: string): string {
   const currentYear = new Date().getFullYear();
-  const copanyName = copany.name;
   
   return `Copany Open Source License (COSL) v0.1
 
-Copyright (c) ${currentYear} ${copanyName}
+Copyright (c) ${currentYear} ${copanyName} Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this project and associated materials (the "Project"), to use, modify, distribute, and create derivative works for any purpose, including commercial, provided that:
 

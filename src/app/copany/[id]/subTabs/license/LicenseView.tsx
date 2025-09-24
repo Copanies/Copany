@@ -113,7 +113,7 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
 
     // 如果 copany 设置了默认使用 COSL，且无法获取到 GitHub license，则显示生成的 COSL license
     if (copany.isDefaultUseCOSL) {
-      const coslLicenseContent = generateCOSLLicense(copany);
+      const coslLicenseContent = generateCOSLLicense(copany.name);
 
       return (
         <div className="space-y-4">

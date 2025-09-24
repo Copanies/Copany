@@ -185,86 +185,94 @@ export default function Signup() {
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-3 px-8 w-full">
-            <button
-              type="button"
-              onClick={handleFigmaSignup}
-              disabled={
-                isEmailLoading ||
-                isResendLoading ||
-                isGitHubLoading ||
-                isGoogleLoading ||
-                isFigmaLoading
-              }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                className="w-4 h-4"
-                alt="Figma Logo"
-                src={figmaIcon}
-                width={16}
-                height={16}
-              />
+          {!pendingConfirm ? (
+            <div className="flex flex-col items-center gap-3 px-8 w-full">
+              <button
+                type="button"
+                onClick={handleFigmaSignup}
+                disabled={
+                  isEmailLoading ||
+                  isResendLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="Figma Logo"
+                  src={figmaIcon}
+                  width={16}
+                  height={16}
+                />
 
-              <span className="whitespace-nowrap">
-                {isFigmaLoading ? "Signing up..." : "Sign up with Figma"}
-              </span>
-            </button>
+                <span className="whitespace-nowrap">
+                  {isFigmaLoading ? "Signing up..." : "Sign up with Figma"}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleGitHubSignup}
-              disabled={
-                isEmailLoading ||
-                isResendLoading ||
-                isGitHubLoading ||
-                isGoogleLoading ||
-                isFigmaLoading
-              }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                className="w-4 h-4"
-                alt="GitHub Logo"
-                src={isDarkMode ? githubIconBlack : githubIconWhite}
-                width={16}
-                height={16}
-              />
+              <button
+                type="button"
+                onClick={handleGitHubSignup}
+                disabled={
+                  isEmailLoading ||
+                  isResendLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="GitHub Logo"
+                  src={isDarkMode ? githubIconBlack : githubIconWhite}
+                  width={16}
+                  height={16}
+                />
 
-              <span className="whitespace-nowrap">
-                {isGitHubLoading ? "Signing up..." : "Sign up with GitHub"}
-              </span>
-            </button>
+                <span className="whitespace-nowrap">
+                  {isGitHubLoading ? "Signing up..." : "Sign up with GitHub"}
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleGoogleSignup}
-              disabled={
-                isEmailLoading ||
-                isResendLoading ||
-                isGitHubLoading ||
-                isGoogleLoading ||
-                isFigmaLoading
-              }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                className="w-4 h-4"
-                alt="Google Logo"
-                src={googleIcon}
-                width={16}
-                height={16}
-              />
+              <button
+                type="button"
+                onClick={handleGoogleSignup}
+                disabled={
+                  isEmailLoading ||
+                  isResendLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="Google Logo"
+                  src={googleIcon}
+                  width={16}
+                  height={16}
+                />
 
-              <span className="whitespace-nowrap">
-                {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
-              </span>
-            </button>
-          </div>
+                <span className="whitespace-nowrap">
+                  {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <></>
+          )}
 
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div className="text-sm text-gray-600 dark:text-gray-400">or</div>
-          </div>
+          {!pendingConfirm ? (
+            <div className="flex items-center justify-center gap-3 w-full">
+              <div className="text-sm text-gray-600 dark:text-gray-400">or</div>
+            </div>
+          ) : (
+            <></>
+          )}
 
           <div className="flex flex-col items-start gap-5 px-8 w-full">
             {pendingConfirm ? (

@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { createAdminSupabaseClient, createSupabaseClient } from '@/utils/supabase/server';
 import { generateRandomCatAvatarClient } from '@/utils/catAvatar';
 

@@ -33,7 +33,10 @@ export default function Footer() {
               />
             </svg>
             <div className="flex flex-col">
-              <p>Copyright © {currentYear} Copany. All rights reserved.</p>
+              <p>
+                Copyright © {currentYear} Copany Contributors. All rights
+                reserved.
+              </p>
               {/* <p className="mt-1">Together, we are free.</p> */}
             </div>
           </div>
@@ -47,10 +50,10 @@ export default function Footer() {
               Terms
             </Link>
             <Link
-              href="/uselicense"
+              href="/license"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
-              Use License
+              License
             </Link>
             <Link
               href="/privacy-policy"
