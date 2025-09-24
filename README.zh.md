@@ -1,7 +1,7 @@
 <h1 align="center">Copany</h1>
 
 <p align="center">
-    <strong>开一个属于我们的 “公司”</strong><br>
+    <strong>一起，我们是自由的。</strong><br>
     <a href="https://github.com/Copanies/Copany/blob/main/README.md">English</a>
     <span>中文</span>
 </p>

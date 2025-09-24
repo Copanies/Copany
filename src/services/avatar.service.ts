@@ -12,16 +12,7 @@ export const uploadAvatarToStorage = async (userId: string, svgContent: string) 
   console.log('🎨 Starting avatar upload for user:', userId);
   
   // Use service role client for server-side upload during registration
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
+  const supabase = await createAdminSupabaseClient();
   
   // Convert SVG to blob
   const blob = new Blob([svgContent], { type: 'image/svg+xml' });

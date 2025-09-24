@@ -494,7 +494,7 @@ export default function New() {
                         </div>
                       )}
                       {(repoError || (repoData && !repoData?.success)) && (
-                        <div className="px-4 py-3 text-red-600 dark:text-red-400">
+                        <div className="px-4 py-3 text-gray-600 dark:text-gray-400">
                           <div className="flex flex-col gap-2">
                             <span>
                               {repoError?.message ||
@@ -644,7 +644,14 @@ export default function New() {
                 />
 
                 <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-                  {isGitHubBinding ? "Reconnecting..." : "Reconnect GitHub"}
+                  {isGitHubBinding
+                    ? "Reconnecting..."
+                    : `Reconnect to @
+                  ${
+                    providersInfo?.providersData.find(
+                      (p) => p.provider === "github"
+                    )?.user_name
+                  }`}
                 </span>
               </button>
             ) : (

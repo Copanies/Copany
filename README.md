@@ -1,7 +1,7 @@
 <h1 align="center">Copany</h1>
 
 <p align="center">
-    <strong>Let’s start our own “company”</strong><br>
+    <strong>Together, we are free.</strong><br>
     <span>English</span>
     <a href="https://github.com/Copanies/Copany/blob/main/README.zh.md">中文</a>
 </p>
