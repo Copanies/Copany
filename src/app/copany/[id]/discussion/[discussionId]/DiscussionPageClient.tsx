@@ -47,7 +47,7 @@ export default function DiscussionPageClient({
 }: DiscussionPageClientProps) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
-  const { data: discussion, isLoading } = useDiscussion(discussionId);
+  const { data: discussion, isLoading } = useDiscussion(copanyId, discussionId);
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
   const { countQuery, flagQuery } = useDiscussionVoteState(discussionId, {
@@ -111,8 +111,16 @@ export default function DiscussionPageClient({
 
   // 处理编辑完成
   const handleDiscussionUpdated = (updatedDiscussion: Discussion) => {
-    // 手动更新单个discussion的缓存，确保立即生效
-    queryClient.setQueryData(["discussion", discussionId], updatedDiscussion);
+    // 手动更新discussions列表缓存，确保立即生效
+    queryClient.setQueryData(
+      ["discussions", copanyId],
+      (prev: Discussion[] | undefined) => {
+        if (!prev) return prev;
+        return prev.map((d) =>
+          String(d.id) === String(updatedDiscussion.id) ? updatedDiscussion : d
+        );
+      }
+    );
     // 关闭弹窗
     setShowEditModal(false);
   };
@@ -361,20 +369,7 @@ export default function DiscussionPageClient({
 
       {/* Comments Timeline */}
       <Suspense
-        fallback={
-          <div className="flex flex-col gap-4 py-8">
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                </div>
-                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            </div>
-          </div>
-        }
+        fallback={<LoadingView type="label" label="Loading comments..." />}
       >
         <DiscussionCommentTimeline
           discussionId={discussionId}

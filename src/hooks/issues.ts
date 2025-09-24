@@ -1,4 +1,3 @@
-// English comments per user rule
 "use client";
 
 import { useQuery, useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";

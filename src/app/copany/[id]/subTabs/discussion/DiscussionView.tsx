@@ -257,20 +257,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
 
         <Suspense
-          fallback={
-            <div className="flex flex-col gap-4 py-8">
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                  </div>
-                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-              </div>
-            </div>
-          }
+          fallback={<LoadingView type="label" label="Loading discussions..." />}
         >
           {filtered.length === 0 ? (
             <EmptyPlaceholderView
