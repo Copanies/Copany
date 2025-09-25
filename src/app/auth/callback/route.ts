@@ -56,8 +56,27 @@ export async function GET(request: Request) {
             
             // Store provider token in our custom table for persistence
             try {
-              // Get provider from URL parameter (most reliable)
-              const detectedProvider = provider || 'github'; // Use provider parameter, fallback to github
+              // Get provider from URL parameter (most reliable), then from session as fallback
+              let detectedProvider = provider;
+              
+              // If no provider in URL, try to get it from the session
+              if (!detectedProvider && session?.provider_token) {
+                // Try to detect provider from user's app_metadata or user_metadata
+                if (user.app_metadata?.provider) {
+                  detectedProvider = user.app_metadata.provider;
+                } else if (user.user_metadata?.provider) {
+                  detectedProvider = user.user_metadata.provider;
+                }
+              }
+              
+              // Final fallback - if still no provider detected, skip token storage
+              if (!detectedProvider) {
+                console.warn("⚠️ Could not determine provider for token storage, skipping");
+                return;
+              }
+              
+              console.log(`🔍 Detected provider: ${detectedProvider}`);
+              
               // Upsert: update if exists, insert if not exists
               const { error: tokenError } = await supabase.rpc('fn_upsert_user_provider_token', {
                 p_user_id: user.id,

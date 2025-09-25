@@ -216,7 +216,7 @@ export async function signInWithFigma() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "figma",
     options: {
-      redirectTo: `${siteUrl!}/auth/callback`,
+      redirectTo: `${siteUrl!}/auth/callback?provider=figma`,
     },
   });
 
