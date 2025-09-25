@@ -72,24 +72,23 @@ export async function GET(request: Request) {
               // Final fallback - if still no provider detected, skip token storage
               if (!detectedProvider) {
                 console.warn("⚠️ Could not determine provider for token storage, skipping");
-                return;
-              }
-              
-              console.log(`🔍 Detected provider: ${detectedProvider}`);
-              
-              // Upsert: update if exists, insert if not exists
-              const { error: tokenError } = await supabase.rpc('fn_upsert_user_provider_token', {
-                p_user_id: user.id,
-                p_provider: detectedProvider,
-                p_access_token: providerToken,
-                p_token_type: 'bearer'
-              });
-              
-              if (tokenError) {
-                console.error("❌ Failed to store provider token:", tokenError);
-                console.error("❌ Token error details:", JSON.stringify(tokenError, null, 2));
               } else {
-                console.log(`✅ Successfully stored ${detectedProvider} token in database`);
+                console.log(`🔍 Detected provider: ${detectedProvider}`);
+                
+                // Upsert: update if exists, insert if not exists
+                const { error: tokenError } = await supabase.rpc('fn_upsert_user_provider_token', {
+                  p_user_id: user.id,
+                  p_provider: detectedProvider,
+                  p_access_token: providerToken,
+                  p_token_type: 'bearer'
+                });
+                
+                if (tokenError) {
+                  console.error("❌ Failed to store provider token:", tokenError);
+                  console.error("❌ Token error details:", JSON.stringify(tokenError, null, 2));
+                } else {
+                  console.log(`✅ Successfully stored ${detectedProvider} token in database`);
+                }
               }
             } catch (error) {
               console.error("❌ Exception storing provider token:", error);
