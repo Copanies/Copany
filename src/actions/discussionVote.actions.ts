@@ -24,4 +24,8 @@ export async function getDiscussionVoteCountAction(discussionId: string): Promis
   return await DiscussionVoteService.getVoteCount(discussionId);
 }
 
+export async function getDiscussionVoteCountsAction(discussionIds: string[]): Promise<Record<string, number>> {
+  return await DiscussionVoteService.getVoteCounts(discussionIds);
+}
+
 

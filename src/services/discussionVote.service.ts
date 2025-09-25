@@ -53,6 +53,23 @@ export class DiscussionVoteService {
     if (error) throw new Error(error.message);
     return data?.vote_up_count || 0;
   }
+
+  static async getVoteCounts(discussionIds: string[]): Promise<Record<string, number>> {
+    if (discussionIds.length === 0) return {};
+    
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("discussion")
+      .select("id, vote_up_count")
+      .in("id", discussionIds);
+    if (error) throw new Error(error.message);
+    
+    const result: Record<string, number> = {};
+    for (const item of data || []) {
+      result[String(item.id)] = item.vote_up_count || 0;
+    }
+    return result;
+  }
 }
 
 

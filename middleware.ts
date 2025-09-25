@@ -3,11 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 
 // 为了减少额外网络请求的频率，这里做一个轻量节流：
 // 当检测到已登录（存在 sb-* Cookie）时，最多每 refreshThrottleSeconds 秒才调用一次 getSession 刷新会话。
-const refreshThrottleSeconds = 60; // 可按需调整（例如 60~120）
+const refreshThrottleSeconds = 300; // 增加到5分钟，减少不必要的网络请求
 const lastRefreshCookieName = "sb-last-refresh";
 
 export async function middleware(req: NextRequest) {
-  console.log("middleware");
   const res = NextResponse.next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -34,6 +33,13 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // 对于静态资源或API路由，跳过认证检查以提高性能
+  if (req.nextUrl.pathname.startsWith('/_next') || 
+      req.nextUrl.pathname.startsWith('/api') ||
+      req.nextUrl.pathname.includes('.')) {
+    return res;
+  }
+
   // 通过 SSR 客户端拉起一次 getSession：
   // - 若会话即将过期/已过期，会触发刷新并回写 Cookie
   // - 若会话健康，不会产生不必要的网络请求
@@ -51,8 +57,13 @@ export async function middleware(req: NextRequest) {
   });
 
   try {
-    console.log("middleware supabase.auth.getSession");
-    await supabase.auth.getSession();
+    // 添加超时机制，避免长时间等待
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('timeout')), 5000)
+    );
+    
+    await Promise.race([sessionPromise, timeoutPromise]);
   } catch {
     // 不影响页面继续执行，静默跳过
   }

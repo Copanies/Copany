@@ -1,0 +1,1 @@
+Run npm run lint in the current project directory using the run_terminal_cmd tool, then carefully fix all lint issues. Remove unused variables and replace any with precise types — only use unknown if the type truly cannot be determined.

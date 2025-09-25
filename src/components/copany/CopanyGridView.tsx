@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import StarButton from "@/components/copany/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
@@ -16,6 +18,7 @@ import { useState, useEffect } from "react";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
+  showNewCopanyCard?: boolean;
 }
 
 interface CopanyCardProps {
@@ -128,15 +131,24 @@ function CopanyCard({ copany }: CopanyCardProps) {
                 {beginIdeaDiscussion?.description && (
                   <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
                     <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
-                      <MilkdownEditor
-                        initialContent={
-                          beginIdeaDiscussion?.description || "Loading..."
+                      <Suspense
+                        fallback={
+                          <LoadingView
+                            type="label"
+                            label="Loading content..."
+                          />
                         }
-                        isReadonly={true}
-                        maxSizeTitle="sm"
-                        placeholder={EMPTY_STRING}
-                        className="w-full"
-                      />
+                      >
+                        <MilkdownEditor
+                          initialContent={
+                            beginIdeaDiscussion?.description || "Loading..."
+                          }
+                          isReadonly={true}
+                          maxSizeTitle="sm"
+                          placeholder={EMPTY_STRING}
+                          className="w-full"
+                        />
+                      </Suspense>
                     </div>
                     {/* Gradient shadow overlay at the bottom - fixed position */}
                     <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
@@ -268,13 +280,16 @@ function NewCopanyCard() {
 /**
  * Copany grid view component - Pure rendering component
  */
-export default function CopanyGridView({ copanies }: CopanyGridViewProps) {
+export default function CopanyGridView({
+  copanies,
+  showNewCopanyCard = true,
+}: CopanyGridViewProps) {
   return (
     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
       {copanies.map((copany) => (
         <CopanyCard key={copany.id} copany={copany} />
       ))}
-      <NewCopanyCard />
+      {showNewCopanyCard && <NewCopanyCard />}
     </ul>
   );
 }

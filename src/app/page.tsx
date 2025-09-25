@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
-import CatBanner from "@/components/commons/CatBanner";
-import MobileCatBanner from "@/components/commons/MobileCatBanner";
+import CatBanner from "@/components/copany/CatBanner";
+import MobileCatBanner from "@/components/copany/MobileCatBanner";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 

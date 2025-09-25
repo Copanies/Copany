@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -46,7 +47,7 @@ export default function DiscussionPageClient({
 }: DiscussionPageClientProps) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
-  const { data: discussion, isLoading } = useDiscussion(discussionId);
+  const { data: discussion, isLoading } = useDiscussion(copanyId, discussionId);
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
   const { countQuery, flagQuery } = useDiscussionVoteState(discussionId, {
@@ -110,8 +111,16 @@ export default function DiscussionPageClient({
 
   // 处理编辑完成
   const handleDiscussionUpdated = (updatedDiscussion: Discussion) => {
-    // 手动更新单个discussion的缓存，确保立即生效
-    queryClient.setQueryData(["discussion", discussionId], updatedDiscussion);
+    // 手动更新discussions列表缓存，确保立即生效
+    queryClient.setQueryData(
+      ["discussions", copanyId],
+      (prev: Discussion[] | undefined) => {
+        if (!prev) return prev;
+        return prev.map((d) =>
+          String(d.id) === String(updatedDiscussion.id) ? updatedDiscussion : d
+        );
+      }
+    );
     // 关闭弹窗
     setShowEditModal(false);
   };
@@ -359,10 +368,14 @@ export default function DiscussionPageClient({
       )}
 
       {/* Comments Timeline */}
-      <DiscussionCommentTimeline
-        discussionId={discussionId}
-        canEdit={!!currentUser}
-      />
+      <Suspense
+        fallback={<LoadingView type="label" label="Loading comments..." />}
+      >
+        <DiscussionCommentTimeline
+          discussionId={discussionId}
+          canEdit={!!currentUser}
+        />
+      </Suspense>
 
       {/* Edit Discussion Modal */}
       <Modal

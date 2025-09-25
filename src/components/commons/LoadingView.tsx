@@ -13,7 +13,7 @@ const SVG_PATH_D =
 export default function LoadingView({
   type = "page",
   label,
-  delay = 2000,
+  delay = 1000,
 }: LoadingViewProps) {
   const [shouldShow, setShouldShow] = useState(false);
   const [pathLength, setPathLength] = useState(0);

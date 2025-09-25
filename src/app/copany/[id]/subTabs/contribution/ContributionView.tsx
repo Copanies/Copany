@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useMemo } from "react";
 import { IssueLevel, AssigneeUser, LEVEL_SCORES } from "@/types/database.types";
 import { useContributions } from "@/hooks/activity";
@@ -256,7 +257,11 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
           Distribution
         </h3>
         <div className="flex w-full items-center justify-center pb-4 border-b border-gray-200 dark:border-gray-700">
-          <ContributionPieChart contributions={contributions} users={users} />
+          <Suspense
+            fallback={<LoadingView type="label" label="Loading pie chart..." />}
+          >
+            <ContributionPieChart contributions={contributions} users={users} />
+          </Suspense>
         </div>
       </div>
 
@@ -264,17 +269,21 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         <div className="flex flex-col md:flex-row gap-6">
           {usersWithContribution.map((userItem) => (
             <div className="w-full md:w-1/2" key={userItem.user.id}>
-              <ContributionChart
-                contributions={contributions.filter(
-                  (c) => c.user_id === userItem.user.id
-                )}
-                user={userItem.user}
-                globalMaxCount={globalMaxCount}
-                globalMaxScore={globalMaxScore}
-                monthRange={monthRange}
-                totalContributionScore={totalContributionScore}
-                rank={userItem.rank}
-              />
+              <Suspense
+                fallback={<LoadingView type="label" label="Loading chart..." />}
+              >
+                <ContributionChart
+                  contributions={contributions.filter(
+                    (c) => c.user_id === userItem.user.id
+                  )}
+                  user={userItem.user}
+                  globalMaxCount={globalMaxCount}
+                  globalMaxScore={globalMaxScore}
+                  monthRange={monthRange}
+                  totalContributionScore={totalContributionScore}
+                  rank={userItem.rank}
+                />
+              </Suspense>
             </div>
           ))}
         </div>

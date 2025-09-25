@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useEffect } from "react";
 import MarkdownView from "@/components/commons/MarkdownView";
 import { getRepoReadmeAction } from "@/actions/github.action";
@@ -160,5 +161,9 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
-  return <MarkdownView content={readmeContent} />;
+  return (
+    <Suspense fallback={<LoadingView type="label" label="Loading README..." />}>
+      <MarkdownView content={readmeContent} />
+    </Suspense>
+  );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
@@ -24,7 +25,13 @@ export default function StarsPage() {
             <LoadingView type="page" />
           ) : list.length > 0 ? (
             <div className="">
-              <CopanyGridView copanies={list} />
+              <Suspense
+                fallback={
+                  <LoadingView type="label" label="Loading copanies..." />
+                }
+              >
+                <CopanyGridView copanies={list} showNewCopanyCard={false} />
+              </Suspense>
             </div>
           ) : (
             <EmptyPlaceholderView

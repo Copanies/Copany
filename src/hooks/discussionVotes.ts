@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { hasVotedDiscussionAction, listMyVotedDiscussionIdsAction, voteDiscussionAction, unvoteDiscussionAction } from "@/actions/discussionVote.actions";
-import { getDiscussionVoteCountAction } from "@/actions/discussionVote.actions";
+import { getDiscussionVoteCountAction, getDiscussionVoteCountsAction } from "@/actions/discussionVote.actions";
 
 export function discussionVoteCountKey(discussionId: string) {
   return ["discussionVoteCount", discussionId] as const;
@@ -87,6 +87,20 @@ export function useMyVotedDiscussionIds() {
     queryFn: () => listMyVotedDiscussionIdsAction(),
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
+  });
+}
+
+function discussionVoteCountsKey(discussionIds: string[]) {
+  return ["discussionVoteCounts", discussionIds.sort()];
+}
+
+export function useDiscussionVoteCounts(discussionIds: string[]) {
+  return useQuery({
+    queryKey: discussionVoteCountsKey(discussionIds),
+    queryFn: () => getDiscussionVoteCountsAction(discussionIds),
+    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    enabled: discussionIds.length > 0,
   });
 }
 

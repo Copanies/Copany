@@ -35,7 +35,7 @@ export default function CatBanner({
 
   return (
     <div
-      className={`relative flex flex-row bg-[#FBF9F5] dark:bg-[#222221] p-8 items-center justify-center overflow-hidden ${className} w-full`}
+      className={`relative flex flex-row bg-[#FBF9F5] dark:bg-[#222221] pt-3 px-8 items-center justify-center overflow-hidden ${className} w-full`}
     >
       {/* Gradient overlay for visual center focus */}
       <div
@@ -51,8 +51,7 @@ export default function CatBanner({
           background: `radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(34, 34, 33, 0.9) 80%, rgba(34, 34, 33, 1) 100%)`,
         }}
       ></div>
-      {/* Center content */}
-      <div className="relative flex flex-row gap-3 w-fit">
+      <div className="relative flex flex-row gap-3 w-fit -mb-8">
         <div className="flex flex-row gap-3">
           {/* Left cats */}
           {[0, 1, 2, 4, 5, 6].map((groupIdx) => (

@@ -1,137 +1,32 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
-import { createSupabaseClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { getProviderToken } from "./userAuth.service";
 
 /**
  * Get current user's GitHub access token
- * Priority: fetch from new userAuth service first, if not available then from legacy session/Cookie
  * @returns GitHub access token, or null if not found
  */
 export async function getGithubAccessToken(): Promise<string | null> {
   try {
     console.log("🔍 Starting to get GitHub access token...");
     
-    // Try to get token from new userAuth service first
+    // Get token from userAuth service
     const tokenFromAuth = await getProviderToken('github');
     if (tokenFromAuth) {
-      console.log("✅ Successfully retrieved GitHub access token from userAuth service");
+      console.log("✅ Successfully retrieved GitHub access token");
       return tokenFromAuth;
     }
 
-    // Fallback to legacy method for backward compatibility
-    console.log("⚠️ No token from userAuth service, trying legacy method...");
-    const supabase = await createSupabaseClient();
-
-    // Get current user and verify identity
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error("❌ Failed to get user information:", userError.message);
-      // When user retrieval fails, try to get from Cookie
-      return await getTokenFromCookie();
-    }
-
-    if (!user) {
-      console.log(
-        "ℹ️ User not logged in - No valid user found, trying to get from Cookie"
-      );
-      return await getTokenFromCookie();
-    }
-
-    console.log("ℹ️ User found, user ID:", user.id);
-
-    // Since getUser() doesn't return provider_token, we need to get it from the session
-    // But here we first verified the user identity
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      console.log("ℹ️ Unable to get session token, trying to get from Cookie");
-      return await getTokenFromCookie();
-    }
-
-    // Get provider_token (GitHub access token) from session
-    const accessToken = session.provider_token;
-
-    if (!accessToken) {
-      console.log(
-        "⚠️ GitHub access token not found in session - provider_token is empty, trying to get from Cookie"
-      );
-      return await getTokenFromCookie();
-    }
-
-    // Note: Cannot modify Cookies in page components, only update in Server Action or Route Handler
-    // Cookie update logic has been moved to OAuth callback handler
-
-    console.log("✅ Successfully retrieved GitHub access token from legacy session");
-    return accessToken;
+    console.log("ℹ️ No GitHub token available - will use public API");
+    return null;
   } catch (error) {
     console.error("❌ Exception when getting GitHub access token:", error);
-    // When exception occurs, try to get from Cookie
-    return await getTokenFromCookie();
-  }
-}
-
-/**
- * Get GitHub access token from Cookie (for SSR scenarios)
- * @returns GitHub access token, or null if not found
- */
-async function getTokenFromCookie(): Promise<string | null> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("github_access_token")?.value;
-
-    if (!token) {
-      console.log("ℹ️ GitHub access token not found in Cookie");
-      return null;
-    }
-
-    console.log("✅ Successfully retrieved GitHub access token from Cookie");
-    return token;
-  } catch (error) {
-    console.error("❌ Failed to get GitHub access token from Cookie:", error);
     return null;
   }
 }
 
-/**
- * Update GitHub access token in Cookie
- * Called when a new provider_token is detected in Supabase session
- * @param token GitHub access token
- */
-export async function updateGithubTokenCookie(token: string): Promise<void> {
-  try {
-    const cookieStore = await cookies();
-    cookieStore.set("github_access_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
-    console.log("✅ GitHub access token Cookie updated");
-  } catch (error) {
-    console.error("❌ Failed to update GitHub access token Cookie:", error);
-  }
-}
-
-/**
- * Clear GitHub access token from Cookie
- */
-export async function clearGithubTokenCookie(): Promise<void> {
-  try {
-    const cookieStore = await cookies();
-    cookieStore.delete("github_access_token");
-    console.log("✅ GitHub access token Cookie cleared");
-  } catch (error) {
-    console.error("❌ Failed to clear GitHub access token Cookie:", error);
-  }
-}
+// Note: Cookie-based token management has been removed
+// Tokens are now retrieved directly from Supabase user identities
+// This is the correct and more secure approach
 
 /**
  * Get repository README without authentication
@@ -180,7 +75,7 @@ export async function getRepoReadme(
 
   // If we have an access token, use authenticated request (can access private repository README)
   if (accessToken) {
-    console.log("Using authenticated request to get README");
+    console.log("🔑 Using authenticated request to get README");
     const octokit = new Octokit({
       auth: accessToken as string,
     });
@@ -204,9 +99,7 @@ export async function getRepoReadme(
     }
   } else {
     // If we don't have an access token, try to get public repository README without authentication
-    console.log(
-      "No access token, trying to get public repository README anonymously"
-    );
+    console.log("🌐 No access token, using public API to get README");
     return await getPublicRepoReadme(repo);
   }
 }
@@ -262,7 +155,7 @@ export async function getRepoLicense(
 
   // If we have an access token, use authenticated request (can access private repository License)
   if (accessToken) {
-    console.log("Using authenticated request to get License");
+    console.log("🔑 Using authenticated request to get License");
     const octokit = new Octokit({
       auth: accessToken as string,
     });
@@ -290,9 +183,7 @@ export async function getRepoLicense(
     }
   } else {
     // If we don't have an access token, try to get public repository License without authentication
-    console.log(
-      "No access token, trying to get public repository License anonymously"
-    );
+    console.log("🌐 No access token, using public API to get License");
     return await getPublicRepoLicense(repo);
   }
 }
@@ -365,10 +256,7 @@ export async function getRepoLicenseType(repo: string): Promise<string | null> {
 
     const [owner, repoName] = repo.split("/");
     const accessToken = await getGithubAccessToken();
-    const octokit = new Octokit({
-      auth: accessToken || undefined,
-    });
-
+    
     // First get the license content to check for COSL
     console.log("📥 Fetching license content...");
     const license = await getRepoLicense(repo);
@@ -387,31 +275,41 @@ export async function getRepoLicenseType(repo: string): Promise<string | null> {
       return "COSL";
     }
 
-    // If not COSL, use GitHub API to get license info
-    console.log("🔄 Not COSL, checking GitHub API for license type...");
-    try {
-      const { data } = await octokit.rest.licenses.getForRepo({
-        owner,
-        repo: repoName,
+    // If not COSL and we have access token, use GitHub API to get license info
+    if (accessToken) {
+      console.log("🔄 Not COSL, checking GitHub API for license type...");
+      const octokit = new Octokit({
+        auth: accessToken,
       });
+      
+      try {
+        const { data } = await octokit.rest.licenses.getForRepo({
+          owner,
+          repo: repoName,
+        });
 
-      const licenseType = data.license?.spdx_id || null;
-      console.log(`✨ GitHub API returned license type: ${licenseType}`);
-      return licenseType;
-    } catch (error) {
-      if (
-        error &&
-        typeof error === "object" &&
-        "status" in error &&
-        error.status === 404
-      ) {
-        console.log("⚠️ GitHub API returned 404 for license");
-        return null;
+        const licenseType = data.license?.spdx_id || null;
+        console.log(`✨ GitHub API returned license type: ${licenseType}`);
+        return licenseType;
+      } catch (error) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          error.status === 404
+        ) {
+          console.log("⚠️ GitHub API returned 404 for license");
+          return null;
+        }
+        throw error;
       }
-      throw error;
+    } else {
+      console.log("ℹ️ No access token available, cannot determine license type from GitHub API");
+      return null;
     }
   } catch (error) {
     console.error("❌ Failed to detect license type:", error);
     return null;
   }
 }
+

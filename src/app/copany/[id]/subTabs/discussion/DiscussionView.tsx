@@ -1,10 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
 import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
 import {
-  useDiscussionVoteState,
   useToggleDiscussionVote,
+  useDiscussionVoteCounts,
+  useMyVotedDiscussionIds,
 } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
@@ -113,6 +115,15 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     return Array.from(set);
   }, [filtered]);
   const { data: usersMap = {} } = useUsersInfo(creatorIds);
+
+  // Collect discussion IDs for batch vote queries
+  const discussionIds = useMemo(() => {
+    return (filtered || []).map((discussion) => String(discussion.id));
+  }, [filtered]);
+
+  // Batch fetch vote counts and voted status
+  const { data: voteCounts = {} } = useDiscussionVoteCounts(discussionIds);
+  const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
   // Handle discussion creation callback
   const handleDiscussionCreated = useCallback(
@@ -245,31 +256,39 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <EmptyPlaceholderView
-            icon={
-              <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
-            }
-            title="No discussions for this label"
-            description="Try another label."
-          />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {filtered.map((d) => (
-              <li key={d.id} className="">
-                <DiscussionItem
-                  copanyId={copanyId}
-                  discussion={d}
-                  creator={
-                    d.creator_id
-                      ? (usersMap[String(d.creator_id)] as UserInfo | undefined)
-                      : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        <Suspense
+          fallback={<LoadingView type="label" label="Loading discussions..." />}
+        >
+          {filtered.length === 0 ? (
+            <EmptyPlaceholderView
+              icon={
+                <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
+              }
+              title="No discussions for this label"
+              description="Try another label."
+            />
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {filtered.map((d) => (
+                <li key={d.id} className="">
+                  <DiscussionItem
+                    copanyId={copanyId}
+                    discussion={d}
+                    creator={
+                      d.creator_id
+                        ? (usersMap[String(d.creator_id)] as
+                            | UserInfo
+                            | undefined)
+                        : undefined
+                    }
+                    voteCounts={voteCounts}
+                    votedDiscussionIds={votedDiscussionIds}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Suspense>
 
         {/* Create Discussion modal */}
         {createDiscussionModal()}
@@ -298,19 +317,23 @@ function DiscussionItem({
   copanyId,
   discussion,
   creator,
+  voteCounts,
+  votedDiscussionIds,
 }: {
   copanyId: string;
   discussion: Discussion;
   creator?: UserInfo;
+  voteCounts: Record<string, number>;
+  votedDiscussionIds: string[];
 }) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
-  const { countQuery: voteCount, flagQuery: voteState } =
-    useDiscussionVoteState(discussion.id, {
-      enableCountQuery: discussion.vote_up_count == null,
-      countInitialData: discussion.vote_up_count ?? undefined,
-    });
+
+  // Use batch fetched data instead of individual queries
+  const hasVoted = votedDiscussionIds.includes(String(discussion.id));
+  const voteCount =
+    voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
   const voteToggle = useToggleDiscussionVote(discussion.id);
 
   return (
@@ -371,13 +394,13 @@ function DiscussionItem({
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => voteToggle.mutate({ toVote: !voteState.data })}
+          onClick={() => voteToggle.mutate({ toVote: !hasVoted })}
           disabled={voteToggle.isPending}
         >
           <div className="flex items-center gap-2">
             <Image
               src={
-                voteState.data
+                hasVoted
                   ? isDarkMode
                     ? arrowshape_up_fill_dark
                     : arrowshape_up_fill
@@ -389,7 +412,7 @@ function DiscussionItem({
               width={16}
               height={16}
             />
-            <span>{voteCount.data ?? 0}</span>
+            <span>{voteCount}</span>
           </div>
         </Button>
 

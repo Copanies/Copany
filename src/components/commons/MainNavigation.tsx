@@ -7,7 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useCopany } from "@/hooks/copany";
 import { createClient } from "@/utils/supabase/client";
-import { signOut } from "@/actions/auth.actions";
 import Button from "./Button";
 import Dropdown from "./Dropdown";
 import NotificationBell from "./NotificationBell";
@@ -52,8 +51,16 @@ export default function MainNavigation() {
 
   const handleLogout = async () => {
     try {
-      // 执行服务器端登出
-      await signOut();
+      // 使用客户端登出，避免 redirect 问题
+      const supabase = createClient();
+      await supabase.auth.signOut();
+
+      // 清除用户缓存
+      queryClient.removeQueries({ queryKey: ["currentUser"] });
+      queryClient.removeQueries({ queryKey: ["userInfo"] });
+
+      // 强制刷新页面以确保状态更新
+      window.location.reload();
     } catch (error) {
       console.error("Failed to logout:", error);
     }

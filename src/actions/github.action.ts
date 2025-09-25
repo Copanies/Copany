@@ -60,6 +60,7 @@ export async function getRepoReadmeAction(githubUrl: string) {
 
 /**
  * Get current user's public repositories
+ * This function REQUIRES GitHub token - will throw error if not available
  */
 async function getUserPublicRepos(): Promise<
   RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"]
@@ -69,7 +70,7 @@ async function getUserPublicRepos(): Promise<
   try {
     const accessToken = await getGithubAccessToken();
     if (!accessToken) {
-      throw new Error("Failed to get GitHub access token - user may not be properly authenticated with GitHub");
+      throw new Error("GitHub authentication required - please reconnect your GitHub account to access your repositories");
     }
 
     console.log("🔑 GitHub access token obtained, creating Octokit client");
