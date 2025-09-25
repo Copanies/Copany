@@ -646,12 +646,11 @@ export default function New() {
                 <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
                   {isGitHubBinding
                     ? "Reconnecting..."
-                    : `Reconnect to @
-                  ${
-                    providersInfo?.providersData.find(
-                      (p) => p.provider === "github"
-                    )?.user_name
-                  }`}
+                    : `Reconnect to @${
+                        providersInfo?.providersData.find(
+                          (p) => p.provider === "github"
+                        )?.user_name
+                      }`}
                 </span>
               </button>
             ) : (
