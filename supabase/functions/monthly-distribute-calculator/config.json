@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "monthly-distribute-calculator": {
+      "schedule": "0 0 1 * *"
+    }
+  }
+}

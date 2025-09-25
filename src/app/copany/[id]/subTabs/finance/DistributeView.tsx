@@ -113,7 +113,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
           title="No distribute records"
           description="Distribute records are generated based on the transaction log and each contributor's share ratio."
         />
-        <div className="flex items-center flex-1 justify-center">
+        <div className="flex items-center flex-1 justify-center gap-2">
           <Button
             size="md"
             variant="secondary"
@@ -128,6 +128,49 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
           >
             Calculate Last Month&apos;s
           </Button>
+          <Button
+            size="md"
+            variant="secondary"
+            className="w-fit"
+            disabled={!isOwner}
+            disableTooltipConent={
+              !isOwner ? "You are not the owner of this copany" : undefined
+            }
+            onClick={async () => {
+              try {
+                const response = await fetch(
+                  "/api/monthly-distribute-calculator",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+
+                if (response.ok) {
+                  const result = await response.json();
+                  console.log(
+                    "Monthly distribute calculation completed:",
+                    result
+                  );
+                  // Refresh the distributes data
+                  window.location.reload();
+                } else {
+                  console.error(
+                    "Failed to trigger monthly distribute calculation"
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  "Error triggering monthly distribute calculation:",
+                  error
+                );
+              }
+            }}
+          >
+            Calculate All Copanies
+          </Button>
         </div>
       </div>
     );
@@ -136,20 +179,65 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
   return (
     <div className="p-0">
       <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
-        <Button
-          size="md"
-          variant="secondary"
-          className="w-fit"
-          disabled={!isOwner}
-          disableTooltipConent={
-            !isOwner ? "You are not the owner of this copany" : undefined
-          }
-          onClick={async () => {
-            await regenerate.mutateAsync();
-          }}
-        >
-          Calculate Last Month&apos;s
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="md"
+            variant="secondary"
+            className="w-fit"
+            disabled={!isOwner}
+            disableTooltipConent={
+              !isOwner ? "You are not the owner of this copany" : undefined
+            }
+            onClick={async () => {
+              await regenerate.mutateAsync();
+            }}
+          >
+            Calculate Last Month&apos;s
+          </Button>
+          <Button
+            size="md"
+            variant="secondary"
+            className="w-fit"
+            disabled={!isOwner}
+            disableTooltipConent={
+              !isOwner ? "You are not the owner of this copany" : undefined
+            }
+            onClick={async () => {
+              try {
+                const response = await fetch(
+                  "/api/monthly-distribute-calculator",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+
+                if (response.ok) {
+                  const result = await response.json();
+                  console.log(
+                    "Monthly distribute calculation completed:",
+                    result
+                  );
+                  // Refresh the distributes data
+                  window.location.reload();
+                } else {
+                  console.error(
+                    "Failed to trigger monthly distribute calculation"
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  "Error triggering monthly distribute calculation:",
+                  error
+                );
+              }
+            }}
+          >
+            Calculate All Copanies
+          </Button>
+        </div>
       </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedDistributes.map((group) => (
