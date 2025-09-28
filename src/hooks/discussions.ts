@@ -15,7 +15,16 @@ function discussionKey(discussionId: string) { return ["discussion", discussionI
 export function useDiscussions(copanyId: string) {
   return useQuery<Discussion[]>({
     queryKey: listKey(copanyId),
-    queryFn: () => listDiscussionsAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussions?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.discussions as Discussion[];
+      } catch {
+        return await listDiscussionsAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
@@ -25,7 +34,16 @@ export function useDiscussions(copanyId: string) {
 export function useDiscussion(copanyId: string, discussionId: string) {
   return useQuery<Discussion[], unknown, Discussion | null>({
     queryKey: listKey(copanyId),
-    queryFn: () => listDiscussionsAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussions?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.discussions as Discussion[];
+      } catch {
+        return await listDiscussionsAction(copanyId);
+      }
+    },
     select: (discussions) => {
       const found = discussions.find((d) => String(d.id) === String(discussionId));
       return found ?? null;

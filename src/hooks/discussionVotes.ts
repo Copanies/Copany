@@ -21,7 +21,16 @@ export function useDiscussionVoteState(
   const enableCountQuery = options?.enableCountQuery ?? true;
   const countQuery = useQuery<number>({
     queryKey: discussionVoteCountKey(discussionId),
-    queryFn: () => getDiscussionVoteCountAction(discussionId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussion-votes?discussionId=${encodeURIComponent(discussionId)}&type=count`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.count as number;
+      } catch {
+        return await getDiscussionVoteCountAction(discussionId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
     enabled: enableCountQuery,
@@ -29,7 +38,16 @@ export function useDiscussionVoteState(
   });
   const flagQuery = useQuery<boolean>({
     queryKey: discussionHasVotedKey(discussionId),
-    queryFn: () => hasVotedDiscussionAction(discussionId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussion-votes?discussionId=${encodeURIComponent(discussionId)}&type=hasVoted`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.hasVoted as boolean;
+      } catch {
+        return await hasVotedDiscussionAction(discussionId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
@@ -84,7 +102,16 @@ export function useToggleDiscussionVote(discussionId: string) {
 export function useMyVotedDiscussionIds() {
   return useQuery<string[]>({
     queryKey: myVotedListKey(),
-    queryFn: () => listMyVotedDiscussionIdsAction(),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussion-votes?type=myVotedList`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.ids as string[];
+      } catch {
+        return await listMyVotedDiscussionIdsAction();
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
@@ -97,7 +124,17 @@ function discussionVoteCountsKey(discussionIds: string[]) {
 export function useDiscussionVoteCounts(discussionIds: string[]) {
   return useQuery({
     queryKey: discussionVoteCountsKey(discussionIds),
-    queryFn: () => getDiscussionVoteCountsAction(discussionIds),
+    queryFn: async () => {
+      try {
+        const params = discussionIds.map(id => `discussionIds=${encodeURIComponent(id)}`).join('&');
+        const res = await fetch(`/api/discussion-votes?${params}&type=counts`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.counts;
+      } catch {
+        return await getDiscussionVoteCountsAction(discussionIds);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: discussionIds.length > 0,

@@ -18,7 +18,16 @@ export function transactionsKey(copanyId: string) { return ["transactions", copa
 export function useDistributes(copanyId: string) {
   return useQuery<DistributeRow[]>({
     queryKey: distributesKey(copanyId),
-    queryFn: () => getDistributesAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/finance?copanyId=${encodeURIComponent(copanyId)}&type=distributes`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.distributes as DistributeRow[];
+      } catch {
+        return await getDistributesAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: !!copanyId,
@@ -52,7 +61,16 @@ export function useRegenerateDistributes(copanyId: string) {
 export function useTransactions(copanyId: string) {
   return useQuery<TransactionRow[]>({
     queryKey: transactionsKey(copanyId),
-    queryFn: () => getTransactionsAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/finance?copanyId=${encodeURIComponent(copanyId)}&type=transactions`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.transactions as TransactionRow[];
+      } catch {
+        return await getTransactionsAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: !!copanyId,

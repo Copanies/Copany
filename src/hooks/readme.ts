@@ -18,9 +18,16 @@ export function useRepoReadme(githubUrl?: string | null) {
     queryKey: githubUrl ? readmeKey(githubUrl) : ["readme", "none"],
     queryFn: async () => {
       if (!githubUrl) return "No README";
-      const res = await getRepoReadmeAction(githubUrl);
-      if (!res?.content) return "No README";
-      return decodeGitHubContent(res.content);
+      try {
+        const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.content as string;
+      } catch {
+        const res = await getRepoReadmeAction(githubUrl);
+        if (!res?.content) return "No README";
+        return decodeGitHubContent(res.content);
+      }
     },
     enabled: !!githubUrl,
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
@@ -33,12 +40,19 @@ export function useRepoLicense(githubUrl?: string | null) {
     queryKey: githubUrl ? licenseKey(githubUrl) : ["license", "none"],
     queryFn: async () => {
       if (!githubUrl) return { content: "No License", type: null };
-      const license = await getRepoLicenseAction(githubUrl);
-      if (!license || Array.isArray(license) || !("content" in license)) {
-        return { content: "No License", type: null };
+      try {
+        const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=license`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return { content: json.content as string, type: json.type as string | null };
+      } catch {
+        const license = await getRepoLicenseAction(githubUrl);
+        if (!license || Array.isArray(license) || !("content" in license)) {
+          return { content: "No License", type: null };
+        }
+        const type = await getRepoLicenseTypeAction(githubUrl);
+        return { content: decodeGitHubContent(license.content), type: type ?? null };
       }
-      const type = await getRepoLicenseTypeAction(githubUrl);
-      return { content: decodeGitHubContent(license.content), type: type ?? null };
     },
     enabled: !!githubUrl,
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days

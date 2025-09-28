@@ -114,7 +114,17 @@ function discussionCommentVoteCountsKey(commentIds: string[]) {
 export function useDiscussionCommentVoteCounts(commentIds: string[]) {
   return useQuery({
     queryKey: discussionCommentVoteCountsKey(commentIds),
-    queryFn: () => getDiscussionCommentVoteCountsAction(commentIds),
+    queryFn: async () => {
+      try {
+        const params = commentIds.map(id => `commentIds=${encodeURIComponent(id)}`).join('&');
+        const res = await fetch(`/api/discussion-comment-votes?${params}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.counts;
+      } catch {
+        return await getDiscussionCommentVoteCountsAction(commentIds);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: commentIds.length > 0,
