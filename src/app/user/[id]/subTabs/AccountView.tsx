@@ -74,20 +74,20 @@ export default function AccountView({ userId }: { userId: string }) {
 
   // Initialize user name when user data is loaded
   useEffect(() => {
-    if (user && !userName) {
+    if (user) {
       setUserName(user.name);
     }
   }, [user]);
 
   // Initialize payment links when data is loaded
   useEffect(() => {
-    if (wisePaymentLink && !wiseLink) {
+    if (wisePaymentLink) {
       setWiseLink(wisePaymentLink.decrypted_link);
     }
   }, [wisePaymentLink]);
 
   useEffect(() => {
-    if (alipayPaymentLink && !alipayLink) {
+    if (alipayPaymentLink) {
       setAlipayLink(alipayPaymentLink.decrypted_link);
     }
   }, [alipayPaymentLink]);
