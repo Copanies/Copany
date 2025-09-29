@@ -77,20 +77,20 @@ export default function AccountView({ userId }: { userId: string }) {
     if (user && !userName) {
       setUserName(user.name);
     }
-  }, [user, userName]);
+  }, [user]);
 
   // Initialize payment links when data is loaded
   useEffect(() => {
     if (wisePaymentLink && !wiseLink) {
       setWiseLink(wisePaymentLink.decrypted_link);
     }
-  }, [wisePaymentLink, wiseLink]);
+  }, [wisePaymentLink]);
 
   useEffect(() => {
     if (alipayPaymentLink && !alipayLink) {
       setAlipayLink(alipayPaymentLink.decrypted_link);
     }
-  }, [alipayPaymentLink, alipayLink]);
+  }, [alipayPaymentLink]);
 
   const handleRenameUser = async () => {
     if (!userName.trim()) return;
