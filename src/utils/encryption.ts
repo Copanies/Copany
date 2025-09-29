@@ -96,16 +96,14 @@ export class EncryptionService {
     
     switch (type) {
       case 'Wise':
-        // Basic URL validation for Wise links
-        return trimmedLink.startsWith('https://') && trimmedLink.includes('wise.com');
+        // Strict validation for Wise payment links
+        const wisePattern = /^https:\/\/wise\.com\/pay\/me\/.+$/;
+        return wisePattern.test(trimmedLink);
       
       case 'Alipay':
-        // Can be QR code link or Alipay link format
-        return (
-          trimmedLink.startsWith('https://') || 
-          trimmedLink.startsWith('alipays://') ||
-          trimmedLink.includes('qr.alipay.com')
-        );
+        // Strict validation for Alipay QR code links
+        const alipayPattern = /^https:\/\/qr\.alipay\.com\/.+$/;
+        return alipayPattern.test(trimmedLink);
       
       default:
         return false;
