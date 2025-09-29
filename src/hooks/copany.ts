@@ -16,7 +16,16 @@ export function useCopany(
 ) {
   return useQuery<Copany | null>({
     queryKey: copanyKey(copanyId),
-    queryFn: () => getCopanyByIdAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/copany?id=${encodeURIComponent(copanyId)}&type=single`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.copany as Copany | null;
+      } catch {
+        return await getCopanyByIdAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: options?.enabled ?? true,
@@ -26,7 +35,16 @@ export function useCopany(
 export function useCopanies() {
   return useQuery<Copany[]>({
     queryKey: copaniesKey(),
-    queryFn: () => getCopaniesAction(),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/copany?type=list`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.copanies as Copany[];
+      } catch {
+        return await getCopaniesAction();
+      }
+    },
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
@@ -35,7 +53,16 @@ export function useCopanies() {
 export function useCopaniesWhereUserIsContributor(userId: string) {
   return useQuery<Copany[]>({
     queryKey: copaniesWhereUserIsContributorKey(userId),
-    queryFn: () => getCopaniesWhereUserIsContributorAction(userId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/copany?userId=${encodeURIComponent(userId)}&type=userContributor`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.copanies as Copany[];
+      } catch {
+        return await getCopaniesWhereUserIsContributorAction(userId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
@@ -44,7 +71,16 @@ export function useCopaniesWhereUserIsContributor(userId: string) {
 export function useMyStarredCopanies() {
   return useQuery<{ ids: string[] }>({
     queryKey: myStarredCopanyIdsKey(),
-    queryFn: async () => ({ ids: await listMyStarredCopanyIdsAction() }),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/copany?type=starred`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return { ids: json.ids as string[] };
+      } catch {
+        return { ids: await listMyStarredCopanyIdsAction() };
+      }
+    },
     staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });

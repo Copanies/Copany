@@ -26,7 +26,16 @@ export function useStarState(
   const enableCountQuery = options?.enableCountQuery ?? true;
   const countQuery = useQuery<number>({
     queryKey: starCountKey(copanyId),
-    queryFn: () => getStarCountAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/stars?copanyId=${encodeURIComponent(copanyId)}&type=count`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.count as number;
+      } catch {
+        return await getStarCountAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: enableCountQuery,
@@ -34,7 +43,16 @@ export function useStarState(
   });
   const flagQuery = useQuery<boolean>({
     queryKey: hasStarredKey(copanyId),
-    queryFn: () => hasStarredAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/stars?copanyId=${encodeURIComponent(copanyId)}&type=hasStarred`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.hasStarred as boolean;
+      } catch {
+        return await hasStarredAction(copanyId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
@@ -96,7 +114,16 @@ export function useToggleStar(copanyId: string) {
 export function useMyStarredCopanyIds() {
   return useQuery<string[]>({
     queryKey: myStarredListKey(),
-    queryFn: () => listMyStarredCopanyIdsAction(),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/stars?type=myStarredList`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.ids as string[];
+      } catch {
+        return await listMyStarredCopanyIdsAction();
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });

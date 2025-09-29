@@ -9,7 +9,16 @@ function key(discussionId: string) { return ["discussionComments", discussionId]
 export function useDiscussionComments(discussionId: string) {
   return useQuery<DiscussionComment[]>({
     queryKey: key(discussionId),
-    queryFn: () => getDiscussionCommentsAction(discussionId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussion-comments?discussionId=${encodeURIComponent(discussionId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.comments as DiscussionComment[];
+      } catch {
+        return await getDiscussionCommentsAction(discussionId);
+      }
+    },
     staleTime: 30 * 24 * 60 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });

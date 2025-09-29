@@ -19,7 +19,16 @@ function byCopanyKey(copanyId: string) {
 export function useAssignmentRequests(issueId: string) {
   return useQuery<AssignmentRequest[]>({
     queryKey: byIssueKey(issueId),
-    queryFn: () => listAssignmentRequestsAction(issueId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/assignment-requests?issueId=${encodeURIComponent(issueId)}&type=byIssue`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.items as AssignmentRequest[];
+      } catch {
+        return await listAssignmentRequestsAction(issueId);
+      }
+    },
     enabled: /^\d+$/.test(String(issueId)),
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
@@ -29,7 +38,16 @@ export function useAssignmentRequests(issueId: string) {
 export function useAssignmentRequestsByCopany(copanyId: string) {
   return useQuery<AssignmentRequest[]>({
     queryKey: byCopanyKey(copanyId),
-    queryFn: () => listAssignmentRequestsByCopanyAction(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/assignment-requests?copanyId=${encodeURIComponent(copanyId)}&type=byCopany`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.items as AssignmentRequest[];
+      } catch {
+        return await listAssignmentRequestsByCopanyAction(copanyId);
+      }
+    },
     enabled: !!copanyId,
     staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
     refetchInterval: 10 * 60 * 1000, // 10 minutes
