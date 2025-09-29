@@ -17,11 +17,19 @@ import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
+import alipayIcon from "@/assets/alipay_logo.svg";
+import wiseIcon from "@/assets/wise_logo.png";
 import Button from "@/components/commons/Button";
 import { updateUserNameAction } from "@/actions/user.actions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  usePaymentLinkByType,
+  useUpsertPaymentLink,
+  useDeletePaymentLink,
+} from "@/hooks/receivePaymentLinks";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function AccountView({ userId }: { userId: string }) {
   const { data: user, isLoading } = useUserInfo(userId);
@@ -38,6 +46,20 @@ export default function AccountView({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  // Payment links state
+  const [wiseLink, setWiseLink] = useState("");
+  const [alipayLink, setAlipayLink] = useState("");
+  const [showWiseLink, setShowWiseLink] = useState(false);
+  const [showAlipayLink, setShowAlipayLink] = useState(false);
+  const [isWiseLoading, setIsWiseLoading] = useState(false);
+  const [isAlipayLoading, setIsAlipayLoading] = useState(false);
+
+  // Payment links hooks
+  const { data: wisePaymentLink } = usePaymentLinkByType(userId, "Wise");
+  const { data: alipayPaymentLink } = usePaymentLinkByType(userId, "Alipay");
+  const upsertPaymentLinkMutation = useUpsertPaymentLink();
+  const deletePaymentLinkMutation = useDeletePaymentLink();
+
   // Check if current user is viewing their own profile
   const isOwnProfile = currentUser?.id === userId;
 
@@ -52,6 +74,14 @@ export default function AccountView({ userId }: { userId: string }) {
   // Initialize user name when user data is loaded
   if (user && !userName) {
     setUserName(user.name);
+  }
+
+  // Initialize payment links when data is loaded
+  if (wisePaymentLink && !wiseLink) {
+    setWiseLink(wisePaymentLink.decrypted_link);
+  }
+  if (alipayPaymentLink && !alipayLink) {
+    setAlipayLink(alipayPaymentLink.decrypted_link);
   }
 
   const handleRenameUser = async () => {
@@ -111,6 +141,100 @@ export default function AccountView({ userId }: { userId: string }) {
     }
   };
 
+  const handleSaveWiseLink = async () => {
+    if (!isOwnProfile || !wiseLink.trim()) return;
+
+    // Validate Wise link format
+    const wisePattern = /^https:\/\/wise\.com\/pay\/me\/.+$/;
+    if (!wisePattern.test(wiseLink.trim())) {
+      alert(
+        "Invalid Wise link format. Please use: https://wise.com/pay/me/XXX"
+      );
+      return;
+    }
+
+    setIsWiseLoading(true);
+    try {
+      await upsertPaymentLinkMutation.mutateAsync({
+        userId,
+        type: "Wise",
+        paymentLink: wiseLink.trim(),
+      });
+      alert("Wise payment link saved successfully");
+    } catch (error) {
+      console.error("Failed to save Wise link:", error);
+      alert("Failed to save Wise payment link, please try again");
+    } finally {
+      setIsWiseLoading(false);
+    }
+  };
+
+  const handleSaveAlipayLink = async () => {
+    if (!isOwnProfile || !alipayLink.trim()) return;
+
+    // Validate Alipay link format
+    const alipayPattern = /^https:\/\/qr\.alipay\.com\/.+$/;
+    if (!alipayPattern.test(alipayLink.trim())) {
+      alert(
+        "Invalid Alipay link format. Please use: https://qr.alipay.com/XXX"
+      );
+      return;
+    }
+
+    setIsAlipayLoading(true);
+    try {
+      await upsertPaymentLinkMutation.mutateAsync({
+        userId,
+        type: "Alipay",
+        paymentLink: alipayLink.trim(),
+      });
+      alert("Alipay payment link saved successfully");
+    } catch (error) {
+      console.error("Failed to save Alipay link:", error);
+      alert("Failed to save Alipay payment link, please try again");
+    } finally {
+      setIsAlipayLoading(false);
+    }
+  };
+
+  const handleDeleteWiseLink = async () => {
+    if (!isOwnProfile || !wisePaymentLink) return;
+
+    if (!confirm("Are you sure you want to delete the Wise payment link?"))
+      return;
+
+    try {
+      await deletePaymentLinkMutation.mutateAsync({
+        userId,
+        type: "Wise",
+      });
+      setWiseLink("");
+      alert("Wise payment link deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete Wise link:", error);
+      alert("Failed to delete Wise payment link, please try again");
+    }
+  };
+
+  const handleDeleteAlipayLink = async () => {
+    if (!isOwnProfile || !alipayPaymentLink) return;
+
+    if (!confirm("Are you sure you want to delete the Alipay payment link?"))
+      return;
+
+    try {
+      await deletePaymentLinkMutation.mutateAsync({
+        userId,
+        type: "Alipay",
+      });
+      setAlipayLink("");
+      alert("Alipay payment link deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete Alipay link:", error);
+      alert("Failed to delete Alipay payment link, please try again");
+    }
+  };
+
   if (isLoading || providersLoading) {
     return <LoadingView type="label" />;
   }
@@ -144,8 +268,116 @@ export default function AccountView({ userId }: { userId: string }) {
           <p className="text-base font-semibold">Email</p>
           <p>{user.email}</p>
         </div>
-        <p className="text-2xl font-semibold">Linked Accounts</p>
+
+        {/* Receive Payments Section */}
+        {isOwnProfile && (
+          <div className="flex flex-col gap-5">
+            <p className="text-2xl font-bold">Receive Payments</p>
+
+            {/* Wise Payment Link */}
+            <div className="flex flex-col gap-3 max-w-full">
+              <div className="flex flex-row gap-3 items-center">
+                <Image src={wiseIcon} alt="Wise Logo" width={66} height={35} />
+                <label htmlFor="wiseLink" className="text-sm font-semibold">
+                  Wise Payment Link
+                </label>
+              </div>
+              <div className="flex flex-row gap-3 max-w-full items-center">
+                <div className="relative flex-1 max-w-[400px]">
+                  <input
+                    type={showWiseLink ? "text" : "password"}
+                    id="wiseLink"
+                    value={wiseLink}
+                    onChange={(e) => setWiseLink(e.target.value)}
+                    className="border border-gray-300 dark:border-gray-700 w-full rounded-md px-2 py-1 pr-10"
+                    placeholder={wisePaymentLink ? "****" : "Enter"}
+                  />
+                  {wiseLink && (
+                    <button
+                      type="button"
+                      onClick={() => setShowWiseLink(!showWiseLink)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:cursor-pointer"
+                    >
+                      {showWiseLink ? (
+                        <EyeSlashIcon className="w-4 h-4" />
+                      ) : (
+                        <EyeIcon className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <Button
+                  onClick={handleSaveWiseLink}
+                  disabled={isWiseLoading || !wiseLink.trim()}
+                >
+                  {isWiseLoading ? "Saving..." : "Save"}
+                </Button>
+                {wisePaymentLink && (
+                  <Button onClick={handleDeleteWiseLink} variant="secondary">
+                    Delete
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm">How to get your link?</p>
+            </div>
+
+            {/* Alipay QR Code Link */}
+            <div className="flex flex-col gap-3 max-w-full">
+              <div className="flex flex-row gap-3 items-center">
+                <Image
+                  src={alipayIcon}
+                  alt="Alipay Logo"
+                  width={83.61}
+                  height={35}
+                />
+                <label htmlFor="alipayLink" className="text-sm font-semibold">
+                  Alipay QR Code Link
+                </label>
+              </div>
+              <div className="flex flex-row gap-3 max-w-full items-center">
+                <div className="relative flex-1 max-w-[400px]">
+                  <input
+                    type={showAlipayLink ? "text" : "password"}
+                    id="alipayLink"
+                    value={alipayLink}
+                    onChange={(e) => setAlipayLink(e.target.value)}
+                    className="border border-gray-300 dark:border-gray-700 w-full rounded-md px-2 py-1 pr-10"
+                    placeholder={alipayPaymentLink ? "****" : "Enter"}
+                  />
+                  {alipayLink && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAlipayLink(!showAlipayLink)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:cursor-pointer"
+                    >
+                      {showAlipayLink ? (
+                        <EyeSlashIcon className="w-4 h-4" />
+                      ) : (
+                        <EyeIcon className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <Button
+                  onClick={handleSaveAlipayLink}
+                  disabled={isAlipayLoading || !alipayLink.trim()}
+                >
+                  {isAlipayLoading ? "Saving..." : "Save"}
+                </Button>
+                {alipayPaymentLink && (
+                  <Button onClick={handleDeleteAlipayLink} variant="secondary">
+                    Delete
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm">How to get your link?</p>
+            </div>
+          </div>
+        )}
+
+        <p className="text-2xl font-semibold">Accounts</p>
         <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold">Linked Accounts</p>
           {linkedProviders.length > 0 ? (
             <div className="flex flex-col gap-3">
               {providersData.map((providerData, index) => (
@@ -163,7 +395,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-semibold">GitHub Account</span>
+                        <span className="font-base">GitHub Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <Link
@@ -185,7 +417,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-semibold">Google Account</span>
+                        <span className="font-base">Google Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <span className="text-gray-500">
@@ -204,7 +436,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-semibold">Figma Account</span>
+                        <span className="font-base">Figma Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <span className="text-gray-500">
@@ -217,7 +449,7 @@ export default function AccountView({ userId }: { userId: string }) {
                     {providerData.provider === "email" && (
                       <div className="flex flex-row gap-1 items-center">
                         <AtSymbolIcon className="w-4 h-4" strokeWidth={2} />
-                        <span className="font-semibold">Email</span>
+                        <span className="font-base">Email</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.email && (
                             <span className="text-gray-500">
@@ -240,7 +472,7 @@ export default function AccountView({ userId }: { userId: string }) {
       {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma) && (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <p className="text-2xl font-bold">Link to Accounts</p>
+            <p className="text-sm font-semibold">Link to Accounts</p>
             <p className="text-gray-500 text-sm">
               Only supports linking to GitHub, Google, or Figma accounts with
               the same email address
@@ -282,7 +514,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isGoogleLoading ||
                   isFigmaLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -307,7 +539,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isGoogleLoading ||
                   isFigmaLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"

@@ -53,6 +53,10 @@ SUPABASE_SERVICE_ROLE_KEY=XXXXXX
 # 以下为 Copany-dev (测试用 GitHub OAuth App)，也可自己创建一个 GitHub OAuth App 进行测试
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=Ov23liDG2Vih89RwzedN
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=36e167a99f9f9cdcae7f4c9a3937303b9de221dd
+
+# 支付链接加密密钥 (32字节十六进制格式)
+# 生成命令: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
 ```
 
 ## 5. 启动前端服务

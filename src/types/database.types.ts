@@ -356,3 +356,16 @@ export interface DiscussionCommentVoteRow {
   comment_id: string;
   user_id: string;
 }
+
+export type ReceivePaymentLinkType = "Wise" | "Alipay";
+
+export interface ReceivePaymentLink {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  iv: string;
+  data: string;
+  tag: string;
+  type: ReceivePaymentLinkType;
+}
