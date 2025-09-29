@@ -18,6 +18,7 @@ import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
 import alipayIcon from "@/assets/alipay_logo.svg";
+import alipayIconDark from "@/assets/alipay_logo_dark.svg";
 import wiseIcon from "@/assets/wise_logo.png";
 import Button from "@/components/commons/Button";
 import { updateUserNameAction } from "@/actions/user.actions";
@@ -325,7 +326,7 @@ export default function AccountView({ userId }: { userId: string }) {
             <div className="flex flex-col gap-3 max-w-full">
               <div className="flex flex-row gap-3 items-center">
                 <Image
-                  src={alipayIcon}
+                  src={isDarkMode ? alipayIconDark : alipayIcon}
                   alt="Alipay Logo"
                   width={83.61}
                   height={35}
@@ -489,7 +490,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isGoogleLoading ||
                   isFigmaLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-transparent text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -514,7 +515,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isGoogleLoading ||
                   isFigmaLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -539,7 +540,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isGoogleLoading ||
                   isFigmaLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
