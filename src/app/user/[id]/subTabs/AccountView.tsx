@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useUserInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -73,17 +73,24 @@ export default function AccountView({ userId }: { userId: string }) {
   const providersData = providersInfo?.providersData || [];
 
   // Initialize user name when user data is loaded
-  if (user && !userName) {
-    setUserName(user.name);
-  }
+  useEffect(() => {
+    if (user && !userName) {
+      setUserName(user.name);
+    }
+  }, [user, userName]);
 
   // Initialize payment links when data is loaded
-  if (wisePaymentLink && !wiseLink) {
-    setWiseLink(wisePaymentLink.decrypted_link);
-  }
-  if (alipayPaymentLink && !alipayLink) {
-    setAlipayLink(alipayPaymentLink.decrypted_link);
-  }
+  useEffect(() => {
+    if (wisePaymentLink && !wiseLink) {
+      setWiseLink(wisePaymentLink.decrypted_link);
+    }
+  }, [wisePaymentLink, wiseLink]);
+
+  useEffect(() => {
+    if (alipayPaymentLink && !alipayLink) {
+      setAlipayLink(alipayPaymentLink.decrypted_link);
+    }
+  }, [alipayPaymentLink, alipayLink]);
 
   const handleRenameUser = async () => {
     if (!userName.trim()) return;
