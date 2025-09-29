@@ -53,6 +53,10 @@ SUPABASE_SERVICE_ROLE_KEY=XXXXXX
 # Below is for Copany-dev (GitHub OAuth App for testing), you can also create your own GitHub OAuth App for testing
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=Ov23liDG2Vih89RwzedN
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=36e167a99f9f9cdcae7f4c9a3937303b9de221dd
+
+# AES Encryption Key for Payment Links (32 bytes in hex format)
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
 ```
 
 ## 5. Access Frontend
