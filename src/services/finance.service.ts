@@ -75,6 +75,16 @@ export class FinanceService {
   static async reviewTransaction(id: string, status: TransactionReviewStatus): Promise<TransactionRow> {
     return await FinanceService.updateTransaction(id, { status });
   }
+
+  static async deleteTransaction(id: string): Promise<boolean> {
+    const supabase = await createSupabaseClient();
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+    return true;
+  }
 }
 
 

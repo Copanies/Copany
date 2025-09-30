@@ -9,6 +9,7 @@ import {
   getTransactionsAction,
   createTransactionAction,
   reviewTransactionAction,
+  deleteTransactionAction,
   regenerateDistributesForCurrentMonthAction,
 } from "@/actions/finance.actions";
 
@@ -89,6 +90,14 @@ export function useReviewTransaction(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: TransactionReviewStatus }) => reviewTransactionAction(id, status),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: transactionsKey(copanyId) }); },
+  });
+}
+
+export function useDeleteTransaction(copanyId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => deleteTransactionAction(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: transactionsKey(copanyId) }); },
   });
 }

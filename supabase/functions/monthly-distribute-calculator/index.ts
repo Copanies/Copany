@@ -52,26 +52,31 @@ interface Contributor {
   contribution_score?: number;
 }
 
-// Contribution scores based on issue levels
-const LEVEL_SCORES: Record<number, number> = {
-  1: 5,   // level_C
-  2: 20,  // level_B
-  3: 60,  // level_A
-  4: 200, // level_S
+enum IssueLevel {
+  level_None = 0,
+  level_C = 1,
+  level_B = 2,
+  level_A = 3,
+  level_S = 4,
+}
+
+const LEVEL_SCORES: Record<IssueLevel, number> = {
+  [IssueLevel.level_C]: 5,
+  [IssueLevel.level_B]: 20,
+  [IssueLevel.level_A]: 60,
+  [IssueLevel.level_S]: 200,
+  [IssueLevel.level_None]: 0,
 };
 
-const ISSUE_LEVELS = [1, 2, 3, 4]; // level_C, level_B, level_A, level_S
-
-// Issue state enum values
-const ISSUE_STATE = {
-  Backlog: 1,
-  Todo: 2,
-  InProgress: 3,
-  Done: 4,
-  Canceled: 5,
-  Duplicate: 6,
-  InReview: 7,
-};
+enum IssueState {
+  Backlog = 1,
+  Todo = 2,
+  InProgress = 3,
+  InReview = 7,
+  Done = 4,
+  Canceled = 5,
+  Duplicate = 6,
+}
 
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -86,14 +91,18 @@ serve(async (req: Request) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('Starting last month distribute calculation...')
+    console.log('Starting monthly distribute calculation...')
 
-    // Get last month time range (UTC)
+    // Get time range: last month 10th to this month 10th (UTC)
     const now = new Date()
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0))
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0))
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 10, 0, 0, 0))
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 10, 0, 0, 0))
     
-    console.log(`Time range (last month): ${start.toISOString()} to ${end.toISOString()}`)
+    // Contribution cutoff: this month 1st 0:00 (UTC)
+    const contributionCutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0))
+    
+    console.log(`Transaction time range: ${start.toISOString()} to ${end.toISOString()}`)
+    console.log(`Contribution cutoff: ${contributionCutoff.toISOString()}`)
 
     // Get all active copanies
     const { data: copanies, error: copaniesError } = await supabase
@@ -169,25 +178,26 @@ serve(async (req: Request) => {
           continue
         }
 
-        // Get all completed issues for contribution calculation (historical data)
+        // Get all completed issues for contribution calculation (up to this month 1st 0:00)
         const { data: issues, error: issuesError } = await supabase
           .from('issue')
-          .select('id, assignee, level, state')
+          .select('id, assignee, level, state, updated_at')
           .eq('copany_id', copany.id)
-          .eq('state', ISSUE_STATE.Done)
+          .eq('state', IssueState.Done)
+          .lte('closed_at', contributionCutoff.toISOString())
 
         if (issuesError) {
           console.error(`Failed to fetch issues for copany ${copany.id}:`, issuesError.message)
           continue
         }
 
-        // Calculate contribution scores based on all historical completed issues
+        // Calculate contribution scores based on completed issues up to this month 1st 0:00
         const userContributionScores: Record<string, number> = {}
         
         ;(issues || []).forEach((issue: Issue) => {
           const level = issue.level
-          if (level && ISSUE_LEVELS.includes(level) && issue.assignee) {
-            const score = LEVEL_SCORES[level] || 0
+          if (level && [IssueLevel.level_C, IssueLevel.level_B, IssueLevel.level_A, IssueLevel.level_S].includes(level) && issue.assignee) {
+            const score = LEVEL_SCORES[level as IssueLevel] || 0
             userContributionScores[issue.assignee] = (userContributionScores[issue.assignee] || 0) + score
           }
         })
@@ -201,7 +211,7 @@ serve(async (req: Request) => {
         const totalContributionScore = Object.values(userContributionScores).reduce((sum, score) => sum + score, 0)
         const currency = (incomes[0]?.currency as string) || (transactions && transactions[0]?.currency) || 'USD'
 
-        console.log(`Total historical contribution score for copany ${copany.id}: ${totalContributionScore}`)
+        console.log(`Total contribution score (up to this month 1st) for copany ${copany.id}: ${totalContributionScore}`)
 
         // Delete existing distributes for this copany
         const { error: deleteError } = await supabase
@@ -282,12 +292,12 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log('Last month distribute calculation completed')
+    console.log('Monthly distribute calculation completed')
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Last month distribute calculation completed',
+        message: 'Monthly distribute calculation completed',
         timestamp: new Date().toISOString(),
         results
       }),

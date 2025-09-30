@@ -274,7 +274,6 @@ export interface DistributeRow {
   updated_at: string;
   copany_id: string;
   to_user: string;
-  bank_card_number: string;
   status: DistributeStatus;
   contribution_percent: number; // numeric(5,2)
   amount: number; // numeric(18,2)
