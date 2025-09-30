@@ -7,7 +7,7 @@ import { IssueWithAssignee } from "@/types/database.types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import IssueConflictResolverModal, {
   type ConflictPayload,
-} from "@/app/copany/[id]/subTabs/issue/IssueConflictResolverModal";
+} from "@/app/copany/[id]/_subTabs/issue/IssueConflictResolverModal";
 
 type UpdaterInfo = {
   id: string;

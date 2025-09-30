@@ -86,7 +86,7 @@ export default function AssignmentRequestPanel({
     <div className="border rounded-lg flex flex-col gap-3 border-blue-600 dark:border-blue-500">
       {(() => {
         const requester = userInfos[requesterId];
-        const requesterName = requester?.name || requesterId;
+        const requesterName = requester?.name || "Unknown";
         const reqs = requestsForRequester;
         return (
           <div
@@ -121,7 +121,7 @@ export default function AssignmentRequestPanel({
               <div className="flex flex-col gap-2">
                 {reqs.map((r) => {
                   const recipient = userInfos[String(r.recipient_id)];
-                  const name = recipient?.name || String(r.recipient_id);
+                  const name = recipient?.name || "Unknown";
                   const avatar = recipient?.avatar_url || "";
                   return (
                     <div

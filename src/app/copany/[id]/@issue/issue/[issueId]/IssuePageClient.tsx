@@ -10,19 +10,19 @@ import {
   AssigneeUser,
 } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import IssueStateSelector from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
-import { renderUserLabel } from "@/app/copany/[id]/subTabs/issue/IssueAssigneeSelector";
-import IssueEditorView from "@/app/copany/[id]/subTabs/issue/IssueEditorView";
+import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
+import { renderUserLabel } from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
+import IssueEditorView from "@/app/copany/[id]/_subTabs/issue/IssueEditorView";
 
-import AssignmentRequestModal from "@/app/copany/[id]/subTabs/issue/AssignmentRequestModal";
-import IssueActivityTimeline from "@/app/copany/[id]/subTabs/issue/IssueActivityTimeline";
+import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/AssignmentRequestModal";
+import IssueActivityTimeline from "@/app/copany/[id]/_subTabs/issue/IssueActivityTimeline";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
 
-import IssueLevelSelector from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
+import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
 import {
   ChevronLeftIcon,
   ArrowRightIcon,
@@ -68,9 +68,8 @@ export default function IssuePageClient({
     // Build return URL, keep tab and subtab parameters
     const copanyId = params.id;
     const tab = searchParams.get("tab") || "Cooperate";
-    const subtab = searchParams.get("subtab") || "Issue";
 
-    const backUrl = `/copany/${copanyId}?tab=${tab}&subtab=${subtab}`;
+    const backUrl = `/copany/${copanyId}?tab=${tab}`;
     router.push(backUrl);
   };
 

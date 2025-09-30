@@ -4,8 +4,8 @@ import { useUserInfo } from "@/hooks/userInfo";
 import LoadingView from "@/components/commons/LoadingView";
 import Image from "next/image";
 import TabView from "@/components/commons/TabView";
-import UserCopanyView from "./subTabs/UserCopanyView";
-import AccountView from "./subTabs/AccountView";
+import UserCopanyView from "./_subTabs/UserCopanyView";
+import AccountView from "./_subTabs/AccountView";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
 import {

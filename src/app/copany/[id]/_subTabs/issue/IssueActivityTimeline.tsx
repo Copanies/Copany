@@ -11,16 +11,16 @@ import {
   IssueActivityPayload,
 } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
-import { renderLevelLabel } from "@/app/copany/[id]/subTabs/issue/IssueLevelSelector";
-import { renderPriorityLabel } from "@/app/copany/[id]/subTabs/issue/IssuePrioritySelector";
-import { renderStateLabel } from "@/app/copany/[id]/subTabs/issue/IssueStateSelector";
+import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
+import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
+import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
 import type { IssueComment } from "@/types/database.types";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
-import IssueCommentCard from "@/app/copany/[id]/subTabs/issue/IssueCommentCard";
-import IssueReviewPanel from "@/app/copany/[id]/subTabs/issue/IssueReviewPanel";
-import AssignmentRequestPanel from "@/app/copany/[id]/subTabs/issue/AssignmentRequestPanel";
+import IssueCommentCard from "@/app/copany/[id]/_subTabs/issue/IssueCommentCard";
+import IssueReviewPanel from "@/app/copany/[id]/_subTabs/issue/IssueReviewPanel";
+import AssignmentRequestPanel from "@/app/copany/[id]/_subTabs/issue/AssignmentRequestPanel";
 import type { AssignmentRequest } from "@/types/database.types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIssueActivity } from "@/hooks/activity";
@@ -116,7 +116,7 @@ export default function IssueActivityTimeline({
       >
     )) {
       map[id] = {
-        name: userInfo.name || userInfo.email || id,
+        name: userInfo.name || "Unknown",
         email: userInfo.email,
         avatar_url: userInfo.avatar_url || "",
       };
@@ -218,7 +218,9 @@ export default function IssueActivityTimeline({
   };
 
   const renderHeaderCompact = (item: IssueActivity): ReactNode => {
-    const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
+    const who = item.actor_id
+      ? userInfos[item.actor_id]?.name || "Unknown"
+      : "System";
     const p = (item.payload ?? EMPTY_OBJECT) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {

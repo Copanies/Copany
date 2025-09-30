@@ -11,8 +11,8 @@ export default function Footer() {
 
   const strokeColor = isDarkMode ? "#9ca3af" : "#4b5563";
   return (
-    <footer className="mt-auto">
-      <div className="max-w-screen-lg bg-transparent mx-auto px-6 py-6">
+    <footer className="mt-auto w-full">
+      <div className="max-w-screen-lg w-full bg-transparent mx-auto px-6 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Copyright information */}
           <div className="text-xs text-gray-600 dark:text-gray-400 text-center md:text-left flex flex-row items-center gap-2">

@@ -60,7 +60,7 @@ export async function middleware(req: NextRequest) {
     // 添加超时机制，避免长时间等待
     const sessionPromise = supabase.auth.getSession();
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), 5000)
+      setTimeout(() => reject(new Error('timeout')), 20000)
     );
     
     await Promise.race([sessionPromise, timeoutPromise]);

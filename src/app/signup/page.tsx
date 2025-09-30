@@ -7,6 +7,7 @@ import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
 import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
+import Footer from "@/components/commons/Footer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
   signUpWithEmail,
@@ -475,6 +476,7 @@ export default function Signup() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

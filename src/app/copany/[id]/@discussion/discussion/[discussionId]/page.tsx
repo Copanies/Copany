@@ -1,4 +1,5 @@
 import MainNavigation from "@/components/commons/MainNavigation";
+import Footer from "@/components/commons/Footer";
 import DiscussionPageClient from "./DiscussionPageClient";
 
 export default async function CopanyDiscussionView({
@@ -11,12 +12,13 @@ export default async function CopanyDiscussionView({
   return (
     <main className="">
       <MainNavigation />
-      <div className="px-2">
+      <div className="px-2 min-h-screen">
         <DiscussionPageClient
           copanyId={resolvedParams.id}
           discussionId={resolvedParams.discussionId}
         />
       </div>
+      <Footer />
     </main>
   );
 }

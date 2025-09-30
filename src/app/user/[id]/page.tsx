@@ -1,4 +1,5 @@
 import MainNavigation from "@/components/commons/MainNavigation";
+import Footer from "@/components/commons/Footer";
 import UserView from "./UserView";
 
 export default async function UserDetailView({
@@ -9,9 +10,10 @@ export default async function UserDetailView({
   const { id } = await params;
 
   return (
-    <main className="h-min-screen">
+    <main className="min-h-screen">
       <MainNavigation />
       <UserView userId={id} />
+      <Footer />
     </main>
   );
 }

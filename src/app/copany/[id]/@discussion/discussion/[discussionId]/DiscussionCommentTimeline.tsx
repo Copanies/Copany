@@ -494,7 +494,7 @@ export default function DiscussionCommentTimeline({
       >
     )) {
       map[id] = {
-        name: userInfo.name || userInfo.email || id,
+        name: userInfo.name || "Unknown",
         email: userInfo.email,
         avatar_url: userInfo.avatar_url || "",
       };

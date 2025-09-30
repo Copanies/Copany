@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
+import Footer from "@/components/commons/Footer";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";
 import { useCopanies, useMyStarredCopanies } from "@/hooks/copany";
@@ -17,10 +18,10 @@ export default function StarsPage() {
   const isLoading = loadingAll || loadingIds;
   const router = useRouter();
   return (
-    <main className="h-min-screen">
+    <main className="min-h-screen">
       <MainNavigation />
-      <div className="p-6 max-w-screen-lg mx-auto flex flex-col">
-        <div className="flex flex-col gap-4 pt-2">
+      <div className="p-6 max-w-screen-lg min-h-screen mx-auto flex flex-col">
+        <div className="min-h-screen">
           {isLoading ? (
             <LoadingView type="page" />
           ) : list.length > 0 ? (
@@ -47,6 +48,7 @@ export default function StarsPage() {
           )}
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

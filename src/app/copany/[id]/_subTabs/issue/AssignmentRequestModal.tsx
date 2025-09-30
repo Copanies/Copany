@@ -69,7 +69,7 @@ export default function AssignmentRequestModal({
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">
-                {(currentUser?.user_metadata?.name || currentUser?.email || "U")
+                {(currentUser?.user_metadata?.name || "U")
                   .slice(0, 1)
                   .toUpperCase()}
               </div>

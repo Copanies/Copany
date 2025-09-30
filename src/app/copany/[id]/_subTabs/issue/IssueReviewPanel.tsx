@@ -180,7 +180,7 @@ export default function IssueReviewPanel({
         <div className="flex flex-col gap-2">
           {reviewers.map((r) => {
             const info = userInfos[String(r.reviewer_id)];
-            const name = info?.name || String(r.reviewer_id);
+            const name = info?.name || "Unknown";
             const avatar = info?.avatar_url || "";
             const isApproved = r.status === "approved";
             const when = isApproved ? r.updated_at : r.created_at;

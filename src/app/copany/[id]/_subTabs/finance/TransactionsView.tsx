@@ -7,6 +7,7 @@ import {
   useTransactions,
   useCreateTransaction,
   useReviewTransaction,
+  useDeleteTransaction,
 } from "@/hooks/finance";
 import type { TransactionRow, TransactionType } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
@@ -41,6 +42,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     useTransactions(copanyId);
   const createTransaction = useCreateTransaction(copanyId);
   const reviewTransaction = useReviewTransaction(copanyId);
+  const deleteTransaction = useDeleteTransaction(copanyId);
 
   // Get unique user IDs from transactions for user info
   const transactionUserIds = useMemo(() => {
@@ -246,6 +248,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
             transaction={viewTransaction}
             isOwner={isOwner}
             userInfo={transactionUsersInfo[viewTransaction.actor_id]}
+            currentUserId={currentUser?.id}
             onClose={() => {
               setIsViewModalOpen(false);
               setViewTransaction(null);
@@ -256,6 +259,12 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
                 id: viewTransaction.id,
                 status: "confirmed",
               });
+              setIsViewModalOpen(false);
+              setViewTransaction(null);
+            }}
+            onDelete={async () => {
+              if (!viewTransaction) return;
+              await deleteTransaction.mutateAsync({ id: viewTransaction.id });
               setIsViewModalOpen(false);
               setViewTransaction(null);
             }}
@@ -456,16 +465,20 @@ function TransactionDetailModal({
   transaction,
   isOwner,
   userInfo,
+  currentUserId,
   onClose,
   onConfirm,
+  onDelete,
 }: {
   transaction: TransactionRow;
   isOwner: boolean;
   userInfo: UserInfo;
+  currentUserId?: string;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
-  const actorName = userInfo?.name || transaction.actor_id;
+  const actorName = userInfo?.name || "Unknown";
   const actorAvatar = userInfo?.avatar_url || "";
   return (
     <div className="p-6">
@@ -560,6 +573,13 @@ function TransactionDetailModal({
         <Button type="button" variant="secondary" size="md" onClick={onClose}>
           Close
         </Button>
+        {currentUserId &&
+          currentUserId === transaction.actor_id &&
+          transaction.status === "in_review" && (
+            <Button type="button" variant="danger" size="md" onClick={onDelete}>
+              Delete
+            </Button>
+          )}
         {isOwner && transaction.status === "in_review" && (
           <Button type="button" variant="primary" size="md" onClick={onConfirm}>
             Confirm
@@ -628,7 +648,7 @@ function TransactionsGroupList({
       <div className="min-w-max" ref={containerRef}>
         {items.map((t) => {
           const userInfo = transactionUsersInfo[t.actor_id];
-          const actorName = userInfo?.name || t.actor_id;
+          const actorName = userInfo?.name || "Unknown";
           const actorAvatar = userInfo?.avatar_url || "";
 
           return (
@@ -661,14 +681,14 @@ function TransactionsGroupList({
                     {actorName}
                   </span>
                 </div>
+                <span className="flex-shrink-0 w-36">
+                  {formatDate(t.occurred_at)}
+                </span>
                 <span className="text-gray-700 dark:text-gray-300 flex-shrink-0 w-36">
                   <StatusLabel status={t.status} showText={true} />
                 </span>
                 <span className="flex-1 min-w-0 truncate w-40">
                   {t.description ? t.description : "No description"}
-                </span>
-                <span className="flex-shrink-0 w-36">
-                  {formatDate(t.occurred_at)}
                 </span>
                 <div className="sticky right-0 h-11 flex items-center justify-start gap-0 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
                   <div

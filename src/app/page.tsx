@@ -4,6 +4,7 @@ import CopanyGridView from "@/components/copany/CopanyGridView";
 import MainNavigation from "@/components/commons/MainNavigation";
 import CatBanner from "@/components/copany/CatBanner";
 import MobileCatBanner from "@/components/copany/MobileCatBanner";
+import Footer from "@/components/commons/Footer";
 import { useCopanies } from "@/hooks/copany";
 import LoadingView from "@/components/commons/LoadingView";
 
@@ -19,7 +20,7 @@ export default function Home() {
   }, []);
   const safeIsLoading = isLoading || !isMounted;
   return (
-    <main className="h-min-screen">
+    <main className="min-h-screen">
       <MainNavigation />
       <div className="flex flex-col">
         {safeIsLoading ? <LoadingView type="page" /> : homeView()}
@@ -29,32 +30,31 @@ export default function Home() {
 
   function homeView() {
     return (
-      <div className="flex flex-col">
-        <div>
-          {/* Desktop CatBanner */}
-          <div className="hidden sm:block">
-            <CatBanner
-              title="Together, we are free."
-              subtitle={`Anyone can start a project
-                Earn points through collaboration
-                Rewards are shared according to points`}
-              className="mb-8"
-            />
-          </div>
-          {/* Mobile CatBanner */}
-          <div className="block sm:hidden">
-            <MobileCatBanner
-              title="Together, we are free."
-              subtitle={`Anyone can start a project
-                Earn points through collaboration
-                Rewards are shared according to points`}
-              className="mb-8"
-            />
-          </div>
-          <div className="px-6 flex flex-col w-full min-h-screen">
-            <CopanyGridView copanies={copanies || []} />
-          </div>
+      <div>
+        {/* Desktop CatBanner */}
+        <div className="hidden sm:block">
+          <CatBanner
+            title="Together, we are free."
+            subtitle={`Anyone can start a project
+              Earn points through collaboration
+              Rewards are shared according to points`}
+            className="mb-8"
+          />
         </div>
+        {/* Mobile CatBanner */}
+        <div className="block sm:hidden">
+          <MobileCatBanner
+            title="Together, we are free."
+            subtitle={`Anyone can start a project
+              Earn points through collaboration
+              Rewards are shared according to points`}
+            className="mb-8"
+          />
+        </div>
+        <div className="px-6 flex flex-col w-full min-h-screen">
+          <CopanyGridView copanies={copanies || []} />
+        </div>
+        <Footer />
       </div>
     );
   }

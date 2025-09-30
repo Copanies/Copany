@@ -5,7 +5,7 @@ import { useCreateDiscussion } from "@/hooks/discussions";
 import Button from "@/components/commons/Button";
 import { EMPTY_STRING } from "@/utils/constants";
 import type { Discussion } from "@/types/database.types";
-import DiscussionLabelSelector from "@/app/copany/[id]/subTabs/discussion/DiscussionLabelSelector";
+import DiscussionLabelSelector from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelSelector";
 
 export default function DiscussionCreateForm({
   copanyId,
