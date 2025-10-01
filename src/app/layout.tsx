@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
-import Footer from "@/components/commons/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

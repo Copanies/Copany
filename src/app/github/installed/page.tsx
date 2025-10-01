@@ -2,7 +2,6 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import GithubInstalledLoading from "./loading";
-import Footer from "@/components/commons/Footer";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { useEffect } from "react";
 
