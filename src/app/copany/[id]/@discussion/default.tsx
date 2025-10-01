@@ -1,3 +1,3 @@
-export default function DiscussionDefault() {
+export default function DiscussionPageDefault() {
   return null;
 }

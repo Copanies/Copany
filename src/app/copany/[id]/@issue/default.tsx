@@ -1,3 +1,3 @@
-export default function IssueDefault() {
+export default function IssuePageDefault() {
   return null;
 }
