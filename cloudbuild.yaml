@@ -1,0 +1,29 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/copany-820/copany-app",
+        "--build-arg",
+        "NEXT_PUBLIC_SUPABASE_URL=${_NEXT_PUBLIC_SUPABASE_URL}",
+        "--build-arg",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=${_NEXT_PUBLIC_SUPABASE_ANON_KEY}",
+        "--build-arg",
+        "NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL}",
+        "--build-arg",
+        "SUPABASE_SERVICE_ROLE_KEY=${_SUPABASE_SERVICE_ROLE_KEY}",
+        "--build-arg",
+        "NEXT_PUBLIC_GITHUB_APP_NAME=${_NEXT_PUBLIC_GITHUB_APP_NAME}",
+        "--build-arg",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID=${_NEXT_PUBLIC_GOOGLE_CLIENT_ID}",
+        "--build-arg",
+        "GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIGMA_CLIENT_ID=${_NEXT_PUBLIC_FIGMA_CLIENT_ID}",
+        "--build-arg",
+        "FIGMA_CLIENT_SECRET=${_FIGMA_CLIENT_SECRET}",
+        ".",
+      ]
+images:
+  - "gcr.io/copany-820/copany-app"

@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  output: "standalone",
+  rewrites: async () => ({
+    beforeFiles: [
+      {
+        source: '/_next/static/chunks/app/:folder*/@:slotName/:path*',
+        destination: '/_next/static/chunks/app/:folder*/%40:slotName/:path*',
+      },
+    ],
+    afterFiles: [],
+    fallback: [],
+  }),
 };
 
 export default nextConfig;
