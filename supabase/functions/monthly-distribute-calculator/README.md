@@ -4,7 +4,7 @@
 
 ## 功能特性
 
-- **自动调度**: 每月 1 号自动执行
+- **自动调度**: 每月 10 号自动执行
 - **批量处理**: 处理所有活跃的 copany
 - **完整逻辑**: 包含交易计算、贡献分数计算、按比例分配
 - **错误处理**: 单个 copany 失败不影响其他 copany
@@ -24,7 +24,7 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ### 2. 配置定时调度
 
-Edge Function 已经配置了每月 1 号执行的 cron 表达式：`0 0 1 * *`
+Edge Function 已经配置了每月 10 号执行的 cron 表达式：`0 0 0 10 * *`
 
 ### 3. 手动测试
 
@@ -42,15 +42,14 @@ curl -X POST https://your-project.supabase.co/functions/v1/monthly-distribute-ca
 
 ## 计算逻辑
 
-1. **获取活跃 copany**: 查询所有 `is_active = true` 的 copany
+1. **获取 copany**: 查询所有 copany
 2. **时间范围**: 当前月份（UTC 时间）
 3. **交易计算**:
-   - 获取已确认的收入和支出交易
+   - 获取当月 10 号 0 点前已确认的收入和支出交易
    - 计算净收入 = 总收入 - 总支出
 4. **贡献分数计算**:
-   - 获取当月完成的 issue
+   - 获取当月 1 号 0 点完成的 issue
    - 根据 issue 等级计算贡献分数
-   - level_C: 1 分, level_B: 2 分, level_A: 3 分, level_S: 4 分
 5. **按比例分配**:
    - 根据贡献分数按比例分配净收入
    - 生成 distribute 记录
@@ -61,7 +60,7 @@ curl -X POST https://your-project.supabase.co/functions/v1/monthly-distribute-ca
 {
   "success": true,
   "message": "Monthly distribute calculation completed",
-  "timestamp": "2024-01-01T00:00:00.000Z",
+  "timestamp": "2024-01-10T00:00:00.000Z",
   "results": [
     {
       "copanyId": "123",

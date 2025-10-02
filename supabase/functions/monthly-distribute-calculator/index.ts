@@ -1,15 +1,10 @@
-// These imports are Deno-specific and will work in the Supabase Edge Functions runtime
-// @ts-ignore - Deno URL imports are not recognized by local TypeScript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-// @ts-ignore - Deno URL imports are not recognized by local TypeScript  
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
 
-// Type declarations for Deno environment
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,7 +14,6 @@ const corsHeaders = {
 interface DistributeRow {
   copany_id: string;
   to_user: string;
-  bank_card_number: string;
   status: 'in_progress' | 'in_review' | 'confirmed';
   contribution_percent: number;
   amount: number;
@@ -78,7 +72,7 @@ enum IssueState {
   Duplicate = 6,
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -91,18 +85,27 @@ serve(async (req: Request) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('Starting monthly distribute calculation...')
 
-    // Get time range: last month 10th to this month 10th (UTC)
+    // Get time range: last month 10th to this month 10th (UTC) for income transactions
     const now = new Date()
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 10, 0, 0, 0))
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 10, 0, 0, 0))
+    const currentYear = now.getUTCFullYear()
+    const currentMonth = now.getUTCMonth()
+    
+    // Income cutoff: this month 10th 0:00 (UTC)
+    const incomeCutoff = new Date(Date.UTC(currentYear, currentMonth, 10, 0, 0, 0))
     
     // Contribution cutoff: this month 1st 0:00 (UTC)
-    const contributionCutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0))
+    const contributionCutoff = new Date(Date.UTC(currentYear, currentMonth, 1, 0, 0, 0))
     
-    console.log(`Transaction time range: ${start.toISOString()} to ${end.toISOString()}`)
+    // Income time range: last month 10th to this month 10th (UTC)
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
+    const start = new Date(Date.UTC(lastMonthYear, lastMonth, 10, 0, 0, 0))
+    const end = incomeCutoff
+    
+    console.log(`Income transaction time range: ${start.toISOString()} to ${end.toISOString()}`)
     console.log(`Contribution cutoff: ${contributionCutoff.toISOString()}`)
+    console.log(`Income cutoff: ${incomeCutoff.toISOString()}`)
 
     // Get all active copanies
     const { data: copanies, error: copaniesError } = await supabase
@@ -128,7 +131,7 @@ serve(async (req: Request) => {
       try {
         console.log(`Processing copany: ${copany.name} (ID: ${copany.id})`)
 
-        // Fetch confirmed transactions for this month
+        // Fetch confirmed transactions for income calculation (last month 10th to this month 10th)
         const { data: transactions, error: txError } = await supabase
           .from('transactions')
           .select('*')
@@ -181,7 +184,7 @@ serve(async (req: Request) => {
         // Get all completed issues for contribution calculation (up to this month 1st 0:00)
         const { data: issues, error: issuesError } = await supabase
           .from('issue')
-          .select('id, assignee, level, state, updated_at')
+          .select('id, assignee, level, state, closed_at')
           .eq('copany_id', copany.id)
           .eq('state', IssueState.Done)
           .lte('closed_at', contributionCutoff.toISOString())
@@ -213,17 +216,6 @@ serve(async (req: Request) => {
 
         console.log(`Total contribution score (up to this month 1st) for copany ${copany.id}: ${totalContributionScore}`)
 
-        // Delete existing distributes for this copany
-        const { error: deleteError } = await supabase
-          .from('distribute')
-          .delete()
-          .eq('copany_id', copany.id)
-
-        if (deleteError) {
-          console.error(`Failed to delete existing distributes for copany ${copany.id}:`, deleteError.message)
-          continue
-        }
-
         // Generate distribute rows
         let distributeRows: DistributeRow[] = []
 
@@ -232,7 +224,6 @@ serve(async (req: Request) => {
           distributeRows = contributorsWithScores.map((c: Contributor) => ({
             copany_id: copany.id,
             to_user: c.user_id,
-            bank_card_number: '0000 0000 0000 0000',
             status: 'in_progress' as const,
             contribution_percent: totalContributionScore > 0 ? ((c.contribution_score || 0) / totalContributionScore) * 100 : 0,
             amount: 0,
@@ -248,7 +239,6 @@ serve(async (req: Request) => {
             return {
               copany_id: copany.id,
               to_user: c.user_id,
-              bank_card_number: '0000 0000 0000 0000',
               status: 'in_progress' as const,
               contribution_percent: ratio * 100,
               amount,
