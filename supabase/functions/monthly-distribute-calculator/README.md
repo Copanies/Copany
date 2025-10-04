@@ -31,11 +31,8 @@ Edge Function 已经配置了每月 10 号执行的 cron 表达式：`0 0 0 10 *
 可以通过以下方式手动触发：
 
 ```bash
-# 使用 Supabase CLI
-supabase functions invoke monthly-distribute-calculator
-
 # 或通过 API
-curl -X POST https://your-project.supabase.co/functions/v1/monthly-distribute-calculator \
+curl -X POST http://localhost:54321/functions/v1/monthly-distribute-calculator \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
   -H "Content-Type: application/json"
 ```

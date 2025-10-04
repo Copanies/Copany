@@ -20,7 +20,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import { BanknotesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
-import { formatDate, getMonthlyPeriod } from "@/utils/time";
+import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 
@@ -69,7 +69,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     >();
 
     transactions.forEach((transaction) => {
-      const period = getMonthlyPeriod(transaction.occurred_at);
+      const period = getMonthlyPeriodFrom10th(transaction.occurred_at);
       const key = period.key;
 
       if (!groups.has(key)) {

@@ -12,16 +12,25 @@ import type { DistributeRow } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { ReceiptPercentIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowUpRightIcon,
+  ReceiptPercentIcon,
+} from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
 import LoadingView from "@/components/commons/LoadingView";
-import { formatDate, getMonthlyPeriod } from "@/utils/time";
+import {
+  formatDate,
+  getMonthlyPeriod,
+  getMonthlyPeriodSimple,
+} from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
+import CountdownTimer from "@/components/commons/CountdownTimer";
+import { useRouter } from "next/navigation";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -30,12 +39,12 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 export default function DistributeView({ copanyId }: { copanyId: string }) {
+  const router = useRouter();
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: distributes, isLoading: isDistributesLoading } =
     useDistributes(copanyId);
   const updateDistribute = useUpdateDistribute(copanyId);
-  const regenerate = useRegenerateDistributes(copanyId);
 
   // Get unique user IDs from distributes for user info
   const distributeUserIds = useMemo(() => {
@@ -48,33 +57,50 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
 
   // Group distributes by monthly period
   const groupedDistributes = useMemo(() => {
-    if (!distributes || distributes.length === 0) return [];
-
     const groups = new Map<
       string,
       {
         period: { start: Date; end: Date; key: string };
         items: DistributeRow[];
         totalAmount: number;
+        isEmpty: boolean;
       }
     >();
 
-    distributes.forEach((distribute) => {
-      const period = getMonthlyPeriod(distribute.created_at);
-      const key = period.key;
+    // Add existing distributes to groups
+    if (distributes && distributes.length > 0) {
+      distributes.forEach((distribute) => {
+        const period = getMonthlyPeriod(distribute.created_at);
+        const key = period.key;
 
-      if (!groups.has(key)) {
-        groups.set(key, {
-          period,
-          items: [],
-          totalAmount: 0,
-        });
-      }
+        if (!groups.has(key)) {
+          groups.set(key, {
+            period,
+            items: [],
+            totalAmount: 0,
+            isEmpty: false,
+          });
+        }
 
-      const group = groups.get(key)!;
-      group.items.push(distribute);
-      group.totalAmount += distribute.amount;
-    });
+        const group = groups.get(key)!;
+        group.items.push(distribute);
+        group.totalAmount += distribute.amount;
+      });
+    }
+
+    // Check if current month has any distributes
+    const currentMonthPeriod = getMonthlyPeriod(new Date());
+    const currentMonthKey = currentMonthPeriod.key;
+
+    if (!groups.has(currentMonthKey)) {
+      // Add current month group with empty state
+      groups.set(currentMonthKey, {
+        period: currentMonthPeriod,
+        items: [],
+        totalAmount: 0,
+        isEmpty: true,
+      });
+    }
 
     // Sort groups by start date (newest first)
     return Array.from(groups.values()).sort(
@@ -100,7 +126,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     return <LoadingView type="label" />;
   }
 
-  if (!distributes || distributes.length === 0) {
+  // Check if there are any non-empty groups
+  const hasNonEmptyGroups = groupedDistributes.some((group) => !group.isEmpty);
+
+  if (!hasNonEmptyGroups) {
     return (
       <div className="p-4">
         <EmptyPlaceholderView
@@ -111,141 +140,40 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             />
           }
           title="No distribute records"
-          description="Distribute records are generated based on the transaction log and each contributor's share ratio."
+          description={
+            <>
+              Distribution records are automatically generated based on the
+              transaction log and each contributor&apos;s allocation ratio. The
+              records are generated on the 10th day of each month at 00:00 UTC.
+              The next results will be available in
+              <br />
+              <CountdownTimer className="font-semibold text-gray-700 dark:text-gray-300" />
+              .
+            </>
+          }
+          buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
+          buttonTitle="View Transactions"
+          buttonAction={() => {
+            router.push(
+              `/copany/${copanyId}?tab=Finance&financeTab=Transactions`
+            );
+          }}
         />
-        <div className="flex items-center flex-1 justify-center gap-2">
-          <Button
-            size="md"
-            variant="secondary"
-            className="w-fit"
-            disabled={!isOwner}
-            disableTooltipConent={
-              !isOwner ? "You are not the owner of this copany" : undefined
-            }
-            onClick={async () => {
-              await regenerate.mutateAsync();
-            }}
-          >
-            Calculate Last Month&apos;s
-          </Button>
-          <Button
-            size="md"
-            variant="secondary"
-            className="w-fit"
-            disabled={!isOwner}
-            disableTooltipConent={
-              !isOwner ? "You are not the owner of this copany" : undefined
-            }
-            onClick={async () => {
-              try {
-                const response = await fetch(
-                  "/api/monthly-distribute-calculator",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
-
-                if (response.ok) {
-                  const result = await response.json();
-                  console.log(
-                    "Monthly distribute calculation completed:",
-                    result
-                  );
-                  // Refresh the distributes data
-                  window.location.reload();
-                } else {
-                  console.error(
-                    "Failed to trigger monthly distribute calculation"
-                  );
-                }
-              } catch (error) {
-                console.error(
-                  "Error triggering monthly distribute calculation:",
-                  error
-                );
-              }
-            }}
-          >
-            Calculate All Copanies
-          </Button>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="p-0">
-      <div className="flex flex-col gap-2 px-0 md:px-4 py-3">
-        <div className="flex gap-2">
-          <Button
-            size="md"
-            variant="secondary"
-            className="w-fit"
-            disabled={!isOwner}
-            disableTooltipConent={
-              !isOwner ? "You are not the owner of this copany" : undefined
-            }
-            onClick={async () => {
-              await regenerate.mutateAsync();
-            }}
-          >
-            Calculate Last Month&apos;s
-          </Button>
-          <Button
-            size="md"
-            variant="secondary"
-            className="w-fit"
-            disabled={!isOwner}
-            disableTooltipConent={
-              !isOwner ? "You are not the owner of this copany" : undefined
-            }
-            onClick={async () => {
-              try {
-                const response = await fetch(
-                  "/api/monthly-distribute-calculator",
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
-
-                if (response.ok) {
-                  const result = await response.json();
-                  console.log(
-                    "Monthly distribute calculation completed:",
-                    result
-                  );
-                  // Refresh the distributes data
-                  window.location.reload();
-                } else {
-                  console.error(
-                    "Failed to trigger monthly distribute calculation"
-                  );
-                }
-              } catch (error) {
-                console.error(
-                  "Error triggering monthly distribute calculation:",
-                  error
-                );
-              }
-            }}
-          >
-            Calculate All Copanies
-          </Button>
-        </div>
-      </div>
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedDistributes.map((group) => (
           <div key={group.period.key} className="">
             {/* Period Header */}
             <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 dark:border-gray-700">
               <div className="flex items-center w-full justify-between">
-                <h3 className="test-base font-medium">{group.period.key}</h3>
+                <h3 className="test-base font-medium">
+                  {getMonthlyPeriodSimple(group.period.start)}
+                </h3>
                 <span className="test-base font-medium">
                   {formatAmount(
                     group.totalAmount,
@@ -256,20 +184,29 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             </div>
 
             {/* Distribute Items (group-level horizontal scroll) */}
-            <DistributeGroupList
-              items={group.items}
-              distributeUsersInfo={distributeUsersInfo}
-              isOwner={isOwner}
-              currentUserId={currentUser?.id}
-              onOpenTransfer={(id) => {
-                setSelectedDistributeId(id);
-                setIsModalOpen(true);
-              }}
-              onOpenView={(d) => {
-                setViewDistribute(d);
-                setIsViewModalOpen(true);
-              }}
-            />
+            {group.isEmpty ? (
+              <div className="p-4 text-center text-gray-600 dark:text-gray-400">
+                The records are generated on the 10th day of each month at 00:00
+                UTC. The next results will be available in{" "}
+                <CountdownTimer className="font-semibold text-gray-700 dark:text-gray-300" />
+                .
+              </div>
+            ) : (
+              <DistributeGroupList
+                items={group.items}
+                distributeUsersInfo={distributeUsersInfo}
+                isOwner={isOwner}
+                currentUserId={currentUser?.id}
+                onOpenTransfer={(id) => {
+                  setSelectedDistributeId(id);
+                  setIsModalOpen(true);
+                }}
+                onOpenView={(d) => {
+                  setViewDistribute(d);
+                  setIsViewModalOpen(true);
+                }}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -285,12 +222,12 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
       >
         <DistributeEvidenceModal
           distribute={
-            distributes.find((d) => d.id === selectedDistributeId) || null
+            distributes?.find((d) => d.id === selectedDistributeId) || null
           }
           userInfo={
             distributeUsersInfo[
-              distributes.find((d) => d.id === selectedDistributeId)?.to_user ||
-                ""
+              distributes?.find((d) => d.id === selectedDistributeId)
+                ?.to_user || ""
             ]
           }
           copanyId={copanyId}

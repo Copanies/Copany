@@ -1,10 +1,10 @@
-import { ReactElement } from "react";
+import { ReactElement, ReactNode } from "react";
 import Button from "./Button";
 
 interface EmptyPlaceholderViewProps {
   icon: ReactElement;
   title: string;
-  description: string;
+  description: string | ReactNode;
   buttonIcon?: ReactElement;
   buttonTitle?: string;
   buttonAction?: () => void;
