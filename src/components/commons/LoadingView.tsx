@@ -35,7 +35,7 @@ export default function LoadingView({
   return (
     <div
       className={`${
-        type === "page" ? "fixed inset-0 h-screen w-screen" : "h-full"
+        type === "page" ? "fixed inset-0 h-screen w-screen" : "h-full p-5"
       } flex justify-center items-center transition-opacity duration-300 ease-in-out ${
         shouldShow ? "opacity-100" : "opacity-0"
       }`}

@@ -6,7 +6,7 @@ import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ArrowUpRightIcon, SquaresPlusIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
-export default function UserCopanyView({ userId }: { userId: string }) {
+export default function WorkingOnView({ userId }: { userId: string }) {
   const { data: copanies, isLoading } =
     useCopaniesWhereUserIsContributor(userId);
   const router = useRouter();

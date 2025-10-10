@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useIsMobile } from "@/utils/deviceDetection";
 
-interface MobileTooltipProps {
+interface COP_TooltipProps {
   content: React.ReactNode;
   children: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
@@ -20,7 +20,7 @@ interface MobileTooltipProps {
  * 移动友好的 Tooltip 组件
  * 在桌面设备上使用 hover 触发，在移动设备上使用点击触发
  */
-export default function MobileTooltip({
+export default function COP_Tooltip({
   content,
   children,
   side = "bottom",
@@ -30,7 +30,7 @@ export default function MobileTooltip({
   delayDuration = 150,
   skipDelayDuration = 300,
   disabled = false,
-}: MobileTooltipProps) {
+}: COP_TooltipProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 

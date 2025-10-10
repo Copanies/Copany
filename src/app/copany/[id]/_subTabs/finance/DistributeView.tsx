@@ -3,14 +3,9 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
-import {
-  useDistributes,
-  useUpdateDistribute,
-  useRegenerateDistributes,
-} from "@/hooks/finance";
+import { useDistributes, useUpdateDistribute } from "@/hooks/finance";
 import type { DistributeRow } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import { storageService } from "@/services/storage.service";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import {
   ArrowUpRightIcon,
@@ -22,15 +17,11 @@ import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
 import LoadingView from "@/components/commons/LoadingView";
-import {
-  formatDate,
-  getMonthlyPeriod,
-  getMonthlyPeriodSimple,
-} from "@/utils/time";
-import ImageUpload from "@/components/commons/ImageUpload";
-import PhotoViewer from "@/components/commons/PhotoViewer";
+import { getMonthlyPeriod, getMonthlyPeriodSimple } from "@/utils/time";
 import CountdownTimer from "@/components/commons/CountdownTimer";
 import { useRouter } from "next/navigation";
+import DistributeDetailModal from "./_subViews/DistributeDetailModal";
+import DistributeEvidenceModal from "./_subViews/DistributeEvidenceModal";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -285,232 +276,6 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
           />
         )}
       </Modal>
-    </div>
-  );
-}
-
-function DistributeEvidenceModal({
-  distribute,
-  userInfo,
-  copanyId,
-  onClose,
-  onConfirm,
-}: {
-  distribute: DistributeRow | null;
-  userInfo?: UserInfo;
-  copanyId: string;
-  onClose: () => void;
-  onConfirm: (evidenceUrl: string | null) => Promise<void>;
-}) {
-  const [_file, _setFile] = useState<File | null>(null);
-  const [_isUploading, _setIsUploading] = useState(false);
-  const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
-
-  const handleConfirm = async () => {
-    if (!distribute) return;
-
-    await onConfirm(evidenceUrl);
-  };
-
-  const contributorName = userInfo?.name || "Unknown";
-  const contributorAvatar = userInfo?.avatar_url || "";
-
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-        Distribute
-      </h2>
-
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 text-base">
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
-            <div className="flex flex-row items-center gap-1">
-              {contributorAvatar ? (
-                <Image
-                  src={contributorAvatar}
-                  alt={contributorName}
-                  width={20}
-                  height={20}
-                  className="w-5 h-5 rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
-                  {contributorName.slice(0, 1).toUpperCase()}
-                </div>
-              )}
-              <span className="">{contributorName}</span>
-            </div>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              Status:
-            </span>
-            <StatusLabel
-              status={distribute?.status || "in_progress"}
-              showText={true}
-            />
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              Amount:
-            </span>
-            <span className="">
-              {formatAmount(
-                distribute?.amount || 0,
-                distribute?.currency || "USD"
-              )}
-            </span>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              CP Percent:
-            </span>
-            <span className="">{distribute?.contribution_percent || 0}%</span>
-          </div>
-        </div>
-        <label className="block test-base font-semibold mb-2 text-gray-900 dark:text-gray-100">
-          Upload evidence (recommended)
-        </label>
-        <ImageUpload
-          value={evidenceUrl}
-          onChange={(url) => setEvidenceUrl(url)}
-          onUpload={async (file) =>
-            storageService.uploadFinanceEvidence(file, copanyId, "distribute")
-          }
-          onDelete={async (url) => {
-            const path = storageService.extractFinancePathFromUrl(url);
-            if (!path) return { success: false, error: "Invalid URL" };
-            return await storageService.deleteFinanceEvidence(path);
-          }}
-          accept="image/*"
-          maxBytes={storageService.getFinanceEvidenceMaxFileSize()}
-          helperText="PNG, JPG, JPEG, GIF, WebP • Max 20MB"
-          uploadButtonText="Upload Image"
-        />
-      </div>
-
-      <div className="flex gap-2 pt-4 justify-end">
-        <Button type="button" variant="secondary" size="md" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          onClick={handleConfirm}
-          disabled={_isUploading}
-        >
-          {_isUploading ? "Uploading..." : "Distribute Completed"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function DistributeDetailModal({
-  distribute,
-  userInfo,
-  canConfirm,
-  onConfirm,
-  onClose,
-}: {
-  distribute: DistributeRow;
-  userInfo?: UserInfo;
-  canConfirm: boolean;
-  onConfirm: () => Promise<void>;
-  onClose: () => void;
-}) {
-  const contributorName = userInfo?.name || "Unknown";
-  const contributorAvatar = userInfo?.avatar_url || "";
-
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Distribute Detail</h2>
-
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 text-base">
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">To:</span>
-            <div className="flex flex-row items-center gap-1">
-              {contributorAvatar ? (
-                <Image
-                  src={contributorAvatar}
-                  alt={contributorName}
-                  width={20}
-                  height={20}
-                  className="w-5 h-5 rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
-                  {contributorName.slice(0, 1).toUpperCase()}
-                </div>
-              )}
-              <span className="">{contributorName}</span>
-            </div>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              Status:
-            </span>
-            <StatusLabel status={distribute.status} showText={true} />
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              Amount:
-            </span>
-            <span className="">
-              {formatAmount(distribute.amount, distribute.currency)}
-            </span>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              CP Percent:
-            </span>
-            <span className="">{distribute.contribution_percent}%</span>
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">
-              Distribute date:
-            </span>
-            <span className="">{formatDate(distribute.created_at)}</span>
-          </div>
-        </div>
-        <div>
-          <label className="block text-gray-600 dark:text-gray-400  mb-2">
-            Evidence:
-          </label>
-          {distribute.evidence_url ? (
-            <PhotoViewer
-              src={distribute.evidence_url}
-              alt="Evidence"
-              renderTrigger={(open) => (
-                <Image
-                  src={distribute.evidence_url as string}
-                  alt="Evidence"
-                  width={320}
-                  height={320}
-                  className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
-                  onClick={open}
-                />
-              )}
-            />
-          ) : (
-            <div className="text-base text-gray-500">No evidence uploaded.</div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex gap-2 pt-4 justify-end">
-        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-          Close
-        </Button>
-        {canConfirm && (
-          <Button type="button" variant="primary" size="sm" onClick={onConfirm}>
-            Confirm
-          </Button>
-        )}
-      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useUserInfo } from "@/hooks/userInfo";
 import LoadingView from "@/components/commons/LoadingView";
 import Image from "next/image";
 import TabView from "@/components/commons/TabView";
-import UserCopanyView from "./_subTabs/UserCopanyView";
+import WorkingOnView from "./_subTabs/WorkingOnView";
 import AccountView from "./_subTabs/AccountView";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
@@ -151,7 +151,7 @@ export default function UserView({ userId }: UserViewProps) {
     {
       label: "Working on",
       icon: <Squares2X2Icon strokeWidth={2} className="w-4 h-4" />,
-      content: <UserCopanyView userId={userId} />,
+      content: <WorkingOnView userId={userId} />,
     },
     {
       label: "Account",
