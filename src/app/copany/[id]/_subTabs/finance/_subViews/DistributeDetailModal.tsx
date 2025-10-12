@@ -8,6 +8,7 @@ import StatusLabel from "@/components/commons/StatusLabel";
 import { formatDate } from "@/utils/time";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import Modal from "@/components/commons/Modal";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 function formatAmount(amount: number, currency: string): string {
   const absAmount = Math.abs(amount);
@@ -129,14 +130,14 @@ export default function DistributeDetailModal({
       </div>
 
       <div className="flex gap-2 pt-4 justify-end">
-        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+        <Button type="button" variant="secondary" size="md" onClick={onClose}>
           Close
         </Button>
         {canConfirm && (
           <Button
             type="button"
             variant="primary"
-            size="sm"
+            size="md"
             onClick={handleConfirmClick}
           >
             Confirm
@@ -155,24 +156,17 @@ export default function DistributeDetailModal({
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <svg
+                  <ExclamationTriangleIcon
                     className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                    strokeWidth={2}
+                  />
                 </div>
-                <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <p className="font-medium mb-2">
+                <div className="text-base">
+                  <p className="font-semibold mb-2">
                     Please confirm that you have received the distribution
                     payment.
                   </p>
-                  <p className="text-yellow-700 dark:text-yellow-300">
+                  <p className="">
                     This action cannot be undone. Once confirmed, the
                     distribution will be marked as completed and cannot be
                     reversed.
@@ -182,20 +176,24 @@ export default function DistributeDetailModal({
             </div>
 
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Amount:</span>
+              <div className="flex flex-col gap-2 text-base">
+                <div className="flex justify-between items-center">
+                  <span className="">Amount:</span>
                   <span>
                     {formatAmount(distribute.amount, distribute.currency)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Recipient:</span>
+                <div className="flex justify-between items-center">
+                  <span className="">Recipient:</span>
                   <span>{contributorName}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Contribution:</span>
+                  <span className="">Contribution:</span>
                   <span>{distribute.contribution_percent}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="">Distribute date:</span>
+                  <span className="">{formatDate(distribute.created_at)}</span>
                 </div>
               </div>
             </div>
@@ -205,7 +203,7 @@ export default function DistributeDetailModal({
             <Button
               type="button"
               variant="secondary"
-              size="sm"
+              size="md"
               onClick={handleCancelConfirm}
               disabled={isConfirming}
             >
@@ -214,7 +212,7 @@ export default function DistributeDetailModal({
             <Button
               type="button"
               variant="primary"
-              size="sm"
+              size="md"
               onClick={handleConfirmSubmit}
               disabled={isConfirming}
             >

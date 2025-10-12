@@ -134,7 +134,7 @@ export default function DistributeEvidenceModal({
                     <Button
                       className="!p-1"
                       variant="ghost"
-                      size="sm"
+                      size="md"
                       shape="square"
                       onClick={() => {
                         navigator.clipboard.writeText(wiseLink || "");
@@ -168,7 +168,7 @@ export default function DistributeEvidenceModal({
                     <Button
                       className="!p-1"
                       variant="ghost"
-                      size="sm"
+                      size="md"
                       shape="square"
                       onClick={() => {
                         navigator.clipboard.writeText(alipayLink || "");
