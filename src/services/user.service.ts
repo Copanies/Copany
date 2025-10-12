@@ -28,7 +28,7 @@ export class UserService {
 
       return {
         id: userId,
-        name: userData.name || "Unknown User",
+        name: userData.name || "",
         email: userData.email || "",
         avatar_url: userData.avatar_url || "",
       };
@@ -63,7 +63,7 @@ export class UserService {
       userDataList?.forEach((userData) => {
         users[userData.user_id] = {
           id: userData.user_id,
-          name: userData.name || "Unknown User",
+          name: userData.name || "",
           email: userData.email || "",
           avatar_url: userData.avatar_url || "",
         };

@@ -24,11 +24,32 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user || user.id !== userId) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized access" },
         { status: 401 }
       );
+    }
+
+    // Check if user can access the payment links:
+    // 1. User accessing their own payment links
+    // 2. Copany owner accessing payment links of recipients with pending distributes
+    if (user.id !== userId) {
+      const { data: hasAccess, error: accessError } = await supabase
+        .from('distribute')
+        .select('id')
+        .eq('to_user', userId)
+        .in('status', ['in_progress', 'in_review'])
+        .inner('copany', 'distribute.copany_id', 'copany.id')
+        .eq('copany.created_by', user.id)
+        .limit(1);
+
+      if (accessError || !hasAccess || hasAccess.length === 0) {
+        return NextResponse.json(
+          { error: "Unauthorized access" },
+          { status: 401 }
+        );
+      }
     }
 
     if (type) {

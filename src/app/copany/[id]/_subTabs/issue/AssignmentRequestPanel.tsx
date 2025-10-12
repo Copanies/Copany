@@ -86,7 +86,7 @@ export default function AssignmentRequestPanel({
     <div className="border rounded-lg flex flex-col gap-3 border-blue-600 dark:border-blue-500">
       {(() => {
         const requester = userInfos[requesterId];
-        const requesterName = requester?.name || "Unknown";
+        const requesterName = requester?.name || "";
         const reqs = requestsForRequester;
         return (
           <div
@@ -110,7 +110,7 @@ export default function AssignmentRequestPanel({
                     />
                   ) : (
                     <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                      {requesterName?.[0]?.toUpperCase() || "U"}
+                      {requesterName?.[0]?.toUpperCase() || ""}
                     </div>
                   )}
                 </div>
@@ -121,7 +121,7 @@ export default function AssignmentRequestPanel({
               <div className="flex flex-col gap-2">
                 {reqs.map((r) => {
                   const recipient = userInfos[String(r.recipient_id)];
-                  const name = recipient?.name || "Unknown";
+                  const name = recipient?.name || "";
                   const avatar = recipient?.avatar_url || "";
                   return (
                     <div
@@ -141,7 +141,7 @@ export default function AssignmentRequestPanel({
                         />
                       ) : (
                         <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                          {name?.slice(0, 2).toUpperCase() || "U"}
+                          {name?.slice(0, 2).toUpperCase() || ""}
                         </div>
                       )}
                       <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">

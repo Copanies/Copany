@@ -175,7 +175,12 @@ export type NotificationType =
   | "discussion_voted"
   | "discussion_comment_created"
   | "discussion_comment_voted"
-  | "discussion_comment_reply";
+  | "discussion_comment_reply"
+  | "distribute_created"
+  | "distribute_submitted"
+  | "distribute_confirmed"
+  | "transaction_created"
+  | "transaction_confirmed";
 
 export interface Notification {
   id: string;
@@ -187,6 +192,8 @@ export interface Notification {
   comment_id: string | null;
   discussion_id: string | null;
   discussion_comment_id: string | null;
+  distribute_id: string | null;
+  transaction_id: string | null;
   type: NotificationType;
   payload: NotificationPayload;
   read_at: string | null;

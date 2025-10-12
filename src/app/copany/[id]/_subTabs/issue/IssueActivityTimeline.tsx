@@ -116,7 +116,7 @@ export default function IssueActivityTimeline({
       >
     )) {
       map[id] = {
-        name: userInfo.name || "Unknown",
+        name: userInfo.name || "",
         email: userInfo.email,
         avatar_url: userInfo.avatar_url || "",
       };
@@ -218,9 +218,7 @@ export default function IssueActivityTimeline({
   };
 
   const renderHeaderCompact = (item: IssueActivity): ReactNode => {
-    const who = item.actor_id
-      ? userInfos[item.actor_id]?.name || "Unknown"
-      : "System";
+    const who = item.actor_id ? userInfos[item.actor_id]?.name || "" : "System";
     const p = (item.payload ?? EMPTY_OBJECT) as IssueActivityPayload;
     const title = p.issue_title ? `"${p.issue_title}"` : "Issue";
     switch (item.type as IssueActivityType) {
@@ -412,7 +410,7 @@ export default function IssueActivityTimeline({
         <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
           {(item.actor_id &&
             userInfos[item.actor_id]?.name?.slice(0, 2).toUpperCase()) ||
-            "U"}
+            ""}
         </div>
       );
     }

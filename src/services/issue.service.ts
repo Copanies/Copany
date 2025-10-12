@@ -80,7 +80,7 @@ export class IssueService {
         if (!userError && userData.user) {
           assigneeUsers[assigneeId] = {
             id: userData.user.id,
-            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
+            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "",
             email: userData.user.email || "",
             avatar_url: userData.user.user_metadata?.avatar_url || "",
           };
@@ -231,7 +231,7 @@ export class IssueService {
         if (user) {
           updater = {
             id: user.id,
-            name: (user.user_metadata?.name as string) || user.email || "Unknown User",
+            name: (user.user_metadata?.name as string) || user.email || "",
             avatar_url: (user.user_metadata?.avatar_url as string) || "",
           };
         }

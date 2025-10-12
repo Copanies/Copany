@@ -23,7 +23,7 @@ export async function getUserByIdAction(userId: string): Promise<UserInfo | null
 
     return {
       id: userData.user.id,
-      name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
+      name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "",
       email: userData.user.email || "",
       avatar_url: userData.user.user_metadata?.avatar_url || "",
     };
@@ -52,7 +52,7 @@ export async function getUsersByIdsAction(userIds: string[]): Promise<Record<str
         if (!userError && userData.user) {
           users[userId] = {
             id: userData.user.id,
-            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "Unknown User",
+            name: userData.user.user_metadata?.user_name || userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email || "",
             email: userData.user.email || "",
             avatar_url: userData.user.user_metadata?.avatar_url || "",
           };

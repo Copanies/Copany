@@ -341,7 +341,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         <div className="flex -space-x-2">
           {shown.map((id) => {
             const info = requestersInfo[id];
-            const name = info?.name || "Unknown";
+            const name = info?.name || "";
             const avatar = info?.avatar_url || "";
             return avatar ? (
               <Image

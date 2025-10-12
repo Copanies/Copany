@@ -108,10 +108,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           ) : (
             <>
               <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                {author?.[0]?.toUpperCase() || "U"}
+                {author?.[0]?.toUpperCase() || ""}
               </div>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
-                {author || "Unknown User"}
+                {author || ""}
               </span>
             </>
           )}
@@ -279,7 +279,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                           />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                            {u?.name?.slice(0, 2).toUpperCase() || "U"}
+                            {u?.name?.slice(0, 2).toUpperCase() || ""}
                           </div>
                         )}
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
@@ -301,7 +301,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                                     (r) =>
                                       String(r.id) === String(reply.parent_id)
                                   )?.created_by ?? ""
-                                ]?.name || "Unknown User"}
+                                ]?.name || ""}
                               </div>
                             </div>
                           )}
@@ -391,7 +391,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                               replies.find(
                                 (r) => String(r.id) === String(reply.parent_id)
                               )?.created_by ?? ""
-                            ]?.name || "Unknown User"}
+                            ]?.name || ""}
                           </div>
                         </div>
                       )}
@@ -487,7 +487,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                           replies.find(
                             (r) => String(r.id) === String(replyingToCommentId)
                           )?.created_by ?? ""
-                        ]?.name || "Unknown User"
+                        ]?.name || ""
                       }...`
                   : "Please sign in to reply"
               }

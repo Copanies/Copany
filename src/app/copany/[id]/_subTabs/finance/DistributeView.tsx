@@ -348,7 +348,7 @@ function DistributeGroupList({
       <div className="min-w-max" ref={containerRef}>
         {items.map((d) => {
           const userInfo = distributeUsersInfo[d.to_user];
-          const contributorName = userInfo?.name || "Unknown";
+          const contributorName = userInfo?.name || "";
           const contributorAvatar = userInfo?.avatar_url || "";
           const canView =
             isOwner || (currentUserId && currentUserId === d.to_user);

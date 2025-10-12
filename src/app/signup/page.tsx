@@ -18,6 +18,7 @@ import {
 import { resendVerificationEmail } from "@/actions/auth.actions";
 import Button from "@/components/commons/Button";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 export default function Signup() {
   const isDarkMode = useDarkMode();
@@ -176,7 +177,13 @@ export default function Signup() {
             </h1>
 
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Welcome to Copany
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Sign in
+              </Link>
             </p>
           </div>
 

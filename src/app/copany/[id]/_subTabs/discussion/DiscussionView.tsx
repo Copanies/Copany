@@ -153,7 +153,12 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     return (
       <div>
         <EmptyPlaceholderView
-          icon={<ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />}
+          icon={
+            <ChatBubbleLeftRightIcon
+              className="w-16 h-16 text-gray-400"
+              strokeWidth={1}
+            />
+          }
           title="No discussions yet"
           description="Create the first discussion to kick off the conversation."
           buttonIcon={<PlusIcon className="w-4 h-4" />}
@@ -367,7 +372,7 @@ function DiscussionItem({
                 </div>
               )}
               <span className="font-semibold text-gray-800 dark:text-gray-200">
-                {creator?.name || "Unknown User"}
+                {creator?.name || ""}
               </span>
               <span>·</span>
               <time title={discussion.created_at}>

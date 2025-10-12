@@ -71,7 +71,6 @@ export default function QRCodePopover({
             }}
           >
             {content}
-            <Tooltip.Arrow className="fill-white dark:fill-gray-800" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>

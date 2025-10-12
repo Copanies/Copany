@@ -313,7 +313,7 @@ function TransactionModal({
           New Transaction
         </h2>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <p className="font-semibold text-sm">Type</p>
             <div className="relative">
@@ -478,7 +478,7 @@ function TransactionDetailModal({
   onConfirm: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
-  const actorName = userInfo?.name || "Unknown";
+  const actorName = userInfo?.name || "";
   const actorAvatar = userInfo?.avatar_url || "";
   return (
     <div className="p-6">
@@ -648,7 +648,7 @@ function TransactionsGroupList({
       <div className="min-w-max" ref={containerRef}>
         {items.map((t) => {
           const userInfo = transactionUsersInfo[t.actor_id];
-          const actorName = userInfo?.name || "Unknown";
+          const actorName = userInfo?.name || "";
           const actorAvatar = userInfo?.avatar_url || "";
 
           return (

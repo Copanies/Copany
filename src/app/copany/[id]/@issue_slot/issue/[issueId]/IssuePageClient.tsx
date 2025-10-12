@@ -374,8 +374,8 @@ export default function IssuePageClient({
                   {renderUserLabel(
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
-                      ? currentUser?.user_metadata?.name || "Unknown"
-                      : requestersInfo[requesterId]?.name || "Unknown",
+                      ? currentUser?.user_metadata?.name || ""
+                      : requestersInfo[requesterId]?.name || "",
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.avatar_url || null
@@ -575,7 +575,7 @@ export default function IssuePageClient({
             </div>
             <div className="hover:opacity-80 cursor-pointer">
               {renderUserLabel(
-                creatorInfo?.name || "Unknown",
+                creatorInfo?.name || "",
                 creatorInfo?.avatar_url || null,
                 true,
                 creatorInfo?.email || null
@@ -730,7 +730,7 @@ export default function IssuePageClient({
               </div>
               <div className="hover:opacity-80 cursor-pointer">
                 {renderUserLabel(
-                  creatorInfo?.name || "Unknown",
+                  creatorInfo?.name || "",
                   creatorInfo?.avatar_url || null,
                   true,
                   creatorInfo?.email || null

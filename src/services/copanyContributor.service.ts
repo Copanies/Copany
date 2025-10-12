@@ -34,7 +34,7 @@ export class CopanyContributorService {
           // Use fallback data
           contributorsWithUserInfo.push({
             ...contributor,
-            name: contributor.email || "Unknown User",
+            name: contributor.email || "",
             avatar_url: "",
           });
           continue;
@@ -45,7 +45,7 @@ export class CopanyContributorService {
                         user.user_metadata?.user_name || 
                         user.user_metadata?.full_name || 
                         user.email || 
-                        "Unknown User";
+                        "";
         
         contributorsWithUserInfo.push({
           ...contributor,
@@ -57,7 +57,7 @@ export class CopanyContributorService {
         // Use fallback data
         contributorsWithUserInfo.push({
           ...contributor,
-          name: contributor.email || "Unknown User",
+          name: contributor.email || "",
           avatar_url: "",
         });
       }

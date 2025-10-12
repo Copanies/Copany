@@ -61,7 +61,7 @@ export default function DistributeEvidenceModal({
   const hasProofs = !!evidenceUrl;
   const canConfirm = hasProofs;
 
-  const contributorName = userInfo?.name || "Unknown";
+  const contributorName = userInfo?.name || "";
   const contributorAvatar = userInfo?.avatar_url || "";
 
   return (

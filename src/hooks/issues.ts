@@ -214,6 +214,8 @@ export function useUpdateIssueState(copanyId: string) {
         const base = prev || [];
         return base.map((i) => (i.id === serverIssue.id ? serverIssue : i));
       });
+      // Force refetch to ensure immediate update
+      qc.refetchQueries({ queryKey: ["contributions", copanyId] });
     },
   });
 }

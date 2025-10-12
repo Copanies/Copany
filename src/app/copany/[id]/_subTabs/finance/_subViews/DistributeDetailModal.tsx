@@ -30,7 +30,7 @@ export default function DistributeDetailModal({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const contributorName = userInfo?.name || "Unknown";
+  const contributorName = userInfo?.name || "";
   const contributorAvatar = userInfo?.avatar_url || "";
 
   const handleConfirmClick = () => {

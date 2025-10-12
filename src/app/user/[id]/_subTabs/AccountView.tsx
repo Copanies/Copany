@@ -321,7 +321,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   {isWiseLoading ? "Saving..." : "Save"}
                 </Button>
                 {wisePaymentLink && (
-                  <Button onClick={handleDeleteWiseLink} variant="secondary">
+                  <Button onClick={handleDeleteWiseLink} variant="danger">
                     Delete
                   </Button>
                 )}
@@ -373,7 +373,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   {isAlipayLoading ? "Saving..." : "Save"}
                 </Button>
                 {alipayPaymentLink && (
-                  <Button onClick={handleDeleteAlipayLink} variant="secondary">
+                  <Button onClick={handleDeleteAlipayLink} variant="danger">
                     Delete
                   </Button>
                 )}

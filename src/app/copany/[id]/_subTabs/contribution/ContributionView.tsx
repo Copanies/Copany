@@ -2,7 +2,7 @@
 import { Suspense } from "react";
 import { useMemo } from "react";
 import { IssueLevel, AssigneeUser, LEVEL_SCORES } from "@/types/database.types";
-import { useContributions } from "@/hooks/activity";
+import { useContributions } from "@/hooks/contributions";
 import { useContributors } from "@/hooks/contributors";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/app/copany/[id]/_subTabs/contribution/ContributionChart";

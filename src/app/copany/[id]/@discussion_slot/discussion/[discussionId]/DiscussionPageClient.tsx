@@ -178,7 +178,7 @@ export default function DiscussionPageClient({
             )}
             <div className="flex flex-row items-center gap-2">
               <span className="font-semibold text-gray-800 dark:text-gray-200">
-                {creator?.name || "Unknown User"}
+                {creator?.name || ""}
               </span>
               <span>·</span>
               <span className="text-sm text-gray-500">

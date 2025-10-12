@@ -105,7 +105,7 @@ export default function MainNavigation() {
       user.user_metadata?.name ||
       user.user_metadata?.full_name ||
       user.email ||
-      "Unknown User";
+      "";
 
     const userAvatar = user.user_metadata?.avatar_url ? (
       <Image
@@ -117,7 +117,7 @@ export default function MainNavigation() {
       />
     ) : (
       <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-        {userName?.[0]?.toUpperCase() || "U"}
+        {userName?.[0]?.toUpperCase() || ""}
       </div>
     );
 
@@ -133,7 +133,7 @@ export default function MainNavigation() {
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-            {userName?.[0]?.toUpperCase() || "U"}
+            {userName?.[0]?.toUpperCase() || ""}
           </div>
         )}
         <div className="flex-1 min-w-0">

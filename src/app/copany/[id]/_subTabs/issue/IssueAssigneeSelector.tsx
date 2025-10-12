@@ -109,7 +109,7 @@ export default function IssueAssigneeSelector({
           if (currentUser && assigneeValue === currentUser.id) {
             newAssigneeUser = {
               id: currentUser.id,
-              name: currentUser.user_metadata?.name || "Unknown",
+              name: currentUser.user_metadata?.name || "",
               email: currentUser.email || "",
               avatar_url: currentUser.user_metadata?.avatar_url || "",
             };
@@ -216,7 +216,7 @@ export default function IssueAssigneeSelector({
             label: (
               <div className="flex items-center gap-1 justify-between w-full">
                 {renderUserLabel(
-                  currentUser.user_metadata?.name || "Unknown",
+                  currentUser.user_metadata?.name || "",
                   currentUser.user_metadata?.avatar_url || null,
                   true,
                   currentUser.email || null,
@@ -291,7 +291,7 @@ export default function IssueAssigneeSelector({
     // If no assigneeUser information, find current user or contributor information
     if (currentUser && currentAssignee === currentUser.id) {
       return renderUserLabel(
-        currentUser.user_metadata?.name || "Unknown",
+        currentUser.user_metadata?.name || "",
         currentUser.user_metadata?.avatar_url || null,
         showText,
         currentUser.email || null
@@ -311,7 +311,7 @@ export default function IssueAssigneeSelector({
     }
 
     // If not found, display a default user label
-    return renderUserLabel("Unknown", null, showText, null);
+    return renderUserLabel("", null, showText, null);
   })();
 
   return (

@@ -13,42 +13,30 @@ export function getTimeUntilNextDistribution(): {
   // Get current year and month
   const currentYear = now.getUTCFullYear();
   const currentMonth = now.getUTCMonth();
+  const currentDay = now.getUTCDate();
   
-  // Calculate next distribution date (10th of next month at 00:00 UTC)
-  let nextDistributionYear = currentYear;
-  let nextDistributionMonth = currentMonth + 1;
+  let targetDate: Date;
   
-  // Handle year rollover
-  if (nextDistributionMonth > 11) {
-    nextDistributionMonth = 0;
-    nextDistributionYear++;
+  // If we're before the 10th of current month, calculate for current month's 10th
+  if (currentDay < 10) {
+    targetDate = new Date(Date.UTC(currentYear, currentMonth, 10, 0, 0, 0));
+  } else {
+    // If we're on or after the 10th, calculate for next month's 10th
+    let nextDistributionYear = currentYear;
+    let nextDistributionMonth = currentMonth + 1;
+    
+    // Handle year rollover
+    if (nextDistributionMonth > 11) {
+      nextDistributionMonth = 0;
+      nextDistributionYear++;
+    }
+    
+    targetDate = new Date(Date.UTC(nextDistributionYear, nextDistributionMonth, 10, 0, 0, 0));
   }
-  
-  // Create the next distribution date
-  const nextDistribution = new Date(Date.UTC(nextDistributionYear, nextDistributionMonth, 10, 0, 0, 0));
   
   // Calculate time difference
-  const timeDiff = nextDistribution.getTime() - now.getTime();
+  const timeDiff = targetDate.getTime() - now.getTime();
   
-  // If we're past the 10th of current month, calculate for next month
-  if (now.getUTCDate() > 10) {
-    return getTimeUntilNextDistribution();
-  }
-  
-  // If we're before the 10th of current month, calculate for current month
-  if (now.getUTCDate() < 10) {
-    const currentMonthDistribution = new Date(Date.UTC(currentYear, currentMonth, 10, 0, 0, 0));
-    const currentTimeDiff = currentMonthDistribution.getTime() - now.getTime();
-    
-    return {
-      days: Math.floor(currentTimeDiff / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((currentTimeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((currentTimeDiff % (1000 * 60 * 60)) / (1000 * 60)),
-      totalMs: currentTimeDiff,
-    };
-  }
-  
-  // If it's exactly the 10th, return time until next month
   return {
     days: Math.floor(timeDiff / (1000 * 60 * 60 * 24)),
     hours: Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),

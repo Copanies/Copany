@@ -149,19 +149,19 @@ export default function UserView({ userId }: UserViewProps) {
 
   const tabs = [
     {
-      label: "Working on",
-      icon: <Squares2X2Icon strokeWidth={2} className="w-4 h-4" />,
-      content: <WorkingOnView userId={userId} />,
-    },
-    {
       label: "Account",
       icon: <UserCircleIcon strokeWidth={2} className="w-4 h-4" />,
       content: <AccountView userId={userId} />,
     },
+    {
+      label: "Working on",
+      icon: <Squares2X2Icon strokeWidth={2} className="w-4 h-4" />,
+      content: <WorkingOnView userId={userId} />,
+    },
   ];
 
   return (
-    <div className="flex flex-col gap-4 max-w-[840px] mx-auto py-6 px-5">
+    <div className="flex flex-col gap-4 max-w-[840px] mx-auto py-6 px-5 min-h-screen">
       <div className="flex flex-row gap-4 items-center">
         {/* Avatar with hover effect and dropdown */}
         <div className="relative inline-block group">

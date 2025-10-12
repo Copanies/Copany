@@ -207,6 +207,16 @@ export default function NotificationBell() {
         return "voted on your comment";
       case "discussion_comment_reply":
         return "replied to your comment";
+      case "distribute_created":
+        return "created a distribution for you";
+      case "distribute_submitted":
+        return "submitted distribution for review";
+      case "distribute_confirmed":
+        return "confirmed your distribution";
+      case "transaction_created":
+        return "created a new transaction";
+      case "transaction_confirmed":
+        return "confirmed your transaction";
       default:
         return "Notification";
     }
@@ -223,6 +233,12 @@ export default function NotificationBell() {
         : "";
       router.push(
         `/copany/${n.copany_id}/discussion/${n.discussion_id}${anchor}`
+      );
+    } else if (n.distribute_id || n.transaction_id) {
+      router.push(
+        `/copany/${n.copany_id}?tab=Finance&financeTab=${
+          n.distribute_id ? "Distribute" : "Transactions"
+        }`
       );
     } else if (n.copany_id) {
       router.push(`/copany/${n.copany_id}`);
@@ -249,7 +265,7 @@ export default function NotificationBell() {
       case IssueState.Duplicate:
         return "Duplicate";
       default:
-        return value || value === 0 ? String(value) : "Unknown";
+        return value || value === 0 ? String(value) : "";
     }
   };
 
@@ -267,7 +283,7 @@ export default function NotificationBell() {
       case IssuePriority.Low:
         return "Low";
       default:
-        return value || value === 0 ? String(value) : "Unknown";
+        return value || value === 0 ? String(value) : "";
     }
   };
 
@@ -285,7 +301,7 @@ export default function NotificationBell() {
       case IssueLevel.level_None:
         return "Unknown level";
       default:
-        return value || value === 0 ? String(value) : "Unknown";
+        return value || value === 0 ? String(value) : "";
     }
   };
 
@@ -368,6 +384,30 @@ export default function NotificationBell() {
         return <span className="text-sm">{latestTitle || "Discussion"}</span>;
       case "discussion_comment_reply":
         return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+      case "distribute_created":
+      case "distribute_submitted":
+      case "distribute_confirmed":
+        return (
+          <span className="text-sm">
+            {String(n.payload?.currency || "")}{" "}
+            {Number(n.payload?.amount || 0).toFixed(2)}
+            {n.payload?.contribution_percent
+              ? ` (${String(n.payload.contribution_percent)}%)`
+              : ""}
+          </span>
+        );
+      case "transaction_created":
+      case "transaction_confirmed":
+        return (
+          <span className="text-sm">
+            {String(n.payload?.type) === "income" ? "+" : "-"}
+            {String(n.payload?.currency || "")}{" "}
+            {Number(n.payload?.amount || 0).toFixed(2)}
+            {n.payload?.description
+              ? ` - ${String(n.payload.description)}`
+              : ""}
+          </span>
+        );
       default:
         return latestTitle ? (
           <span className="text-sm">{latestTitle}</span>
@@ -461,7 +501,7 @@ export default function NotificationBell() {
           </div>
         ) : (
           <div className=" w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-            {actorUsers[n.actor_id || ""]?.name?.slice(0, 2) || "U"}
+            {actorUsers[n.actor_id || ""]?.name?.slice(0, 2) || ""}
           </div>
         )}
         {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (

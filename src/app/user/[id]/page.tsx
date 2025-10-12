@@ -10,9 +10,11 @@ export default async function UserDetailView({
   const { id } = await params;
 
   return (
-    <main className="min-h-screen">
+    <main>
       <MainNavigation />
-      <UserView userId={id} />
+      <div className="min-h-screen">
+        <UserView userId={id} />
+      </div>
       <Footer />
     </main>
   );
