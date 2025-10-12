@@ -1,4 +1,4 @@
-import MainNavigation from "@/components/commons/MainNavigation";
+import MainNavigation from "@/app/_navigation_bar/MainNavigation";
 import Footer from "@/components/commons/Footer";
 import DiscussionPageClient from "./DiscussionPageClient";
 

@@ -8,7 +8,7 @@ import type {
   Copany,
 } from "@/types/database.types";
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
-import Button from "./Button";
+import Button from "@/components/commons/Button";
 import { useRouter } from "next/navigation";
 import {
   BellAlertIcon,

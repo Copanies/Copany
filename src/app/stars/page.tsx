@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
-import MainNavigation from "@/components/commons/MainNavigation";
+import MainNavigation from "@/app/_navigation_bar/MainNavigation";
 import Footer from "@/components/commons/Footer";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";

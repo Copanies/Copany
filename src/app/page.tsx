@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import CopanyGridView from "@/components/copany/CopanyGridView";
-import MainNavigation from "@/components/commons/MainNavigation";
+import MainNavigation from "@/app/_navigation_bar/MainNavigation";
 import CatBanner from "@/components/copany/CatBanner";
 import MobileCatBanner from "@/components/copany/MobileCatBanner";
 import Footer from "@/components/commons/Footer";
