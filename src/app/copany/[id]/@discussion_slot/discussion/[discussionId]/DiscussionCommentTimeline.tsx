@@ -173,7 +173,7 @@ function CommentNode({
             <>
               <Image
                 src={author.avatar_url}
-                alt={author.name || "User"}
+                alt={author.name || ""}
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded-full relative z-10"

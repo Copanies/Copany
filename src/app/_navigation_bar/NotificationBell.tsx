@@ -10,10 +10,12 @@ import type {
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
 import Button from "@/components/commons/Button";
 import { useRouter } from "next/navigation";
+import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
-  BellAlertIcon,
-  XMarkIcon,
   HandRaisedIcon,
+  UserGroupIcon,
+  ChatBubbleLeftRightIcon,
+  ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
@@ -313,82 +315,137 @@ export default function NotificationBell() {
     switch (n.type) {
       case "copany_starred": {
         const name = n.copany_id ? copanies[String(n.copany_id)]?.name : "";
-        return name ? <span className="text-sm">{name}</span> : null;
+        return name ? (
+          <span className="text-base">{`Copany: ${name}`}</span>
+        ) : null;
       }
+      case "comment_reply":
+        return (
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
+        );
+      case "new_comment":
+        return (
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
+        );
+      case "new_issue":
+        return (
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
+        );
+      case "mention":
+        return (
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
+        );
       case "issue_assigned":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {`@${p.from_user_name}`} → {`@${p.to_user_name}`}
           </span>
         );
       case "issue_state_changed":
         return (
-          <span className="text-sm ">
-            {latestTitle ? `${latestTitle}: ` : ""}
+          <span className="text-base ">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getStateName(p.from_state)} → {getStateName(p.to_state)}
           </span>
         );
       case "issue_priority_changed":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getPriorityName(p.from_priority)} →{" "}
             {getPriorityName(p.to_priority)}
           </span>
         );
       case "issue_level_changed":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getLevelName(p.from_level)} → {getLevelName(p.to_level)}
           </span>
         );
       case "issue_closed":
-        return <span className="text-sm">{latestTitle || "Issue"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
+        );
       case "assignment_request_received":
         return (
-          <span className="text-sm">{latestTitle ? latestTitle : "Issue"}</span>
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}` : "Issue"}
+          </span>
         );
       case "assignment_request_accepted":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}Your request was accepted
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Your request was
+            accepted
           </span>
         );
       case "assignment_request_refused":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}Your request was refused
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Your request was
+            refused
           </span>
         );
       case "review_requested":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}You were requested to review
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}You were
+            requested to review
           </span>
         );
       case "review_approved":
         return (
-          <span className="text-sm">
-            {latestTitle ? `${latestTitle}: ` : ""}Review approved
+          <span className="text-base">
+            {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Review approved
           </span>
         );
       case "discussion_created":
-        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
+          </span>
+        );
       case "discussion_voted":
-        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
+          </span>
+        );
       case "discussion_comment_created":
-        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
+          </span>
+        );
       case "discussion_comment_voted":
-        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
+          </span>
+        );
       case "discussion_comment_reply":
-        return <span className="text-sm">{latestTitle || "Discussion"}</span>;
+        return (
+          <span className="text-base">
+            {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
+          </span>
+        );
       case "distribute_created":
       case "distribute_submitted":
       case "distribute_confirmed":
         return (
-          <span className="text-sm">
+          <span className="text-base">
             {String(n.payload?.currency || "")}{" "}
             {Number(n.payload?.amount || 0).toFixed(2)}
             {n.payload?.contribution_percent
@@ -399,8 +456,8 @@ export default function NotificationBell() {
       case "transaction_created":
       case "transaction_confirmed":
         return (
-          <span className="text-sm">
-            {String(n.payload?.type) === "income" ? "+" : "-"}
+          <span className="text-base">
+            Transaction: {String(n.payload?.type) === "income" ? "+" : "-"}
             {String(n.payload?.currency || "")}{" "}
             {Number(n.payload?.amount || 0).toFixed(2)}
             {n.payload?.description
@@ -408,10 +465,18 @@ export default function NotificationBell() {
               : ""}
           </span>
         );
-      default:
-        return latestTitle ? (
-          <span className="text-sm">{latestTitle}</span>
-        ) : null;
+      default: {
+        if (!latestTitle) return null;
+        // Determine prefix based on whether it's an issue or discussion
+        if (n.issue_id || p.issue_title) {
+          return <span className="text-base">{`Issue ${latestTitle}`}</span>;
+        } else if (n.discussion_id || p.discussion_title) {
+          return (
+            <span className="text-base">{`Discussion ${latestTitle}`}</span>
+          );
+        }
+        return <span className="text-base">{latestTitle}</span>;
+      }
     }
   };
 
@@ -419,8 +484,26 @@ export default function NotificationBell() {
     switch (n.type) {
       case "copany_starred":
         return <StarIcon className="w-6 h-6 text-[#FF9D0B]" />;
+      case "comment_reply":
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "new_comment":
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "new_issue":
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "mention":
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "issue_assigned":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "issue_state_changed":
         return (
           <div className="w-6 h-6 flex items-center justify-center scale-125">
@@ -440,21 +523,33 @@ export default function NotificationBell() {
           </div>
         );
       case "issue_closed":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "assignment_request_received":
         return (
           <HandRaisedIcon className="w-6 h-6 text-gray-900 dark:text-gray-100 -rotate-30 " />
         );
       case "assignment_request_accepted":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "assignment_request_refused":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "review_requested":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "review_approved":
-        return null;
+        return (
+          <UserGroupIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "discussion_created":
-        return null;
+        return (
+          <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "discussion_voted":
         return isDarkMode ? (
           <Image
@@ -466,7 +561,9 @@ export default function NotificationBell() {
           <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
         );
       case "discussion_comment_created":
-        return null;
+        return (
+          <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       case "discussion_comment_voted":
         return isDarkMode ? (
           <Image
@@ -478,7 +575,29 @@ export default function NotificationBell() {
           <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
         );
       case "discussion_comment_reply":
-        return null;
+        return (
+          <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "distribute_created":
+        return (
+          <ReceiptPercentIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "distribute_submitted":
+        return (
+          <ReceiptPercentIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "distribute_confirmed":
+        return (
+          <ReceiptPercentIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "transaction_created":
+        return (
+          <ReceiptPercentIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
+      case "transaction_confirmed":
+        return (
+          <ReceiptPercentIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+        );
       default:
         return null;
     }
@@ -493,30 +612,29 @@ export default function NotificationBell() {
           <div className="flex w-8 h-8">
             <Image
               src={actorUsers[n.actor_id]!.avatar_url}
-              alt={actorUsers[n.actor_id]!.name || "User"}
-              className=" w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
+              alt={actorUsers[n.actor_id]!.name || ""}
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
               width={32}
               height={32}
             />
           </div>
         ) : (
-          <div className=" w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-            {actorUsers[n.actor_id || ""]?.name?.slice(0, 2) || ""}
+          <div className="flex w-8 h-8">
+            {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
+              <Image
+                src={copanies[String(n.copany_id)]!.logo_url as string}
+                alt="Copany"
+                className="w-8 h-8 rounded-sm"
+                width={32}
+                height={32}
+              />
+            ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
+              <div className="w-8 h-8 rounded-sm bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+                {copanies[String(n.copany_id)]?.name?.slice(0, 2) || ""}
+              </div>
+            ) : null}
           </div>
         )}
-        {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
-          <Image
-            src={copanies[String(n.copany_id)]!.logo_url as string}
-            alt="Copany"
-            className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-1 border-white dark:border-gray-700"
-            width={20}
-            height={20}
-          />
-        ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
-          <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-            {copanies[String(n.copany_id)]?.name?.slice(0, 2) || "Co"}
-          </div>
-        ) : null}
       </div>
     );
 
@@ -540,17 +658,30 @@ export default function NotificationBell() {
               </div>
               {actionIcon ? avator : null}
               <div className="flex flex-col gap-0 w-full">
-                <div className="flex flex-row gap-2 justify-between w-full">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <div className="flex flex-row gap-2 justify-between items-center w-full">
+                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
                     {n.actor_id && actorUsers[n.actor_id]
                       ? actorUsers[n.actor_id].name
-                      : ""}
+                      : n.copany_id && copanies[String(n.copany_id)]?.name}
                   </span>
-                  <span className="ml-auto text-sm text-gray-400">
+                  <span className="ml-auto text-base text-gray-400">
                     {formatRelativeTime(n.created_at)}
                   </span>
+                  {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
+                    <Image
+                      src={copanies[String(n.copany_id)]!.logo_url as string}
+                      alt="Copany"
+                      className="w-5 h-5 rounded-sm"
+                      width={20}
+                      height={20}
+                    />
+                  ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
+                    <div className="w-5 h-5 rounded-sm bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+                      {copanies[String(n.copany_id)]?.name?.slice(0, 2) || ""}
+                    </div>
+                  ) : null}
                 </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-base text-gray-500 dark:text-gray-400">
                   {simpleText(n)}
                 </span>
               </div>
@@ -559,7 +690,9 @@ export default function NotificationBell() {
           <div className="flex flex-col pl-10">
             {renderSecondaryLine(n)}
             {n.payload?.preview && (
-              <span className="text-sm line-clamp-2">{n.payload.preview}</span>
+              <span className="text-base line-clamp-2">
+                {n.payload.preview}
+              </span>
             )}
           </div>
         </div>
@@ -658,8 +791,8 @@ export default function NotificationBell() {
             width: panelPosition.width,
           }}
         >
-          <div className="px-4 py-1 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
-            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <div className="px-4 pt-1 pb-2 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+            <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Notifications
             </div>
             <Button
@@ -672,7 +805,7 @@ export default function NotificationBell() {
                 closePanel();
               }}
             >
-              <XMarkIcon className="w-4 h-4 text-gray-500" />
+              <XMarkIcon className="w-4 h-4" />
             </Button>
           </div>
           <div
@@ -686,12 +819,12 @@ export default function NotificationBell() {
           >
             {list.map(renderItem)}
             {list.length === 0 && (
-              <div className="px-2 py-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-2 py-4 text-base text-gray-500 dark:text-gray-400">
                 No notifications
               </div>
             )}
             {isLoadingMore && (
-              <div className="px-2 py-2 text-sm text-gray-400">Loading…</div>
+              <div className="px-2 py-2 text-base text-gray-400">Loading…</div>
             )}
           </div>
         </div>

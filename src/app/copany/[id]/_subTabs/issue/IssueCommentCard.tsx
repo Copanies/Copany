@@ -96,7 +96,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
             <>
               <Image
                 src={userInfos[comment.created_by]!.avatar_url}
-                alt={userInfos[comment.created_by]!.name || "User"}
+                alt={userInfos[comment.created_by]!.name || ""}
                 width={20}
                 height={20}
                 className="w-5 h-5 rounded-full"
@@ -272,7 +272,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         {u?.avatar_url ? (
                           <Image
                             src={u.avatar_url}
-                            alt={u.name || "User"}
+                            alt={u.name || ""}
                             width={20}
                             height={20}
                             className="w-5 h-5 rounded-full"

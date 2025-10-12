@@ -62,7 +62,7 @@ export default function AssignmentRequestModal({
             {currentUser?.user_metadata?.avatar_url ? (
               <Image
                 src={currentUser.user_metadata.avatar_url}
-                alt={currentUser.user_metadata?.name || "User"}
+                alt={currentUser.user_metadata?.name || ""}
                 width={28}
                 height={28}
                 className="w-5 h-5 rounded-full"

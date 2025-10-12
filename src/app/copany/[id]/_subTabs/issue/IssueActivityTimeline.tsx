@@ -400,7 +400,7 @@ export default function IssueActivityTimeline({
         return (
           <Image
             src={userInfos[item.actor_id]!.avatar_url}
-            alt={userInfos[item.actor_id]!.name || "User"}
+            alt={userInfos[item.actor_id]!.name || ""}
             width={20}
             height={20}
             className="w-5 h-5 rounded-full"
