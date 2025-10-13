@@ -218,6 +218,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
             <TransactionsGroupList
               items={group.items}
               transactionUsersInfo={transactionUsersInfo}
+              isOwner={isOwner}
               currentUserId={currentUser?.id}
               onOpenView={(t) => {
                 setViewTransaction(t);
@@ -598,11 +599,13 @@ function TransactionDetailModal({
 function TransactionsGroupList({
   items,
   transactionUsersInfo,
+  isOwner,
   currentUserId,
   onOpenView,
 }: {
   items: TransactionRow[];
   transactionUsersInfo: Record<string, UserInfo>;
+  isOwner: boolean;
   currentUserId?: string;
   onOpenView: (t: TransactionRow) => void;
 }) {
@@ -646,7 +649,7 @@ function TransactionsGroupList({
       window.removeEventListener("resize", onWindowResize);
       ro.disconnect();
     };
-  }, [items.length, currentUserId]);
+  }, [items.length, isOwner, currentUserId]);
 
   return (
     <div className="w-full overflow-x-auto scrollbar-hide">
@@ -655,11 +658,14 @@ function TransactionsGroupList({
           const userInfo = transactionUsersInfo[t.actor_id];
           const actorName = userInfo?.name || "";
           const actorAvatar = userInfo?.avatar_url || "";
+          const isPendingReview = t.status === "in_review" && isOwner;
 
           return (
             <div
               key={t.id}
-              className="pl-3 md:pl-4 h-11 items-center hover:bg-gray-50 group dark:hover:bg-gray-900 select-none min-w-0"
+              className={`pl-3 md:pl-4 h-11 items-center group min-w-0 ${
+                isPendingReview ? "bg-purple-100 dark:bg-purple-900/30" : ""
+              }`}
             >
               <div className="flex gap-3 test-base h-11 items-center">
                 <span className="font-medium flex-shrink-0 w-36">
@@ -697,7 +703,13 @@ function TransactionsGroupList({
                 <span className="flex-1 min-w-0 truncate w-40">
                   {t.description ? t.description : "No description"}
                 </span>
-                <div className="sticky right-0 h-11 flex items-center justify-start gap-0 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+                <div
+                  className={`sticky right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 ${
+                    isPendingReview
+                      ? "bg-purple-100 dark:bg-transparent"
+                      : "bg-white dark:bg-background-dark"
+                  }`}
+                >
                   <div
                     data-role="actions"
                     className="flex items-center justify-start gap-0 px-2"

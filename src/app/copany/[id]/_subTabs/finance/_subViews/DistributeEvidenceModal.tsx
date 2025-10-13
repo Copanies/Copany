@@ -42,7 +42,8 @@ export default function DistributeEvidenceModal({
   const isDarkMode = useDarkMode();
 
   // Get payment links for the distribute.to_user
-  const { data: paymentLinks } = usePaymentLinks(distribute?.to_user || "");
+  const { data: paymentLinks, isLoading: isLoadingPaymentLinks } =
+    usePaymentLinks(distribute?.to_user || "");
 
   // Extract Alipay and Wise links
   const alipayLink = paymentLinks?.find(
@@ -129,7 +130,11 @@ export default function DistributeEvidenceModal({
                   />
                   <span className="">Wise Payment Link</span>
                 </div>
-                {wiseLink ? (
+                {isLoadingPaymentLinks ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : wiseLink ? (
                   <div className="flex items-center gap-2">
                     <Link href={wiseLink} target="_blank">
                       <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">
@@ -165,7 +170,11 @@ export default function DistributeEvidenceModal({
                   />
                   <span className="">Alipay QR Code Link</span>
                 </div>
-                {alipayLink ? (
+                {isLoadingPaymentLinks ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : alipayLink ? (
                   <div className="flex items-center gap-2">
                     <Link href={alipayLink} target="_blank">
                       <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">
