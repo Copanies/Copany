@@ -15,8 +15,9 @@ export default function ReactQueryProvider({ children }: Props) {
       defaultOptions: {
         queries: {
           // Keep data fresh for a long time to leverage persistence
-          staleTime: 30 * 24 * 60 * 60 * 1000,
-          gcTime: 31 * 24 * 60 * 60 * 1000,
+          // Use Infinity to avoid setTimeout overflow (max: 2^31-1 ms ≈ 24.8 days)
+          staleTime: Infinity,
+          gcTime: Infinity,
           refetchOnWindowFocus: true,
           refetchOnReconnect: true,
           retry: 2,
@@ -53,7 +54,7 @@ export default function ReactQueryProvider({ children }: Props) {
   return (
     <PersistQueryClientProvider
       client={client}
-      persistOptions={{ persister, maxAge: 30 * 24 * 60 * 60 * 1000 }}
+      persistOptions={{ persister, maxAge: Infinity }}
     >
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
