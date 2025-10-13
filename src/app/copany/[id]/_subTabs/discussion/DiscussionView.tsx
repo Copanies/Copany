@@ -183,7 +183,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             <button
               className={`text-sm rounded-lg px-2 py-1 text-left border hover:cursor-pointer ${
                 activeLabel === "all"
-                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-black"
+                  ? "bg-gray-100 dark:bg-gray-600 border-gray-200 dark:border-gray-500"
                   : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
               }`}
               onClick={() => setActiveLabel("all")}
@@ -195,7 +195,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                 key={l}
                 className={`text-sm rounded-lg px-2 py-1 text-left border hover:cursor-pointer ${
                   activeLabel === l
-                    ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-black"
+                    ? "bg-gray-100 dark:bg-gray-600 border-gray-200 dark:border-gray-500"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                 }`}
                 onClick={() => setActiveLabel(l)}
