@@ -6,7 +6,8 @@ import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
 import LicenseBadge from "@/components/copany/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -17,6 +18,7 @@ interface CopanyListViewProps {
  */
 export default function CopanyListView({ copanies }: CopanyListViewProps) {
   const router = useRouter();
+  const isDarkMode = useDarkMode();
   return (
     <ul className="space-y-6">
       {copanies.map((copany, index) => (
@@ -38,7 +40,7 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                     width={32}
                     height={32}
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(32, 32)}
+                    blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
                   />
                 )}
                 <div className="font-semibold text-base">{copany.name}</div>

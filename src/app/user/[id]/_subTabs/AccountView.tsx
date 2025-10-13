@@ -7,7 +7,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useHasProviders } from "@/hooks/userAuth";
 import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { AtSymbolIcon } from "@heroicons/react/24/outline";
 import {
   signInWithGitHub,
@@ -319,7 +319,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   width={66}
                   height={35}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(66, 35)}
+                  blurDataURL={shimmerDataUrlWithTheme(66, 35, isDarkMode)}
                 />
                 <label htmlFor="wiseLink" className="text-sm font-semibold">
                   Wise Payment Link
@@ -376,7 +376,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   width={83.61}
                   height={35}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(83.61, 35)}
+                  blurDataURL={shimmerDataUrlWithTheme(83.61, 35, isDarkMode)}
                 />
                 <label htmlFor="alipayLink" className="text-sm font-semibold">
                   Alipay QR Code Link
@@ -446,7 +446,11 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(16, 16)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            16,
+                            16,
+                            isDarkMode
+                          )}
                         />
                         <span className="font-base">GitHub Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -470,7 +474,11 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(16, 16)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            16,
+                            16,
+                            isDarkMode
+                          )}
                         />
                         <span className="font-base">Google Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -491,7 +499,11 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(16, 16)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            16,
+                            16,
+                            isDarkMode
+                          )}
                         />
                         <span className="font-base">Figma Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -555,7 +567,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   width={16}
                   height={16}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(16, 16)}
+                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
                 <span className="whitespace-nowrap">
                   {isGitHubLoading ? "Linking..." : "Link with GitHub"}
@@ -582,7 +594,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   width={16}
                   height={16}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(16, 16)}
+                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
                 <span className="whitespace-nowrap">
                   {isGoogleLoading ? "Linking..." : "Link with Google"}
@@ -609,7 +621,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   width={16}
                   height={16}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(16, 16)}
+                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
                 <span className="whitespace-nowrap">
                   {isFigmaLoading ? "Linking..." : "Link with Figma"}

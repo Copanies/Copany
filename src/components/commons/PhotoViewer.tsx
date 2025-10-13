@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 type PhotoViewerProps = {
@@ -26,6 +27,7 @@ export default function PhotoViewer({
   closeButtonAriaLabel = "Close",
   renderTrigger,
 }: PhotoViewerProps) {
+  const isDarkMode = useDarkMode();
   const [isOpen, setIsOpen] = useState(false);
 
   const open = useCallback(() => setIsOpen(true), []);
@@ -58,7 +60,7 @@ export default function PhotoViewer({
             role="button"
             aria-label={alt}
             placeholder="blur"
-            blurDataURL={shimmerDataUrl(128, 128)}
+            blurDataURL={shimmerDataUrlWithTheme(128, 128, isDarkMode)}
           />
         </div>
       )}
@@ -81,7 +83,7 @@ export default function PhotoViewer({
               className="object-contain rounded shadow-2xl"
               onClick={(e) => e.stopPropagation()}
               placeholder="blur"
-              blurDataURL={shimmerDataUrl(800, 800)}
+              blurDataURL={shimmerDataUrlWithTheme(800, 800, isDarkMode)}
             />
           </div>
 

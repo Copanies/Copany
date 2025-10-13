@@ -24,7 +24,8 @@ import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
@@ -37,7 +38,6 @@ import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useDarkMode } from "@/utils/useDarkMode";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const { data: discussions, isLoading } = useDiscussions(copanyId);
@@ -364,7 +364,7 @@ function DiscussionItem({
                   height={32}
                   className="w-8 h-8 rounded-full"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(32, 32)}
+                  blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
@@ -420,7 +420,7 @@ function DiscussionItem({
               width={16}
               height={16}
               placeholder="blur"
-              blurDataURL={shimmerDataUrl(16, 16)}
+              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
             />
             <span>{voteCount}</span>
           </div>

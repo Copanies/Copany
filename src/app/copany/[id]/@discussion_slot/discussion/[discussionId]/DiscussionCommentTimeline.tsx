@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import {
   useDiscussionComments,
   useCreateDiscussionComment,
@@ -28,7 +29,6 @@ import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import { EMPTY_ARRAY, EMPTY_OBJECT, EMPTY_STRING } from "@/utils/constants";
-import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
 
 interface DiscussionCommentTimelineProps {
@@ -84,7 +84,7 @@ function VoteButton({
           width={16}
           height={16}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(16, 16)}
+          blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
         />
         <span>{voteCount ?? 0}</span>
       </div>
@@ -145,8 +145,8 @@ function CommentNode({
   const [_openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
     null
   );
-
   const author = comment.created_by ? userInfos[comment.created_by] : undefined;
+  const isDarkMode = useDarkMode();
 
   // Check if this comment has children
   const hasChildren = useMemo(() => {
@@ -181,7 +181,7 @@ function CommentNode({
                 height={32}
                 className="w-8 h-8 rounded-full relative z-10"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(32, 32)}
+                blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
               />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {author.name}

@@ -54,3 +54,16 @@ const shimmerDark = (w: number, h: number) => `
 export const shimmerDarkDataUrl = (w: number = 400, h: number = 400) =>
   `data:image/svg+xml;base64,${toBase64(shimmerDark(w, h))}`;
 
+/**
+ * 根据主题模式自动选择对应的 shimmer Data URL
+ * @param w - 宽度
+ * @param h - 高度
+ * @param isDark - 是否为暗色模式，默认为 false
+ * @returns Data URL 字符串，可直接用于 Image 的 blurDataURL 属性
+ */
+export const shimmerDataUrlWithTheme = (
+  w: number = 400,
+  h: number = 400,
+  isDark: boolean = false
+) => (isDark ? shimmerDarkDataUrl(w, h) : shimmerDataUrl(w, h));
+

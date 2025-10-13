@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { useState } from "react";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
@@ -41,6 +42,7 @@ interface IssueCommentCardProps {
 }
 
 export default function IssueCommentCard(props: IssueCommentCardProps) {
+  const isDarkMode = useDarkMode();
   const {
     comment,
     replies,
@@ -102,7 +104,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                 height={20}
                 className="w-5 h-5 rounded-full"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(20, 20)}
+                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
                 {userInfos[comment.created_by]!.name}
@@ -280,7 +282,11 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             height={20}
                             className="w-5 h-5 rounded-full"
                             placeholder="blur"
-                            blurDataURL={shimmerDataUrl(20, 20)}
+                            blurDataURL={shimmerDataUrlWithTheme(
+                              20,
+                              20,
+                              isDarkMode
+                            )}
                           />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">

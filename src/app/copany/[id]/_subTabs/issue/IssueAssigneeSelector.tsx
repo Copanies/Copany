@@ -10,7 +10,8 @@ import {
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
@@ -56,6 +57,7 @@ export default function IssueAssigneeSelector({
   const [currentAssigneeUser, setCurrentAssigneeUser] = useState(assigneeUser);
   const mutation = useUpdateIssueAssignee(copanyId || "");
   const qc = useQueryClient();
+  const isDarkMode = useDarkMode();
 
   // 当 props 变化时同步内部状态，确保外部缓存更新能反映到 UI
   useEffect(() => {
@@ -220,6 +222,7 @@ export default function IssueAssigneeSelector({
                   currentUser.user_metadata?.name || "",
                   currentUser.user_metadata?.avatar_url || null,
                   true,
+                  isDarkMode,
                   currentUser.email || null,
                   readOnly
                 )}
@@ -255,6 +258,7 @@ export default function IssueAssigneeSelector({
             contributor.name,
             contributor.avatar_url,
             true,
+            isDarkMode,
             contributor.email,
             readOnly
           ),
@@ -285,6 +289,7 @@ export default function IssueAssigneeSelector({
         currentAssigneeUser.name,
         currentAssigneeUser.avatar_url,
         showText,
+        isDarkMode,
         currentAssigneeUser.email
       );
     }
@@ -295,6 +300,7 @@ export default function IssueAssigneeSelector({
         currentUser.user_metadata?.name || "",
         currentUser.user_metadata?.avatar_url || null,
         showText,
+        isDarkMode,
         currentUser.email || null
       );
     }
@@ -307,12 +313,13 @@ export default function IssueAssigneeSelector({
         contributor.name,
         contributor.avatar_url,
         showText,
+        isDarkMode,
         contributor.email
       );
     }
 
     // If not found, display a default user label
-    return renderUserLabel("", null, showText, null);
+    return renderUserLabel("", null, showText, isDarkMode, null);
   })();
 
   return (
@@ -331,6 +338,7 @@ export function renderUserLabel(
   name: string,
   avatarUrl: string | null,
   showText: boolean,
+  isDarkMode: boolean,
   email?: string | null,
   readOnly?: boolean | null
 ) {
@@ -344,7 +352,7 @@ export function renderUserLabel(
           height={22}
           className="w-[22px] h-[22px] rounded-full"
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(22, 22)}
+          blurDataURL={shimmerDataUrlWithTheme(22, 22, isDarkMode)}
         />
       ) : (
         <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -383,7 +391,7 @@ export function renderUserLabel(
                       height={28}
                       className="w-7 h-7 rounded-full"
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(28, 28)}
+                      blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
                     />
                   ) : (
                     <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -425,7 +433,8 @@ export function renderUnassignedLabel(showText: boolean) {
 export function renderUserLabelSm(
   name: string,
   avatarUrl: string | null,
-  showText: boolean
+  showText: boolean,
+  isDarkMode: boolean
 ) {
   return (
     <div className="flex items-center gap-1 -my-[1px]">
@@ -437,7 +446,7 @@ export function renderUserLabelSm(
           height={20}
           className="w-5 h-5 rounded-full"
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(20, 20)}
+          blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
         />
       ) : (
         <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300 font-semibold">

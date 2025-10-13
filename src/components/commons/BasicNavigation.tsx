@@ -5,7 +5,7 @@ import copanylogo from "@/assets/copany_logo.svg";
 import copanylogoDark from "@/assets/copany_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useRouter } from "next/navigation";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 
 export default function BasicNavigation() {
   const isDarkMode = useDarkMode();
@@ -19,7 +19,7 @@ export default function BasicNavigation() {
         width={48}
         height={48}
         placeholder="blur"
-        blurDataURL={shimmerDataUrl(48, 48)}
+        blurDataURL={shimmerDataUrlWithTheme(48, 48, isDarkMode)}
         onClick={() => router.push("/")}
       />
     </header>

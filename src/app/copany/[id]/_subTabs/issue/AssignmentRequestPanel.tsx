@@ -5,7 +5,8 @@ import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import type { AssignmentRequest } from "@/types/database.types";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import {
   useAssignmentRequests,
@@ -35,6 +36,7 @@ export default function AssignmentRequestPanel({
   onFocusNewComment,
   onActivityChanged,
 }: AssignmentRequestPanelProps) {
+  const isDarkMode = useDarkMode();
   const { data: itemsData } = useAssignmentRequests(issueId);
   const items = (itemsData || EMPTY_ARRAY) as AssignmentRequest[];
   const userIds = Array.from(
@@ -109,7 +111,7 @@ export default function AssignmentRequestPanel({
                       height={20}
                       className="w-5 h-5 rounded-full"
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(20, 20)}
+                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
                   ) : (
                     <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
@@ -142,7 +144,11 @@ export default function AssignmentRequestPanel({
                           height={16}
                           className="w-4 h-4 rounded-full"
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(16, 16)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            16,
+                            16,
+                            isDarkMode
+                          )}
                         />
                       ) : (
                         <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">

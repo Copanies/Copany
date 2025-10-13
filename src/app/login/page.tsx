@@ -9,7 +9,7 @@ import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import Footer from "@/components/commons/Footer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import {
   signInWithEmail,
   signInWithGitHub,
@@ -159,7 +159,7 @@ export default function Login() {
                 width={16}
                 height={16}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(16, 16)}
+                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
@@ -184,7 +184,7 @@ export default function Login() {
                 width={16}
                 height={16}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(16, 16)}
+                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
@@ -210,7 +210,7 @@ export default function Login() {
                 width={16}
                 height={16}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(16, 16)}
+                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">

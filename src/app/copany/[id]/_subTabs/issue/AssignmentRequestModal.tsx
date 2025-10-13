@@ -5,7 +5,8 @@ import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { User } from "@supabase/supabase-js";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ export default function AssignmentRequestModal({
   copanyId,
   currentUser,
 }: AssignmentRequestModalProps) {
+  const isDarkMode = useDarkMode();
   const [requestMessage, setRequestMessage] = useState("");
   const queryClient = useQueryClient();
 
@@ -68,7 +70,7 @@ export default function AssignmentRequestModal({
                 height={28}
                 className="w-5 h-5 rounded-full"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(28, 28)}
+                blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">

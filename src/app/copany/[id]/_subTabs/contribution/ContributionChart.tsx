@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { Group } from "@visx/group";
 import { Bar, LinePath } from "@visx/shape";
 import { scaleLinear, scaleBand } from "@visx/scale";
@@ -627,7 +627,7 @@ function UserChart({
                   height={24}
                   className="w-6 h-6 rounded-full mr-2.5"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(24, 24)}
+                  blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
                 />
                 <div>
                   <div className="font-bold text-gray-900 dark:text-gray-100">
@@ -669,7 +669,7 @@ function UserChart({
                 height={24}
                 className="w-6 h-6 rounded-full mr-2.5"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(24, 24)}
+                blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
               />
               <div>
                 <div className="font-bold text-gray-900 dark:text-gray-100">

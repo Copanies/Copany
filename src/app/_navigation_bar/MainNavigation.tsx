@@ -15,7 +15,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -116,7 +116,7 @@ export default function MainNavigation() {
         width={32}
         height={32}
         placeholder="blur"
-        blurDataURL={shimmerDataUrl(32, 32)}
+        blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
       />
     ) : (
       <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -131,7 +131,7 @@ export default function MainNavigation() {
             src={user.user_metadata.avatar_url}
             alt={userName}
             placeholder="blur"
-            blurDataURL={shimmerDataUrl(40, 40)}
+            blurDataURL={shimmerDataUrlWithTheme(40, 40, isDarkMode)}
             className="w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600"
             width={40}
             height={40}
@@ -215,7 +215,7 @@ export default function MainNavigation() {
           width={36}
           height={36}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(36, 36)}
+          blurDataURL={shimmerDataUrlWithTheme(36, 36, isDarkMode)}
           onClick={() => router.push("/")}
         />
 

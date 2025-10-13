@@ -5,7 +5,7 @@ import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Modal from "@/components/commons/Modal";
 import Dropdown from "@/components/commons/Dropdown";
@@ -146,7 +146,7 @@ export default function AssetLinkModal({
                 width={20}
                 height={20}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(20, 20)}
+                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
               <p className="text-sm font-semibold w-full text-left">
                 {assetLinks.find((link) => link.id === assetType)?.label || ""}
@@ -172,7 +172,11 @@ export default function AssetLinkModal({
                           width={20}
                           height={20}
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(20, 20)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            20,
+                            20,
+                            isDarkMode
+                          )}
                         />
                         <label className="text-sm font-semibold">
                           {link.label}
@@ -204,7 +208,7 @@ export default function AssetLinkModal({
                       width={20}
                       height={20}
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(20, 20)}
+                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
                     <label
                       htmlFor="assetType"

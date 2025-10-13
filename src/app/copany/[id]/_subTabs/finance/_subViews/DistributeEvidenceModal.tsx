@@ -6,7 +6,7 @@ import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import { Square2StackIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import StatusLabel from "@/components/commons/StatusLabel";
 import ImageUpload from "@/components/commons/ImageUpload";
@@ -85,7 +85,7 @@ export default function DistributeEvidenceModal({
                   height={20}
                   className="w-5 h-5 rounded-full"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(20, 20)}
+                  blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
@@ -126,7 +126,7 @@ export default function DistributeEvidenceModal({
                     width={66}
                     height={35}
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(66, 35)}
+                    blurDataURL={shimmerDataUrlWithTheme(66, 35, isDarkMode)}
                   />
                   <span className="">Wise Payment Link</span>
                 </div>
@@ -166,7 +166,7 @@ export default function DistributeEvidenceModal({
                     width={83.61}
                     height={35}
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(83, 35)}
+                    blurDataURL={shimmerDataUrlWithTheme(83, 35, isDarkMode)}
                   />
                   <span className="">Alipay QR Code Link</span>
                 </div>
