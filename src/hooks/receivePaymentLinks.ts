@@ -1,12 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReceivePaymentLink, ReceivePaymentLinkType } from "@/types/database.types";
-import {
-  getUserPaymentLinksAction,
-  getPaymentLinkByTypeAction,
-  upsertPaymentLinkAction,
-  deletePaymentLinkAction,
-  getPaymentLinkStatusAction
-} from "@/actions/receivePaymentLink.actions";
+import { getPaymentLinkStatusAction } from "@/actions/receivePaymentLink.actions";
 
 type PaymentLinkWithDecrypted = ReceivePaymentLink & { decrypted_link: string };
 
@@ -17,29 +11,18 @@ export function usePaymentLinks(userId: string) {
   return useQuery<PaymentLinkWithDecrypted[]>({
     queryKey: ["paymentLinks", userId],
     queryFn: async () => {
-      // Only use server actions for security (encryption/decryption in server)
-      try {
-        const response = await fetch(`/api/receive-payment-links?userId=${userId}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+      const response = await fetch(`/api/receive-payment-links?userId=${userId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data || [];
-      } catch (error) {
-        console.error("Error fetching payment links:", error);
-        // Fallback to server action
-        const actionResult = await getUserPaymentLinksAction(userId);
-        if (actionResult.success) {
-          return actionResult.data || [];
-        }
-        
-        throw new Error(actionResult.error || "Failed to fetch payment links");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
       }
+
+      const result = await response.json();
+      return result.data || [];
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -54,29 +37,18 @@ export function usePaymentLinkByType(userId: string, type: ReceivePaymentLinkTyp
   return useQuery<PaymentLinkWithDecrypted | null>({
     queryKey: ["paymentLink", userId, type],
     queryFn: async () => {
-      // Only use server actions for security (encryption/decryption in server)
-      try {
-        const response = await fetch(`/api/receive-payment-links?userId=${userId}&type=${type}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+      const response = await fetch(`/api/receive-payment-links?userId=${userId}&type=${type}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-      } catch (error) {
-        console.error("Error fetching payment link by type:", error);
-        // Fallback to server action
-        const actionResult = await getPaymentLinkByTypeAction(userId, type);
-        if (actionResult.success) {
-          return actionResult.data;
-        }
-        
-        throw new Error(actionResult.error || "Failed to fetch payment link");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
       }
+
+      const result = await response.json();
+      return result.data;
     },
     enabled: !!userId && !!type,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -100,30 +72,19 @@ export function useUpsertPaymentLink() {
       type: ReceivePaymentLinkType;
       paymentLink: string;
     }) => {
-      // Only use server actions for security (encryption/decryption in server)
-      try {
-        const response = await fetch("/api/receive-payment-links", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, type, paymentLink }),
-        });
+      const response = await fetch("/api/receive-payment-links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, type, paymentLink }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-      } catch (error) {
-        console.error("Error upserting payment link:", error);
-        // Fallback to server action
-        const actionResult = await upsertPaymentLinkAction(userId, type, paymentLink);
-        if (actionResult.success) {
-          return actionResult.data;
-        }
-        
-        throw new Error(actionResult.error || "Failed to save payment link");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
       }
+
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: (_, { userId, type }) => {
       // Invalidate relevant queries
@@ -147,28 +108,17 @@ export function useDeletePaymentLink() {
       userId: string;
       type: ReceivePaymentLinkType;
     }) => {
-      // Only use server actions for security (encryption/decryption in server)
-      try {
-        const response = await fetch(`/api/receive-payment-links?userId=${userId}&type=${type}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
+      const response = await fetch(`/api/receive-payment-links?userId=${userId}&type=${type}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Error deleting payment link:", error);
-        // Fallback to server action
-        const actionResult = await deletePaymentLinkAction(userId, type);
-        if (actionResult.success) {
-          return actionResult.data;
-        }
-        
-        throw new Error(actionResult.error || "Failed to delete payment link");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
       }
+
+      return true;
     },
     onSuccess: (_, { userId, type }) => {
       // Invalidate relevant queries

@@ -4,17 +4,60 @@ import { EncryptionService } from "@/utils/encryption";
 
 export class ReceivePaymentLinkService {
   /**
+   * Check if current user can access target user's payment links
+   * @param currentUserId - Current authenticated user ID
+   * @param targetUserId - Target user whose payment links are being accessed
+   * @returns true if access is allowed
+   */
+  private static async canAccessPaymentLinks(
+    currentUserId: string,
+    targetUserId: string
+  ): Promise<boolean> {
+    // User can always access their own payment links
+    if (currentUserId === targetUserId) {
+      return true;
+    }
+
+    // Check if current user is a copany owner with pending distributes to target user
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from('distribute')
+      .select('id, copany!inner(created_by)')
+      .eq('to_user', targetUserId)
+      .in('status', ['in_progress', 'in_review'])
+      .eq('copany.created_by', currentUserId)
+      .limit(1);
+
+    if (error) {
+      console.error('Error checking payment link access:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
+  }
+
+  /**
    * Get user's payment links (decrypted)
-   * @param userId - User ID
+   * @param currentUserId - Current authenticated user ID
+   * @param targetUserId - Target user ID whose payment links to fetch
    * @returns Array of payment links with decrypted data
    */
-  static async getUserPaymentLinks(userId: string): Promise<Array<ReceivePaymentLink & { decrypted_link: string }>> {
+  static async getUserPaymentLinks(
+    currentUserId: string,
+    targetUserId: string
+  ): Promise<Array<ReceivePaymentLink & { decrypted_link: string }>> {
+    // Check access permission
+    const hasAccess = await this.canAccessPaymentLinks(currentUserId, targetUserId);
+    if (!hasAccess) {
+      throw new Error('Unauthorized access to payment links');
+    }
+
     const supabase = await createSupabaseClient();
     
     const { data, error } = await supabase
       .from('receive_payment_link')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', targetUserId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -44,20 +87,28 @@ export class ReceivePaymentLinkService {
 
   /**
    * Get payment link by type for a user
-   * @param userId - User ID
+   * @param currentUserId - Current authenticated user ID
+   * @param targetUserId - Target user ID whose payment link to fetch
    * @param type - Payment link type
    * @returns Payment link with decrypted data or null if not found
    */
   static async getPaymentLinkByType(
-    userId: string, 
+    currentUserId: string,
+    targetUserId: string,
     type: ReceivePaymentLinkType
   ): Promise<(ReceivePaymentLink & { decrypted_link: string }) | null> {
+    // Check access permission
+    const hasAccess = await this.canAccessPaymentLinks(currentUserId, targetUserId);
+    if (!hasAccess) {
+      throw new Error('Unauthorized access to payment links');
+    }
+
     const supabase = await createSupabaseClient();
     
     const { data, error } = await supabase
       .from('receive_payment_link')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', targetUserId)
       .eq('type', type)
       .single();
 

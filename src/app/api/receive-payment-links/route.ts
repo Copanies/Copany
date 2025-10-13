@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getUserPaymentLinksAction, getPaymentLinkByTypeAction } from "@/actions/receivePaymentLink.actions";
 import { ReceivePaymentLinkService } from "@/services/receivePaymentLink.service";
 import { ReceivePaymentLinkType } from "@/types/database.types";
 import { createSupabaseClient } from "@/utils/supabase/server";
@@ -24,13 +25,15 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user || user.id !== userId) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized access" },
         { status: 401 }
       );
     }
 
+    let result;
+    
     if (type) {
       // Get specific payment link by type
       if (!['Wise', 'Alipay'].includes(type)) {
@@ -40,15 +43,30 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const paymentLink = await ReceivePaymentLinkService.getPaymentLinkByType(userId, type);
-      return NextResponse.json({ data: paymentLink });
+      result = await getPaymentLinkByTypeAction(user.id, userId, type);
     } else {
       // Get all payment links for user
-      const paymentLinks = await ReceivePaymentLinkService.getUserPaymentLinks(userId);
-      return NextResponse.json({ data: paymentLinks });
+      result = await getUserPaymentLinksAction(user.id, userId);
     }
+
+    if (!result.success) {
+      if (result.error === 'Unauthorized access to payment links') {
+        return NextResponse.json(
+          { error: "Unauthorized access" },
+          { status: 401 }
+        );
+      }
+      
+      return NextResponse.json(
+        { error: result.error || "Failed to fetch payment links" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     console.error("GET /api/receive-payment-links error:", error);
+    
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

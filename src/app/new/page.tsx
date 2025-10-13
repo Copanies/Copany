@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import BasicNavigation from "@/components/commons/BasicNavigation";
+import Footer from "@/components/commons/Footer";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
@@ -918,7 +919,7 @@ export default function New() {
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
 
-      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-0 flex-1">
+      <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px-0 flex-1 min-h-screen">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm"
@@ -1003,6 +1004,7 @@ export default function New() {
           </div>
         </form>
       </div>
+      <Footer />
     </div>
   );
 }

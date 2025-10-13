@@ -1,6 +1,7 @@
 "use client";
 import Button from "@/components/commons/Button";
 import BasicNavigation from "@/components/commons/BasicNavigation";
+import Footer from "@/components/commons/Footer";
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { generateCOSLLicense } from "@/utils/coslLicense";
 
@@ -15,7 +16,7 @@ Copyright (c) ${currentYear} [name of copyright owner] Contributors
 Permission is hereby granted, free of charge, to any person obtaining a copy of this project and associated materials (the “Project”), to use, modify, distribute, and create derivative works for any purpose, including commercial, provided that:`;
 
   return (
-    <main className="h-min-screen bg-[#FBF9F5] dark:bg-background-dark">
+    <main className="min-h-screen bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
       <div className="p-6 max-w-screen-lg mx-auto flex flex-col gap-4 pb-20">
         <Button
@@ -50,6 +51,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           {replaceBracketsContent}
         </pre>
       </div>
+      <Footer />
     </main>
   );
 }

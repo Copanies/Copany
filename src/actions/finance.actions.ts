@@ -33,6 +33,12 @@ export async function reviewTransactionAction(id: string, status: TransactionRev
   return await FinanceService.reviewTransaction(id, status);
 }
 
+export async function deleteTransactionAction(id: string) {
+  const me = await getCurrentUser();
+  if (!me) throw new Error("Not authenticated");
+  return await FinanceService.deleteTransaction(id);
+}
+
 /**
  * Delete all distributes for this copany, and regenerate for current month
  * Period: month 1st 00:00:00 to next month 1st 00:00:00 (UTC)
@@ -151,7 +157,6 @@ export async function regenerateDistributesForCurrentMonthAction(copanyId: strin
     const rows = contributorsWithScores.map((c: { user_id: string; contribution_score: number }) => ({
       copany_id: copanyId,
       to_user: c.user_id,
-      bank_card_number: "0000 0000 0000 0000",
       status: "in_progress",
       contribution_percent: totalContributionScore > 0 ? (c.contribution_score / totalContributionScore) * 100 : 0,
       amount: 0,
@@ -176,7 +181,6 @@ export async function regenerateDistributesForCurrentMonthAction(copanyId: strin
     return {
       copany_id: copanyId,
       to_user: c.user_id,
-      bank_card_number: "0000 0000 0000 0000",
       status: "in_progress",
       contribution_percent: ratio * 100,
       amount,
