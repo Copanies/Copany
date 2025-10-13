@@ -33,14 +33,14 @@ export default function DiscussionLabelChips({
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       {labels.map((label) => (
-        <div
-          key={label.id}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium text-white"
-          style={{
-            backgroundColor: `${label.color}`,
-          }}
-        >
-          <span>{label.name}</span>
+        <div className="flex items-center gap-2" key={label.id}>
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{
+              backgroundColor: `${label.color}`,
+            }}
+          />
+          {label.name}
         </div>
       ))}
     </div>

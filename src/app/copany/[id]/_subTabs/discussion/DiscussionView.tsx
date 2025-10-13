@@ -268,7 +268,10 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           {filtered.length === 0 ? (
             <EmptyPlaceholderView
               icon={
-                <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
+                <ChatBubbleLeftRightIcon
+                  className="w-16 h-16 text-gray-400"
+                  strokeWidth={1}
+                />
               }
               title="No discussions for this label"
               description="Try another label."
@@ -352,12 +355,6 @@ function DiscussionItem({
           }
         >
           <div className="flex flex-col gap-3">
-            {discussion.labels && discussion.labels.length > 0 && (
-              <DiscussionLabelChips
-                labelIds={discussion.labels}
-                className="mt-1"
-              />
-            )}
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               {creator?.avatar_url ? (
                 <Image
@@ -371,12 +368,15 @@ function DiscussionItem({
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
-                  {(creator?.name || "?").slice(0, 1).toUpperCase()}
+                  {(creator?.name || "").slice(0, 1).toUpperCase()}
                 </div>
               )}
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
+              {discussion.labels && discussion.labels.length > 0 && (
+                <DiscussionLabelChips labelIds={discussion.labels} />
+              )}
               <span>·</span>
               <time title={discussion.created_at}>
                 {formatRelativeTime(discussion.created_at)}

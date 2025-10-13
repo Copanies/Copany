@@ -154,13 +154,6 @@ export default function DiscussionPageClient({
 
       {/* Discussion header */}
       <div className="mb-5">
-        {/* Labels */}
-        {discussion.labels && discussion.labels.length > 0 && (
-          <div className="mb-3">
-            <DiscussionLabelChips labelIds={discussion.labels} />
-          </div>
-        )}
-
         {/* Creator info */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex flex-row items-center gap-3">
@@ -176,12 +169,17 @@ export default function DiscussionPageClient({
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm text-gray-700 dark:text-gray-200">
-                {(creator?.name || "?").slice(0, 1).toUpperCase()}
+                {(creator?.name || "").slice(0, 1).toUpperCase()}
               </div>
             )}
             <div className="flex flex-row items-center gap-2">
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
+              </span>
+              <span className="text-sm text-gray-500">
+                {discussion.labels && discussion.labels.length > 0 && (
+                  <DiscussionLabelChips labelIds={discussion.labels} />
+                )}
               </span>
               <span>·</span>
               <span className="text-sm text-gray-500">
