@@ -31,6 +31,7 @@ import {
   useDeletePaymentLink,
 } from "@/hooks/receivePaymentLinks";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import QRCodeUploader from "@/components/commons/QRCodeUploader";
 
 export default function AccountView({ userId }: { userId: string }) {
   const { data: user, isLoading } = useUserInfo(userId);
@@ -243,6 +244,32 @@ export default function AccountView({ userId }: { userId: string }) {
     }
   };
 
+  const handleWiseQrScan = (text: string) => {
+    const wisePattern = /^https:\/\/wise\.com\/pay\/me\/.+$/;
+
+    if (wisePattern.test(text)) {
+      setWiseLink(text);
+      alert("QR code scanned successfully!");
+    } else {
+      alert(
+        "Extracted text doesn't match Wise link format. Please verify manually."
+      );
+    }
+  };
+
+  const handleAlipayQrScan = (text: string) => {
+    const alipayPattern = /^https:\/\/qr\.alipay\.com\/.+$/;
+
+    if (alipayPattern.test(text)) {
+      setAlipayLink(text);
+      alert("QR code scanned successfully!");
+    } else {
+      alert(
+        "Extracted text doesn't match Alipay link format. Please verify manually."
+      );
+    }
+  };
+
   if (isLoading || providersLoading) {
     return <LoadingView type="label" />;
   }
@@ -314,6 +341,7 @@ export default function AccountView({ userId }: { userId: string }) {
                     </button>
                   )}
                 </div>
+                <QRCodeUploader onScan={handleWiseQrScan} />
                 <Button
                   onClick={handleSaveWiseLink}
                   disabled={isWiseLoading || !wiseLink.trim()}
@@ -366,6 +394,7 @@ export default function AccountView({ userId }: { userId: string }) {
                     </button>
                   )}
                 </div>
+                <QRCodeUploader onScan={handleAlipayQrScan} />
                 <Button
                   onClick={handleSaveAlipayLink}
                   disabled={isAlipayLoading || !alipayLink.trim()}
