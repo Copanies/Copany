@@ -293,7 +293,14 @@ function UserChart({
   }, []);
 
   const height = 200;
-  const margin = { top: 32, right: 32, bottom: 32, left: 32 }; // Increase right margin for line chart Y-axis
+  // Use smaller margins on very small screens
+  const isMobile = containerWidth < 640; // sm breakpoint
+  const margin = {
+    top: isMobile ? 24 : 32,
+    right: isMobile ? 24 : 32,
+    bottom: isMobile ? 24 : 32,
+    left: isMobile ? 24 : 32,
+  };
   const availableWidth = containerWidth - margin.left - margin.right;
   const chartWidth = availableWidth > 50 ? availableWidth : 50; // Ensure minimum width of 50px
   const chartHeight = height - margin.top - margin.bottom;
@@ -614,23 +621,23 @@ function UserChart({
   // If container width is invalid, show loading state
   if (containerWidth <= 0) {
     return (
-      <div ref={containerRef} className="mb-10 w-full relative">
+      <div ref={containerRef} className="mb-10 w-full min-w-0 relative">
         {showUserInfo && (
           <>
             {/* User Info */}
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center">
+            <div className="flex justify-between items-center mb-3 min-w-0">
+              <div className="flex items-center min-w-0 flex-1">
                 <Image
                   src={userData.user.avatar_url}
                   alt={userData.user.name}
                   width={24}
                   height={24}
-                  className="w-6 h-6 rounded-full mr-2.5"
+                  className="w-6 h-6 rounded-full mr-2.5 flex-shrink-0"
                   placeholder="blur"
                   blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
                 />
-                <div>
-                  <div className="font-bold text-gray-900 dark:text-gray-100">
+                <div className="min-w-0">
+                  <div className="font-bold text-gray-900 dark:text-gray-100 truncate">
                     {userData.user.name}
                   </div>
                 </div>
@@ -638,7 +645,7 @@ function UserChart({
 
               {/* Rank display in top-right corner */}
               {rank !== undefined && (
-                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px]">
+                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px] flex-shrink-0 ml-2">
                   #{rank}
                 </div>
               )}
@@ -656,23 +663,23 @@ function UserChart({
   }
 
   return (
-    <div ref={containerRef} className="mb-10 w-full relative">
+    <div ref={containerRef} className="mb-10 w-full min-w-0 relative">
       {showUserInfo && (
         <>
           {/* User Info */}
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center">
+          <div className="flex justify-between items-center mb-3 min-w-0">
+            <div className="flex items-center min-w-0 flex-1">
               <Image
                 src={userData.user.avatar_url}
                 alt={userData.user.name}
                 width={24}
                 height={24}
-                className="w-6 h-6 rounded-full mr-2.5"
+                className="w-6 h-6 rounded-full mr-2.5 flex-shrink-0"
                 placeholder="blur"
                 blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
               />
-              <div>
-                <div className="font-bold text-gray-900 dark:text-gray-100">
+              <div className="min-w-0">
+                <div className="font-bold text-gray-900 dark:text-gray-100 truncate">
                   {userData.user.name}
                 </div>
               </div>
@@ -680,7 +687,7 @@ function UserChart({
 
             {/* Rank display in top-right corner */}
             {rank !== undefined && (
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px]">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-[2px] flex-shrink-0 ml-2">
                 #{rank}
               </div>
             )}
@@ -695,7 +702,7 @@ function UserChart({
       )}
 
       {/* Chart */}
-      <svg width={containerWidth} height={height}>
+      <svg width={containerWidth} height={height} className="max-w-full">
         <Group left={margin.left} top={margin.top}>
           {/* Horizontal grid lines */}
           {leftYTickValues.map((tickValue, index) => (
@@ -969,7 +976,7 @@ function UserChart({
       )}
 
       {/* Legend */}
-      <div className="flex flex-row mt-2 gap-3 justify-between font-semibold text-sm">
+      <div className="flex flex-col sm:flex-row mt-2 gap-2 sm:gap-3 sm:justify-between font-semibold text-sm">
         <div className="flex gap-3 flex-wrap gap-y-1">
           {/* Issue Level Legend */}
           {displayLevels.map((level) => (
@@ -1061,11 +1068,11 @@ function ContributionStats({
     .join(", ");
 
   return (
-    <div>
-      <div className="text-3xl font-normal text-gray-900 dark:text-gray-100">
+    <div className="min-w-0">
+      <div className="text-3xl font-normal text-gray-900 dark:text-gray-100 break-words">
         {userTotalScore} CP - {percentage.toFixed(1)}%
       </div>
-      <div className="text-sm text-gray-900 dark:text-gray-100">
+      <div className="text-sm text-gray-900 dark:text-gray-100 break-words">
         {levelCountsDisplay}
       </div>
     </div>
