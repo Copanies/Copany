@@ -21,6 +21,7 @@ import GooglePlayStoreIcon from "@/assets/google_play_store_logo.png";
 import WebsiteIcon from "@/assets/website_logo.svg";
 import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import {
   PencilIcon,
@@ -461,6 +462,8 @@ export default function SettingsView({
                 width={96}
                 height={96}
                 className="w-24 h-24 rounded-lg"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(96, 96)}
               />
             ) : (
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
@@ -571,6 +574,8 @@ export default function SettingsView({
                   width={96}
                   height={96}
                   className="w-24 h-24 rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(96, 96)}
                   onLoad={() => setIsImageLoading(false)}
                   onError={() => setIsImageLoading(false)}
                 />
@@ -641,6 +646,8 @@ export default function SettingsView({
                   width={400}
                   height={128}
                   className="w-full h-32 object-cover rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(400, 128)}
                   onLoad={() => setIsCoverImageLoading(false)}
                   onError={() => setIsCoverImageLoading(false)}
                 />
@@ -702,6 +709,10 @@ export default function SettingsView({
                       src={isDarkMode ? link.darkIcon : link.icon}
                       alt={link.label || ""}
                       className="w-5 h-5"
+                      width={20}
+                      height={20}
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(20, 20)}
                     />
                     <p className="text-sm font-semibold text-center">
                       {link.label}
@@ -777,6 +788,10 @@ export default function SettingsView({
               src={isDarkMode ? GithubDarkIcon : GithubIcon}
               alt="GitHub"
               className="w-8 h-8 rounded-md p-2 bg-gray-100 dark:bg-gray-900"
+              width={32}
+              height={32}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(32, 32)}
             />
             <div className="flex flex-col gap-0">
               <p className="text-sm font-medium">GitHub</p>

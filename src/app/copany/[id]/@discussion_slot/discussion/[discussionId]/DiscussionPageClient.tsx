@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { useRouter } from "next/navigation";
 import {
   ChatBubbleBottomCenterIcon,
@@ -170,6 +171,8 @@ export default function DiscussionPageClient({
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded-full"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(32, 32)}
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm text-gray-700 dark:text-gray-200">
@@ -266,6 +269,8 @@ export default function DiscussionPageClient({
                 alt="Vote"
                 width={16}
                 height={16}
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(16, 16)}
               />
               <span>{countQuery.data ?? 0}</span>
             </div>

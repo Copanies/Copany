@@ -24,6 +24,7 @@ import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
@@ -365,6 +366,8 @@ function DiscussionItem({
                   width={32}
                   height={32}
                   className="w-8 h-8 rounded-full"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(32, 32)}
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
@@ -416,6 +419,8 @@ function DiscussionItem({
               alt="Vote"
               width={16}
               height={16}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(16, 16)}
             />
             <span>{voteCount}</span>
           </div>

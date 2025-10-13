@@ -5,6 +5,7 @@ import Modal from "@/components/commons/Modal";
 import Button from "@/components/commons/Button";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { User } from "@supabase/supabase-js";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,6 +67,8 @@ export default function AssignmentRequestModal({
                 width={28}
                 height={28}
                 className="w-5 h-5 rounded-full"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(28, 28)}
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-300">

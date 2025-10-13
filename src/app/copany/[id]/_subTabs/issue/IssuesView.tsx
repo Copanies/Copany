@@ -24,6 +24,7 @@ import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import type { AssignmentRequest } from "@/types/database.types";
 import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
 
@@ -351,6 +352,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                 width={22}
                 height={22}
                 className="w-[22px] h-[22px] rounded-full border border-white dark:border-black"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(22, 22)}
               />
             ) : (
               <div

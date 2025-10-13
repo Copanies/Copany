@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
 import { scaleOrdinal } from "@visx/scale";
@@ -458,6 +459,8 @@ export default function ContributionPieChart({
                     width={24}
                     height={24}
                     className="w-6 h-6 rounded-full flex-shrink-0"
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(24, 24)}
                   />
                 )}
                 <div className="min-w-0 flex-1">
@@ -501,6 +504,8 @@ export default function ContributionPieChart({
                 width={24}
                 height={24}
                 className="w-6 h-6 rounded-full"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(24, 24)}
               />
             )}
             <div className="flex flex-col gap-0">

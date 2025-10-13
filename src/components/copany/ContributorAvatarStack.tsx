@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useContributors } from "@/hooks/contributors";
 import { useMemo } from "react";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
+import { shimmerDataUrl } from "@/utils/shimmer";
 
 interface ContributorAvatarStackProps {
   copany: Copany;
@@ -77,6 +78,8 @@ export default function ContributorAvatarStack({
             width={width[size]}
             height={height[size]}
             className={`rounded-full ${sizeClasses[size]}`}
+            placeholder="blur"
+            blurDataURL={shimmerDataUrl(width[size], height[size])}
           />
         </div>
       ))}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import {
   IssueActivity,
   IssueActivityType,
@@ -404,6 +405,8 @@ export default function IssueActivityTimeline({
             width={20}
             height={20}
             className="w-5 h-5 rounded-full"
+            placeholder="blur"
+            blurDataURL={shimmerDataUrl(20, 20)}
           />
         );
       return (

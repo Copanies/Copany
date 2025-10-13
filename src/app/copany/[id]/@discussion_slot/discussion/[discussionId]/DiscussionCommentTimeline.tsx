@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import {
   useDiscussionComments,
   useCreateDiscussionComment,
@@ -82,6 +83,8 @@ function VoteButton({
           alt="Vote"
           width={16}
           height={16}
+          placeholder="blur"
+          blurDataURL={shimmerDataUrl(16, 16)}
         />
         <span>{voteCount ?? 0}</span>
       </div>
@@ -177,6 +180,8 @@ function CommentNode({
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded-full relative z-10"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(32, 32)}
               />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {author.name}

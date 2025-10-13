@@ -20,6 +20,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import { BanknotesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
@@ -515,6 +516,8 @@ function TransactionDetailModal({
                 width={20}
                 height={20}
                 className="w-5 h-5 rounded-full"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(20, 20)}
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
@@ -560,6 +563,8 @@ function TransactionDetailModal({
                   height={320}
                   className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                   onClick={open}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(320, 320)}
                 />
               )}
             />
@@ -668,6 +673,8 @@ function TransactionsGroupList({
                       width={20}
                       height={20}
                       className="w-5 h-5 rounded-full"
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(20, 20)}
                     />
                   ) : (
                     <div

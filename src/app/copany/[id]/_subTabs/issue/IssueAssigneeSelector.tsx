@@ -10,6 +10,7 @@ import {
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
@@ -342,6 +343,8 @@ export function renderUserLabel(
           width={22}
           height={22}
           className="w-[22px] h-[22px] rounded-full"
+          placeholder="blur"
+          blurDataURL={shimmerDataUrl(22, 22)}
         />
       ) : (
         <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -379,6 +382,8 @@ export function renderUserLabel(
                       width={28}
                       height={28}
                       className="w-7 h-7 rounded-full"
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(28, 28)}
                     />
                   ) : (
                     <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -431,6 +436,8 @@ export function renderUserLabelSm(
           width={20}
           height={20}
           className="w-5 h-5 rounded-full"
+          placeholder="blur"
+          blurDataURL={shimmerDataUrl(20, 20)}
         />
       ) : (
         <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300 font-semibold">

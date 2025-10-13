@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import jsQR from "jsqr";
 import Button from "./Button";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 interface QRCodeUploaderProps {
   onScan: (text: string) => void;
@@ -15,7 +16,7 @@ interface QRCodeUploaderProps {
 export default function QRCodeUploader({
   onScan,
   onError,
-  buttonText = "Upload QR code",
+  buttonText = "QR code",
   accept = "image/*",
   disabled = false,
 }: QRCodeUploaderProps) {
@@ -95,7 +96,10 @@ export default function QRCodeUploader({
         className="hidden"
       />
       <Button onClick={handleClick} disabled={disabled || isScanning}>
-        {isScanning ? "Scanning..." : buttonText}
+        <div className="flex flex-row items-center gap-2">
+          <ArrowUpTrayIcon className="w-4 h-4" strokeWidth={1.5} />
+          {isScanning ? "Scanning..." : buttonText}
+        </div>
       </Button>
     </>
   );
