@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getUserPaymentLinksAction, getPaymentLinkByTypeAction } from "@/actions/receivePaymentLink.actions";
 import { ReceivePaymentLinkService } from "@/services/receivePaymentLink.service";
 import { ReceivePaymentLinkType } from "@/types/database.types";
 import { createSupabaseClient } from "@/utils/supabase/server";
@@ -31,27 +32,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user can access the payment links:
-    // 1. User accessing their own payment links
-    // 2. Copany owner accessing payment links of recipients with pending distributes
-    if (user.id !== userId) {
-      const { data: hasAccess, error: accessError } = await supabase
-        .from('distribute')
-        .select('id')
-        .eq('to_user', userId)
-        .in('status', ['in_progress', 'in_review'])
-        .inner('copany', 'distribute.copany_id', 'copany.id')
-        .eq('copany.created_by', user.id)
-        .limit(1);
-
-      if (accessError || !hasAccess || hasAccess.length === 0) {
-        return NextResponse.json(
-          { error: "Unauthorized access" },
-          { status: 401 }
-        );
-      }
-    }
-
+    let result;
+    
     if (type) {
       // Get specific payment link by type
       if (!['Wise', 'Alipay'].includes(type)) {
@@ -61,15 +43,30 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const paymentLink = await ReceivePaymentLinkService.getPaymentLinkByType(userId, type);
-      return NextResponse.json({ data: paymentLink });
+      result = await getPaymentLinkByTypeAction(user.id, userId, type);
     } else {
       // Get all payment links for user
-      const paymentLinks = await ReceivePaymentLinkService.getUserPaymentLinks(userId);
-      return NextResponse.json({ data: paymentLinks });
+      result = await getUserPaymentLinksAction(user.id, userId);
     }
+
+    if (!result.success) {
+      if (result.error === 'Unauthorized access to payment links') {
+        return NextResponse.json(
+          { error: "Unauthorized access" },
+          { status: 401 }
+        );
+      }
+      
+      return NextResponse.json(
+        { error: result.error || "Failed to fetch payment links" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     console.error("GET /api/receive-payment-links error:", error);
+    
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

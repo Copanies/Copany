@@ -12,9 +12,12 @@ export interface ActionResult<T = unknown> {
 /**
  * Get user's payment links
  */
-export async function getUserPaymentLinksAction(userId: string): Promise<ActionResult> {
+export async function getUserPaymentLinksAction(
+  currentUserId: string,
+  targetUserId: string
+): Promise<ActionResult> {
   try {
-    const paymentLinks = await ReceivePaymentLinkService.getUserPaymentLinks(userId);
+    const paymentLinks = await ReceivePaymentLinkService.getUserPaymentLinks(currentUserId, targetUserId);
     return { success: true, data: paymentLinks };
   } catch (error) {
     console.error("Get user payment links action error:", error);
@@ -29,11 +32,12 @@ export async function getUserPaymentLinksAction(userId: string): Promise<ActionR
  * Get payment link by type
  */
 export async function getPaymentLinkByTypeAction(
-  userId: string, 
+  currentUserId: string,
+  targetUserId: string,
   type: ReceivePaymentLinkType
 ): Promise<ActionResult> {
   try {
-    const paymentLink = await ReceivePaymentLinkService.getPaymentLinkByType(userId, type);
+    const paymentLink = await ReceivePaymentLinkService.getPaymentLinkByType(currentUserId, targetUserId, type);
     return { success: true, data: paymentLink };
   } catch (error) {
     console.error("Get payment link by type action error:", error);
