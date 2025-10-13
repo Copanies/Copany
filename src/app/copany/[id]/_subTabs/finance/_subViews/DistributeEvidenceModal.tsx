@@ -6,6 +6,7 @@ import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import { Square2StackIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import StatusLabel from "@/components/commons/StatusLabel";
 import ImageUpload from "@/components/commons/ImageUpload";
@@ -41,7 +42,8 @@ export default function DistributeEvidenceModal({
   const isDarkMode = useDarkMode();
 
   // Get payment links for the distribute.to_user
-  const { data: paymentLinks } = usePaymentLinks(distribute?.to_user || "");
+  const { data: paymentLinks, isLoading: isLoadingPaymentLinks } =
+    usePaymentLinks(distribute?.to_user || "");
 
   // Extract Alipay and Wise links
   const alipayLink = paymentLinks?.find(
@@ -82,6 +84,8 @@ export default function DistributeEvidenceModal({
                   width={20}
                   height={20}
                   className="w-5 h-5 rounded-full"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(20, 20)}
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
@@ -121,10 +125,16 @@ export default function DistributeEvidenceModal({
                     alt="Wise Logo"
                     width={66}
                     height={35}
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(66, 35)}
                   />
                   <span className="">Wise Payment Link</span>
                 </div>
-                {wiseLink ? (
+                {isLoadingPaymentLinks ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : wiseLink ? (
                   <div className="flex items-center gap-2">
                     <Link href={wiseLink} target="_blank">
                       <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">
@@ -155,10 +165,16 @@ export default function DistributeEvidenceModal({
                     alt="Alipay Logo"
                     width={83.61}
                     height={35}
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(83, 35)}
                   />
                   <span className="">Alipay QR Code Link</span>
                 </div>
-                {alipayLink ? (
+                {isLoadingPaymentLinks ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : alipayLink ? (
                   <div className="flex items-center gap-2">
                     <Link href={alipayLink} target="_blank">
                       <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">

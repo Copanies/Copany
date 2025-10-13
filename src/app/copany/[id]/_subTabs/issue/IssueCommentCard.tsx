@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { useState } from "react";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
@@ -100,6 +101,8 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                 width={20}
                 height={20}
                 className="w-5 h-5 rounded-full"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(20, 20)}
               />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
                 {userInfos[comment.created_by]!.name}
@@ -276,6 +279,8 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             width={20}
                             height={20}
                             className="w-5 h-5 rounded-full"
+                            placeholder="blur"
+                            blurDataURL={shimmerDataUrl(20, 20)}
                           />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">

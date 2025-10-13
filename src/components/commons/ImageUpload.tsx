@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import Button from "./Button";
 import PhotoViewer from "./PhotoViewer";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -132,6 +133,8 @@ export default function ImageUpload({
                 height={320}
                 className="max-w-full max-h-40 w-auto h-auto rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in object-contain"
                 onClick={open}
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(320, 320)}
               />
             )}
           />

@@ -6,6 +6,7 @@ import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
 import LicenseBadge from "@/components/copany/LicenseBadge";
 import StarButton from "@/components/copany/StarButton";
+import { shimmerDataUrl } from "@/utils/shimmer";
 
 interface CopanyListViewProps {
   copanies: Copany[];
@@ -36,6 +37,8 @@ export default function CopanyListView({ copanies }: CopanyListViewProps) {
                     className="w-8 h-8 rounded-md"
                     width={32}
                     height={32}
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(32, 32)}
                   />
                 )}
                 <div className="font-semibold text-base">{copany.name}</div>

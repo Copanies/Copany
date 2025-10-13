@@ -24,6 +24,7 @@ import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
@@ -267,7 +268,10 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           {filtered.length === 0 ? (
             <EmptyPlaceholderView
               icon={
-                <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400" />
+                <ChatBubbleLeftRightIcon
+                  className="w-16 h-16 text-gray-400"
+                  strokeWidth={1}
+                />
               }
               title="No discussions for this label"
               description="Try another label."
@@ -351,12 +355,6 @@ function DiscussionItem({
           }
         >
           <div className="flex flex-col gap-3">
-            {discussion.labels && discussion.labels.length > 0 && (
-              <DiscussionLabelChips
-                labelIds={discussion.labels}
-                className="mt-1"
-              />
-            )}
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               {creator?.avatar_url ? (
                 <Image
@@ -365,15 +363,20 @@ function DiscussionItem({
                   width={32}
                   height={32}
                   className="w-8 h-8 rounded-full"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(32, 32)}
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
-                  {(creator?.name || "?").slice(0, 1).toUpperCase()}
+                  {(creator?.name || "").slice(0, 1).toUpperCase()}
                 </div>
               )}
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
+              {discussion.labels && discussion.labels.length > 0 && (
+                <DiscussionLabelChips labelIds={discussion.labels} />
+              )}
               <span>·</span>
               <time title={discussion.created_at}>
                 {formatRelativeTime(discussion.created_at)}
@@ -416,6 +419,8 @@ function DiscussionItem({
               alt="Vote"
               width={16}
               height={16}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(16, 16)}
             />
             <span>{voteCount}</span>
           </div>

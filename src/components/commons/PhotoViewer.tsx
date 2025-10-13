@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 type PhotoViewerProps = {
@@ -56,6 +57,8 @@ export default function PhotoViewer({
             onClick={open}
             role="button"
             aria-label={alt}
+            placeholder="blur"
+            blurDataURL={shimmerDataUrl(128, 128)}
           />
         </div>
       )}
@@ -77,6 +80,8 @@ export default function PhotoViewer({
               fill
               className="object-contain rounded shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(800, 800)}
             />
           </div>
 

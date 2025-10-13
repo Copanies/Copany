@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useHasProviders } from "@/hooks/userAuth";
 import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import { AtSymbolIcon } from "@heroicons/react/24/outline";
 import {
   signInWithGitHub,
@@ -31,6 +32,7 @@ import {
   useDeletePaymentLink,
 } from "@/hooks/receivePaymentLinks";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import QRCodeUploader from "@/components/commons/QRCodeUploader";
 
 export default function AccountView({ userId }: { userId: string }) {
   const { data: user, isLoading } = useUserInfo(userId);
@@ -243,6 +245,32 @@ export default function AccountView({ userId }: { userId: string }) {
     }
   };
 
+  const handleWiseQrScan = (text: string) => {
+    const wisePattern = /^https:\/\/wise\.com\/pay\/me\/.+$/;
+
+    if (wisePattern.test(text)) {
+      setWiseLink(text);
+      alert("QR code scanned successfully!");
+    } else {
+      alert(
+        "Extracted text doesn't match Wise link format. Please verify manually."
+      );
+    }
+  };
+
+  const handleAlipayQrScan = (text: string) => {
+    const alipayPattern = /^https:\/\/qr\.alipay\.com\/.+$/;
+
+    if (alipayPattern.test(text)) {
+      setAlipayLink(text);
+      alert("QR code scanned successfully!");
+    } else {
+      alert(
+        "Extracted text doesn't match Alipay link format. Please verify manually."
+      );
+    }
+  };
+
   if (isLoading || providersLoading) {
     return <LoadingView type="label" />;
   }
@@ -285,13 +313,20 @@ export default function AccountView({ userId }: { userId: string }) {
             {/* Wise Payment Link */}
             <div className="flex flex-col gap-3 max-w-full">
               <div className="flex flex-row gap-3 items-center">
-                <Image src={wiseIcon} alt="Wise Logo" width={66} height={35} />
+                <Image
+                  src={wiseIcon}
+                  alt="Wise Logo"
+                  width={66}
+                  height={35}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(66, 35)}
+                />
                 <label htmlFor="wiseLink" className="text-sm font-semibold">
                   Wise Payment Link
                 </label>
               </div>
-              <div className="flex flex-row gap-3 max-w-full items-center">
-                <div className="relative flex-1 max-w-[400px]">
+              <div className="flex flex-col md:flex-row gap-3 max-w-full md:items-center">
+                <div className="relative flex-1 max-w-80">
                   <input
                     type={showWiseLink ? "text" : "password"}
                     id="wiseLink"
@@ -314,17 +349,20 @@ export default function AccountView({ userId }: { userId: string }) {
                     </button>
                   )}
                 </div>
-                <Button
-                  onClick={handleSaveWiseLink}
-                  disabled={isWiseLoading || !wiseLink.trim()}
-                >
-                  {isWiseLoading ? "Saving..." : "Save"}
-                </Button>
-                {wisePaymentLink && (
-                  <Button onClick={handleDeleteWiseLink} variant="danger">
-                    Delete
+                <div className="flex flex-row gap-3 items-center">
+                  <QRCodeUploader onScan={handleWiseQrScan} />
+                  <Button
+                    onClick={handleSaveWiseLink}
+                    disabled={isWiseLoading || !wiseLink.trim()}
+                  >
+                    {isWiseLoading ? "Saving..." : "Save"}
                   </Button>
-                )}
+                  {wisePaymentLink && (
+                    <Button onClick={handleDeleteWiseLink} variant="danger">
+                      Delete
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="text-sm">How to get your link?</p>
             </div>
@@ -337,13 +375,15 @@ export default function AccountView({ userId }: { userId: string }) {
                   alt="Alipay Logo"
                   width={83.61}
                   height={35}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(83.61, 35)}
                 />
                 <label htmlFor="alipayLink" className="text-sm font-semibold">
                   Alipay QR Code Link
                 </label>
               </div>
-              <div className="flex flex-row gap-3 max-w-full items-center">
-                <div className="relative flex-1 max-w-[400px]">
+              <div className="flex flex-col md:flex-row gap-3 max-w-full md:items-center">
+                <div className="relative flex-1 max-w-80">
                   <input
                     type={showAlipayLink ? "text" : "password"}
                     id="alipayLink"
@@ -366,17 +406,20 @@ export default function AccountView({ userId }: { userId: string }) {
                     </button>
                   )}
                 </div>
-                <Button
-                  onClick={handleSaveAlipayLink}
-                  disabled={isAlipayLoading || !alipayLink.trim()}
-                >
-                  {isAlipayLoading ? "Saving..." : "Save"}
-                </Button>
-                {alipayPaymentLink && (
-                  <Button onClick={handleDeleteAlipayLink} variant="danger">
-                    Delete
+                <div className="flex flex-row gap-3 items-center">
+                  <QRCodeUploader onScan={handleAlipayQrScan} />
+                  <Button
+                    onClick={handleSaveAlipayLink}
+                    disabled={isAlipayLoading || !alipayLink.trim()}
+                  >
+                    {isAlipayLoading ? "Saving..." : "Save"}
                   </Button>
-                )}
+                  {alipayPaymentLink && (
+                    <Button onClick={handleDeleteAlipayLink} variant="danger">
+                      Delete
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="text-sm">How to get your link?</p>
             </div>
@@ -402,6 +445,8 @@ export default function AccountView({ userId }: { userId: string }) {
                           src={isDarkMode ? githubIconWhite : githubIconBlack}
                           width={16}
                           height={16}
+                          placeholder="blur"
+                          blurDataURL={shimmerDataUrl(16, 16)}
                         />
                         <span className="font-base">GitHub Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -424,6 +469,8 @@ export default function AccountView({ userId }: { userId: string }) {
                           src={googleIcon}
                           width={16}
                           height={16}
+                          placeholder="blur"
+                          blurDataURL={shimmerDataUrl(16, 16)}
                         />
                         <span className="font-base">Google Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -443,6 +490,8 @@ export default function AccountView({ userId }: { userId: string }) {
                           src={figmaIcon}
                           width={16}
                           height={16}
+                          placeholder="blur"
+                          blurDataURL={shimmerDataUrl(16, 16)}
                         />
                         <span className="font-base">Figma Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
@@ -505,6 +554,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   src={isDarkMode ? githubIconBlack : githubIconWhite}
                   width={16}
                   height={16}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(16, 16)}
                 />
                 <span className="whitespace-nowrap">
                   {isGitHubLoading ? "Linking..." : "Link with GitHub"}
@@ -530,6 +581,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   src={googleIcon}
                   width={16}
                   height={16}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(16, 16)}
                 />
                 <span className="whitespace-nowrap">
                   {isGoogleLoading ? "Linking..." : "Link with Google"}
@@ -555,6 +608,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   src={figmaIcon}
                   width={16}
                   height={16}
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(16, 16)}
                 />
                 <span className="whitespace-nowrap">
                   {isFigmaLoading ? "Linking..." : "Link with Figma"}

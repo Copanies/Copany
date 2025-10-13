@@ -7,6 +7,7 @@ import TabView from "@/components/commons/TabView";
 import ReadmeView from "./_subTabs/readme/ReadmeView";
 import LicenseView from "./_subTabs/license/LicenseView";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./_subTabs/CooperateView";
 import ContributionView from "./_subTabs/contribution/ContributionView";
@@ -159,6 +160,8 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               style={{ objectPosition: "center" }}
               sizes="100vw"
               priority
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(400, 400)}
             />
           </div>
         )}
@@ -171,6 +174,8 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
                 width={64}
                 height={64}
                 className="rounded-md"
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(64, 64)}
               />
             )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>

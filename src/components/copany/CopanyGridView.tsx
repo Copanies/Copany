@@ -15,6 +15,7 @@ import { EMPTY_STRING } from "@/utils/constants";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { useState, useEffect } from "react";
+import { shimmerDataUrl } from "@/utils/shimmer";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -62,6 +63,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   className="object-cover w-full h-full"
                   style={{ objectPosition: "center" }}
                   sizes="100vw"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrl(400, 400)}
                   priority
                 />
                 {/* Foreground logo in top-left corner */}
@@ -73,6 +76,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                       className="rounded-lg object-contain"
                       width={64}
                       height={64}
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(64, 64)}
                       priority
                     />
                   </div>
@@ -97,6 +102,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                     className="object-contain w-full h-full blur-[30px]"
                     style={{ objectPosition: "center", opacity: 0.7 }}
                     sizes="200vw"
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(400, 400)}
                     priority
                   />
                 </div>
@@ -116,6 +123,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                     className="rounded-xl object-contain"
                     width={128}
                     height={128}
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrl(128, 128)}
                     priority
                   />
                 </div>

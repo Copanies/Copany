@@ -53,7 +53,7 @@ export default function Dropdown({
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const dropdownWidth =
-      size === "sm" ? 128 : size === "md" ? 192 : size === "lg" ? 256 : 192;
+      size === "sm" ? 128 : size === "md" ? 192 : size === "lg" ? 320 : 192;
 
     // 获取实际高度，但要考虑最大高度限制
     const actualHeight = dropdownContentRef.current?.offsetHeight;
@@ -208,7 +208,7 @@ export default function Dropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+        className={`inline-flex items-center px-2 py-1 rounded-md text-base font-medium transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground
@@ -230,7 +230,7 @@ export default function Dropdown({
                 : size === "md"
                 ? "w-48"
                 : size === "lg"
-                ? "w-64"
+                ? "w-80"
                 : "w-48"
             }`}
             style={{ top: "-9999px", left: "-9999px" }}
@@ -249,10 +249,10 @@ export default function Dropdown({
                     size === "sm"
                       ? "text-sm"
                       : size === "md"
-                      ? "text-sm"
+                      ? "text-base"
                       : size === "lg"
-                      ? "text-sm"
-                      : "text-sm"
+                      ? "text-base"
+                      : "text-base"
                   } ${
                     option.value === selectedValue
                       ? "bg-gray-100 dark:bg-gray-700 font-medium"
@@ -317,7 +317,7 @@ export default function Dropdown({
                   : size === "md"
                   ? "w-48"
                   : size === "lg"
-                  ? "w-64"
+                  ? "w-80"
                   : "w-48"
               }`}
               style={{
@@ -345,10 +345,10 @@ export default function Dropdown({
                       size === "sm"
                         ? "text-sm"
                         : size === "md"
-                        ? "text-sm"
+                        ? "text-base"
                         : size === "lg"
-                        ? "text-sm"
-                        : "text-sm"
+                        ? "text-base"
+                        : "text-base"
                     } ${
                       option.disabled
                         ? "opacity-50 cursor-not-allowed"

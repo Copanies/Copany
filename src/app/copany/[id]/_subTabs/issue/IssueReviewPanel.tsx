@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
@@ -167,6 +168,8 @@ export default function IssueReviewPanel({
                 alt="In Review"
                 width={20}
                 height={20}
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(20, 20)}
               />
             )}
             {hasAnyApproved
@@ -209,6 +212,8 @@ export default function IssueReviewPanel({
                         width={16}
                         height={16}
                         className="w-4 h-4 rounded-full"
+                        placeholder="blur"
+                        blurDataURL={shimmerDataUrl(16, 16)}
                       />
                     ) : (
                       <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">

@@ -31,6 +31,7 @@ import { getCopanyByIdAction } from "@/actions/copany.actions";
 import { listNotificationsAction } from "@/actions/notification.actions";
 import { formatAbbreviatedCount } from "@/utils/number";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { shimmerDataUrl } from "@/utils/shimmer";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -616,6 +617,8 @@ export default function NotificationBell() {
               className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
               width={32}
               height={32}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrl(32, 32)}
             />
           </div>
         ) : (
@@ -627,6 +630,8 @@ export default function NotificationBell() {
                 className="w-8 h-8 rounded-sm"
                 width={32}
                 height={32}
+                placeholder="blur"
+                blurDataURL={shimmerDataUrl(32, 32)}
               />
             ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
               <div className="w-8 h-8 rounded-sm bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
@@ -674,6 +679,8 @@ export default function NotificationBell() {
                       className="w-5 h-5 rounded-sm"
                       width={20}
                       height={20}
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(20, 20)}
                     />
                   ) : n.copany_id && copanies[String(n.copany_id)]?.name ? (
                     <div className="w-5 h-5 rounded-sm bg-[#FBF9F5] dark:bg-[#323231] border border-white dark:border-gray-700 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">

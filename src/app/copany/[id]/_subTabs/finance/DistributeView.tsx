@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
+import { shimmerDataUrl } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
@@ -352,11 +353,15 @@ function DistributeGroupList({
           const contributorAvatar = userInfo?.avatar_url || "";
           const canView =
             isOwner || (currentUserId && currentUserId === d.to_user);
+          const isPendingReview =
+            d.status === "in_review" && currentUserId === d.to_user;
 
           return (
             <div
               key={d.id}
-              className="pl-3 md:pl-4 h-11 items-center hover:bg-gray-50 group dark:hover:bg-gray-900 select-none"
+              className={`pl-3 md:pl-4 h-11 items-center group ${
+                isPendingReview ? "bg-purple-100 dark:bg-purple-900/30" : ""
+              }`}
             >
               <div className="flex flex-row items-center h-11 gap-3 text-base">
                 <div className="flex items-center gap-2 w-36">
@@ -367,6 +372,8 @@ function DistributeGroupList({
                       width={20}
                       height={20}
                       className="w-5 h-5 rounded-full"
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrl(20, 20)}
                     />
                   ) : (
                     <div
@@ -389,7 +396,13 @@ function DistributeGroupList({
                 <span className="text-left w-36">
                   <StatusLabel status={d.status} showText={true} />
                 </span>
-                <div className="sticky ml-auto right-0 flex items-center justify-start h-11 bg-white dark:bg-background-dark group group-hover:bg-gray-50 dark:group-hover:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+                <div
+                  className={`sticky ml-auto right-0 flex items-center justify-start h-11 border-l border-gray-200 dark:border-gray-700 ${
+                    isPendingReview
+                      ? "bg-purple-100 dark:bg-transparent"
+                      : "bg-white dark:bg-background-dark"
+                  }`}
+                >
                   <div
                     data-role="actions"
                     className="flex items-center justify-start gap-0 px-2"

@@ -173,39 +173,39 @@ export default function DiscussionLabelSelector({
     const isBeginIdea = label.name === "Begin idea";
 
     return (
-      <div
-        key={label.id}
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium cursor-pointer transition-all duration-200 ${
-          isSelected
-            ? "text-white"
-            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-        }`}
-        style={{
-          backgroundColor: isSelected ? label.color : undefined,
-        }}
-        onClick={() => handleLabelToggle(label.id)}
-      >
-        <span>{label.name}</span>
-        {!readOnly && isSelected && !isBeginIdea && (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              handleLabelRemove(label.id); // Remove from selection
-            }}
-            className="p-0.5 hover:bg-white/20 dark:hover:bg-black/20 rounded text-white cursor-pointer ml-1"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
+      <div className="flex items-center gap-2" key={label.id}>
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: `${label.color}`,
+          }}
+        />
+        <div className="flex items-center gap-1">
+          <span>{label.name}</span>
+          {!readOnly && isSelected && !isBeginIdea && (
+            <div
+              onClick={(e) => {
                 e.stopPropagation();
-                handleLabelRemove(label.id);
-              }
-            }}
-          >
-            <XMarkIcon className="w-3 h-3" />
-          </div>
-        )}
+                handleLabelRemove(label.id); // Remove from selection
+              }}
+              className="p-0.5 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleLabelRemove(label.id);
+                }
+              }}
+            >
+              <XMarkIcon
+                className="w-3 h-3 text-gray-500 dark:text-gray-400"
+                strokeWidth={2}
+              />
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -213,7 +213,7 @@ export default function DiscussionLabelSelector({
   const renderSelectedLabels = () => {
     if (selectedLabels.length === 0) {
       return (
-        <span className="text-sm text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
+        <span className="text-base text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
           Labels
         </span>
       );
@@ -233,16 +233,17 @@ export default function DiscussionLabelSelector({
       label: (
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col gap-1 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" key={label.id}>
               <div
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium text-white"
-                style={{ backgroundColor: label.color }}
-              >
-                <span>{label.name}</span>
-              </div>
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: `${label.color}`,
+                }}
+              />
+              <span>{label.name}</span>
             </div>
             {label.description && (
-              <span className="text-xs text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 {label.description}
               </span>
             )}
@@ -311,7 +312,7 @@ export default function DiscussionLabelSelector({
 
   if (isLoading) {
     return (
-      <div className="animate-pulse h-10 bg-gray-200 dark:bg-gray-700 rounded-md" />
+      <div className="animate-pulse h-10 bg-gray-200 dark:bg-gray-700 rounded-md max-w-16 max-h-8" />
     );
   }
 
@@ -335,38 +336,36 @@ export default function DiscussionLabelSelector({
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Label Name
-              </label>
+              <label className="block text-base mb-2">Label Name</label>
               <input
                 type="text"
                 placeholder="Enter label name"
                 value={newLabelName}
                 onChange={(e) => setNewLabelName(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Color</label>
+              <label className="block text-base mb-2">Color</label>
               <div className="flex items-center gap-3">
                 <input
                   type="color"
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="w-8 h-9 text-sm rounded-md cursor-pointer"
+                  className="w-8 h-9 text-base rounded-md cursor-pointer"
                 />
                 <input
                   type="text"
                   placeholder="#6B7280"
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="flex-1 px-3 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-base mb-2">
                 Description (Optional)
               </label>
               <input
@@ -374,7 +373,7 @@ export default function DiscussionLabelSelector({
                 placeholder="Enter description"
                 value={newLabelDescription}
                 onChange={(e) => setNewLabelDescription(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">
@@ -401,38 +400,36 @@ export default function DiscussionLabelSelector({
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Label Name
-              </label>
+              <label className="block text-base mb-2">Label Name</label>
               <input
                 type="text"
                 placeholder="Enter label name"
                 value={newLabelName}
                 onChange={(e) => setNewLabelName(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Color</label>
+              <label className="block text-base mb-2">Color</label>
               <div className="flex items-center gap-3">
                 <input
                   type="color"
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="w-8 h-8 text-sm rounded-md cursor-pointer"
+                  className="w-8 h-8 text-base rounded-md cursor-pointer"
                 />
                 <input
                   type="text"
                   placeholder="#6B7280"
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="flex-1 px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-base mb-2">
                 Description (Optional)
               </label>
               <input
@@ -440,7 +437,7 @@ export default function DiscussionLabelSelector({
                 placeholder="Enter description"
                 value={newLabelDescription}
                 onChange={(e) => setNewLabelDescription(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">
