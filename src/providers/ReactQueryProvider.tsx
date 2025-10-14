@@ -14,11 +14,16 @@ export default function ReactQueryProvider({ children }: Props) {
     const client = new QueryClient({
       defaultOptions: {
         queries: {
-          // Keep data fresh for a long time to leverage persistence
-          staleTime: 30 * 24 * 60 * 60 * 1000,
-          gcTime: 31 * 24 * 60 * 60 * 1000,
+          // 数据在获取后1分钟内视为新鲜；
+          // 超过1分钟标记为stale，下次访问会立即返回缓存并后台更新
+          staleTime: 1 * 60 * 1000,
+          // 缓存数据在无人使用后保留1天再被清除
+          gcTime: 24 * 60 * 60 * 1000, // 1 day
+          // 窗口重新获得焦点时，如数据是stale则后台重新获取
           refetchOnWindowFocus: true,
+          // 网络从离线恢复在线时，如数据是stale则后台重新获取
           refetchOnReconnect: true,
+          // 请求失败自动重试2次（共尝试3次）
           retry: 2,
         },
       },
@@ -53,7 +58,11 @@ export default function ReactQueryProvider({ children }: Props) {
   return (
     <PersistQueryClientProvider
       client={client}
-      persistOptions={{ persister, maxAge: 30 * 24 * 60 * 60 * 1000 }}
+      persistOptions={{
+        persister,
+        // localStorage cache expires after 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      }}
     >
       {children}
       <ReactQueryDevtools initialIsOpen={false} />

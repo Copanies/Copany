@@ -21,6 +21,7 @@ import IssueActivityTimeline from "@/app/copany/[id]/_subTabs/issue/IssueActivit
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
 import {
@@ -89,6 +90,7 @@ export default function IssuePageClient({
   } = useAssignmentRequests(issueId);
   const { data: canEdit = false, isLoading: isPermissionLoading } =
     useIssuePermission(copanyId, issueData);
+  const isDarkMode = useDarkMode();
 
   // Overall loading state
   const isLoading =
@@ -381,6 +383,7 @@ export default function IssuePageClient({
                       ? currentUser?.user_metadata?.avatar_url || null
                       : requestersInfo[requesterId]?.avatar_url || null,
                     true,
+                    isDarkMode,
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.email || null
@@ -578,6 +581,7 @@ export default function IssuePageClient({
                 creatorInfo?.name || "",
                 creatorInfo?.avatar_url || null,
                 true,
+                isDarkMode,
                 creatorInfo?.email || null
               )}
             </div>
@@ -733,6 +737,7 @@ export default function IssuePageClient({
                   creatorInfo?.name || "",
                   creatorInfo?.avatar_url || null,
                   true,
+                  isDarkMode,
                   creatorInfo?.email || null
                 )}
               </div>

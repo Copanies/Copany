@@ -1,6 +1,6 @@
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
@@ -65,7 +65,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.apple_app_store_url) {
               window.open(copany.apple_app_store_url, "_blank");
@@ -81,7 +85,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.google_play_store_url) {
               window.open(copany.google_play_store_url, "_blank");
@@ -97,7 +105,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.website_url) {
               window.open(copany.website_url, "_blank");
@@ -113,7 +125,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.discord_url) {
               window.open(copany.discord_url, "_blank");
@@ -129,7 +145,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.telegram_url) {
               window.open(copany.telegram_url, "_blank");
@@ -145,7 +165,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.notion_url) {
               window.open(copany.notion_url, "_blank");
@@ -161,7 +185,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.figma_url) {
               window.open(copany.figma_url, "_blank");
@@ -177,7 +205,11 @@ export default function AssetLinksSection({
           width={iconWidth}
           height={iconHeight}
           placeholder="blur"
-          blurDataURL={shimmerDataUrl(iconWidth, iconHeight)}
+          blurDataURL={shimmerDataUrlWithTheme(
+            iconWidth,
+            iconHeight,
+            isDarkMode
+          )}
           onClick={() => {
             if (copany.github_url) {
               window.open(copany.github_url, "_blank");

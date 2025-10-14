@@ -2,7 +2,8 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import {
   IssueActivity,
   IssueActivityType,
@@ -51,6 +52,7 @@ export default function IssueActivityTimeline({
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
+  const isDarkMode = useDarkMode();
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
@@ -406,7 +408,7 @@ export default function IssueActivityTimeline({
             height={20}
             className="w-5 h-5 rounded-full"
             placeholder="blur"
-            blurDataURL={shimmerDataUrl(20, 20)}
+            blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
           />
         );
       return (

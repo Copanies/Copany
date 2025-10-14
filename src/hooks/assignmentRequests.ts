@@ -30,7 +30,7 @@ export function useAssignmentRequests(issueId: string) {
       }
     },
     enabled: /^\d+$/.test(String(issueId)),
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -49,7 +49,7 @@ export function useAssignmentRequestsByCopany(copanyId: string) {
       }
     },
     enabled: !!copanyId,
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }

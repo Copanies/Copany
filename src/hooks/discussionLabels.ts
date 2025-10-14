@@ -29,7 +29,7 @@ export function useDiscussionLabels(copanyId: string) {
       return result.labels;
     },
     enabled: !!copanyId,
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -48,7 +48,7 @@ export function useDiscussionLabelsByIds(ids: string[]) {
       return result.labels;
     },
     enabled: ids.length > 0,
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

@@ -15,7 +15,8 @@ import { EMPTY_STRING } from "@/utils/constants";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { useState, useEffect } from "react";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -31,6 +32,7 @@ interface CopanyCardProps {
  */
 function CopanyCard({ copany }: CopanyCardProps) {
   const router = useRouter();
+  const isDarkMode = useDarkMode();
   const { data: discussions } = useDiscussions(copany.id);
   const { data: labels } = useDiscussionLabels(copany.id);
 
@@ -64,7 +66,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   style={{ objectPosition: "center" }}
                   sizes="100vw"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(400, 400)}
+                  blurDataURL={shimmerDataUrlWithTheme(400, 400, isDarkMode)}
                   priority
                 />
                 {/* Foreground logo in top-left corner */}
@@ -77,7 +79,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                       width={64}
                       height={64}
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(64, 64)}
+                      blurDataURL={shimmerDataUrlWithTheme(64, 64, isDarkMode)}
                       priority
                     />
                   </div>
@@ -103,7 +105,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                     style={{ objectPosition: "center", opacity: 0.7 }}
                     sizes="200vw"
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(400, 400)}
+                    blurDataURL={shimmerDataUrlWithTheme(400, 400, isDarkMode)}
                     priority
                   />
                 </div>
@@ -124,7 +126,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                     width={128}
                     height={128}
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(128, 128)}
+                    blurDataURL={shimmerDataUrlWithTheme(128, 128, isDarkMode)}
                     priority
                   />
                 </div>

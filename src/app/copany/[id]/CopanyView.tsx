@@ -7,7 +7,8 @@ import TabView from "@/components/commons/TabView";
 import ReadmeView from "./_subTabs/readme/ReadmeView";
 import LicenseView from "./_subTabs/license/LicenseView";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
 import CooperateView from "./_subTabs/CooperateView";
 import ContributionView from "./_subTabs/contribution/ContributionView";
@@ -34,6 +35,7 @@ interface CopanyViewProps {
 }
 
 export default function CopanyView({ copanyId }: CopanyViewProps) {
+  const isDarkMode = useDarkMode();
   console.log(`[CopanyView] 🚀 Component initialized:`, {
     copanyId,
   });
@@ -161,7 +163,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               sizes="100vw"
               priority
               placeholder="blur"
-              blurDataURL={shimmerDataUrl(400, 400)}
+              blurDataURL={shimmerDataUrlWithTheme(400, 400, isDarkMode)}
             />
           </div>
         )}
@@ -175,7 +177,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
                 height={64}
                 className="rounded-md"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(64, 64)}
+                blurDataURL={shimmerDataUrlWithTheme(64, 64, isDarkMode)}
               />
             )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>

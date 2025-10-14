@@ -251,7 +251,7 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 mb-8 px-0 md:px-5">
+    <div className="flex flex-col min-w-0 gap-6 mb-8">
       <div className="flex flex-col w-full gap-2">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Distribution
@@ -265,10 +265,10 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
         </div>
       </div>
 
-      <div>
+      <div className="w-full min-w-0">
         <div className="flex flex-col md:flex-row gap-6">
           {usersWithContribution.map((userItem) => (
-            <div className="w-full md:w-1/2" key={userItem.user.id}>
+            <div className="w-full md:w-1/2 min-w-0" key={userItem.user.id}>
               <Suspense
                 fallback={<LoadingView type="label" label="Loading chart..." />}
               >

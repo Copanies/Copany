@@ -20,7 +20,8 @@ import LoadingView from "@/components/commons/LoadingView";
 import { BanknotesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
@@ -482,6 +483,7 @@ function TransactionDetailModal({
 }) {
   const actorName = userInfo?.name || "";
   const actorAvatar = userInfo?.avatar_url || "";
+  const isDarkMode = useDarkMode();
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -518,7 +520,7 @@ function TransactionDetailModal({
                 height={20}
                 className="w-5 h-5 rounded-full"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(20, 20)}
+                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
@@ -565,7 +567,7 @@ function TransactionDetailModal({
                   className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                   onClick={open}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(320, 320)}
+                  blurDataURL={shimmerDataUrlWithTheme(320, 320, isDarkMode)}
                 />
               )}
             />
@@ -612,7 +614,7 @@ function TransactionsGroupList({
   const containerRef = useRef<HTMLDivElement>(null);
   const [actionWidth, setActionWidth] = useState<number>(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-
+  const isDarkMode = useDarkMode();
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -680,7 +682,7 @@ function TransactionsGroupList({
                       height={20}
                       className="w-5 h-5 rounded-full"
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(20, 20)}
+                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
                   ) : (
                     <div

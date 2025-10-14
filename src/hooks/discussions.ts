@@ -25,7 +25,7 @@ export function useDiscussions(copanyId: string) {
         return await listDiscussionsAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -48,7 +48,7 @@ export function useDiscussion(copanyId: string, discussionId: string) {
       const found = discussions.find((d) => String(d.id) === String(discussionId));
       return found ?? null;
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

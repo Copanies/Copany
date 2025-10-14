@@ -1,7 +1,7 @@
 "use client";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { Group } from "@visx/group";
 import { Pie } from "@visx/shape";
 import { scaleOrdinal } from "@visx/scale";
@@ -115,6 +115,7 @@ export default function ContributionPieChart({
   users,
 }: ContributionPieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(400);
 
   // Use custom hook to detect dark mode
   const isDarkMode = useDarkMode();
@@ -128,6 +129,45 @@ export default function ContributionPieChart({
     hideTooltip,
     showTooltip,
   } = useTooltip<TooltipData>();
+
+  // Monitor container width changes
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
+      }
+    });
+
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        if (width > 0) {
+          setContainerWidth(width);
+        }
+      }
+    };
+
+    updateWidth();
+
+    if (containerRef.current && containerRef.current.offsetWidth === 0) {
+      setTimeout(updateWidth, 0);
+      setTimeout(updateWidth, 100);
+    }
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    window.addEventListener("resize", updateWidth);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, []);
 
   // Calculate each user's contribution score and level breakdown
   const userContributionData: UserContributionData[] = useMemo(() => {
@@ -241,10 +281,22 @@ export default function ContributionPieChart({
     range: isDarkMode ? darkColors : lightColors,
   });
 
-  const maxWidth = 600;
-  const width = Math.min(400, maxWidth);
-  const height = 300;
-  const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+  // Responsive SVG dimensions based on container width
+  const isMobile = containerWidth < 640; // sm breakpoint
+  // On very small screens (< 415px), use almost full container width with some padding
+  // On mobile (< 640px), cap at 300px
+  // On desktop, use 400px
+  const maxChartSize = isMobile
+    ? Math.min(containerWidth * 0.95, 300) // Use 95% of container width or max 300px
+    : Math.min(containerWidth * 0.5, 400); // On desktop, pie chart takes about half the width
+  const width = Math.max(Math.min(maxChartSize, 400), 200); // Min 200px, max 400px
+  const height = isMobile ? width : 300; // Square on mobile, 300px height on desktop
+  const margin = {
+    top: isMobile ? 12 : 20,
+    right: isMobile ? 12 : 20,
+    bottom: isMobile ? 12 : 20,
+    left: isMobile ? 12 : 20,
+  };
   const radius =
     Math.min(width, height) / 2 - Math.max(...Object.values(margin));
 
@@ -337,11 +389,11 @@ export default function ContributionPieChart({
     isDarkMode ? levelColors[level].dark : levelColors[level].light;
 
   return (
-    <div ref={containerRef} className="w-full max-w-4xl relative">
-      <div className="flex flex-col lg:flex-row items-center gap-8 justify-center">
+    <div ref={containerRef} className="w-full min-w-0 max-w-4xl relative">
+      <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 justify-center min-w-0">
         {/* Pie chart */}
-        <div className="flex-shrink-0">
-          <svg width={width} height={height}>
+        <div className="flex-shrink-0 min-w-0 flex justify-center">
+          <svg width={width} height={height} className="max-w-full">
             <Group top={height / 2} left={width / 2}>
               <Pie
                 data={processedData}
@@ -460,7 +512,7 @@ export default function ContributionPieChart({
                     height={24}
                     className="w-6 h-6 rounded-full flex-shrink-0"
                     placeholder="blur"
-                    blurDataURL={shimmerDataUrl(24, 24)}
+                    blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
                   />
                 )}
                 <div className="min-w-0 flex-1">
@@ -505,7 +557,7 @@ export default function ContributionPieChart({
                 height={24}
                 className="w-6 h-6 rounded-full"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(24, 24)}
+                blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
               />
             )}
             <div className="flex flex-col gap-0">

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "./Button";
 import PhotoViewer from "./PhotoViewer";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -30,6 +31,7 @@ export default function ImageUpload({
   helperText = "PNG, JPG, JPEG, GIF, WebP • Max 1MB",
   uploadButtonText = "Upload Image",
 }: ImageUploadProps) {
+  const isDarkMode = useDarkMode();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export default function ImageUpload({
                 className="max-w-full max-h-40 w-auto h-auto rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in object-contain"
                 onClick={open}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(320, 320)}
+                blurDataURL={shimmerDataUrlWithTheme(320, 320, isDarkMode)}
               />
             )}
           />

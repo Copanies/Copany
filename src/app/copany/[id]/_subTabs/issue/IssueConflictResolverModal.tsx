@@ -8,6 +8,7 @@ import { renderUserLabel } from "./IssueAssigneeSelector";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { formatRelativeTime } from "@/utils/time";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 type UpdaterInfo = {
   id: string;
@@ -47,6 +48,7 @@ export default function IssueConflictResolverModal({
   const serverTitle = conflict?.server?.title ?? "";
   const serverDesc = conflict?.server?.description ?? "";
   const currentUser = useCurrentUser();
+  const isDarkMode = useDarkMode();
   const [leftTitle, setLeftTitle] = useState(localTitle);
   const [leftDesc, setLeftDesc] = useState(localDescription);
   const [rightTitle, setRightTitle] = useState(serverTitle);
@@ -113,6 +115,7 @@ export default function IssueConflictResolverModal({
                   currentUser?.data?.user_metadata?.name || "",
                   currentUser?.data?.user_metadata?.avatar_url || null,
                   true,
+                  isDarkMode,
                   currentUser?.data?.user_metadata?.email || null
                 )}
               </div>
@@ -175,6 +178,7 @@ export default function IssueConflictResolverModal({
                   updater?.name || "",
                   updater?.avatar_url || null,
                   true,
+                  isDarkMode,
                   updater?.email || null
                 )}
               </div>

@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useContributors } from "@/hooks/contributors";
 import { useMemo } from "react";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface ContributorAvatarStackProps {
   copany: Copany;
@@ -18,6 +19,7 @@ export default function ContributorAvatarStack({
   size = "md",
   className = "",
 }: ContributorAvatarStackProps) {
+  const isDarkMode = useDarkMode();
   const { data: contributorsData } = useContributors(copany.id);
   const contributors = contributorsData || EMPTY_ARRAY;
 
@@ -79,7 +81,11 @@ export default function ContributorAvatarStack({
             height={height[size]}
             className={`rounded-full ${sizeClasses[size]}`}
             placeholder="blur"
-            blurDataURL={shimmerDataUrl(width[size], height[size])}
+            blurDataURL={shimmerDataUrlWithTheme(
+              width[size],
+              height[size],
+              isDarkMode
+            )}
           />
         </div>
       ))}

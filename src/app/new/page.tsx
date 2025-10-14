@@ -6,7 +6,7 @@ import BasicNavigation from "@/components/commons/BasicNavigation";
 import Footer from "@/components/commons/Footer";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import {
   ChevronDownIcon,
   QuestionMarkCircleIcon,
@@ -471,7 +471,11 @@ export default function New() {
                           height={20}
                           className="rounded-sm w-5 h-5"
                           placeholder="blur"
-                          blurDataURL={shimmerDataUrl(20, 20)}
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            20,
+                            20,
+                            isDarkMode
+                          )}
                         />
                         <span>{getSelectedRepoDisplay()!.fullName}</span>
                       </div>
@@ -607,7 +611,11 @@ export default function New() {
                                     height={24}
                                     className="w-6 h-6 rounded-sm"
                                     placeholder="blur"
-                                    blurDataURL={shimmerDataUrl(24, 24)}
+                                    blurDataURL={shimmerDataUrlWithTheme(
+                                      24,
+                                      24,
+                                      isDarkMode
+                                    )}
                                   />
                                   <div className="flex flex-col flex-1 min-w-0">
                                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -648,7 +656,7 @@ export default function New() {
                   width={16}
                   height={16}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(16, 16)}
+                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
 
                 <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
@@ -670,7 +678,7 @@ export default function New() {
                   width={16}
                   height={16}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(16, 16)}
+                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
                 <p>Connected</p>
                 <Link
@@ -704,7 +712,7 @@ export default function New() {
                 width={16}
                 height={16}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(16, 16)}
+                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
@@ -784,7 +792,7 @@ export default function New() {
                       height={96}
                       className="w-24 h-24 rounded-lg border border-gray-300 dark:border-gray-700"
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(96, 96)}
+                      blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
                       onLoad={() => setIsImageLoading(false)}
                       onError={() => setIsImageLoading(false)}
                     />

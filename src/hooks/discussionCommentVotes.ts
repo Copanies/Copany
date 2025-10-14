@@ -103,7 +103,7 @@ export function useMyVotedDiscussionCommentIds() {
   return useQuery({
     queryKey: myVotedCommentListKey(),
     queryFn: listMyVotedDiscussionCommentIdsAction,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000,
   });
 }
 
@@ -125,7 +125,7 @@ export function useDiscussionCommentVoteCounts(commentIds: string[]) {
         return await getDiscussionCommentVoteCountsAction(commentIds);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: commentIds.length > 0,
   });

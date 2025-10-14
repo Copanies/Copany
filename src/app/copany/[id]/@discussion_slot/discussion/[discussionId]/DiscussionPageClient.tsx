@@ -3,7 +3,8 @@
 import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { useRouter } from "next/navigation";
 import {
   ChatBubbleBottomCenterIcon,
@@ -35,7 +36,6 @@ import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
 import DiscussionEditForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionEditForm";
-import { useDarkMode } from "@/utils/useDarkMode";
 
 interface DiscussionPageClientProps {
   copanyId: string;
@@ -165,7 +165,7 @@ export default function DiscussionPageClient({
                 height={32}
                 className="w-8 h-8 rounded-full"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(32, 32)}
+                blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm text-gray-700 dark:text-gray-200">
@@ -176,13 +176,13 @@ export default function DiscussionPageClient({
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
                 {discussion.labels && discussion.labels.length > 0 && (
                   <DiscussionLabelChips labelIds={discussion.labels} />
                 )}
               </span>
               <span>·</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {formatRelativeTime(discussion.created_at)}
               </span>
             </div>
@@ -227,6 +227,11 @@ export default function DiscussionPageClient({
           )}
         </div>
         <div className="flex flex-col gap-2">
+          <span className="block md:hidden text-sm text-gray-600 dark:text-gray-400">
+            {discussion.labels && discussion.labels.length > 0 && (
+              <DiscussionLabelChips labelIds={discussion.labels} />
+            )}
+          </span>
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {discussion.title}
@@ -268,7 +273,7 @@ export default function DiscussionPageClient({
                 width={16}
                 height={16}
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(16, 16)}
+                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
               <span>{countQuery.data ?? 0}</span>
             </div>

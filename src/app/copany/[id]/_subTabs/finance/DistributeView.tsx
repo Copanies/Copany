@@ -13,7 +13,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import StatusLabel from "@/components/commons/StatusLabel";
@@ -300,6 +301,7 @@ function DistributeGroupList({
   const containerRef = useRef<HTMLDivElement>(null);
   const [actionWidth, setActionWidth] = useState<number>(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const isDarkMode = useDarkMode();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -373,7 +375,7 @@ function DistributeGroupList({
                       height={20}
                       className="w-5 h-5 rounded-full"
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrl(20, 20)}
+                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
                   ) : (
                     <div

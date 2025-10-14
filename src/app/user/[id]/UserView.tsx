@@ -22,13 +22,15 @@ import {
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/commons/Button";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 
 interface UserViewProps {
   userId: string;
 }
 
 export default function UserView({ userId }: UserViewProps) {
+  const isDarkMode = useDarkMode();
   const { data: user, isLoading: loading } = useUserInfo(userId);
   const [showRandomAvatarModal, setShowRandomAvatarModal] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState<string>("");
@@ -176,7 +178,7 @@ export default function UserView({ userId }: UserViewProps) {
                   height={120}
                   className="rounded-full transition-shadow group-hover:shadow-lg"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(120, 120)}
+                  blurDataURL={shimmerDataUrlWithTheme(120, 120, isDarkMode)}
                 />
                 {/* Hover Overlay, controlled by group-hover */}
                 <div className="pointer-events-none absolute inset-0 bg-black/30 dark:bg-gray-800/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

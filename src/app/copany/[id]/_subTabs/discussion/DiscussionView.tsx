@@ -24,7 +24,8 @@ import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
@@ -37,7 +38,6 @@ import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useDarkMode } from "@/utils/useDarkMode";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const { data: discussions, isLoading } = useDiscussions(copanyId);
@@ -172,7 +172,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-5">
+    <div className="flex flex-col md:flex-row gap-5 overflow-x-hidden">
       {/* Desktop sidebar */}
       <div className="hidden md:block w-44 shrink-0">
         <div className="sticky top-4 flex flex-col gap-3">
@@ -183,7 +183,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             <button
               className={`text-sm rounded-lg px-2 py-1 text-left border hover:cursor-pointer ${
                 activeLabel === "all"
-                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-black"
+                  ? "bg-gray-100 dark:bg-gray-600 border-gray-200 dark:border-gray-500"
                   : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
               }`}
               onClick={() => setActiveLabel("all")}
@@ -195,7 +195,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                 key={l}
                 className={`text-sm rounded-lg px-2 py-1 text-left border hover:cursor-pointer ${
                   activeLabel === l
-                    ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-black"
+                    ? "bg-gray-100 dark:bg-gray-600 border-gray-200 dark:border-gray-500"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                 }`}
                 onClick={() => setActiveLabel(l)}
@@ -232,25 +232,25 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           <div className="md:hidden flex flex-col gap-3">
             <Dropdown
               trigger={
-                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px] h-[34px]">
-                  <span>
+                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
+                  <span className="truncate">
                     {activeLabel === "all" ? (
                       "All"
                     ) : (
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-2 h-2 rounded-full"
+                          className="w-2 h-2 rounded-full shrink-0"
                           style={{
                             backgroundColor: labels.find(
                               (label) => label.name === activeLabel
                             )?.color,
                           }}
                         />
-                        {activeLabel}
+                        <span className="truncate">{activeLabel}</span>
                       </div>
                     )}
                   </span>
-                  <ChevronDownIcon className="w-4 h-4" />
+                  <ChevronDownIcon className="w-4 h-4 shrink-0" />
                 </div>
               }
               options={dropdownOptions}
@@ -346,10 +346,10 @@ function DiscussionItem({
   const voteToggle = useToggleDiscussionVote(discussion.id);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3">
+    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div
-          className="flex-1 hover:cursor-pointer"
+          className="flex-1 hover:cursor-pointer min-w-0"
           onClick={() =>
             router.push(`/copany/${copanyId}/discussion/${discussion.id}`)
           }
@@ -364,7 +364,7 @@ function DiscussionItem({
                   height={32}
                   className="w-8 h-8 rounded-full"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(32, 32)}
+                  blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
@@ -374,16 +374,25 @@ function DiscussionItem({
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
-              {discussion.labels && discussion.labels.length > 0 && (
-                <DiscussionLabelChips labelIds={discussion.labels} />
-              )}
+              <span className="hidden md:block">
+                {discussion.labels && discussion.labels.length > 0 && (
+                  <DiscussionLabelChips labelIds={discussion.labels} />
+                )}
+              </span>
               <span>·</span>
               <time title={discussion.created_at}>
                 {formatRelativeTime(discussion.created_at)}
               </time>
             </div>
-            <div className="flex flex-col gap-1">
-              <div className="text-lg font-semibold">{discussion.title}</div>
+            <span className="block md:hidden">
+              {discussion.labels && discussion.labels.length > 0 && (
+                <DiscussionLabelChips labelIds={discussion.labels} />
+              )}
+            </span>
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="text-lg font-semibold break-words">
+                {discussion.title}
+              </div>
               {discussion.description && (
                 <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2">
                   <MilkdownEditor
@@ -420,7 +429,7 @@ function DiscussionItem({
               width={16}
               height={16}
               placeholder="blur"
-              blurDataURL={shimmerDataUrl(16, 16)}
+              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
             />
             <span>{voteCount}</span>
           </div>

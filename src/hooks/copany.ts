@@ -26,7 +26,7 @@ export function useCopany(
         return await getCopanyByIdAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: options?.enabled ?? true,
   });
@@ -45,7 +45,7 @@ export function useCopanies() {
         return await getCopaniesAction();
       }
     },
-    staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -63,7 +63,7 @@ export function useCopaniesWhereUserIsContributor(userId: string) {
         return await getCopaniesWhereUserIsContributorAction(userId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -81,7 +81,7 @@ export function useMyStarredCopanies() {
         return { ids: await listMyStarredCopanyIdsAction() };
       }
     },
-    staleTime:  30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }

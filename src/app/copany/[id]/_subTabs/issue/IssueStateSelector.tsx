@@ -6,7 +6,7 @@ import { updateIssueStateAction } from "@/actions/issue.actions";
 import { useUpdateIssueState } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import InreviewIcon from "@/assets/in_review_state.svg";
 import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
@@ -310,7 +310,7 @@ function InReviewLabel({
         height={20}
         alt="In Review"
         placeholder="blur"
-        blurDataURL={shimmerDataUrl(20, 20)}
+        blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
       />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">

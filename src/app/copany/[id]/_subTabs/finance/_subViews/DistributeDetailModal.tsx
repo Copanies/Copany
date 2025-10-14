@@ -3,7 +3,8 @@ import { useState } from "react";
 import type { DistributeRow } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "@/components/commons/Button";
 import StatusLabel from "@/components/commons/StatusLabel";
 import { formatDate } from "@/utils/time";
@@ -29,6 +30,7 @@ export default function DistributeDetailModal({
   onConfirm: () => Promise<void>;
   onClose: () => void;
 }) {
+  const isDarkMode = useDarkMode();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -70,7 +72,7 @@ export default function DistributeDetailModal({
                   height={20}
                   className="w-5 h-5 rounded-full"
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(20, 20)}
+                  blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-white dark:border-black flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
@@ -124,7 +126,7 @@ export default function DistributeDetailModal({
                   className="mx-auto max-h-80 rounded border border-gray-200 dark:border-gray-700 cursor-zoom-in"
                   onClick={open}
                   placeholder="blur"
-                  blurDataURL={shimmerDataUrl(320, 320)}
+                  blurDataURL={shimmerDataUrlWithTheme(320, 320, isDarkMode)}
                 />
               )}
             />

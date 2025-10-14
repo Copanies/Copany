@@ -24,7 +24,8 @@ import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { shimmerDataUrl } from "@/utils/shimmer";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
 import type { AssignmentRequest } from "@/types/database.types";
 import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
 
@@ -115,6 +116,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
+  const isDarkMode = useDarkMode();
   const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
   const issues = issuesData || EMPTY_ISSUES_ARRAY;
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -353,7 +355,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                 height={22}
                 className="w-[22px] h-[22px] rounded-full border border-white dark:border-black"
                 placeholder="blur"
-                blurDataURL={shimmerDataUrl(22, 22)}
+                blurDataURL={shimmerDataUrlWithTheme(22, 22, isDarkMode)}
               />
             ) : (
               <div
