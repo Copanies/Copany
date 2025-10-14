@@ -31,7 +31,7 @@ export function useDiscussionVoteState(
         return await getDiscussionVoteCountAction(discussionId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
     enabled: enableCountQuery,
     initialData: options?.countInitialData,
@@ -48,7 +48,7 @@ export function useDiscussionVoteState(
         return await hasVotedDiscussionAction(discussionId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
   return { countQuery, flagQuery } as const;
@@ -112,7 +112,7 @@ export function useMyVotedDiscussionIds() {
         return await listMyVotedDiscussionIdsAction();
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -135,7 +135,7 @@ export function useDiscussionVoteCounts(discussionIds: string[]) {
         return await getDiscussionVoteCountsAction(discussionIds);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: discussionIds.length > 0,
   });

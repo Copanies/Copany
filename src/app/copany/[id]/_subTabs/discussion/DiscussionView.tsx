@@ -172,7 +172,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-5">
+    <div className="flex flex-col md:flex-row gap-5 overflow-x-hidden">
       {/* Desktop sidebar */}
       <div className="hidden md:block w-44 shrink-0">
         <div className="sticky top-4 flex flex-col gap-3">
@@ -232,25 +232,25 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           <div className="md:hidden flex flex-col gap-3">
             <Dropdown
               trigger={
-                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px] h-[34px]">
-                  <span>
+                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
+                  <span className="truncate">
                     {activeLabel === "all" ? (
                       "All"
                     ) : (
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-2 h-2 rounded-full"
+                          className="w-2 h-2 rounded-full shrink-0"
                           style={{
                             backgroundColor: labels.find(
                               (label) => label.name === activeLabel
                             )?.color,
                           }}
                         />
-                        {activeLabel}
+                        <span className="truncate">{activeLabel}</span>
                       </div>
                     )}
                   </span>
-                  <ChevronDownIcon className="w-4 h-4" />
+                  <ChevronDownIcon className="w-4 h-4 shrink-0" />
                 </div>
               }
               options={dropdownOptions}
@@ -346,10 +346,10 @@ function DiscussionItem({
   const voteToggle = useToggleDiscussionVote(discussion.id);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3">
+    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div
-          className="flex-1 hover:cursor-pointer"
+          className="flex-1 hover:cursor-pointer min-w-0"
           onClick={() =>
             router.push(`/copany/${copanyId}/discussion/${discussion.id}`)
           }
@@ -382,8 +382,10 @@ function DiscussionItem({
                 {formatRelativeTime(discussion.created_at)}
               </time>
             </div>
-            <div className="flex flex-col gap-1">
-              <div className="text-lg font-semibold">{discussion.title}</div>
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="text-lg font-semibold break-words">
+                {discussion.title}
+              </div>
               {discussion.description && (
                 <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2">
                   <MilkdownEditor

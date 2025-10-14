@@ -30,8 +30,8 @@ export function useRepoReadme(githubUrl?: string | null) {
       }
     },
     enabled: !!githubUrl,
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 60 * 60 * 1000, // 1 hour 
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 
@@ -55,8 +55,8 @@ export function useRepoLicense(githubUrl?: string | null) {
       }
     },
     enabled: !!githubUrl,
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
-    refetchInterval: 60 * 60 * 1000, // 1 hour 
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 

@@ -20,7 +20,7 @@ export function useIssues(copanyId: string) {
         return await getIssuesAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -43,7 +43,7 @@ export function useIssue(copanyId: string, issueId: string) {
       const found = issues.find((i) => String(i.id) === String(issueId));
       return found ?? null;
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days (align with list)
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }

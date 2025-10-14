@@ -36,7 +36,7 @@ export function useStarState(
         return await getStarCountAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: enableCountQuery,
     initialData: options?.countInitialData,
@@ -53,7 +53,7 @@ export function useStarState(
         return await hasStarredAction(copanyId);
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
   return { countQuery, flagQuery } as const;
@@ -124,7 +124,7 @@ export function useMyStarredCopanyIds() {
         return await listMyStarredCopanyIdsAction();
       }
     },
-    staleTime: 30 * 24 * 60 * 60 * 1000, // 30 days
+    staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
