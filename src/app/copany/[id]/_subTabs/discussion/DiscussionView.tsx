@@ -374,14 +374,21 @@ function DiscussionItem({
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
-              {discussion.labels && discussion.labels.length > 0 && (
-                <DiscussionLabelChips labelIds={discussion.labels} />
-              )}
+              <span className="hidden md:block">
+                {discussion.labels && discussion.labels.length > 0 && (
+                  <DiscussionLabelChips labelIds={discussion.labels} />
+                )}
+              </span>
               <span>·</span>
               <time title={discussion.created_at}>
                 {formatRelativeTime(discussion.created_at)}
               </time>
             </div>
+            <span className="block md:hidden">
+              {discussion.labels && discussion.labels.length > 0 && (
+                <DiscussionLabelChips labelIds={discussion.labels} />
+              )}
+            </span>
             <div className="flex flex-col gap-1 min-w-0">
               <div className="text-lg font-semibold break-words">
                 {discussion.title}

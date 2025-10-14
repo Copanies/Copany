@@ -176,13 +176,13 @@ export default function DiscussionPageClient({
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
                 {discussion.labels && discussion.labels.length > 0 && (
                   <DiscussionLabelChips labelIds={discussion.labels} />
                 )}
               </span>
               <span>·</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {formatRelativeTime(discussion.created_at)}
               </span>
             </div>
@@ -227,6 +227,11 @@ export default function DiscussionPageClient({
           )}
         </div>
         <div className="flex flex-col gap-2">
+          <span className="block md:hidden text-sm text-gray-600 dark:text-gray-400">
+            {discussion.labels && discussion.labels.length > 0 && (
+              <DiscussionLabelChips labelIds={discussion.labels} />
+            )}
+          </span>
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {discussion.title}
