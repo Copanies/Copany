@@ -109,7 +109,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
     {
       label: "Contribution",
       icon: <ChartPieIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <ContributionView copanyId={copanyId} />,
+      content: <ContributionView copany={copany} />,
     },
     {
       label: "Finance",

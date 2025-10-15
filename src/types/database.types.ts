@@ -41,6 +41,7 @@ export interface Issue {
   closed_at: string | null;
   assignee: string | null;
   version?: number; // optimistic locking version
+  is_history_issue?: boolean;
 }
 
 // Table: copany_contributor (after migration - removed name and avatar_url)
@@ -126,6 +127,7 @@ export interface Contribution {
   year: number;
   month: number;
   day: number;
+  is_history_issue?: boolean;
 }
 
 // Level score configuration

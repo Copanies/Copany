@@ -1,6 +1,6 @@
-# 本地开发启动指南
+# 贡献指南
 
-> [English](local-development-setup.md) | 中文版本
+> [English](https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.md) | 中文版本
 
 本指南帮助你在本地搭建完整的 Supabase 开发环境，并连接前端项目进行调试。
 

@@ -3,11 +3,14 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useContributions } from "@/hooks/contributions";
 import { useUsersInfo } from "@/hooks/userInfo";
+import { useCopany } from "@/hooks/copany";
+import { useCurrentUser } from "@/hooks/currentUser";
 import type { Contribution } from "@/types/database.types";
 import { IssueLevel, LEVEL_SCORES } from "@/types/database.types";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";
 import Button from "@/components/commons/Button";
+import Modal from "@/components/commons/Modal";
 import { getMonthlyPeriod, getMonthlyPeriodSimple } from "@/utils/time";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -15,6 +18,7 @@ import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
+import HistoryIssueCreateModal from "./_components/HistoryIssueCreateModal";
 
 // Helper function to format date
 function formatDate(year: number, month: number, day: number): string {
@@ -34,6 +38,14 @@ export default function ContributionRecordsView({
   const router = useRouter();
   const { data: contributions, isLoading: isContributionsLoading } =
     useContributions(copanyId);
+  const { data: copany } = useCopany(copanyId);
+  const { data: currentUser } = useCurrentUser();
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  // Check if current user is owner
+  const isOwner = useMemo(() => {
+    return !!(copany && currentUser && copany.created_by === currentUser.id);
+  }, [copany, currentUser]);
 
   // Filter contributions with valid level
   const validContributions = useMemo(() => {
@@ -42,6 +54,8 @@ export default function ContributionRecordsView({
       (contribution) => contribution.issue_level !== IssueLevel.level_None
     );
   }, [contributions]);
+
+  // Keep all contributions together (no separation needed)
 
   // Get unique user IDs from contributions for user info
   const contributionUserIds = useMemo(() => {
@@ -53,7 +67,7 @@ export default function ContributionRecordsView({
   const { data: contributionUsersInfo = {} } =
     useUsersInfo(contributionUserIds);
 
-  // Group contributions by monthly period
+  // Group all contributions together
   const groupedContributions = useMemo(() => {
     const groups = new Map<
       string,
@@ -65,7 +79,6 @@ export default function ContributionRecordsView({
       }
     >();
 
-    // Add existing contributions to groups
     if (validContributions && validContributions.length > 0) {
       validContributions.forEach((contribution) => {
         const period = getMonthlyPeriod(
@@ -89,7 +102,6 @@ export default function ContributionRecordsView({
       });
     }
 
-    // Sort groups by start date (newest first)
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
@@ -99,30 +111,66 @@ export default function ContributionRecordsView({
     return <LoadingView type="label" />;
   }
 
-  // Check if there are any non-empty groups
-  const hasNonEmptyGroups = groupedContributions.some(
-    (group) => !group.isEmpty
-  );
+  // Check if there are any contributions
+  const hasContributions = groupedContributions.some((group) => !group.isEmpty);
 
-  if (!hasNonEmptyGroups) {
+  if (!hasContributions) {
     return (
-      <div className="p-4">
-        <EmptyPlaceholderView
-          icon={
-            <ClipboardDocumentListIcon
-              className="w-16 h-16 text-gray-500"
-              strokeWidth={1}
-            />
-          }
-          title="No contribution records"
-          description="Contribution records are generated from completed issues. Complete some issues to see contribution records here."
-        />
+      <div className="p-0">
+        {/* Add History Issues button - only visible to owner */}
+        {isOwner && (
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <Button onClick={() => setIsHistoryModalOpen(true)}>
+              Add History Issues
+            </Button>
+          </div>
+        )}
+
+        <div className="p-4">
+          <EmptyPlaceholderView
+            icon={
+              <ClipboardDocumentListIcon
+                className="w-16 h-16 text-gray-500"
+                strokeWidth={1}
+              />
+            }
+            title="No contribution records"
+            description="Contribution records are generated from completed issues. Complete some issues to see contribution records here."
+          />
+        </div>
+
+        {/* Modal */}
+        <Modal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          size="lg"
+        >
+          <HistoryIssueCreateModal
+            copanyId={copanyId}
+            isOpen={isHistoryModalOpen}
+            onClose={() => setIsHistoryModalOpen(false)}
+            onSuccess={() => {
+              setIsHistoryModalOpen(false);
+              // Contributions will auto-refresh via React Query
+            }}
+          />
+        </Modal>
       </div>
     );
   }
 
   return (
     <div className="p-0">
+      {/* Add History Issues button - only visible to owner */}
+      {isOwner && (
+        <div className="px-0 md:px-4 pt-2 pb-3">
+          <Button onClick={() => setIsHistoryModalOpen(true)}>
+            Add History Issues
+          </Button>
+        </div>
+      )}
+
+      {/* All Contribution Records */}
       <div className="relative border-b border-gray-200 dark:border-gray-700">
         {groupedContributions.map((group) => (
           <div key={group.period.key} className="">
@@ -149,6 +197,23 @@ export default function ContributionRecordsView({
           </div>
         ))}
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        size="lg"
+      >
+        <HistoryIssueCreateModal
+          copanyId={copanyId}
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          onSuccess={() => {
+            setIsHistoryModalOpen(false);
+            // Contributions will auto-refresh via React Query
+          }}
+        />
+      </Modal>
     </div>
   );
 }

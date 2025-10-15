@@ -32,7 +32,7 @@ Copany 是一个协作平台，用于团队和社区透明记录贡献、量化�
 
 1. 打开 [Issues](https://copany.app/copany/5?tab=Cooperate&subtab=Issue) 页面，新建一个 Issue 或找到一个合适的 Issue
 2. 发起认领 Issue 请求，与项目管理者进行沟通
-3. 搭建本地开发环境：请参考 [本地开发环境搭建指南](https://github.com/Copanies/Copany/blob/main/local-development-setup.zh.md)
+3. 搭建本地开发环境：请参考 [如何贡献](https://github.com/Copanies/Copany/blob/main/https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.zh.md)
 4. 完成 Issue，将 Issue 状态设置为 In review
 5. Issue 审核通过后，你将获得相应的 贡献积分 (CP)
 6. 所有贡献都会记录在 [贡献记录](https://copany.app/copany/5?tab=Contribution&subtab=Issue) 页面

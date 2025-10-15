@@ -666,7 +666,7 @@ function TransactionsGroupList({
             <div
               key={t.id}
               className={`pl-3 md:pl-4 h-11 items-center group min-w-0 ${
-                isPendingReview ? "bg-purple-100 dark:bg-purple-900/30" : ""
+                isPendingReview ? "bg-purple-100 dark:bg-purple-950/50" : ""
               }`}
             >
               <div className="flex gap-3 test-base h-11 items-center">
@@ -708,7 +708,7 @@ function TransactionsGroupList({
                 <div
                   className={`sticky right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 ${
                     isPendingReview
-                      ? "bg-purple-100 dark:bg-transparent"
+                      ? "bg-purple-100 dark:bg-background-dark"
                       : "bg-white dark:bg-background-dark"
                   }`}
                 >

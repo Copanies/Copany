@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
-import { getIssuesAction, getIssueAction, updateIssuePriorityAction, updateIssueLevelAction, updateIssueAssigneeAction, updateIssueStateAction, deleteIssueAction, createIssueAction } from "@/actions/issue.actions";
+import { getIssuesAction, getIssueAction, updateIssuePriorityAction, updateIssueLevelAction, updateIssueAssigneeAction, updateIssueStateAction, deleteIssueAction, createIssueAction, createHistoryIssuesAction } from "@/actions/issue.actions";
 import type { IssueWithAssignee, IssuePriority, IssueLevel, IssueState, Issue } from "@/types/database.types";
 
 export function issuesKey(copanyId: string): QueryKey { return ["issues", copanyId]; }
@@ -268,4 +268,25 @@ export function useCreateIssue(copanyId: string) {
   });
 }
 
-
+export function useCreateHistoryIssues(copanyId: string) {
+  const qc = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (issues: Array<{ title: string; level: IssueLevel; closedAt: string; assignee: string | null }>) => {
+      return await createHistoryIssuesAction(copanyId, issues);
+    },
+    onSuccess: (createdIssues) => {
+      // Update issues cache
+      qc.setQueryData<IssueWithAssignee[]>(
+        issuesKey(copanyId),
+        (prev) => {
+          const base = prev || [];
+          return [...createdIssues, ...base];
+        }
+      );
+      
+      // Invalidate contributions to refresh
+      qc.invalidateQueries({ queryKey: ["contributions", copanyId] });
+    },
+  });
+}
