@@ -266,9 +266,9 @@ export default function ContributionView({ copanyId }: ContributionViewProps) {
       </div>
 
       <div className="w-full min-w-0">
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-6">
           {usersWithContribution.map((userItem) => (
-            <div className="w-full md:w-1/2 min-w-0" key={userItem.user.id}>
+            <div className="min-w-0" key={userItem.user.id}>
               <Suspense
                 fallback={<LoadingView type="label" label="Loading chart..." />}
               >

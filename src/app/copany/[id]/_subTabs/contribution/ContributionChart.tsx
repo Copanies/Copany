@@ -621,7 +621,7 @@ function UserChart({
   // If container width is invalid, show loading state
   if (containerWidth <= 0) {
     return (
-      <div ref={containerRef} className="mb-10 w-full min-w-0 relative">
+      <div ref={containerRef} className="w-full min-w-0 relative">
         {showUserInfo && (
           <>
             {/* User Info */}
@@ -663,7 +663,7 @@ function UserChart({
   }
 
   return (
-    <div ref={containerRef} className="mb-10 w-full min-w-0 relative">
+    <div ref={containerRef} className="w-full min-w-0 relative">
       {showUserInfo && (
         <>
           {/* User Info */}
