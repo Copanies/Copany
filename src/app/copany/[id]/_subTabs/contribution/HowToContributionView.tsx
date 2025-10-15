@@ -10,7 +10,6 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { EMPTY_STRING } from "@/utils/constants";
 
 interface HowToContributionViewProps {
-  copanyId: string;
   githubUrl?: string | null;
 }
 
@@ -30,7 +29,6 @@ const generateNewContributingUrl = (githubUrl: string): string | null => {
 };
 
 export default function HowToContributionView({
-  copanyId,
   githubUrl,
 }: HowToContributionViewProps) {
   const { data: currentUser } = useCurrentUser();

@@ -18,12 +18,7 @@ export default function ContributionView({ copany }: { copany: Copany }) {
     },
     {
       label: "How to contribution",
-      content: (
-        <HowToContributionView
-          copanyId={copany.id}
-          githubUrl={copany.github_url}
-        />
-      ),
+      content: <HowToContributionView githubUrl={copany.github_url} />,
     },
   ];
   return <SecondaryTabViewView tabs={tabs} urlParamName="contributionTab" />;

@@ -1,6 +1,12 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import { getProviderToken } from "./userAuth.service";
 
+// Define error type for GitHub API errors
+interface GitHubError {
+  status: number;
+  message?: string;
+}
+
 /**
  * Get current user's GitHub access token
  * @returns GitHub access token, or null if not found
@@ -213,7 +219,7 @@ export async function getPublicRepoContributing(
         error &&
         typeof error === "object" &&
         "status" in error &&
-        (error as any).status === 404
+        (error as GitHubError).status === 404
       ) {
         // try next path
         continue;
@@ -252,7 +258,7 @@ export async function getRepoContributing(
           error &&
           typeof error === "object" &&
           "status" in error &&
-          (error as any).status === 404
+          (error as GitHubError).status === 404
         ) {
           // try next path
           continue;
