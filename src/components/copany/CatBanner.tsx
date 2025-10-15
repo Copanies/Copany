@@ -35,7 +35,7 @@ export default function CatBanner({
 
   return (
     <div
-      className={`relative flex flex-row bg-[#FBF9F5] dark:bg-[#222221] pt-3 px-8 items-center justify-center overflow-hidden ${className} w-full`}
+      className={`relative flex flex-row bg-[#FBF9F5] dark:bg-[#222221] px-8 items-center justify-center overflow-hidden ${className} w-full`}
     >
       {/* Gradient overlay for visual center focus */}
       <div
@@ -78,7 +78,7 @@ export default function CatBanner({
         </div>
         <div className="flex flex-col items-center justify-center min-h-[252px]">
           <div
-            className={`flex flex-col items-center justify-center px-8 my-auto max-w-screen-lg transition-all duration-700 ease-out ${
+            className={`flex flex-col items-center justify-center px-8 pt-5 my-auto max-w-screen-lg transition-all duration-700 ease-out ${
               isVisible
                 ? `opacity-100 translate-y-0`
                 : `opacity-0 translate-y-4`
