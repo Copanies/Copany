@@ -76,6 +76,7 @@ export default function SettingsView({
   const [coverImageUploadError, setCoverImageUploadError] = useState<
     string | null
   >(null);
+  const [isDeletingCoverImage, setIsDeletingCoverImage] = useState(false);
   const coverImageFileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete Copany related states
@@ -400,6 +401,38 @@ export default function SettingsView({
     }
   };
 
+  // Handle delete cover image
+  const handleDeleteCoverImage = async () => {
+    setIsDeletingCoverImage(true);
+    try {
+      const currentCoverImageUrl =
+        uploadedCoverImageUrl || copany.cover_image_url;
+
+      if (currentCoverImageUrl) {
+        // Delete from storage
+        const filePath =
+          storageService.extractCoverImagePathFromUrl(currentCoverImageUrl);
+        if (filePath) {
+          await storageService.deleteCoverImage(filePath);
+        }
+
+        // Update copany's cover_image_url to null
+        const updatedCopany = {
+          ...copany,
+          cover_image_url: null,
+        };
+        await updateCopanyMutateRef.current(updatedCopany);
+
+        // Clear local state
+        setUploadedCoverImageUrl(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete cover image:", error);
+    } finally {
+      setIsDeletingCoverImage(false);
+    }
+  };
+
   // Handle delete Copany
   async function handleDeleteCopany() {
     setIsDeleting(true);
@@ -651,9 +684,26 @@ export default function SettingsView({
                   onLoad={() => setIsCoverImageLoading(false)}
                   onError={() => setIsCoverImageLoading(false)}
                 />
+                {/* Delete button overlay */}
+                <div className="absolute top-2 right-2">
+                  <Button
+                    onClick={handleDeleteCoverImage}
+                    disabled={
+                      isDeletingCoverImage ||
+                      isUploadingCoverImage ||
+                      isCoverImageLoading
+                    }
+                    variant="secondary"
+                    shape="square"
+                    className="!p-1"
+                    title="Delete cover image"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="w-full max-w-md h-32 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+              <div className="w-full max-w-md h-32 bg-gray-100 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                 <span className="text-gray-400 text-sm">No Cover Image</span>
               </div>
             )}
