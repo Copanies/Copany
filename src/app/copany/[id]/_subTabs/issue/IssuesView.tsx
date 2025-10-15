@@ -10,16 +10,16 @@ import {
   IssueState,
   AssigneeUser,
 } from "@/types/database.types";
-import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
+import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
 import LoadingView from "@/components/commons/LoadingView";
-import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
+import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { InboxStackIcon, PlusIcon } from "@heroicons/react/24/outline";
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
-import IssueCreateForm from "@/app/copany/[id]/_subTabs/issue/IssueCreateForm";
+import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
+import IssueCreateForm from "@/app/copany/[id]/_subTabs/issue/_components/IssueCreateForm";
 import type { IssueReviewer } from "@/types/database.types";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
@@ -29,7 +29,7 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import type { AssignmentRequest } from "@/types/database.types";
 import { EMPTY_ARRAY, EMPTY_REVIEWERS_OBJECT } from "@/utils/constants";
 
-import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/AssignmentRequestModal";
+import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/_components/AssignmentRequestModal";
 import { useIssues, useDeleteIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/currentUser";

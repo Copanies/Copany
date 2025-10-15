@@ -10,20 +10,20 @@ import {
   AssigneeUser,
 } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
-import { renderUserLabel } from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
-import IssueEditorView from "@/app/copany/[id]/_subTabs/issue/IssueEditorView";
+import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
+import { renderUserLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
+import IssueEditorView from "@/app/copany/[id]/_subTabs/issue/_components/IssueEditorView";
 
-import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/AssignmentRequestModal";
-import IssueActivityTimeline from "@/app/copany/[id]/_subTabs/issue/IssueActivityTimeline";
+import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/_components/AssignmentRequestModal";
+import IssueActivityTimeline from "@/app/copany/[id]/_subTabs/issue/_components/IssueActivityTimeline";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
 import { useDarkMode } from "@/utils/useDarkMode";
 
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
+import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
 import {
   ChevronLeftIcon,
   ArrowRightIcon,
