@@ -75,7 +75,7 @@ export default function DistributeEvidenceModal({
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
-            <span className="w-32">To:</span>
+            <span className="w-24 sm:w-32">To:</span>
             <div className="flex flex-row items-center gap-1">
               {contributorAvatar ? (
                 <Image
@@ -96,14 +96,14 @@ export default function DistributeEvidenceModal({
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="w-32">Status:</span>
+            <span className="w-24 sm:w-32">Status:</span>
             <StatusLabel
               status={distribute?.status || "in_progress"}
               showText={true}
             />
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="w-32">Amount:</span>
+            <span className="w-24 sm:w-32">Amount:</span>
             <span className="">
               {formatAmount(
                 distribute?.amount || 0,
@@ -112,13 +112,13 @@ export default function DistributeEvidenceModal({
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="w-32">CP Percent:</span>
+            <span className="w-24 sm:w-32">CP Percent:</span>
             <span className="">{distribute?.contribution_percent || 0}%</span>
           </div>
-          <div className="flex flex-row items-start gap-2">
-            <span className="w-32">Payment:</span>
-            <div className="flex flex-col items-start gap-3">
-              <div className="flex flex-col items-start gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+            <span className="w-24 sm:w-32 flex-shrink-0">Payment:</span>
+            <div className="flex flex-col items-start gap-3 flex-1 min-w-0">
+              <div className="flex flex-col items-start gap-2 w-full">
                 <div className="flex flex-row items-center gap-2">
                   <Image
                     src={wiseIcon}
@@ -131,18 +131,22 @@ export default function DistributeEvidenceModal({
                   <span className="">Wise Payment Link</span>
                 </div>
                 {isLoadingPaymentLinks ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="h-5 flex-1 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                   </div>
                 ) : wiseLink ? (
-                  <div className="flex items-center gap-2">
-                    <Link href={wiseLink} target="_blank">
-                      <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">
+                  <div className="flex items-center gap-2 w-full">
+                    <Link
+                      href={wiseLink}
+                      target="_blank"
+                      className="flex-1 min-w-0"
+                    >
+                      <span className="text-base underline text-blue-500 dark:text-blue-400 block truncate">
                         {wiseLink}
                       </span>
                     </Link>
                     <Button
-                      className="!p-1"
+                      className="!p-1 flex-shrink-0"
                       variant="ghost"
                       size="md"
                       shape="square"
@@ -158,7 +162,7 @@ export default function DistributeEvidenceModal({
                   <span className="">Not set</span>
                 )}
               </div>
-              <div className="flex flex-col items-start gap-2">
+              <div className="flex flex-col items-start gap-2 w-full">
                 <div className="flex flex-row items-center gap-2">
                   <Image
                     src={isDarkMode ? alipayIconDark : alipayIcon}
@@ -171,18 +175,22 @@ export default function DistributeEvidenceModal({
                   <span className="">Alipay QR Code Link</span>
                 </div>
                 {isLoadingPaymentLinks ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="h-5 flex-1 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                   </div>
                 ) : alipayLink ? (
-                  <div className="flex items-center gap-2">
-                    <Link href={alipayLink} target="_blank">
-                      <span className="text-base underline text-blue-500 dark:text-blue-400 max-w-xs truncate">
+                  <div className="flex items-center gap-2 w-full">
+                    <Link
+                      href={alipayLink}
+                      target="_blank"
+                      className="flex-1 min-w-0"
+                    >
+                      <span className="text-base underline text-blue-500 dark:text-blue-400 block truncate">
                         {alipayLink}
                       </span>
                     </Link>
                     <Button
-                      className="!p-1"
+                      className="!p-1 flex-shrink-0"
                       variant="ghost"
                       size="md"
                       shape="square"
@@ -200,7 +208,7 @@ export default function DistributeEvidenceModal({
               </div>
             </div>
           </div>
-          <div className="flex flex-row items-top gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-2">
             <span className="w-32">
               Proofs:
               <span className="text-red-500 ml-1">*</span>
@@ -223,7 +231,7 @@ export default function DistributeEvidenceModal({
               accept="image/*"
               maxBytes={storageService.getFinanceEvidenceMaxFileSize()}
               helperText="PNG, JPG, JPEG, GIF, WebP • Max 20MB"
-              uploadButtonText="Upload Transfer Evidence"
+              uploadButtonText="Upload Transfer Proof"
             />
           </div>
         </div>

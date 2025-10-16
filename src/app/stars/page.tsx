@@ -36,7 +36,12 @@ export default function StarsPage() {
             </div>
           ) : (
             <EmptyPlaceholderView
-              icon={<SparklesIcon className="w-16 h-16 text-gray-500" />}
+              icon={
+                <SparklesIcon
+                  className="w-16 h-16 text-gray-500 dark:text-gray-400"
+                  strokeWidth={1}
+                />
+              }
               title="No starred copanies yet"
               description="Star a copany to see it here."
               buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}

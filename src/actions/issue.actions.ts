@@ -18,8 +18,10 @@ export async function getIssuesAction(copanyId: string) {
 export async function createIssueAction(
   issue: Omit<
     Issue,
-    "id" | "created_at" | "updated_at" | "closed_at" | "created_by"
-  >
+    "id" | "created_at" | "updated_at" | "created_by"
+  > & {
+    closed_at?: string | null;
+  }
 ) {
   const user = await getCurrentUser();
   if (!user) {
@@ -37,6 +39,48 @@ export async function createIssueAction(
     );
   }
   return newIssue;
+}
+
+export async function createHistoryIssuesAction(
+  copanyId: string,
+  issues: Array<{
+    title: string;
+    level: IssueLevel;
+    closedAt: string; // ISO date string
+    assignee: string | null;
+  }>
+): Promise<IssueWithAssignee[]> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Not authenticated");
+  
+  const createdIssues = await Promise.all(
+    issues.map(async (issue) => {
+      const newIssue = await IssueService.createIssue({
+        copany_id: copanyId,
+        title: issue.title,
+        level: issue.level,
+        state: IssueState.Done,
+        closed_at: issue.closedAt, // Use provided date
+        assignee: issue.assignee, // Use provided assignee
+        created_by: currentUser.id,
+        is_history_issue: true,
+        description: "",
+        priority: IssuePriority.None,
+      });
+      
+      // Create contributor if needed
+      if (newIssue.copany_id && newIssue.assignee) {
+        await CopanyContributorService.createCopanyContributor(
+          newIssue.copany_id,
+          newIssue.assignee
+        );
+      }
+      
+      return newIssue;
+    })
+  );
+  
+  return createdIssues;
 }
 
 export async function getIssueAction(issueId: string) {

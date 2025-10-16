@@ -11,11 +11,11 @@ import {
   CopanyContributorWithUserInfo,
   AssigneeUser,
 } from "@/types/database.types";
-import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/IssueAssigneeSelector";
+import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
+import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
 
@@ -114,6 +114,7 @@ export default function IssueCreateForm({
         priority: priority,
         level: level,
         assignee: assignee,
+        closed_at: null,
       });
 
       // Reset form

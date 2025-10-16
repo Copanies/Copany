@@ -100,17 +100,26 @@ export class IssueService {
   }
 
   static async createIssue(
-    issue: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at">
+    issue: Omit<Issue, "id" | "created_at" | "updated_at"> & {
+      closed_at?: string | null;
+    }
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
+    // Respect caller-provided closed_at if explicitly present; otherwise derive from state
+    const providedClosedAt = issue.closed_at;
+    const hasProvidedClosedAt = providedClosedAt !== undefined && providedClosedAt !== null;
+
     const updatedIssue = {
       ...issue,
-      closed_at:
-        issue.state === IssueState.Done ||
-        issue.state === IssueState.Canceled ||
-        issue.state === IssueState.Duplicate
-          ? new Date().toISOString()
-          : null,
+      closed_at: hasProvidedClosedAt
+        ? providedClosedAt
+        : (
+            issue.state === IssueState.Done ||
+            issue.state === IssueState.Canceled ||
+            issue.state === IssueState.Duplicate
+              ? new Date().toISOString()
+              : null
+          ),
     };
 
     const { data, error } = await supabase
@@ -260,15 +269,20 @@ export class IssueService {
     state: IssueState
   ): Promise<IssueWithAssignee> {
     // Enforce rule: Only allow moving to Done when InReview and has at least one approval
+    // Exception: History issues can be set to Done directly
     if (state === IssueState.Done) {
       const current = await this.getIssue(issueId);
-      if (current.state !== IssueState.InReview) {
-        throw new Error("Only allowed after review");
-      }
-      const reviewers: IssueReviewer[] = await IssueReviewerService.list(issueId);
-      const hasApproved = reviewers.some((r) => r.status === "approved");
-      if (!hasApproved) {
-        throw new Error("Requires at least one approval");
+      
+      // Skip review requirements for history issues
+      if (!current.is_history_issue) {
+        if (current.state !== IssueState.InReview) {
+          throw new Error("Only allowed after review");
+        }
+        const reviewers: IssueReviewer[] = await IssueReviewerService.list(issueId);
+        const hasApproved = reviewers.some((r) => r.status === "approved");
+        if (!hasApproved) {
+          throw new Error("Requires at least one approval");
+        }
       }
     }
 

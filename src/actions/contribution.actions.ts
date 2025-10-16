@@ -32,6 +32,7 @@ export async function generateContributionsFromIssuesAction(
         year: closedDate.getFullYear(),
         month: closedDate.getMonth() + 1, // JavaScript months start from 0
         day: closedDate.getDate(),
+        is_history_issue: issue.is_history_issue || false, // 新增
       } as Contribution;
     });
 

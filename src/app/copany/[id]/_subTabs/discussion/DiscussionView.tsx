@@ -156,7 +156,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         <EmptyPlaceholderView
           icon={
             <ChatBubbleLeftRightIcon
-              className="w-16 h-16 text-gray-400"
+              className="w-16 h-16 text-gray-500 dark:text-gray-400"
               strokeWidth={1}
             />
           }
@@ -269,7 +269,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             <EmptyPlaceholderView
               icon={
                 <ChatBubbleLeftRightIcon
-                  className="w-16 h-16 text-gray-400"
+                  className="w-16 h-16 text-gray-500 dark:text-gray-400"
                   strokeWidth={1}
                 />
               }

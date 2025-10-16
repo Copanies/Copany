@@ -20,9 +20,9 @@ import {
 import { StarIcon } from "@heroicons/react/24/solid";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/IssueStateSelector";
-import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/IssuePrioritySelector";
-import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/IssueLevelSelector";
+import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
+import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { formatRelativeTime } from "@/utils/time";
 import type { UserInfo } from "@/actions/user.actions";

@@ -30,7 +30,7 @@ It is not only a software tool but also a new collaboration philosophy — aimin
 
 1. Open the [Issues](https://copany.app/copany/5?tab=Cooperate&subtab=Issue) page and create a new Issue or find a suitable one
 2. Submit an Issue assignment request and communicate with the project maintainers
-3. Set up your local development environment: see the [Local Development Setup Guide](https://github.com/Copanies/Copany/blob/main/local-development-setup.md)
+3. Set up your local development environment: see the [CONTRIBUTING](https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.md)
 4. Complete the Issue and set its status to In review
 5. After the Issue passes review, you will receive the corresponding Contribution Points (CP)
 6. All contributions are recorded on the [Contributions](https://copany.app/copany/5?tab=Contribution&subtab=Issue) page

@@ -1,6 +1,12 @@
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import { getProviderToken } from "./userAuth.service";
 
+// Define error type for GitHub API errors
+interface GitHubError {
+  status: number;
+  message?: string;
+}
+
 /**
  * Get current user's GitHub access token
  * @returns GitHub access token, or null if not found
@@ -186,6 +192,84 @@ export async function getRepoLicense(
     console.log("🌐 No access token, using public API to get License");
     return await getPublicRepoLicense(repo);
   }
+}
+
+/**
+ * Get repository CONTRIBUTING guide without authentication
+ * Tries common paths in order
+ */
+export async function getPublicRepoContributing(
+  repo: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  const octokit = new Octokit();
+  const [owner, repoName] = repo.split("/");
+  const candidatePaths = [
+    "CONTRIBUTING",
+    "CONTRIBUTING.md",
+    ".github/CONTRIBUTING.md",
+    "docs/CONTRIBUTING.md",
+  ];
+
+  for (const path of candidatePaths) {
+    try {
+      const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+      return response.data;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        (error as GitHubError).status === 404
+      ) {
+        // try next path
+        continue;
+      }
+      throw error;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get repository CONTRIBUTING guide from GitHub
+ * Uses authenticated request when token available, falls back to public
+ */
+export async function getRepoContributing(
+  repo: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  const accessToken = await getGithubAccessToken();
+
+  if (accessToken) {
+    const octokit = new Octokit({ auth: accessToken as string });
+    const [owner, repoName] = repo.split("/");
+    const candidatePaths = [
+      "CONTRIBUTING",
+      "CONTRIBUTING.md",
+      ".github/CONTRIBUTING.md",
+      "docs/CONTRIBUTING.md",
+    ];
+
+    for (const path of candidatePaths) {
+      try {
+        const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+        return response.data;
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          (error as GitHubError).status === 404
+        ) {
+          // try next path
+          continue;
+        }
+        throw error;
+      }
+    }
+    return null;
+  }
+
+  return await getPublicRepoContributing(repo);
 }
 
 /**

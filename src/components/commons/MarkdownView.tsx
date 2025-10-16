@@ -2,7 +2,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypePrism from "rehype-prism-plus";
 import rehypeRaw from "rehype-raw";
+import { refractor } from "refractor";
 import "github-markdown-css/github-markdown.css";
+
+// Register env language as an alias for bash/shell
+refractor.alias({ bash: ["env"] });
 
 const markdownStyles = `
 .markdown-body {

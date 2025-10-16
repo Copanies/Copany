@@ -22,8 +22,8 @@ import LoadingView from "@/components/commons/LoadingView";
 import { getMonthlyPeriod, getMonthlyPeriodSimple } from "@/utils/time";
 import CountdownTimer from "@/components/commons/CountdownTimer";
 import { useRouter } from "next/navigation";
-import DistributeDetailModal from "./_subViews/DistributeDetailModal";
-import DistributeEvidenceModal from "./_subViews/DistributeEvidenceModal";
+import DistributeDetailModal from "./_components/DistributeDetailModal";
+import DistributeEvidenceModal from "./_components/DistributeEvidenceModal";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -128,7 +128,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
         <EmptyPlaceholderView
           icon={
             <ReceiptPercentIcon
-              className="w-16 h-16 text-gray-500"
+              className="w-16 h-16 text-gray-500 dark:text-gray-400"
               strokeWidth={1}
             />
           }

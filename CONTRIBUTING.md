@@ -1,6 +1,6 @@
-# Local Development Setup Guide
+# CONTRIBUTING
 
-> [中文版本](local-development-setup.zh.md) | English
+> [中文版本](https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.zh.md) | English
 
 This guide will help you set up the full Supabase development environment locally and connect it to your frontend project.
 
