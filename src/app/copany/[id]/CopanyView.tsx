@@ -10,7 +10,7 @@ import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
-import CooperateView from "./_subTabs/CooperateView";
+import CooperateView from "./_subTabs/issue/CooperateView";
 import ContributionView from "./_subTabs/contribution/ContributionView";
 import FinanceView from "./_subTabs/finance/FinanceView";
 import SettingsView from "./_subTabs/settings/SettingsView";
