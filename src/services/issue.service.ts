@@ -100,21 +100,19 @@ export class IssueService {
   }
 
   static async createIssue(
-    issue: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at">
+    issue: Omit<Issue, "id" | "created_at" | "updated_at"> & {
+      closed_at?: string | null;
+    }
   ): Promise<IssueWithAssignee> {
     const supabase = await createSupabaseClient();
     // Respect caller-provided closed_at if explicitly present; otherwise derive from state
-    const issueAny = issue as unknown as Record<string, unknown>;
-    const hasProvidedClosedAt = Object.prototype.hasOwnProperty.call(
-      issueAny,
-      "closed_at"
-    );
-    const providedClosedAt = (issueAny["closed_at"] as string | null | undefined);
+    const providedClosedAt = issue.closed_at;
+    const hasProvidedClosedAt = providedClosedAt !== undefined && providedClosedAt !== null;
 
     const updatedIssue = {
       ...issue,
       closed_at: hasProvidedClosedAt
-        ? (providedClosedAt ?? null)
+        ? providedClosedAt
         : (
             issue.state === IssueState.Done ||
             issue.state === IssueState.Canceled ||

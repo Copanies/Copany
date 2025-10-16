@@ -567,7 +567,10 @@ export default function New() {
                           <div className="p-4">
                             <EmptyPlaceholderView
                               icon={
-                                <CubeTransparentIcon className="w-12 h-12 text-gray-400 stroke-1" />
+                                <CubeTransparentIcon
+                                  className="w-12 h-12 text-gray-500 dark:text-gray-400"
+                                  strokeWidth={1}
+                                />
                               }
                               title={`@${
                                 providersInfo?.providersData.find(

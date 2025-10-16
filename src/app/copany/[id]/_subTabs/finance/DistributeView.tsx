@@ -128,7 +128,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
         <EmptyPlaceholderView
           icon={
             <ReceiptPercentIcon
-              className="w-16 h-16 text-gray-500"
+              className="w-16 h-16 text-gray-500 dark:text-gray-400"
               strokeWidth={1}
             />
           }

@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { TableCellsIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
 import HistoryIssueCreateModal from "./_components/HistoryIssueCreateModal";
 
@@ -117,27 +117,21 @@ export default function ContributionRecordsView({
   if (!hasContributions) {
     return (
       <div className="p-0">
-        {/* Add History Issues button - only visible to owner */}
-        {isOwner && (
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <Button onClick={() => setIsHistoryModalOpen(true)}>
-              Add History Issues
-            </Button>
-          </div>
-        )}
-
-        <div className="p-4">
-          <EmptyPlaceholderView
-            icon={
-              <ClipboardDocumentListIcon
-                className="w-16 h-16 text-gray-500"
-                strokeWidth={1}
-              />
-            }
-            title="No contribution records"
-            description="Contribution records are generated from completed issues. Complete some issues to see contribution records here."
-          />
-        </div>
+        <EmptyPlaceholderView
+          icon={
+            <TableCellsIcon
+              className="w-16 h-16 text-gray-500 dark:text-gray-400"
+              strokeWidth={1}
+            />
+          }
+          title="No contribution records"
+          description="Contribution records are generated from completed issues. Complete some issues to see contribution records here."
+          buttonIcon={<PlusIcon className="w-4 h-4" />}
+          buttonTitle="Add History Issues"
+          buttonAction={() => setIsHistoryModalOpen(true)}
+          buttonDisabled={!isOwner}
+          buttonTooltip="Only the owner can add history issues"
+        />
 
         {/* Modal */}
         <Modal
@@ -322,7 +316,7 @@ function ContributionRecordsList({
                 </span>
 
                 {/* Level */}
-                <div className="text-left w-20">
+                <div className="text-left w-12">
                   {renderLevelLabel(contribution.issue_level, false, false)}
                 </div>
 

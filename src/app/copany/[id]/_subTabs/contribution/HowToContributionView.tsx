@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import MarkdownView from "@/components/commons/MarkdownView";
 import LoadingView from "@/components/commons/LoadingView";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { MapIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRepoContributing } from "@/hooks/contributing";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { EMPTY_STRING } from "@/utils/constants";
@@ -69,7 +69,7 @@ export default function HowToContributionView({
     return (
       <EmptyPlaceholderView
         icon={
-          <BookOpenIcon
+          <MapIcon
             className="w-16 h-16 text-gray-500 dark:text-gray-400"
             strokeWidth={1}
           />
