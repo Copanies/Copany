@@ -126,7 +126,8 @@ export default function HistoryIssueCreateModal({
           Add History Issues
         </h2>
       </div>
-      <div className="grid grid-cols-[1fr_5rem_10rem_10rem_2.25rem] gap-3 items-center mb-3 w-full text-base">
+      {/* Desktop Header - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-[1fr_5rem_10rem_10rem_2.25rem] gap-3 items-center mb-3 w-full text-base">
         <div className="">Issue Title</div>
         <div className="">Level</div>
         <div className="">Completion Date</div>
@@ -136,70 +137,157 @@ export default function HistoryIssueCreateModal({
 
       <div className="space-y-3 mb-6">
         {rows.map((row, _index) => (
-          <div
-            key={row.id}
-            className="grid grid-cols-[1fr_5rem_10rem_10rem_2.25rem] gap-3 items-center w-full"
-          >
-            {/* Title */}
-            <input
-              type="text"
-              placeholder="Enter issue title"
-              value={row.title}
-              onChange={(e) => updateRow(row.id, "title", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-
-            {/* Level */}
-            <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
-              <IssueLevelSelector
-                issueId={row.id}
-                initialLevel={row.level}
-                showText={false}
-                onLevelChange={(_, newLevel) =>
-                  updateRow(row.id, "level", newLevel)
-                }
-                readOnly={false}
-                disableServerUpdate={true}
+          <div key={row.id} className="space-y-3">
+            {/* Desktop Layout */}
+            <div className="hidden md:grid grid-cols-[1fr_5rem_10rem_10rem_2.25rem] gap-3 items-center w-full">
+              {/* Title */}
+              <input
+                type="text"
+                placeholder="Enter issue title"
+                value={row.title}
+                onChange={(e) => updateRow(row.id, "title", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+
+              {/* Level */}
+              <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                <IssueLevelSelector
+                  issueId={row.id}
+                  initialLevel={row.level}
+                  showText={false}
+                  onLevelChange={(_, newLevel) =>
+                    updateRow(row.id, "level", newLevel)
+                  }
+                  readOnly={false}
+                  disableServerUpdate={true}
+                />
+              </div>
+
+              {/* Completion Date */}
+              <input
+                type="date"
+                value={row.closedAt}
+                onChange={(e) => updateRow(row.id, "closedAt", e.target.value)}
+                max={maxDate.toISOString().split("T")[0]}
+                className="w-full px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+
+              {/* Assignee */}
+              <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                <IssueAssigneeSelector
+                  issueId={row.id}
+                  initialAssignee={row.assignee}
+                  currentUser={currentUser}
+                  contributors={contributors}
+                  showText={true}
+                  disableServerUpdate={true}
+                  readOnly={false}
+                  copanyId={copanyId}
+                  onAssigneeChange={(_, newAssignee) => {
+                    updateRow(row.id, "assignee", newAssignee);
+                  }}
+                />
+              </div>
+
+              {/* Remove Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                shape="square"
+                onClick={() => removeRow(row.id)}
+                className="justify-self-end"
+                disabled={rows.length <= 1}
+              >
+                <TrashIcon className="w-4 h-4" />
+              </Button>
             </div>
 
-            {/* Completion Date */}
-            <input
-              type="date"
-              value={row.closedAt}
-              onChange={(e) => updateRow(row.id, "closedAt", e.target.value)}
-              max={maxDate.toISOString().split("T")[0]}
-              className="w-full px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            {/* Mobile Layout */}
+            <div className="md:hidden space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Issue Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter issue title"
+                  value={row.title}
+                  onChange={(e) => updateRow(row.id, "title", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
-            {/* Assignee */}
-            <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
-              <IssueAssigneeSelector
-                issueId={row.id}
-                initialAssignee={row.assignee}
-                currentUser={currentUser}
-                contributors={contributors}
-                showText={true}
-                disableServerUpdate={true}
-                readOnly={false}
-                copanyId={copanyId}
-                onAssigneeChange={(_, newAssignee) => {
-                  updateRow(row.id, "assignee", newAssignee);
-                }}
-              />
+              {/* Level and Completion Date Row */}
+              <div className="grid grid-cols-[5rem_1fr] gap-3 w-full">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Level
+                  </label>
+                  <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                    <IssueLevelSelector
+                      issueId={row.id}
+                      initialLevel={row.level}
+                      showText={false}
+                      onLevelChange={(_, newLevel) =>
+                        updateRow(row.id, "level", newLevel)
+                      }
+                      readOnly={false}
+                      disableServerUpdate={true}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Completion Date
+                  </label>
+                  <input
+                    type="date"
+                    value={row.closedAt}
+                    onChange={(e) =>
+                      updateRow(row.id, "closedAt", e.target.value)
+                    }
+                    max={maxDate.toISOString().split("T")[0]}
+                    className="w-full px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Assignee */}
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Assignee
+                </label>
+                <div className="flex flex-row gap-3 items-center w-full">
+                  <div className="w-full flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                    <IssueAssigneeSelector
+                      issueId={row.id}
+                      initialAssignee={row.assignee}
+                      currentUser={currentUser}
+                      contributors={contributors}
+                      showText={true}
+                      disableServerUpdate={true}
+                      readOnly={false}
+                      copanyId={copanyId}
+                      onAssigneeChange={(_, newAssignee) => {
+                        updateRow(row.id, "assignee", newAssignee);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    shape="square"
+                    onClick={() => removeRow(row.id)}
+                    className="justify-self-end"
+                    disabled={rows.length <= 1}
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-
-            {/* Remove Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              shape="square"
-              onClick={() => removeRow(row.id)}
-              className="justify-self-end"
-              disabled={rows.length <= 1}
-            >
-              <TrashIcon className="w-4 h-4" />
-            </Button>
           </div>
         ))}
       </div>
