@@ -114,6 +114,7 @@ export default function IssueCreateForm({
         priority: priority,
         level: level,
         assignee: assignee,
+        closed_at: null,
       });
 
       // Reset form

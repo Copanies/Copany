@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
       priority,
       level,
       assignee,
+      closed_at: null,
     });
     return NextResponse.json({ issue: created });
   } catch (_e) {

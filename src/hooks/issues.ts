@@ -244,7 +244,7 @@ export function useDeleteIssue(copanyId: string) {
 export function useCreateIssue(copanyId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Omit<Issue, "id" | "created_at" | "updated_at" | "closed_at" | "created_by">) => {
+    mutationFn: async (payload: Omit<Issue, "id" | "created_at" | "updated_at" | "created_by"> & { closed_at?: string | null }) => {
       try {
         const res = await fetch("/api/issue/create", {
           method: "POST",
