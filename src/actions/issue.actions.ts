@@ -69,10 +69,10 @@ export async function createHistoryIssuesAction(
       });
       
       // Create contributor if needed
-      if (newIssue.copany_id) {
+      if (newIssue.copany_id && newIssue.assignee) {
         await CopanyContributorService.createCopanyContributor(
           newIssue.copany_id,
-          currentUser.id
+          newIssue.assignee
         );
       }
       
