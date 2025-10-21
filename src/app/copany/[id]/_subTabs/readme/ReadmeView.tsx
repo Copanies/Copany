@@ -38,21 +38,17 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 };
 
 export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
-  // 使用语言检测 hook
   const { isChinesePreferred } = usePreferredLanguage();
 
-  // 使用当前用户 hook
   const { data: currentUser } = useCurrentUser();
   const isLoggedIn = !!currentUser;
 
-  // 使用 README hook，根据语言偏好获取内容
   const {
     data: readmeContent,
     isLoading,
     error,
   } = useRepoReadme(githubUrl, isChinesePreferred);
 
-  // 处理加载状态
   if (isLoading) {
     return (
       <div className="py-8 text-center">
@@ -61,18 +57,16 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
-  // 处理错误状态
   if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
         <p className="text-red-600 dark:text-red-400">
-          Failed to load README content.
+          Failed to load README content from GitHub.
         </p>
       </div>
     );
   }
 
-  // 处理无 README 的情况
   if (!readmeContent || readmeContent === "No README") {
     const newReadmeUrl = githubUrl ? generateNewReadmeUrl(githubUrl) : null;
 
@@ -103,7 +97,6 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
-  // 显示 README 内容
   return (
     <Suspense fallback={<LoadingView type="label" label="Loading README..." />}>
       <MarkdownView content={readmeContent} />
