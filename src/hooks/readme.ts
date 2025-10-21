@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getRepoReadmeAction, getRepoLicenseAction, getRepoLicenseTypeAction } from "@/actions/github.action";
+import { getRepoReadmeWithFilenameAction, getRepoLicenseAction, getRepoLicenseTypeAction } from "@/actions/github.action";
 
 function readmeKey(githubUrl: string) { return ["readme", githubUrl] as const; }
 function licenseKey(githubUrl: string) { return ["license", githubUrl] as const; }
@@ -13,20 +13,48 @@ const decodeGitHubContent = (base64String: string): string => {
   return decoder.decode(bytes);
 };
 
-export function useRepoReadme(githubUrl?: string | null) {
+export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean) {
   return useQuery<string>({
-    queryKey: githubUrl ? readmeKey(githubUrl) : ["readme", "none"],
+    queryKey: githubUrl ? [...readmeKey(githubUrl), preferChinese ? "zh" : "en"] : ["readme", "none"],
     queryFn: async () => {
       if (!githubUrl) return "No README";
+      console.log("useRepoReadme", githubUrl, preferChinese);
+      
       try {
-        const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme`);
-        if (!res.ok) throw new Error("request failed");
-        const json = await res.json();
-        return json.content as string;
+        // If Chinese is preferred, try to get README.zh.md first
+        if (preferChinese) {
+          try {
+            const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme&filename=README.zh.md`);
+            if (res.ok) {
+              const json = await res.json();
+              if (json.content) return json.content as string;
+            }
+          } catch {
+            // Fallback to action if API fails
+            try {
+              const res = await getRepoReadmeWithFilenameAction(githubUrl, "README.zh.md");
+              if (res && !Array.isArray(res) && "content" in res && res.content) {
+                return decodeGitHubContent(res.content);
+              }
+            } catch {
+              // Continue to fallback to default README
+            }
+          }
+        }
+        
+        // Try default README (either as fallback for Chinese or primary for non-Chinese)
+        try {
+          const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme`);
+          if (!res.ok) throw new Error("request failed");
+          const json = await res.json();
+          return json.content as string;
+        } catch {
+          const res = await getRepoReadmeWithFilenameAction(githubUrl);
+          if (!res || Array.isArray(res) || !("content" in res) || !res.content) return "No README";
+          return decodeGitHubContent(res.content);
+        }
       } catch {
-        const res = await getRepoReadmeAction(githubUrl);
-        if (!res?.content) return "No README";
-        return decodeGitHubContent(res.content);
+        return "No README";
       }
     },
     enabled: !!githubUrl,

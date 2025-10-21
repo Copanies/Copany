@@ -1,6 +1,6 @@
 "use server";
 import {
-  getRepoReadme,
+  getRepoReadmeWithFilename,
   getRepoLicense,
   getRepoLicenseType,
 } from "@/services/github.service";
@@ -50,12 +50,12 @@ function extractRepoPathFromUrl(url: string): string | null {
   }
 }
 
-export async function getRepoReadmeAction(githubUrl: string) {
+export async function getRepoReadmeWithFilenameAction(githubUrl: string, filename?: string) {
   const repoPath = extractRepoPathFromUrl(githubUrl);
   if (!repoPath) {
     throw new Error("Invalid GitHub URL");
   }
-  const readme = await getRepoReadme(repoPath);
+  const readme = await getRepoReadmeWithFilename(repoPath, filename);
   return readme;
 }
 

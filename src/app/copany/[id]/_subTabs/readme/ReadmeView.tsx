@@ -1,31 +1,17 @@
 "use client";
 
 import { Suspense } from "react";
-import { useState, useEffect } from "react";
 import MarkdownView from "@/components/commons/MarkdownView";
-import { getRepoReadmeAction } from "@/actions/github.action";
 import LoadingView from "@/components/commons/LoadingView";
 import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { EMPTY_STRING } from "@/utils/constants";
+import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
+import { useRepoReadme } from "@/hooks/readme";
 
 interface ReadmeViewProps {
   githubUrl?: string | null;
 }
-
-const decodeGitHubContent = (base64String: string): string => {
-  try {
-    const binaryString = atob(base64String);
-    const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
-    const decoder = new TextDecoder("utf-8");
-    return decoder.decode(bytes);
-  } catch (error) {
-    console.error("Failed to decode GitHub content:", error);
-    throw new Error("Failed to decode GitHub content");
-  }
-};
 
 /**
  * Generate a link to create a new README file from GitHub URL
@@ -52,70 +38,22 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 };
 
 export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
-  const [readmeContent, setReadmeContent] = useState<string>(EMPTY_STRING);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  // 使用语言检测 hook
+  const { isChinesePreferred } = usePreferredLanguage();
 
-  // 使用 React Query 获取当前用户
+  // 使用当前用户 hook
   const { data: currentUser } = useCurrentUser();
   const isLoggedIn = !!currentUser;
 
-  // 使用 React Query 获取 README 内容
-  const { data: readmeData, isLoading: isReadmeLoading } = useQuery({
-    queryKey: ["readme", githubUrl],
-    queryFn: async () => {
-      if (!githubUrl) {
-        return null;
-      }
-
-      try {
-        const readme = await getRepoReadmeAction(githubUrl);
-        if (!readme?.content) {
-          return "No README";
-        }
-        return decodeGitHubContent(readme.content);
-      } catch (error) {
-        console.error("Failed to get README:", error);
-        throw new Error("Failed to get README content.");
-      }
-    },
-    enabled: !!githubUrl,
-    staleTime: 1 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    refetchIntervalInBackground: true,
-  });
-
-  useEffect(() => {
-    console.log("ReadmeTabView mounted, starting to fetch README");
-
-    if (!githubUrl) {
-      setReadmeContent("No repository information found");
-      return;
-    }
-
-    // 处理 README 数据
-    if (readmeData === "No README") {
-      setNotFound(true);
-      setReadmeContent(EMPTY_STRING);
-      setError(null);
-    } else if (readmeData) {
-      setNotFound(false);
-      setReadmeContent(readmeData);
-      setError(null);
-    }
-  }, [readmeData, githubUrl]);
+  // 使用 README hook，根据语言偏好获取内容
+  const {
+    data: readmeContent,
+    isLoading,
+    error,
+  } = useRepoReadme(githubUrl, isChinesePreferred);
 
   // 处理加载状态
-  useEffect(() => {
-    if (isReadmeLoading && !readmeData) {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
-  }, [isReadmeLoading, readmeData]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="py-8 text-center">
         <LoadingView type="label" />
@@ -123,15 +61,19 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
+  // 处理错误状态
   if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-red-600 dark:text-red-400">
+          Failed to load README content.
+        </p>
       </div>
     );
   }
 
-  if (notFound) {
+  // 处理无 README 的情况
+  if (!readmeContent || readmeContent === "No README") {
     const newReadmeUrl = githubUrl ? generateNewReadmeUrl(githubUrl) : null;
 
     return (
@@ -161,6 +103,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
+  // 显示 README 内容
   return (
     <Suspense fallback={<LoadingView type="label" label="Loading README..." />}>
       <MarkdownView content={readmeContent} />
