@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRepoReadmeAction, getRepoLicenseAction, getRepoLicenseTypeAction } from "@/actions/github.action";
+import { getRepoReadmeWithFilenameAction, getRepoLicenseAction, getRepoLicenseTypeAction } from "@/actions/github.action";
 
 const decodeGitHubContent = (base64String: string): string => {
   const binaryString = typeof atob !== "undefined" ? atob(base64String) : Buffer.from(base64String, "base64").toString("binary");
@@ -19,8 +19,9 @@ export async function GET(request: NextRequest) {
     }
     
     if (type === "readme") {
-      const res = await getRepoReadmeAction(githubUrl);
-      if (!res?.content) {
+      const filename = searchParams.get("filename"); // Optional filename parameter
+      const res = await getRepoReadmeWithFilenameAction(githubUrl, filename || undefined);
+      if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
         return NextResponse.json({ content: "No README" });
       }
       const content = decodeGitHubContent(res.content);

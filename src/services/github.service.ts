@@ -30,86 +30,6 @@ export async function getGithubAccessToken(): Promise<string | null> {
   }
 }
 
-// Note: Cookie-based token management has been removed
-// Tokens are now retrieved directly from Supabase user identities
-// This is the correct and more secure approach
-
-/**
- * Get repository README without authentication
- * @param repo Repository path, in the format "owner/repo"
- * @returns Repository README content, or null if it doesn't exist
- */
-export async function getPublicRepoReadme(
-  repo: string
-): Promise<
-  RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
-> {
-  const octokit = new Octokit(); // No auth parameter, using anonymous request
-
-  try {
-    const response = await octokit.request(`GET /repos/${repo}/readme`);
-    return response.data;
-  } catch (error: unknown) {
-    // If it's a 404 error (README doesn't exist), return null instead of throwing an error
-    if (
-      error &&
-      typeof error === "object" &&
-      "status" in error &&
-      error.status === 404
-    ) {
-      console.log(`ℹ️ Repository ${repo} does not have a README file`);
-      return null;
-    }
-    // Other errors are thrown directly
-    throw error;
-  }
-}
-
-/**
- * Get repository README from GitHub
- * @param repo Repository name in the format "owner/repo"
- * @returns Repository README content
- *
- * API: GET https://api.github.com/repos/{owner}/{repo}/readme
- */
-export async function getRepoReadme(
-  repo: string
-): Promise<
-  RestEndpointMethodTypes["repos"]["getReadme"]["response"]["data"] | null
-> {
-  const accessToken = await getGithubAccessToken();
-
-  // If we have an access token, use authenticated request (can access private repository README)
-  if (accessToken) {
-    console.log("🔑 Using authenticated request to get README");
-    const octokit = new Octokit({
-      auth: accessToken as string,
-    });
-
-    try {
-      const response = await octokit.request(`GET /repos/${repo}/readme`);
-      return response.data;
-    } catch (error: unknown) {
-      // If it's a 404 error (README doesn't exist), return null instead of throwing an error
-      if (
-        error &&
-        typeof error === "object" &&
-        "status" in error &&
-        error.status === 404
-      ) {
-        console.log(`ℹ️ Repository ${repo} does not have a README file`);
-        return null;
-      }
-      // Other errors are thrown directly
-      throw error;
-    }
-  } else {
-    // If we don't have an access token, try to get public repository README without authentication
-    console.log("🌐 No access token, using public API to get README");
-    return await getPublicRepoReadme(repo);
-  }
-}
-
 /**
  * Get repository License without authentication
  * @param repo Repository path, in the format "owner/repo"
@@ -191,6 +111,136 @@ export async function getRepoLicense(
     // If we don't have an access token, try to get public repository License without authentication
     console.log("🌐 No access token, using public API to get License");
     return await getPublicRepoLicense(repo);
+  }
+}
+
+/**
+ * Get repository README with specific filename without authentication
+ * @param repo Repository path, in the format "owner/repo"
+ * @param filename Optional filename to look for (e.g., "README.zh.md")
+ * @returns Repository README content, or null if it doesn't exist
+ */
+export async function getPublicRepoReadmeWithFilename(
+  repo: string,
+  filename?: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  const octokit = new Octokit();
+  const [owner, repoName] = repo.split("/");
+  
+  // If no filename specified, use default README
+  if (!filename) {
+    try {
+      const response = await octokit.request(`GET /repos/${repo}/readme`);
+      return response.data;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        (error as GitHubError).status === 404
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  // Try multiple candidate paths for the specified filename
+  const candidatePaths = [
+    filename,
+    filename.replace(/\.md$/, ""), // without .md extension
+    `.github/${filename}`,
+    `docs/${filename}`,
+  ];
+
+  for (const path of candidatePaths) {
+    try {
+      const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+      return response.data;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        (error as GitHubError).status === 404
+      ) {
+        // try next path
+        continue;
+      }
+      throw error;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get repository README with specific filename from GitHub
+ * @param repo Repository name in the format "owner/repo"
+ * @param filename Optional filename to look for (e.g., "README.zh.md")
+ * @returns Repository README content, or null if it doesn't exist
+ */
+export async function getRepoReadmeWithFilename(
+  repo: string,
+  filename?: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  const accessToken = await getGithubAccessToken();
+
+  // If we have an access token, use authenticated request
+  if (accessToken) {
+    console.log("🔑 Using authenticated request to get README with filename");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
+    const [owner, repoName] = repo.split("/");
+
+    // If no filename specified, use default README endpoint
+    if (!filename) {
+      try {
+        const response = await octokit.request(`GET /repos/${repo}/readme`);
+        return response.data;
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          (error as GitHubError).status === 404
+        ) {
+          return null;
+        }
+        throw error;
+      }
+    }
+
+    // Try multiple candidate paths for the specified filename
+    const candidatePaths = [
+      filename,
+      filename.replace(/\.md$/, ""), // without .md extension
+      `.github/${filename}`,
+      `docs/${filename}`,
+    ];
+
+    for (const path of candidatePaths) {
+      try {
+        const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+        return response.data;
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          (error as GitHubError).status === 404
+        ) {
+          // try next path
+          continue;
+        }
+        throw error;
+      }
+    }
+    return null;
+  } else {
+    // If we don't have an access token, try to get public repository README without authentication
+    console.log("🌐 No access token, using public API to get README with filename");
+    return await getPublicRepoReadmeWithFilename(repo, filename);
   }
 }
 
