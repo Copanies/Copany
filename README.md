@@ -202,7 +202,7 @@ To make work more free — and more meaningful.
 ## License
 
 This project is licensed under the
-Copany Open Collaboration License (COSL)
+[Copany Open Collaboration License (COSL)](https://github.com/Copanies/Copany/blob/main/LICENSE)
 
 ## Legal Disclaimer
 
