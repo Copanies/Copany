@@ -207,7 +207,9 @@ Copany Open Collaboration License (COSL)
 ## Legal Disclaimer
 
 - This project and all contributions are provided “as is,” without any warranty of function or availability.
+
 - By submitting contributions, you agree to comply with the Copany Open Collaboration License (COSL) and its profit-sharing terms.
+
 - In case of violations, contributors reserve the right to pursue enforcement and protect their interests.
 
 ## Join the Community
@@ -215,7 +217,11 @@ Copany Open Collaboration License (COSL)
 Have questions or suggestions? Join the discussion or start contributing today!
 
 - Discussion: [Copany Discussion](https://copany.app/copany/5?tab=Discussion)
+
 - Collaboration: [Copany Collaboration](https://copany.app/copany/5?tab=Cooperate)
+
 - Telegram: [Copany Group](https://t.me/+FMfZz5wKKAAzNmI1)
+
 - Learn more: [Explore Copany](https://copany.app)
-- Contact: support@copany.app
+
+- Contact: jinhongw982@gmail.com

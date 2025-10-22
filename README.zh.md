@@ -9,7 +9,7 @@
 ## 项目背景
 
 如今，我们开启一段事业的方式大致有两种：
-要么**成立一家公司**，要么**加入一家公司**。
+要么成立一家公司，要么加入一家公司。
 
 公司通过薪资体系，将人们组织起来，共同完成那些个人难以独立完成的伟大事业，同时为成员提供了相对稳定的收入。
 然而，这种看似成熟的合作方式，在带来效率与秩序的同时，也存在以下几个长期困扰我们的问题：
@@ -217,8 +217,12 @@ Copany 旨在为以上问题提供一种新的解决思路。
 
 有问题或建议？欢迎提交 Issues 或加入 Copany 社区讨论！
 
-参与讨论：[Copany 讨论区](https://copany.app/copany/5?tab=Discussion)
-参与贡献：[Copany 合作区](https://copany.app/copany/5?tab=Cooperate)
-Telegram: [Copany 群组](https://t.me/+FMfZz5wKKAAzNmI1)
-了解更多: [探索 Copany](https://copany.app)
-联系方式: support@copany.app
+- 参与讨论：[Copany 讨论区](https://copany.app/copany/5?tab=Discussion)
+
+- 参与贡献：[Copany 合作区](https://copany.app/copany/5?tab=Cooperate)
+
+- Telegram: [Copany 群组](https://t.me/+FMfZz5wKKAAzNmI1)
+
+- 了解更多: [探索 Copany](https://copany.app)
+
+- 联系方式: jinhongw982@gmail.com
