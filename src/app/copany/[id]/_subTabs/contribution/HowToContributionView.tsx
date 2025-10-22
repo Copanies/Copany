@@ -7,20 +7,25 @@ import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { MapIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRepoContributing } from "@/hooks/contributing";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
 import { EMPTY_STRING } from "@/utils/constants";
 
 interface HowToContributionViewProps {
   githubUrl?: string | null;
 }
 
-const generateNewContributingUrl = (githubUrl: string): string | null => {
+const generateNewContributingUrl = (
+  githubUrl: string,
+  preferChinese?: boolean
+): string | null => {
   try {
     const url = new URL(githubUrl);
     const pathSegments = url.pathname.split("/").filter(Boolean);
     if (pathSegments.length >= 2) {
       const [owner, repo] = pathSegments;
       const cleanRepo = repo.replace(/\.git$/, "");
-      return `https://github.com/${owner}/${cleanRepo}/new/main?filename=CONTRIBUTING.md`;
+      const filename = preferChinese ? "CONTRIBUTING.zh.md" : "CONTRIBUTING.md";
+      return `https://github.com/${owner}/${cleanRepo}/new/main?filename=${filename}`;
     }
     return null;
   } catch (_e) {
@@ -31,10 +36,14 @@ const generateNewContributingUrl = (githubUrl: string): string | null => {
 export default function HowToContributionView({
   githubUrl,
 }: HowToContributionViewProps) {
+  const { isChinesePreferred } = usePreferredLanguage();
   const { data: currentUser } = useCurrentUser();
   const isLoggedIn = !!currentUser;
 
-  const { data, isLoading } = useRepoContributing(githubUrl);
+  const { data, isLoading } = useRepoContributing(
+    githubUrl,
+    isChinesePreferred
+  );
   const [content, setContent] = useState<string>(EMPTY_STRING);
   const [notFound, setNotFound] = useState(false);
 
@@ -64,7 +73,7 @@ export default function HowToContributionView({
 
   if (notFound) {
     const newContribUrl = githubUrl
-      ? generateNewContributingUrl(githubUrl)
+      ? generateNewContributingUrl(githubUrl, isChinesePreferred)
       : null;
     return (
       <EmptyPlaceholderView
@@ -97,7 +106,7 @@ export default function HowToContributionView({
     <Suspense
       fallback={<LoadingView type="label" label="Loading CONTRIBUTING..." />}
     >
-      <div className="pl-5">
+      <div className="pl-0 md:pl-5">
         <MarkdownView content={content} />
       </div>
     </Suspense>

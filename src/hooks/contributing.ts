@@ -12,16 +12,34 @@ const decodeGitHubContent = (base64String: string): string => {
   return decoder.decode(bytes);
 };
 
-export function useRepoContributing(githubUrl?: string | null) {
+export function useRepoContributing(githubUrl?: string | null, preferChinese?: boolean) {
   return useQuery<string>({
-    queryKey: githubUrl ? contributingKey(githubUrl) : ["contributing", "none"],
+    queryKey: githubUrl ? [...contributingKey(githubUrl), preferChinese ? "zh" : "en"] : ["contributing", "none"],
     queryFn: async () => {
       if (!githubUrl) return "No CONTRIBUTING";
+      console.log("useRepoContributing", githubUrl, preferChinese);
+      
       try {
-        // We currently do not add a dedicated API route; call action directly
-        const res = await getRepoContributingAction(githubUrl);
-        if (!res || Array.isArray(res) || !("content" in res)) return "No CONTRIBUTING";
-        return decodeGitHubContent(res.content as string);
+        // If Chinese is preferred, try to get CONTRIBUTING.zh.md first
+        if (preferChinese) {
+          try {
+            const res = await getRepoContributingAction(githubUrl, "CONTRIBUTING.zh.md");
+            if (res && !Array.isArray(res) && "content" in res && res.content) {
+              return decodeGitHubContent(res.content);
+            }
+          } catch {
+            // Continue to fallback to default CONTRIBUTING
+          }
+        }
+        
+        // Try default CONTRIBUTING (either as fallback for Chinese or primary for non-Chinese)
+        try {
+          const res = await getRepoContributingAction(githubUrl);
+          if (!res || Array.isArray(res) || !("content" in res) || !res.content) return "No CONTRIBUTING";
+          return decodeGitHubContent(res.content);
+        } catch {
+          return "No CONTRIBUTING";
+        }
       } catch {
         return "No CONTRIBUTING";
       }

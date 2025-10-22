@@ -7,7 +7,7 @@ import {
 import { getGithubAccessToken } from "@/services/github.service";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Octokit } from "@octokit/rest";
-import { getRepoContributing } from "@/services/github.service";
+import { getRepoContributingWithFilename } from "@/services/github.service";
 
 /**
  * Extract repository path from GitHub URL
@@ -59,12 +59,12 @@ export async function getRepoReadmeWithFilenameAction(githubUrl: string, filenam
   return readme;
 }
 
-export async function getRepoContributingAction(githubUrl: string) {
+export async function getRepoContributingAction(githubUrl: string, filename?: string) {
   const repoPath = extractRepoPathFromUrl(githubUrl);
   if (!repoPath) {
     throw new Error("Invalid GitHub URL");
   }
-  const contributing = await getRepoContributing(repoPath);
+  const contributing = await getRepoContributingWithFilename(repoPath, filename);
   return contributing;
 }
 
