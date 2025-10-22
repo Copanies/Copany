@@ -92,29 +92,41 @@ Copany 旨在为以上问题提供一种新的解决思路。
 ## 使命、愿景
 
 **使命：**
+
 创造出一种自由、透明、成果共享的协作方式。
 
 **愿景：**
+
 让人们的工作更加自由，且充满意义。
 
 ## 产品框架
 
 **探索页（Explore）**
+
 浏览并探索所有 Copany 项目，了解项目进展与参与方式。
 
 **个人页（Profile）**
+
 进行账户管理，包括收益接收方式的设置与结算记录查看。
 
 **项目页（Project）**
+
 一个项目包含以下四个核心区域：
 
 - **讨论区（Discussion）**：
+
   分享想法、讨论方向、交流灵感。
+
 - **合作区（Collaboration）**：
+
   规划项目事项，分配负责人，确定事项分级与执行顺序。
+
 - **贡献记录区（Contribution）**：
+
   记录所有已完成的事项及其对应的贡献积分比例。
+
 - **收益支出记录区（Finance）**：
+
   展示项目的收益与支出情况，并按照贡献比例定期分配收益。
 
 ## 技术栈
@@ -141,7 +153,7 @@ Copany 旨在为以上问题提供一种新的解决思路。
 
 ## 快速开始
 
-- 代码开发参考 [CONTRIBUTING.md](http://contributing.md/)
+- 代码开发参考 [CONTRIBUTING.md](https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.zh.md/)
 
 - 产品设计原型查看 [Figma 设计稿](https://www.figma.com/design/B5wmCOR2kV9pKCZiq6fDMS/Copany?node-id=2809-4074&t=kkuuZDL8rl0pVeKU-1)
 
