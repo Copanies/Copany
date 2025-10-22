@@ -281,17 +281,101 @@ export async function getPublicRepoContributing(
 }
 
 /**
- * Get repository CONTRIBUTING guide from GitHub
+ * Get repository CONTRIBUTING guide with specified filename from GitHub
  * Uses authenticated request when token available, falls back to public
+ * @param repo Repository path (format: owner/repo)
+ * @param filename Optional filename (e.g., "CONTRIBUTING.zh.md")
+ * @returns Repository CONTRIBUTING content, or null if it doesn't exist
  */
-export async function getRepoContributing(
-  repo: string
+export async function getRepoContributingWithFilename(
+  repo: string,
+  filename?: string
 ): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
   const accessToken = await getGithubAccessToken();
 
+  // If we have an access token, use authenticated request
   if (accessToken) {
-    const octokit = new Octokit({ auth: accessToken as string });
+    console.log("🔑 Using authenticated request to get CONTRIBUTING with filename");
+    const octokit = new Octokit({
+      auth: accessToken as string,
+    });
     const [owner, repoName] = repo.split("/");
+
+    // If no filename specified, use default CONTRIBUTING behavior
+    if (!filename) {
+      const candidatePaths = [
+        "CONTRIBUTING",
+        "CONTRIBUTING.md",
+        ".github/CONTRIBUTING.md",
+        "docs/CONTRIBUTING.md",
+      ];
+
+      for (const path of candidatePaths) {
+        try {
+          const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+          return response.data;
+        } catch (error: unknown) {
+          if (
+            error &&
+            typeof error === "object" &&
+            "status" in error &&
+            (error as GitHubError).status === 404
+          ) {
+            // try next path
+            continue;
+          }
+          throw error;
+        }
+      }
+      return null;
+    }
+
+    // Try multiple candidate paths for the specified filename
+    const candidatePaths = [
+      filename,
+      filename.replace(/\.md$/, ""), // without .md extension
+      `.github/${filename}`,
+      `docs/${filename}`,
+    ];
+
+    for (const path of candidatePaths) {
+      try {
+        const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+        return response.data;
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          (error as GitHubError).status === 404
+        ) {
+          // try next path
+          continue;
+        }
+        throw error;
+      }
+    }
+    return null;
+  } else {
+    // If we don't have an access token, try to get public repository CONTRIBUTING without authentication
+    console.log("🌐 No access token, using public API to get CONTRIBUTING with filename");
+    return await getPublicRepoContributingWithFilename(repo, filename);
+  }
+}
+
+/**
+ * Get repository CONTRIBUTING guide without authentication
+ * Tries common paths in order
+ */
+export async function getPublicRepoContributingWithFilename(
+  repo: string,
+  filename?: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  const octokit = new Octokit();
+  const [owner, repoName] = repo.split("/");
+
+  // If no filename specified, use default CONTRIBUTING behavior
+  if (!filename) {
     const candidatePaths = [
       "CONTRIBUTING",
       "CONTRIBUTING.md",
@@ -319,7 +403,42 @@ export async function getRepoContributing(
     return null;
   }
 
-  return await getPublicRepoContributing(repo);
+  // Try multiple candidate paths for the specified filename
+  const candidatePaths = [
+    filename,
+    filename.replace(/\.md$/, ""), // without .md extension
+    `.github/${filename}`,
+    `docs/${filename}`,
+  ];
+
+  for (const path of candidatePaths) {
+    try {
+      const response = await octokit.rest.repos.getContent({ owner, repo: repoName, path });
+      return response.data;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        (error as GitHubError).status === 404
+      ) {
+        // try next path
+        continue;
+      }
+      throw error;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get repository CONTRIBUTING guide from GitHub
+ * Uses authenticated request when token available, falls back to public
+ */
+export async function getRepoContributing(
+  repo: string
+): Promise<RestEndpointMethodTypes["repos"]["getContent"]["response"]["data"] | null> {
+  return await getRepoContributingWithFilename(repo);
 }
 
 /**
