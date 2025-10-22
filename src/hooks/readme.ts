@@ -27,7 +27,9 @@ export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean
             const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme&filename=README.zh.md`);
             if (res.ok) {
               const json = await res.json();
-              if (json.content) return json.content as string;
+              if (json.content && json.content !== "No README") {
+                return json.content as string;
+              }
             }
           } catch {
             // Fallback to action if API fails

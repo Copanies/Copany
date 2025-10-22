@@ -28,7 +28,9 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
       // Remove possible .git suffix
       const cleanRepo = repo.replace(/\.git$/, "");
       // Construct URL for creating a new README file
-      return `https://github.com/${owner}/${cleanRepo}/new/main?filename=README.md`;
+      const url = `https://github.com/${owner}/${cleanRepo}/new/main?filename=README.md`;
+      console.log("url", url);
+      return url;
     }
     return null;
   } catch (error) {
