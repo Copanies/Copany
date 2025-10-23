@@ -159,7 +159,7 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
                   <p className="text-base text-gray-800 dark:text-gray-200">
                     To ensure the authority and visibility of the license, we
                     recommend submitting the following LICENSE file to the root
-                    directory of your GitHub repository's main branch.
+                    directory of your GitHub repository&apos;s main branch.
                   </p>
                   {newLicenseUrl && (
                     <div className="flex -ml-2">

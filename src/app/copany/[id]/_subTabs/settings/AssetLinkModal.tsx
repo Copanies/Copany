@@ -12,6 +12,7 @@ import Dropdown from "@/components/commons/Dropdown";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
+import GitHubRepoSelector from "@/components/github/GitHubRepoSelector";
 
 export default function AssetLinkModal({
   isOpen,
@@ -230,16 +231,33 @@ export default function AssetLinkModal({
             />
           )}
           <p className="text-sm font-semibold">Asset link</p>
-          <input
-            type="text"
-            id="assetLink"
-            className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1"
-            placeholder="https://example.com"
-            value={assetLink || EMPTY_STRING}
-            onChange={(e) => {
-              setAssetLink(e.target.value);
-            }}
-          />
+
+          {/* GitHub 仓库选择器 */}
+          {assetType === 1 ? (
+            <GitHubRepoSelector
+              onRepoSelect={(repo) => {
+                if (repo) {
+                  setAssetLink(repo.html_url);
+                } else {
+                  setAssetLink(null);
+                }
+              }}
+              defaultSelectedRepoId={copany.github_repository_id}
+              disabled={isLoading}
+            />
+          ) : (
+            /* 手动输入框 - 非 GitHub 类型时显示 */
+            <input
+              type="text"
+              id="assetLink"
+              className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1"
+              placeholder="https://example.com"
+              value={assetLink || EMPTY_STRING}
+              onChange={(e) => {
+                setAssetLink(e.target.value);
+              }}
+            />
+          )}
         </div>
         <div className="flex flex-row gap-2 justify-end px-8 pb-8">
           <Button
