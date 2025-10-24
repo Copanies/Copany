@@ -15,13 +15,16 @@ import GooglePlayStoreIcon from "@/assets/google_play_store_logo.png";
 import WebsiteIcon from "@/assets/website_logo.svg";
 import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import { useState, useEffect } from "react";
+import Button from "../commons/Button";
 
 export default function AssetLinksSection({
   copany,
   size = "md",
+  onConnectRepo,
 }: {
   copany: Copany;
   size?: "sm" | "md";
+  onConnectRepo?: () => void;
 }) {
   const isDarkMode = useDarkMode();
   const [mounted, setMounted] = useState(false);
@@ -197,7 +200,7 @@ export default function AssetLinksSection({
           }}
         />
       )}
-      {copany.github_url && (
+      {copany.github_url ? (
         <Image
           src={currentGithubIcon}
           alt={copany.github_url || ""}
@@ -216,7 +219,22 @@ export default function AssetLinksSection({
             }
           }}
         />
-      )}
+      ) : onConnectRepo ? (
+        <Button variant="secondary" size={size} onClick={onConnectRepo}>
+          <div className="flex flex-row items-center gap-2">
+            <Image
+              src={currentGithubIcon}
+              alt="GitHub"
+              className="w-4 h-4"
+              width={16}
+              height={16}
+              placeholder="blur"
+              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
+            />
+            <p className="text-base ">Connect a repo</p>
+          </div>
+        </Button>
+      ) : null}
     </div>
   );
 }

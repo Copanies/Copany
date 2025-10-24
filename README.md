@@ -1,3 +1,10 @@
+<div align="center">
+<picture>
+  <source media="(max-width: 520px)" srcset="https://github.com/Copanies/Copany/blob/main/src/app/favicon.ico" width="168">
+  <img src="https://github.com/Copanies/Copany/blob/main/src/app/favicon.ico" width="256">
+</picture>
+</div>
+
 <h1 align="center">Copany</h1>
 
 <p align="center">
@@ -31,6 +38,16 @@ However, this seemingly efficient and mature structure comes with several long-s
 4. **High Costs and Managerial Friction**
    For companies, hiring the right people is both difficult and expensive, requiring extensive screening and interviews.
    After onboarding, companies must invest even more effort into “managing” and “motivating” employees — methods that often prove inefficient or counterproductive.
+
+## Mission & Vision
+
+**Mission:**
+
+To create a collaborative model that is free, transparent, and built on shared outcomes.
+
+**Vision:**
+
+To make work more free — and more meaningful.
 
 ## Introduction
 
@@ -86,16 +103,6 @@ In practice, Copany currently follows this evaluation process:
 4. All records are public and transparent, open to discussion and iteration, helping the community reach a shared understanding of task complexity.
 
 Through continuous feedback and refinement, Copany aims to establish a system that truly reflects both personal value and collective contribution.
-
-## Mission & Vision
-
-**Mission:**
-
-To create a collaborative model that is free, transparent, and built on shared outcomes.
-
-**Vision:**
-
-To make work more free — and more meaningful.
 
 ## Product Structure
 

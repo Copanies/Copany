@@ -7,39 +7,33 @@ import Footer from "@/components/commons/Footer";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import {
-  ChevronDownIcon,
-  QuestionMarkCircleIcon,
-  CubeTransparentIcon,
-  ArrowUpRightIcon,
-} from "@heroicons/react/24/outline";
-import githubIconBlack from "@/assets/github_logo.svg";
-import githubIconWhite from "@/assets/github_logo_dark.svg";
-import { getOrgAndReposAction } from "@/actions/github.action";
-import { RestEndpointMethodTypes } from "@octokit/rest";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { useCreateCopany } from "@/hooks/copany";
 import { storageService } from "@/services/storage.service";
 import Button from "@/components/commons/Button";
-import LoadingView from "@/components/commons/LoadingView";
-import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
+import { EMPTY_STRING } from "@/utils/constants";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
-import { useHasProviders } from "@/hooks/userAuth";
-import { signInWithGitHub } from "@/actions/auth.actions";
-import { useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import RadioGroup from "@/components/commons/RadioGroup";
+import GitHubRepoSelector from "@/components/github/GitHubRepoSelector";
 
 export default function New() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [projectType, setProjectType] = useState("existing");
-  const [_selectedRepo, setSelectedRepo] = useState("");
-  const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<{
+    id: number;
+    name: string;
+    full_name: string;
+    html_url: string;
+    description: string | null;
+    owner: {
+      avatar_url: string;
+      login: string;
+      type: string;
+    };
+  } | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
   const [useCOSL, setUseCOSL] = useState(true);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -47,62 +41,39 @@ export default function New() {
   const [ideaSummary, setIdeaSummary] = useState("");
   const [ideaDescription, setIdeaDescription] = useState("");
   const [productName, setProductName] = useState("");
-  const [isGitHubBinding, setIsGitHubBinding] = useState(false);
-  const [repoData, setRepoData] = useState<{
-    success: boolean;
-    data?: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"];
-    error?: string;
-  } | null>(null);
-  const [repoError, setRepoError] = useState<Error | null>(null);
-  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const isDarkMode = useDarkMode();
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorDivRef = useRef<HTMLDivElement>(null);
-
-  // Check GitHub binding status
-  const { data: providersInfo, isLoading: providersLoading } =
-    useHasProviders();
-  const hasGitHub = providersInfo?.hasGitHub || false;
-
-  // Check if there's an authentication error
-  const hasAuthError = () => {
-    const errorMessage = repoError?.message || repoData?.error || "";
-    return (
-      errorMessage.includes("Bad credentials") ||
-      errorMessage.includes("401") ||
-      errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("authentication failed") ||
-      errorMessage.includes("GitHub authentication required")
-    );
-  };
 
   // 处理编辑器内容变化的回调函数
   const handleIdeaDescriptionChange = useCallback((content: string) => {
     setIdeaDescription(content);
   }, []);
 
-  // 获取仓库数据的函数
-  const fetchRepos = useCallback(async () => {
-    if (!hasGitHub || projectType !== "existing") return;
-
-    setIsLoadingRepos(true);
-    setRepoError(null);
-
-    try {
-      const result = await getOrgAndReposAction();
-      setRepoData(result);
-    } catch (error) {
-      setRepoError(error as Error);
-    } finally {
-      setIsLoadingRepos(false);
-    }
-  }, [hasGitHub, projectType]);
-
-  // 当条件满足时自动获取仓库数据
-  useEffect(() => {
-    fetchRepos();
-  }, [fetchRepos]);
+  // 处理仓库选择
+  const handleRepoSelect = useCallback(
+    (
+      repo: {
+        id: number;
+        name: string;
+        full_name: string;
+        html_url: string;
+        description: string | null;
+        owner: {
+          avatar_url: string;
+          login: string;
+          type: string;
+        };
+      } | null
+    ) => {
+      setSelectedRepo(repo);
+      if (repo) {
+        setCompanyName(repo.name);
+        setCompanyDescription(repo.description || EMPTY_STRING);
+      }
+    },
+    []
+  );
 
   // 使用 React Query 创建 copany
   const createCopanyMutation = useCreateCopany(async (result) => {
@@ -172,67 +143,12 @@ export default function New() {
     },
   ];
 
-  // 点击外部关闭下拉菜单
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        // 阻止事件传播，防止触发被点击元素的点击事件
-        event.stopPropagation();
-        event.preventDefault();
-        setIsDropdownOpen(false);
-      }
-    }
-
-    if (isDropdownOpen) {
-      // 使用 capture 阶段来确保我们能够先处理事件
-      document.addEventListener("click", handleClickOutside, true);
-      return () => {
-        document.removeEventListener("click", handleClickOutside, true);
-      };
-    }
-  }, [isDropdownOpen]);
-
-  // 获取选中的仓库
-  const getSelectedRepo = () => {
-    if (!selectedRepoId || !repoData?.success || !repoData?.data) return null;
-    return repoData.data.find(
-      (
-        repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
-      ) => repo.id === selectedRepoId
-    );
-  };
-
-  // 处理仓库选择，自动填充表单
-  const handleRepoSelection = (repoId: number) => {
-    setSelectedRepoId(repoId);
-    setIsDropdownOpen(false);
-
-    // 自动填充 copany 信息
-    const repo =
-      repoData?.success && repoData?.data
-        ? repoData.data.find(
-            (
-              r: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
-            ) => r.id === repoId
-          )
-        : null;
-    if (repo) {
-      setCompanyName(repo.name);
-      setCompanyDescription(repo.description || EMPTY_STRING);
-      setSelectedRepo(repo.name); // 保持向后兼容
-    }
-  };
-
   // 获取默认 logo URL
   const getDefaultLogoUrl = () => {
-    const repo = getSelectedRepo();
-    if (!repo) return EMPTY_STRING;
+    if (!selectedRepo) return EMPTY_STRING;
 
     // 使用仓库 owner 的头像（个人或组织）
-    return repo.owner.avatar_url || EMPTY_STRING;
+    return selectedRepo.owner.avatar_url || EMPTY_STRING;
   };
 
   // 从 Supabase Storage URL 中提取文件路径
@@ -276,8 +192,7 @@ export default function New() {
       return;
     }
 
-    const repo = getSelectedRepo();
-    if (!repo) {
+    if (!selectedRepo) {
       setUploadError("Please select a repository first");
       return;
     }
@@ -288,7 +203,7 @@ export default function New() {
 
     try {
       // 先上传新的 logo
-      const result = await storageService.uploadLogo(file, repo.name);
+      const result = await storageService.uploadLogo(file);
 
       if (result.success && result.url) {
         // 上传成功后，删除旧的 logo
@@ -320,62 +235,12 @@ export default function New() {
     }
   };
 
-  // 获取选中仓库的显示信息
-  const getSelectedRepoDisplay = () => {
-    const repo = getSelectedRepo();
-    if (!repo) return null;
-
-    return {
-      avatarUrl: repo.owner.avatar_url,
-      fullName: repo.full_name, // 显示完整名称 owner/repo
-      name: repo.name,
-      ownerType: repo.owner.type, // User 或 Organization
-    };
-  };
-
-  // GitHub 绑定处理函数
-  const handleBindGitHub = async () => {
-    setIsGitHubBinding(true);
-    try {
-      await signInWithGitHub();
-    } catch (error) {
-      console.error("GitHub binding failed:", error);
-      setIsGitHubBinding(false);
-    }
-  };
-
-  // GitHub 重新绑定处理函数（当 token 无效时）
-  const handleRebindGitHub = async () => {
-    setIsGitHubBinding(true);
-    try {
-      await signInWithGitHub();
-      // 重新连接后，使用 React Query 刷新用户认证信息
-      await queryClient.invalidateQueries({ queryKey: ["userAuth"] });
-      // 重新获取仓库数据
-      await fetchRepos();
-    } catch (error) {
-      console.error("GitHub rebinding failed:", error);
-    } finally {
-      setIsGitHubBinding(false);
-    }
-  };
-
-  // 手动重试获取仓库数据
-  const handleRetryFetch = async () => {
-    try {
-      await fetchRepos();
-    } catch (error) {
-      console.error("Manual retry failed:", error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (projectType === "existing") {
       // 已存在项目的逻辑
-      const repo = getSelectedRepo();
-      if (!repo) {
+      if (!selectedRepo) {
         return;
       }
 
@@ -400,8 +265,8 @@ export default function New() {
           name: companyName,
           description: companyDescription,
           logo_url: logoUrl,
-          github_url: repo.html_url,
-          github_repository_id: repo.id.toString(),
+          github_url: selectedRepo.html_url,
+          github_repository_id: selectedRepo.id.toString(),
           isDefaultUseCOSL: useCOSL,
         });
       } catch (error) {
@@ -435,303 +300,10 @@ export default function New() {
   const existRepoForm = () => {
     return (
       <>
-        <div className="flex flex-col items-start gap-3 w-full">
-          <label
-            htmlFor="github-repo"
-            className="text-sm font-normal text-gray-900 dark:text-gray-100"
-          >
-            Select GitHub repository
-          </label>
-
-          <div className="flex items-center gap-2.5 w-full">
-            <div className="relative flex-1" ref={dropdownRef}>
-              {hasGitHub ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!hasAuthError()) {
-                        setIsDropdownOpen(!isDropdownOpen);
-                      }
-                    }}
-                    disabled={hasAuthError()}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-3 w-full justify-between text-sm ${
-                      hasAuthError()
-                        ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
-                        : "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
-                    }`}
-                  >
-                    {getSelectedRepoDisplay() ? (
-                      <div className="flex items-center gap-2">
-                        <Image
-                          src={getSelectedRepoDisplay()!.avatarUrl}
-                          alt="Repository Owner Avatar"
-                          width={20}
-                          height={20}
-                          className="rounded-sm w-5 h-5"
-                          placeholder="blur"
-                          blurDataURL={shimmerDataUrlWithTheme(
-                            20,
-                            20,
-                            isDarkMode
-                          )}
-                        />
-                        <span>{getSelectedRepoDisplay()!.fullName}</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Select repository
-                      </span>
-                    )}
-
-                    <ChevronDownIcon
-                      className={`w-4 h-4 text-gray-900 dark:text-gray-100 ${
-                        isDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isDropdownOpen && (
-                    <div
-                      className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-120 overflow-y-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {isLoadingRepos && (
-                        <div className="py-8">
-                          <LoadingView type="label" delay={500} />
-                        </div>
-                      )}
-                      {(repoError || (repoData && !repoData?.success)) && (
-                        <div className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                          <div className="flex flex-col gap-2">
-                            <span>
-                              {repoError?.message ||
-                                repoData?.error ||
-                                "Failed to load repositories"}
-                            </span>
-                            {(() => {
-                              const errorMessage =
-                                repoError?.message || repoData?.error || "";
-                              const isAuthError =
-                                errorMessage.includes("Bad credentials") ||
-                                errorMessage.includes("401") ||
-                                errorMessage.includes("Unauthorized") ||
-                                errorMessage.includes(
-                                  "authentication failed"
-                                ) ||
-                                errorMessage.includes(
-                                  "GitHub authentication required"
-                                );
-
-                              // 如果是认证错误，不在这里显示重新连接按钮，而是在下拉选择器下方显示
-                              if (isAuthError) {
-                                return (
-                                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                                    Please reconnect your GitHub account below.
-                                  </span>
-                                );
-                              }
-
-                              return (
-                                <div className="flex flex-col gap-2 mt-2">
-                                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                                    This might be a temporary issue. You can try
-                                    again.
-                                  </span>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={handleRetryFetch}
-                                  >
-                                    <span>Try Again</span>
-                                  </Button>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                      {!isLoadingRepos &&
-                        !repoError &&
-                        repoData?.success &&
-                        !repoData?.data && (
-                          <div className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                            No repository data available
-                          </div>
-                        )}
-                      {!isLoadingRepos &&
-                        !repoError &&
-                        repoData?.success &&
-                        repoData?.data &&
-                        (repoData.data || EMPTY_ARRAY).length === 0 && (
-                          <div className="p-4">
-                            <EmptyPlaceholderView
-                              icon={
-                                <CubeTransparentIcon
-                                  className="w-12 h-12 text-gray-500 dark:text-gray-400"
-                                  strokeWidth={1}
-                                />
-                              }
-                              title={`@${
-                                providersInfo?.providersData.find(
-                                  (p) => p.provider === "github"
-                                )?.user_name
-                              } has no available public repositories`}
-                              description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                              buttonTitle="Create GitHub Repository"
-                              buttonIcon={
-                                <ArrowUpRightIcon className="w-4 h-4" />
-                              }
-                              buttonAction={() =>
-                                window.open("https://github.com/new", "_blank")
-                              }
-                              size="md"
-                            />
-                          </div>
-                        )}
-                      {!isLoadingRepos &&
-                        !repoError &&
-                        repoData?.success &&
-                        repoData?.data &&
-                        (repoData.data || EMPTY_ARRAY).length > 0 && (
-                          <>
-                            {(repoData.data || EMPTY_ARRAY).map(
-                              (
-                                repo: RestEndpointMethodTypes["repos"]["listForAuthenticatedUser"]["response"]["data"][0]
-                              ) => (
-                                <div
-                                  key={repo.id}
-                                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRepoSelection(repo.id);
-                                  }}
-                                >
-                                  <Image
-                                    src={repo.owner.avatar_url}
-                                    alt={`${repo.owner.login} Avatar`}
-                                    width={24}
-                                    height={24}
-                                    className="w-6 h-6 rounded-sm"
-                                    placeholder="blur"
-                                    blurDataURL={shimmerDataUrlWithTheme(
-                                      24,
-                                      24,
-                                      isDarkMode
-                                    )}
-                                  />
-                                  <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                      {repo.full_name}
-                                    </span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                      {repo.description || "No description"}
-                                    </span>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </>
-                        )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-3 w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800">
-                  <span>Please connect with GitHub first</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {hasGitHub ? (
-            hasAuthError() ? (
-              <button
-                type="button"
-                onClick={handleRebindGitHub}
-                disabled={isGitHubBinding}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Image
-                  src={isDarkMode ? githubIconBlack : githubIconWhite}
-                  alt="GitHub Logo"
-                  className="w-4 h-4"
-                  width={16}
-                  height={16}
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-                />
-
-                <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-                  {isGitHubBinding
-                    ? "Reconnecting..."
-                    : `Reconnect to @${
-                        providersInfo?.providersData.find(
-                          (p) => p.provider === "github"
-                        )?.user_name
-                      }`}
-                </span>
-              </button>
-            ) : (
-              <div className="flex flex-row items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                <Image
-                  src={isDarkMode ? githubIconWhite : githubIconBlack}
-                  alt="GitHub Logo"
-                  className="w-4 h-4"
-                  width={16}
-                  height={16}
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-                />
-                <p>Connected</p>
-                <Link
-                  href={`https://github.com/${
-                    providersInfo?.providersData.find(
-                      (p) => p.provider === "github"
-                    )?.user_name
-                  }`}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
-                >
-                  @
-                  {
-                    providersInfo?.providersData.find(
-                      (p) => p.provider === "github"
-                    )?.user_name
-                  }
-                </Link>
-              </div>
-            )
-          ) : (
-            <button
-              type="button"
-              onClick={handleBindGitHub}
-              disabled={hasGitHub || isGitHubBinding}
-              className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800 dark:bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Image
-                src={isDarkMode ? githubIconBlack : githubIconWhite}
-                alt="GitHub Logo"
-                className="w-4 h-4"
-                width={16}
-                height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-              />
-
-              <span className="text-sm font-semibold text-white dark:text-gray-900 whitespace-nowrap">
-                {isGitHubBinding
-                  ? "Binding..."
-                  : hasGitHub
-                  ? `Connected @${
-                      providersInfo?.providersData.find(
-                        (p) => p.provider === "github"
-                      )?.user_name
-                    }`
-                  : "Connect with GitHub"}
-              </span>
-            </button>
-          )}
-        </div>
+        <GitHubRepoSelector
+          onRepoSelect={handleRepoSelect}
+          disabled={createCopanyMutation.isPending}
+        />
 
         <div className="flex flex-col items-start gap-3 w-full">
           <label
@@ -821,7 +393,7 @@ export default function New() {
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isImageLoading || !getSelectedRepo()}
+                disabled={isUploading || isImageLoading || !selectedRepo}
                 size="sm"
                 variant="secondary"
               >
@@ -923,22 +495,6 @@ export default function New() {
     );
   };
 
-  // 如果正在加载 providers 信息，显示加载状态
-  if (providersLoading) {
-    return (
-      <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
-        <BasicNavigation />
-        <div className="flex flex-col w-full max-w-2xl items-center gap-16 pt-8 pb-16 px=0 flex-1">
-          <div className="flex flex-col items-center gap-5 w-full bg-white dark:bg-gray-800 rounded-none sm:rounded-2xl shadow-sm">
-            <div className="flex flex-col items-center gap-5 px-8 py-8 w-full">
-              <LoadingView type="label" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
@@ -1012,7 +568,7 @@ export default function New() {
             <button
               type="submit"
               disabled={
-                (projectType === "existing" && !getSelectedRepo()) ||
+                (projectType === "existing" && !selectedRepo) ||
                 (projectType === "new" &&
                   (!productName.trim() ||
                     !ideaSummary.trim() ||

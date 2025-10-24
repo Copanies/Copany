@@ -27,7 +27,7 @@ import {
   PencilIcon,
   TrashIcon,
   ArrowUpRightIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
@@ -293,7 +293,7 @@ export default function SettingsView({
 
     try {
       // Upload new logo first
-      const result = await storageService.uploadLogo(file, copany.name);
+      const result = await storageService.uploadLogo(file);
 
       if (result.success && result.url) {
         // After successful upload, delete old logo
@@ -360,7 +360,7 @@ export default function SettingsView({
 
     try {
       // Upload new cover image first
-      const result = await storageService.uploadCoverImage(file, copany.name);
+      const result = await storageService.uploadCoverImage(file);
 
       if (result.success && result.url) {
         // After successful upload, delete old cover image
@@ -500,7 +500,7 @@ export default function SettingsView({
               />
             ) : (
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">No Logo</span>
+                <span className="text-gray-400 text-base">No Logo</span>
               </div>
             )}
             <div>
@@ -508,7 +508,7 @@ export default function SettingsView({
                 {copany.name}
               </h3>
               {copany.description && (
-                <p className="text-sm text-gray-500 text-center dark:text-gray-400">
+                <p className="text-base text-gray-500 text-center dark:text-gray-400">
                   {copany.description}
                 </p>
               )}
@@ -516,7 +516,7 @@ export default function SettingsView({
           </div>
 
           <div className="mb-4">
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+            <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
               To confirm, type{" "}
               <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
               in the box below
@@ -547,7 +547,7 @@ export default function SettingsView({
   function renameSection() {
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label htmlFor="name" className="text-sm font-semibold">
+        <label htmlFor="name" className="text-base font-semibold">
           Copany name
         </label>
         <div className="flex flex-row gap-3 max-w-full">
@@ -569,7 +569,7 @@ export default function SettingsView({
   function descriptionSection() {
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-sm font-semibold">Description</label>
+        <label className="text-base font-semibold">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -591,7 +591,7 @@ export default function SettingsView({
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-sm font-semibold">Copany logo</label>
+        <label className="text-base font-semibold">Copany logo</label>
 
         <div className="flex flex-col space-y-3">
           {/* Logo display area */}
@@ -615,7 +615,7 @@ export default function SettingsView({
               </div>
             ) : (
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">No Logo</span>
+                <span className="text-gray-400 text-base">No Logo</span>
               </div>
             )}
           </div>
@@ -647,7 +647,7 @@ export default function SettingsView({
 
             {/* Error message */}
             {uploadError && (
-              <div className="text-sm text-red-600 dark:text-red-400 text-center">
+              <div className="text-base text-red-600 dark:text-red-400 text-center">
                 {uploadError}
               </div>
             )}
@@ -663,7 +663,7 @@ export default function SettingsView({
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-sm font-semibold">Cover image</label>
+        <label className="text-base font-semibold">Cover image</label>
 
         <div className="flex flex-col space-y-3">
           {/* Cover image display area */}
@@ -704,7 +704,7 @@ export default function SettingsView({
               </div>
             ) : (
               <div className="w-full max-w-md h-32 bg-gray-100 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">No Cover Image</span>
+                <span className="text-gray-400 text-base">No Cover Image</span>
               </div>
             )}
           </div>
@@ -736,7 +736,7 @@ export default function SettingsView({
 
             {/* Error message */}
             {coverImageUploadError && (
-              <div className="text-sm text-red-600 dark:text-red-400 text-center">
+              <div className="text-base text-red-600 dark:text-red-400 text-center">
                 {coverImageUploadError}
               </div>
             )}
@@ -764,7 +764,7 @@ export default function SettingsView({
                       placeholder="blur"
                       blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
-                    <p className="text-sm font-semibold text-center">
+                    <p className="text-base font-semibold text-center">
                       {link.label}
                     </p>
                   </div>
@@ -789,7 +789,7 @@ export default function SettingsView({
                   href={link.value}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline inline-block break-all max-w-full w-fit text-sm text-gray-500 dark:text-gray-400"
+                  className="hover:underline inline-block break-all max-w-full w-fit text-base text-gray-500 dark:text-gray-400"
                 >
                   {link.value}
                 </a>
@@ -844,7 +844,7 @@ export default function SettingsView({
               blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
             />
             <div className="flex flex-col gap-0">
-              <p className="text-sm font-medium">GitHub</p>
+              <p className="text-base font-medium">GitHub</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Link pull requests to your copany
               </p>
@@ -869,7 +869,7 @@ export default function SettingsView({
               {copany.is_connected_github && (
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
               )}
-              <p className="text-sm font-medium">
+              <p className="text-base font-medium">
                 {copany.is_connected_github ? "Connected" : "Connect"}
               </p>
               {copany.is_connected_github ? (
@@ -888,7 +888,7 @@ export default function SettingsView({
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-1.5 border-red-500">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold ">Delete Copany</label>
+          <label className="text-base font-semibold ">Delete Copany</label>
           <p className="text-sm">
             Once you delete a copany, there is no going back. Please be certain.
           </p>

@@ -325,6 +325,7 @@ export default function DiscussionLabelSelector({
         selectedValue={null} // Multi-select, so no single value
         onSelect={handleDropdownSelect}
         showBackground={showBackground}
+        marginX={showBackground ? 2 : 0}
         disabled={readOnly}
       />
 

@@ -6,14 +6,44 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useRepoLicense } from "@/hooks/readme";
 import { updateCopanyLicenseAction } from "@/actions/copany.actions";
 import LoadingView from "@/components/commons/LoadingView";
-import { ScaleIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import {
+  ScaleIcon,
+  ArrowUpRightIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
+import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 import CoslLicenseTip from "@/components/copany/CoslLicenseTip";
 import { generateCOSLLicense } from "@/utils/coslLicense";
+
+/**
+ * Generate a link to create a new LICENSE file from GitHub URL
+ * @param githubUrl GitHub repository URL
+ * @returns Link to create a new LICENSE file, or null if parsing fails
+ */
+const generateNewLicenseUrl = (githubUrl: string): string | null => {
+  try {
+    const url = new URL(githubUrl);
+    const pathSegments = url.pathname.split("/").filter(Boolean);
+
+    if (pathSegments.length >= 2) {
+      const [owner, repo] = pathSegments;
+      // Remove possible .git suffix
+      const cleanRepo = repo.replace(/\.git$/, "");
+      // Construct URL for creating a new LICENSE file
+      const url = `https://github.com/${owner}/${cleanRepo}/new/main?filename=LICENSE`;
+      return url;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to generate new LICENSE URL:", error);
+    return null;
+  }
+};
 
 interface LicenseViewProps {
   githubUrl?: string | null;
@@ -24,7 +54,7 @@ interface LicenseViewProps {
 export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  // 使用 React Query hooks 替代 cacheManager
+
   const { data: currentUser } = useCurrentUser();
   const { data: licenseData, isLoading: isLicenseLoading } =
     useRepoLicense(githubUrl);
@@ -41,20 +71,16 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
       return licenseType;
     },
     onSuccess: (newLicenseType) => {
-      // 更新本地状态
       setLicenseType(newLicenseType);
-      // 使相关的查询失效
       queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
     },
   });
 
-  // 稳定 mutation 的可变方法
   const mutateRef = useRef(updateLicenseMutation.mutate);
   useEffect(() => {
     mutateRef.current = updateLicenseMutation.mutate;
   }, [updateLicenseMutation.mutate]);
 
-  // 处理 license 数据变化
   useEffect(() => {
     if (!licenseData) {
       setNotFound(true);
@@ -78,7 +104,6 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
     }
   }, [licenseData]);
 
-  // 检查并更新 license type
   useEffect(() => {
     if (!githubUrl || !licenseData || licenseData.content === "No License")
       return;
@@ -87,7 +112,6 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
       console.log(
         `📝 License type changed: ${licenseType} -> ${licenseData.type}`
       );
-      // 使用 ref 来避免依赖整个 mutation 对象
       mutateRef.current(licenseData.type);
     }
   }, [githubUrl, licenseData, licenseType]);
@@ -111,12 +135,72 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
   if (notFound) {
     const isOwner = currentUser?.id === copany.created_by;
 
-    // 如果 copany 设置了默认使用 COSL，且无法获取到 GitHub license，则显示生成的 COSL license
+    // If copany is set to use COSL by default and the GitHub license can't be found, display the generated COSL license
     if (copany.isDefaultUseCOSL) {
       const coslLicenseContent = generateCOSLLicense(copany.name);
+      const newLicenseUrl = githubUrl ? generateNewLicenseUrl(githubUrl) : null;
 
       return (
         <div className="space-y-4">
+          {/* GitHub LICENSE submission tip */}
+          {githubUrl && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-lg p-4">
+              <div className="flex flex-row gap-2">
+                <div className="flex items-center justify-center h-6">
+                  <InformationCircleIcon
+                    className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                    strokeWidth={2}
+                  />
+                </div>
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    Recommend submitting LICENSE file to GitHub
+                  </p>
+                  <p className="text-base text-gray-800 dark:text-gray-200">
+                    To ensure the authority and visibility of the license, we
+                    recommend submitting the following LICENSE file to the root
+                    directory of your GitHub repository&apos;s main branch.
+                  </p>
+                  {newLicenseUrl && (
+                    <div className="flex -ml-2">
+                      <Button
+                        variant="ghost"
+                        size="md"
+                        className="!w-fit !text-nowrap hover:!bg-blue-100 dark:hover:!bg-blue-900/20"
+                        onClick={() => {
+                          // Copy LICENSE content to clipboard
+                          navigator.clipboard
+                            .writeText(coslLicenseContent)
+                            .then(() => {
+                              // Open GitHub create LICENSE page after copying successfully
+                              window.open(newLicenseUrl, "_blank");
+                            })
+                            .catch((err) => {
+                              console.error(
+                                "Failed to copy LICENSE content:",
+                                err
+                              );
+                              // Open GitHub page even if copying fails
+                              window.open(newLicenseUrl, "_blank");
+                            });
+                        }}
+                      >
+                        <div className="flex flex-row items-center gap-2">
+                          <ArrowUpRightIcon
+                            className="w-4 h-4"
+                            strokeWidth={2}
+                          />
+                          <p className="!text-nowrap">
+                            Copy and Add LICENSE to GitHub
+                          </p>
+                        </div>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
             {coslLicenseContent}
           </pre>

@@ -96,6 +96,7 @@ export default function IssuePrioritySelector({
       selectedValue={currentPriority}
       onSelect={handlePriorityChange}
       showBackground={showBackground}
+      marginX={showBackground ? 0 : 2}
       disabled={false}
     />
   );
