@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
   CubeTransparentIcon,
   ArrowUpRightIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
@@ -41,12 +42,14 @@ interface GitHubRepoSelectorProps {
   defaultSelectedRepoUrl?: string | null;
   disabled?: boolean;
   className?: string;
+  showLabel?: boolean;
 }
 
 export default function GitHubRepoSelector({
   onRepoSelect,
   defaultSelectedRepoId,
   defaultSelectedRepoUrl,
+  showLabel = true,
   disabled = false,
   className = "",
 }: GitHubRepoSelectorProps) {
@@ -365,12 +368,14 @@ export default function GitHubRepoSelector({
 
   return (
     <div className={`flex flex-col items-start gap-3 w-full ${className}`}>
-      <label
-        htmlFor="github-repo"
-        className="text-sm font-normal text-gray-900 dark:text-gray-100"
-      >
-        Select GitHub repository
-      </label>
+      {showLabel && (
+        <label
+          htmlFor="github-repo"
+          className="text-sm font-normal text-gray-900 dark:text-gray-100"
+        >
+          Select GitHub repository
+        </label>
+      )}
 
       <div className="flex items-center gap-2.5 w-full">
         <div className="relative flex-1" ref={dropdownRef}>
@@ -561,6 +566,24 @@ export default function GitHubRepoSelector({
                               </div>
                             )
                           )}
+                          {/* Create Repository Button - As List Item */}
+                          <div
+                            className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open("https://github.com/new", "_blank");
+                            }}
+                          >
+                            <PlusIcon className="w-6 h-6" />
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                Create Repository
+                              </span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                Create a new repository on GitHub
+                              </span>
+                            </div>
+                          </div>
                         </>
                       )}
                   </div>
@@ -710,6 +733,24 @@ export default function GitHubRepoSelector({
                                 </div>
                               )
                             )}
+                            {/* Create Repository Button - As List Item */}
+                            <div
+                              className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open("https://github.com/new", "_blank");
+                              }}
+                            >
+                              <PlusIcon className="w-6 h-6" />
+                              <div className="flex flex-col flex-1 min-w-0">
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                  Create Repository
+                                </span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                  Create a new repository on GitHub
+                                </span>
+                              </div>
+                            </div>
                           </>
                         )}
                     </div>

@@ -191,7 +191,7 @@ export default function AssetLinkModal({
           {isEditMode ? "Edit asset link" : "Add asset link"}
         </h1>
         <div className="flex flex-col gap-3 px-8">
-          <p className="text-base font-semibold">Asset type</p>
+          <p className="text-base">Asset type</p>
           {forceGithubType ? (
             <div className="w-full flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">
               <Image
@@ -312,7 +312,7 @@ export default function AssetLinkModal({
               }
             />
           )}
-          <p className="text-base font-semibold">Asset link</p>
+          <p className="text-base">Asset link</p>
 
           {/* GitHub repository selector */}
           {assetType === 1 || forceGithubType ? (
@@ -324,6 +324,7 @@ export default function AssetLinkModal({
                   ? editingAssetLink.currentValue
                   : null
               }
+              showLabel={false}
               disabled={isLoading}
             />
           ) : (
