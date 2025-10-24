@@ -213,7 +213,7 @@ Have questions or suggestions? Join the discussion or start contributing today!
 
 - Collaboration: [Copany Collaboration](https://copany.app/copany/5?tab=Cooperate)
 
-- Telegram: [Copany Group](https://t.me/+FMfZz5wKKAAzNmI1)
+- Discord: [Discord Sever](https://discord.gg/fWPx5dJRHQ)
 
 - Learn more: [Explore Copany](https://copany.app)
 
