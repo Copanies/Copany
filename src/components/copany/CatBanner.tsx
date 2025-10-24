@@ -44,17 +44,17 @@ export default function CatBanner({
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-10 pointer-events-none w-full h-full min-w-[1024px] flex block dark:hidden"
         style={{
-          background: `radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(251, 249, 245, 0.9) 80%, rgba(251, 249, 245, 1) 100%)`,
+          background: `radial-gradient(circle at center, transparent 0%, transparent 50%, rgba(255, 255, 255, 0.9) 80%, rgba(255, 255, 255, 1) 100%)`,
         }}
       ></div>
       {/* Dark mode gradient overlay */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-10 pointer-events-none w-full h-full min-w-[1024px] flex dark:block hidden"
         style={{
-          background: `radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(34, 34, 33, 0.9) 80%, rgba(34, 34, 33, 1) 100%)`,
+          background: `radial-gradient(circle at center, transparent 0%, transparent 50%, rgba(10, 10, 10, 0.9) 80%, rgba(10, 10, 10, 1) 100%)`,
         }}
       ></div>
-      <div className="relative flex flex-row gap-3 w-fit -mb-8 -mt-2">
+      <div className="relative flex flex-row gap-3 w-fit -mb-8">
         <div className="flex flex-row gap-3">
           {/* Left cats */}
           {[0, 1, 2, 4, 5, 6].map((groupIdx) => (
