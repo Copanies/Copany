@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
+import Button from "../commons/Button";
+import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 interface CatBannerProps {
   title: string;
   subtitle?: string;
@@ -17,7 +20,7 @@ export default function CatBanner({
 }: CatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     // Generate random cat avatars for the border
     const avatars = Array.from({ length: 40 }, () =>
@@ -51,7 +54,7 @@ export default function CatBanner({
           background: `radial-gradient(circle at center, transparent 0%, transparent 30%, rgba(34, 34, 33, 0.9) 80%, rgba(34, 34, 33, 1) 100%)`,
         }}
       ></div>
-      <div className="relative flex flex-row gap-3 w-fit -mb-8">
+      <div className="relative flex flex-row gap-3 w-fit -mb-8 -mt-2">
         <div className="flex flex-row gap-3">
           {/* Left cats */}
           {[0, 1, 2, 4, 5, 6].map((groupIdx) => (
@@ -95,6 +98,19 @@ export default function CatBanner({
                 ))}
               </div>
             )}
+            <Button
+              variant="ghost"
+              size="md"
+              className="mt-4 -mb-6"
+              onClick={() => {
+                router.push("/copany/5");
+              }}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2} />
+                <p className="!text-nowrap font-semiblod">Learn More</p>
+              </div>
+            </Button>
           </div>
           {/* Bottom cats */}
           <div className="flex flex-row gap-3 w-fit">
