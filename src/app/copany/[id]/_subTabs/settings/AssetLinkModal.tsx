@@ -3,7 +3,7 @@
 import { updateCopanyAction } from "@/actions/copany.actions";
 import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
@@ -51,17 +51,17 @@ export default function AssetLinkModal({
   const updateCopanyAssetLinkMutation = useMutation({
     mutationFn: updateCopanyAction,
     onSuccess: (updatedCopany) => {
-      // 更新本地状态
+      // update local state
       onCopanyUpdate(updatedCopany);
 
-      // 失效相关查询
+      // invalidate related queries
       queryClient.invalidateQueries({ queryKey: ["copany", copany.id] });
       queryClient.invalidateQueries({ queryKey: ["copanies"] });
 
-      // 设置查询数据以保持 UI 同步 - 使用正确的查询键
+      // set query data to keep UI in sync - use the correct query key
       queryClient.setQueryData(["copany", copany.id], updatedCopany);
 
-      // 重置状态并关闭弹窗
+      // reset state and close modal
       setAssetType(null);
       setAssetLink(null);
       onClose();
@@ -71,15 +71,15 @@ export default function AssetLinkModal({
     },
   });
 
-  // 稳定 mutation 的可变方法
+  // stable mutation method
   const mutateAsyncRef = useRef(updateCopanyAssetLinkMutation.mutateAsync);
 
-  // 同步 ref 中的最新函数
+  // sync the latest function in the ref
   if (updateCopanyAssetLinkMutation.mutateAsync !== mutateAsyncRef.current) {
     mutateAsyncRef.current = updateCopanyAssetLinkMutation.mutateAsync;
   }
 
-  // 当弹窗打开时，设置初始值
+  // when the modal is opened, set the initial values
   useEffect(() => {
     if (isOpen && editingAssetLink) {
       setAssetType(editingAssetLink.type);
@@ -89,6 +89,62 @@ export default function AssetLinkModal({
       setAssetLink(null);
     }
   }, [isOpen, editingAssetLink]);
+
+  // extract repository information from GitHub URL
+  const extractRepoInfoFromUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname === "github.com") {
+        const pathParts = urlObj.pathname.split("/").filter((part) => part);
+        if (pathParts.length >= 2) {
+          return {
+            owner: pathParts[0],
+            repo: pathParts[1],
+            fullName: `${pathParts[0]}/${pathParts[1]}`,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Failed to parse GitHub URL:", error);
+    }
+    return null;
+  };
+
+  // get the default selected repository ID (for edit mode)
+  const getDefaultSelectedRepoId = () => {
+    if (isEditMode && editingAssetLink && editingAssetLink.type === 1) {
+      const repoInfo = extractRepoInfoFromUrl(editingAssetLink.currentValue);
+      if (repoInfo) {
+        return copany.github_repository_id;
+      }
+    }
+    return copany.github_repository_id;
+  };
+
+  // stable repository selection callback
+  const handleRepoSelect = useCallback(
+    (
+      repo: {
+        id: number;
+        name: string;
+        full_name: string;
+        html_url: string;
+        description: string | null;
+        owner: {
+          avatar_url: string;
+          login: string;
+          type: string;
+        };
+      } | null
+    ) => {
+      if (repo) {
+        setAssetLink(repo.html_url);
+      } else {
+        setAssetLink(null);
+      }
+    },
+    []
+  );
 
   async function updateCopanyAssetLinkAction(
     assetType: number,
@@ -118,7 +174,6 @@ export default function AssetLinkModal({
     <Modal
       isOpen={isOpen}
       onClose={() => {
-        // 重置状态
         setAssetType(null);
         setAssetLink(null);
         onClose();
@@ -129,9 +184,9 @@ export default function AssetLinkModal({
           {isEditMode ? "Edit asset link" : "Add asset link"}
         </h1>
         <div className="flex flex-col gap-3 px-8">
-          <p className="text-sm font-semibold">Asset type</p>
+          <p className="text-base font-semibold">Asset type</p>
           {isEditMode && assetType !== null ? (
-            <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full bg-gray-50 dark:bg-gray-800">
+            <div className="w-full flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">
               <Image
                 src={
                   isDarkMode
@@ -143,19 +198,20 @@ export default function AssetLinkModal({
                 alt={
                   assetLinks.find((link) => link.id === assetType)?.label || ""
                 }
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
                 width={20}
                 height={20}
                 placeholder="blur"
                 blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
-              <p className="text-sm font-semibold w-full text-left">
+              <p className="text-base flex-1 text-left">
                 {assetLinks.find((link) => link.id === assetType)?.label || ""}
               </p>
             </div>
           ) : (
             <Dropdown
               className="w-full"
+              showBorder={true}
               options={assetLinks
                 .filter((link) => {
                   const value = copany[link.key as keyof Copany];
@@ -179,9 +235,7 @@ export default function AssetLinkModal({
                             isDarkMode
                           )}
                         />
-                        <label className="text-sm font-semibold">
-                          {link.label}
-                        </label>
+                        <label className="text-base">{link.label}</label>
                       </div>
                     ),
                   };
@@ -192,7 +246,7 @@ export default function AssetLinkModal({
               selectedValue={assetType ? Number(assetType) : null}
               trigger={
                 assetType ? (
-                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2">
+                  <div className="w-full flex flex-row gap-2 items-center">
                     <Image
                       src={
                         isDarkMode
@@ -205,7 +259,7 @@ export default function AssetLinkModal({
                         assetLinks.find((link) => link.id === assetType)
                           ?.label || ""
                       }
-                      className="w-5 h-5"
+                      className="w-5 h-5 flex-shrink-0"
                       width={20}
                       height={20}
                       placeholder="blur"
@@ -213,44 +267,43 @@ export default function AssetLinkModal({
                     />
                     <label
                       htmlFor="assetType"
-                      className="text-sm font-semibold text-left cursor-pointer"
+                      className="text-base text-left cursor-pointer flex-1"
                     >
                       {assetLinks.find((link) => link.id === assetType)?.label}
                     </label>
-                    <ChevronDownIcon className="w-5 h-5" />
+                    <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />
                   </div>
                 ) : (
-                  <div className="flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1">
-                    <label className="text-base text-gray-500 cursor-pointer text-left">
+                  <div className="w-full flex flex-row gap-2 items-center">
+                    <label className="text-base text-gray-500 cursor-pointer text-left flex-1">
                       Select asset type
                     </label>
-                    <ChevronDownIcon className="w-5 h-5" />
+                    <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />
                   </div>
                 )
               }
             />
           )}
-          <p className="text-sm font-semibold">Asset link</p>
+          <p className="text-base font-semibold">Asset link</p>
 
-          {/* GitHub 仓库选择器 */}
+          {/* GitHub repository selector */}
           {assetType === 1 ? (
             <GitHubRepoSelector
-              onRepoSelect={(repo) => {
-                if (repo) {
-                  setAssetLink(repo.html_url);
-                } else {
-                  setAssetLink(null);
-                }
-              }}
-              defaultSelectedRepoId={copany.github_repository_id}
+              onRepoSelect={handleRepoSelect}
+              defaultSelectedRepoId={getDefaultSelectedRepoId()}
+              defaultSelectedRepoUrl={
+                isEditMode && editingAssetLink?.type === 1
+                  ? editingAssetLink.currentValue
+                  : null
+              }
               disabled={isLoading}
             />
           ) : (
-            /* 手动输入框 - 非 GitHub 类型时显示 */
+            /* manual input box - display when not GitHub type */
             <input
               type="text"
               id="assetLink"
-              className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1"
+              className="text-base border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2"
               placeholder="https://example.com"
               value={assetLink || EMPTY_STRING}
               onChange={(e) => {

@@ -38,6 +38,7 @@ interface GitHubRepoSelectorProps {
     } | null
   ) => void;
   defaultSelectedRepoId?: string | null;
+  defaultSelectedRepoUrl?: string | null;
   disabled?: boolean;
   className?: string;
 }
@@ -45,6 +46,7 @@ interface GitHubRepoSelectorProps {
 export default function GitHubRepoSelector({
   onRepoSelect,
   defaultSelectedRepoId,
+  defaultSelectedRepoUrl,
   disabled = false,
   className = "",
 }: GitHubRepoSelectorProps) {
@@ -53,6 +55,12 @@ export default function GitHubRepoSelector({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownContentRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const onRepoSelectRef = useRef(onRepoSelect);
+
+  // sync the latest callback function in the ref
+  useEffect(() => {
+    onRepoSelectRef.current = onRepoSelect;
+  }, [onRepoSelect]);
 
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -76,7 +84,7 @@ export default function GitHubRepoSelector({
     useHasProviders();
   const hasGitHub = providersInfo?.hasGitHub || false;
 
-  // Check if there's an authentication error
+  // check if there is an authentication error
   const hasAuthError = () => {
     const errorMessage = repoError?.message || repoData?.error || "";
     return (
@@ -88,21 +96,21 @@ export default function GitHubRepoSelector({
     );
   };
 
-  // 计算下拉菜单位置
+  // calculate dropdown menu position
   const calculateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const dropdownWidth = buttonRect.width;
-    const maxHeight = 400; // max-h-100 对应的像素值
+    const maxHeight = 400; // max-h-100 corresponding pixel value
 
-    // 获取实际高度
+    // get the actual height
     const actualHeight = dropdownContentRef.current?.offsetHeight;
     const effectiveHeight = actualHeight
       ? Math.min(actualHeight, maxHeight)
       : maxHeight;
 
-    // 如果没有实际高度，不显示下拉菜单
+    // if there is no actual height, do not display the dropdown menu
     if (!actualHeight) {
       setShouldShowDropdown(false);
       return;
@@ -111,12 +119,12 @@ export default function GitHubRepoSelector({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // 使用相对于视窗的坐标，添加 8px 安全边距
+    // use relative to viewport coordinates, add 8px safe margin
     const safeMargin = 8;
     let top = buttonRect.bottom + safeMargin;
     let left = buttonRect.left;
 
-    // 检查是否可以显示在下方（考虑安全边距）
+    // check if it can be displayed below (consider safe margin)
     const canShowBelow =
       buttonRect.bottom + safeMargin + effectiveHeight <=
       viewportHeight - safeMargin;
@@ -124,12 +132,12 @@ export default function GitHubRepoSelector({
       buttonRect.left + dropdownWidth <= viewportWidth - safeMargin;
 
     if (canShowBelow) {
-      // 在下方显示
+      // display below
       top = buttonRect.bottom + safeMargin;
       if (canShowLeftAligned) {
         left = buttonRect.left;
       } else {
-        // 右对齐
+        // right align
         left = buttonRect.right - dropdownWidth;
         // 确保不超出右边界
         if (left < safeMargin) {
@@ -137,20 +145,20 @@ export default function GitHubRepoSelector({
         }
       }
     } else {
-      // 在上方显示
+      // display above
       top = buttonRect.top - effectiveHeight - safeMargin;
       if (canShowLeftAligned) {
         left = buttonRect.left;
       } else {
         left = buttonRect.right - dropdownWidth;
-        // 确保不超出右边界
+        // ensure not to exceed the right boundary
         if (left < safeMargin) {
           left = safeMargin;
         }
       }
     }
 
-    // 确保不超出左边界
+    // ensure not to exceed the left boundary
     if (left < safeMargin) {
       left = safeMargin;
     }
@@ -159,7 +167,7 @@ export default function GitHubRepoSelector({
     setShouldShowDropdown(true);
   }, []);
 
-  // 获取仓库数据的函数
+  // get repository data function
   const fetchRepos = useCallback(async () => {
     if (!hasGitHub) return;
 
@@ -176,24 +184,51 @@ export default function GitHubRepoSelector({
     }
   }, [hasGitHub]);
 
-  // 当条件满足时自动获取仓库数据
+  // when the conditions are met, automatically fetch repository data
   useEffect(() => {
     fetchRepos();
   }, [fetchRepos]);
 
-  // 设置默认选中的仓库
+  // set the default selected repository
   useEffect(() => {
-    if (defaultSelectedRepoId && repoData?.success && repoData?.data) {
-      const repoId = parseInt(defaultSelectedRepoId);
-      const repo = repoData.data.find((r) => r.id === repoId);
-      if (repo) {
-        setSelectedRepoId(repoId);
-        onRepoSelect(repo);
+    if (repoData?.success && repoData?.data) {
+      let selectedRepo = null;
+
+      console.log(
+        "GitHubRepoSelector: Attempting to set default selected repository"
+      );
+      console.log("defaultSelectedRepoUrl:", defaultSelectedRepoUrl);
+      console.log("defaultSelectedRepoId:", defaultSelectedRepoId);
+      console.log("repoData.data length:", repoData.data.length);
+
+      // prioritize matching by URL (for edit mode)
+      if (defaultSelectedRepoUrl) {
+        console.log("Attempting to match by URL:", defaultSelectedRepoUrl);
+        selectedRepo = repoData.data.find(
+          (r) => r.html_url === defaultSelectedRepoUrl
+        );
+        console.log("URL matching result:", selectedRepo);
+      }
+
+      // if URL matching fails, try matching by ID
+      if (!selectedRepo && defaultSelectedRepoId) {
+        const repoId = parseInt(defaultSelectedRepoId);
+        console.log("Attempting to match by ID:", repoId);
+        selectedRepo = repoData.data.find((r) => r.id === repoId);
+        console.log("ID matching result:", selectedRepo);
+      }
+
+      if (selectedRepo) {
+        console.log("Setting selected repository:", selectedRepo);
+        setSelectedRepoId(selectedRepo.id);
+        onRepoSelectRef.current(selectedRepo);
+      } else {
+        console.log("No matching repository found");
       }
     }
-  }, [defaultSelectedRepoId, repoData, onRepoSelect]);
+  }, [defaultSelectedRepoId, defaultSelectedRepoUrl, repoData]);
 
-  // 点击外部关闭下拉菜单
+  // click outside to close dropdown menu
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -215,17 +250,17 @@ export default function GitHubRepoSelector({
     }
   }, [isDropdownOpen]);
 
-  // 当下拉菜单打开时计算位置
+  // when the dropdown menu is opened, calculate the position
   useEffect(() => {
     if (isDropdownOpen) {
       setShouldShowDropdown(false);
 
-      // 延迟一帧确保DOM已渲染，然后计算位置
+      // delay one frame to ensure the DOM is rendered, then calculate the position
       requestAnimationFrame(() => {
         calculateDropdownPosition();
       });
 
-      // 监听窗口大小变化和滚动事件
+      // listen to window size change and scroll event
       const handleResize = () => calculateDropdownPosition();
       const handleScroll = () => calculateDropdownPosition();
 
@@ -241,7 +276,7 @@ export default function GitHubRepoSelector({
     }
   }, [isDropdownOpen, calculateDropdownPosition]);
 
-  // 获取选中的仓库
+  // get the selected repository
   const getSelectedRepo = () => {
     if (!selectedRepoId || !repoData?.success || !repoData?.data) return null;
     return repoData.data.find(
@@ -251,7 +286,7 @@ export default function GitHubRepoSelector({
     );
   };
 
-  // 处理仓库选择
+  // handle repository selection
   const handleRepoSelection = (repoId: number) => {
     setSelectedRepoId(repoId);
     setIsDropdownOpen(false);
@@ -270,7 +305,7 @@ export default function GitHubRepoSelector({
     }
   };
 
-  // GitHub 绑定处理函数
+  // GitHub binding handler
   const handleBindGitHub = async () => {
     setIsGitHubBinding(true);
     try {
@@ -281,7 +316,7 @@ export default function GitHubRepoSelector({
     }
   };
 
-  // GitHub 重新绑定处理函数（当 token 无效时）
+  // GitHub re-binding handler (when token is invalid)
   const handleRebindGitHub = async () => {
     setIsGitHubBinding(true);
     try {
@@ -295,7 +330,7 @@ export default function GitHubRepoSelector({
     }
   };
 
-  // 手动重试获取仓库数据
+  // manually retry to fetch repository data
   const handleRetryFetch = async () => {
     try {
       await fetchRepos();
@@ -304,7 +339,7 @@ export default function GitHubRepoSelector({
     }
   };
 
-  // 获取选中仓库的显示信息
+  // get the display information of the selected repository
   const getSelectedRepoDisplay = () => {
     const repo = getSelectedRepo();
     if (!repo) return null;
@@ -317,7 +352,7 @@ export default function GitHubRepoSelector({
     };
   };
 
-  // 如果正在加载 providers 信息，显示加载状态
+  // if the providers information is loading, display the loading state
   if (providersLoading) {
     return (
       <div
@@ -351,7 +386,7 @@ export default function GitHubRepoSelector({
                   }
                 }}
                 disabled={hasAuthError() || disabled}
-                className={`flex items-center gap-2 rounded-lg border px-4 py-3 w-full justify-between text-sm ${
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 w-full justify-between text-base ${
                   hasAuthError() || disabled
                     ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                     : "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
@@ -384,7 +419,7 @@ export default function GitHubRepoSelector({
               </button>
               {isDropdownOpen && (
                 <>
-                  {/* 隐藏的DOM元素用于计算高度 */}
+                  {/* hidden DOM element used to calculate height */}
                   <div
                     ref={dropdownContentRef}
                     className="fixed invisible bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-100 overflow-y-auto"
@@ -530,7 +565,7 @@ export default function GitHubRepoSelector({
                       )}
                   </div>
 
-                  {/* 实际显示的下拉菜单 */}
+                  {/* actual displayed dropdown menu */}
                   {shouldShowDropdown && (
                     <div
                       className="fixed z-[60] bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-100 overflow-y-auto"

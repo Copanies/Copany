@@ -27,7 +27,7 @@ import {
   PencilIcon,
   TrashIcon,
   ArrowUpRightIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";

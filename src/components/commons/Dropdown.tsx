@@ -16,6 +16,7 @@ interface DropdownProps {
   selectedValue: number | null;
   onSelect: (value: number) => void;
   showBackground?: boolean;
+  showBorder?: boolean;
   className?: string;
   header?: ReactNode; // 新增可选头部容器
   size?: "sm" | "md" | "lg";
@@ -29,6 +30,7 @@ export default function Dropdown({
   selectedValue,
   onSelect,
   showBackground = false,
+  showBorder = false,
   size = "md",
   className = "",
   header,
@@ -199,21 +201,22 @@ export default function Dropdown({
   };
 
   return (
-    <div
-      className={`relative ${className} flex items-center`}
-      ref={dropdownRef}
-    >
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         ref={buttonRef}
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-base font-medium transition-all duration-200 ${
+        className={`w-full flex items-center px-2 py-1 rounded-md text-base font-medium transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
             : "bg-transparent dark:bg-transparent -mx-2"
+        } ${
+          showBorder
+            ? "border border-gray-300 dark:border-gray-700 !mx-0 !px-3 !py-2"
+            : ""
         }`}
       >
         {trigger}
