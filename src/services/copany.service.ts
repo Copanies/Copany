@@ -146,4 +146,29 @@ export class CopanyService {
       throw error;
     }
   }
+
+  /**
+   * Get multiple companies by IDs
+   */
+  static async getCopaniesByIds(ids: string[]): Promise<Record<string, Copany>> {
+    if (ids.length === 0) return {};
+    
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("copany")
+      .select("*")
+      .in("id", ids);
+
+    if (error) {
+      console.error("Error fetching copanies by IDs:", error);
+      throw new Error(`Failed to fetch copanies by IDs: ${error.message}`);
+    }
+
+    const result: Record<string, Copany> = {};
+    (data as Copany[]).forEach((copany) => {
+      result[copany.id] = copany;
+    });
+
+    return result;
+  }
 }

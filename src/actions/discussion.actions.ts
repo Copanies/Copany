@@ -46,4 +46,8 @@ export async function deleteDiscussionAction(discussionId: string): Promise<void
   return DiscussionService.remove(discussionId);
 }
 
+export async function listAllDiscussionsAction(): Promise<Discussion[]> {
+  return DiscussionService.listAll();
+}
+
 

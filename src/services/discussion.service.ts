@@ -90,6 +90,19 @@ export class DiscussionService {
       throw new Error(`Failed to delete discussion: ${error.message}`);
     }
   }
+
+  static async listAll(): Promise<Discussion[]> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("discussion")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Error fetching all discussions:", error);
+      throw new Error(`Failed to fetch all discussions: ${error.message}`);
+    }
+    return (data as Discussion[]) || [];
+  }
 }
 
 

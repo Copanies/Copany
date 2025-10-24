@@ -213,14 +213,14 @@ export default function DiscussionLabelSelector({
   const renderSelectedLabels = () => {
     if (selectedLabels.length === 0) {
       return (
-        <span className="text-base text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
+        <span className="text-base text-base bg-gray-100 dark:bg-gray-800 rounded-md px-2 py-1">
           Labels
         </span>
       );
     }
 
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 px-2 py-1 items-center">
         {selectedLabels.map((label) => renderLabelChip(label, true))}
       </div>
     );
@@ -326,6 +326,7 @@ export default function DiscussionLabelSelector({
         onSelect={handleDropdownSelect}
         showBackground={showBackground}
         marginX={showBackground ? 2 : 0}
+        showPadding={false}
         disabled={readOnly}
       />
 

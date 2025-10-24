@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Copany } from "@/types/database.types";
-import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction,  getCopaniesWhereUserIsContributorAction } from "@/actions/copany.actions";
+import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction,  getCopaniesWhereUserIsContributorAction, getCopaniesByIdsAction } from "@/actions/copany.actions";
 import { listMyStarredCopanyIdsAction } from "@/actions/star.actions";
 
 function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
@@ -112,6 +112,25 @@ export function useUpdateCopany(copanyId: string) {
     onSuccess: (updated) => {
       qc.setQueryData<Copany | null>(copanyKey(copanyId), updated);
     },
+  });
+}
+
+export function useCopaniesByIds(ids: string[]) {
+  return useQuery<Record<string, Copany>>({
+    queryKey: ["copaniesByIds", ids.sort().join(",")],
+    queryFn: async () => {
+      try {
+        const params = ids.map((id) => `ids=${encodeURIComponent(id)}`).join("&");
+        const res = await fetch(`/api/copany?${params}&type=byIds`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return (json.map as Record<string, Copany>) || {};
+      } catch {
+        return await getCopaniesByIdsAction(ids);
+      }
+    },
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 

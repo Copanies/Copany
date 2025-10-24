@@ -160,3 +160,12 @@ export async function updateCopanyLicenseAction(
 ) {
   await CopanyService.updateCopanyLicense(copanyId, license);
 }
+
+export async function getCopaniesByIdsAction(ids: string[]): Promise<Record<string, Copany>> {
+  try {
+    return await CopanyService.getCopaniesByIds(ids);
+  } catch (error) {
+    console.error("❌ Failed to get copanies by IDs:", error);
+    throw error;
+  }
+}

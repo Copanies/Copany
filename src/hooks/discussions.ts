@@ -7,10 +7,12 @@ import {
   createDiscussionAction,
   updateDiscussionAction,
   deleteDiscussionAction,
+  listAllDiscussionsAction,
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
 function discussionKey(discussionId: string) { return ["discussion", discussionId] as const; }
+function allDiscussionsKey() { return ["discussions", "all"] as const; }
 
 export function useDiscussions(copanyId: string) {
   return useQuery<Discussion[]>({
@@ -99,6 +101,24 @@ export function useDeleteDiscussion(copanyId: string) {
       return { prev } as { prev?: Discussion[] };
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(listKey(copanyId), ctx.prev); },
+  });
+}
+
+export function useAllDiscussions() {
+  return useQuery<Discussion[]>({
+    queryKey: allDiscussionsKey(),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/discussions/all`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.discussions as Discussion[];
+      } catch {
+        return await listAllDiscussionsAction();
+      }
+    },
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 
