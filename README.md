@@ -16,93 +16,79 @@
 ## Background
 
 Today, there are generally two ways to start a career:
-Either found a company, or join one.
+either found a company or join one.
 
-A company organizes people through its salary system to accomplish great things that individuals couldn’t achieve alone, while providing members with relatively stable income.
-However, this seemingly efficient and mature structure comes with several long-standing issues that limit both freedom and meaning at work:
+Companies organize people through salary systems, enabling them to achieve great things that individuals couldn’t accomplish alone — while providing relatively stable income.
+However, this seemingly mature model of collaboration, while efficient and structured, also brings several long-standing challenges:
 
-1. **Lack of Freedom in Collaboration**
-   In most companies, everything is prearranged — what you do and who you work with.
-   Switching teams or exploring a new direction often requires lengthy interviews, sacrificing bonuses, and taking the risk that the next job might be worse.
+1. **High cost of joining or leaving a team**
+   Changing teams or pursuing a new direction comes with significant cost — going through interviews, giving up bonuses, and risking that the next job might be even worse.
 
-2. **Meaningless Work**
-   Many tasks exist not because of real product needs or personal belief, but due to managerial decisions, processes, or performance metrics.
-   The root cause is simple: we don’t own the products we create.
-   As a result, we’re not truly accountable to the product itself — we’re accountable to “the job,” to “the process,” and to “the evaluation.”
-   For those who seek meaning in their work, this can be deeply frustrating.
+2. **Lack of meaning in daily work**
+   Because we work for others, not for our own ventures, many tasks exist not for real product needs or personal belief, but to satisfy managerial decisions, processes, or performance metrics.
 
-3. **Income Tied to Time**
+3. **Income stops when you leave**
    Our income comes from selling time. Once we stop working, the income stops as well.
-   Because we don’t own the long-term value of what we create, we lose all connection to a product’s future success once we leave the company.
+   Since the long-term value of the product doesn’t belong to us, we have no connection to its future gains after leaving the company.
 
-4. **High Costs and Managerial Friction**
-   For companies, hiring the right people is both difficult and expensive, requiring extensive screening and interviews.
-   After onboarding, companies must invest even more effort into “managing” and “motivating” employees — methods that often prove inefficient or counterproductive.
-
-## Mission & Vision
-
-**Mission:**
-
-To create a collaborative model that is free, transparent, and built on shared outcomes.
-
-**Vision:**
-
-To make work more free — and more meaningful.
+4. **High operational cost and management burden**
+   For companies, finding the right people is time-consuming and expensive.
+   After hiring, they must invest even more effort into “managing” and “motivating” employees — approaches that often prove inefficient or counterproductive.
 
 ## Introduction
 
-Copany aims to provide a new way of addressing these problems.
-It may not be a perfect solution, but through collective exploration, we hope to build a system of collaboration that is freer, more efficient, and fairer than the traditional company model.
+Copany aims to create a new way of collaboration — one that is free, transparent, and outcome-driven.
 
 In Copany:
 
 1. **Anyone can start or join a project**
-   No interviews, no barriers — you can join or leave at any time. Collaboration is entirely free and open.
+   No interviews, no entry barriers. Join or leave anytime — collaboration is entirely free.
 
-2. **Project profits are distributed by contribution points**
-   Each project’s revenue is divided based on each member’s contribution ratio, represented by contribution points that never expire.
-   This means part of the project’s value always belongs to you — even after you leave.
-   Because “the results belong to yourself,” people naturally focus on work that truly matters.
+2. **Project income is distributed by contribution points**
+   The projects you participate in always remain partially yours.
+   Even after leaving, you continue to share in their future earnings.
 
 3. **Contribution points are based on task complexity**
-   Each completed task that meets the defined standard grants contribution points proportional to its complexity.
-   Deliverables that exceed expectations can earn additional rewards.
+   Each completed task that meets the standard earns contribution points according to its complexity.
 
-4. **More forms of contribution will be supported in the future**
-   Beyond task completion, Copany will support contributions such as financial or material support — all converted into corresponding contribution points.
+4. **More contribution types coming soon**
+   Beyond completed tasks, Copany will support contributions such as funding or material support in the future.
 
-#### Why Measure Contribution by “Task Complexity”?
+#### Why measure contributions by “task complexity”?
 
 Let’s ask a simple question:
-**What is the essence of your contribution to a project?**
-The answer: time and experience/knowledge.
+**What do you truly contribute to a project?**
+The answer is — **your time and experience.**
 
-In traditional companies, salaries are essentially calculated as
-“working time × experience-matched hourly rate.”
-But in Copany, we don’t restrict working hours, nor do we evaluate experience through interviews — so this model doesn’t apply.
+In traditional companies, the pay system is essentially working hours × experience-based rate. But in Copany, we don’t limit your working time or evaluate you through interviews, so this model doesn’t apply.
 
-Instead, we measure results — the outcomes produced by your time and experience.
-Since the time required for a task correlates strongly with its complexity, task complexity becomes a fair and transparent measure of contribution.
+Instead, we measure your results — the tasks you’ve completed — which represent the product of your time and experience. Since the time required for a task strongly correlates with its complexity, “task complexity” serves as a fair basis for measuring contribution.
 
-In Copany, only deliverables that meet the predefined quality standards are accepted and counted toward contribution points.
-Because the time and skill required to meet the standard inherently reflect the contributor’s experience, experience is indirectly incorporated into the system.
-This allows Copany to fairly evaluate contributions using a single metric — task complexity.
+> In Copany, only tasks that meet predefined quality standards are counted as valid contributions. Whether a task meets the standard depends on the contributor’s experience and ability, meaning that experience is already indirectly reflected in the system. This allows Copany to fairly assess contributions through a single dimension — task complexity.
 
-For exceptional work that exceeds expectations, Copany plans to introduce an additional reward mechanism in the future.
+For exceptional work that goes beyond the standard, Copany plans to introduce an additional reward mechanism in the future.
 
-#### Complexity Evaluation Mechanism
+#### How task complexity is determined
 
-In practice, Copany currently follows this evaluation process:
+In practice, Copany currently follows this process:
 
-1. Task owners provide an initial estimate of task complexity before work begins.
+1. Task owners provide an initial complexity estimate before starting;
 
-2. Team members may discuss and adjust the rating during execution.
+2. Team members can discuss and adjust it during execution;
 
-3. Project leads perform a final review of both results and complexity ratings upon completion.
+3. Project leads review and finalize complexity levels after completion;
 
-4. All records are public and transparent, open to discussion and iteration, helping the community reach a shared understanding of task complexity.
+4. All records are public, allowing everyone to review, comment, and help refine the shared understanding of complexity.
 
-Through continuous feedback and refinement, Copany aims to establish a system that truly reflects both personal value and collective contribution.
+Through continuous iteration and feedback, Copany aims to build a system that truly reflects each individual’s value and contribution to a project.
+
+## Mission & Vision
+
+**Mission:**
+To create a collaborative system that is free, transparent, and shares outcomes fairly.
+
+**Vision:**
+To make work more free — and more meaningful.
 
 ## Product Structure
 
