@@ -293,7 +293,7 @@ export default function SettingsView({
 
     try {
       // Upload new logo first
-      const result = await storageService.uploadLogo(file, copany.name);
+      const result = await storageService.uploadLogo(file);
 
       if (result.success && result.url) {
         // After successful upload, delete old logo
@@ -360,7 +360,7 @@ export default function SettingsView({
 
     try {
       // Upload new cover image first
-      const result = await storageService.uploadCoverImage(file, copany.name);
+      const result = await storageService.uploadCoverImage(file);
 
       if (result.success && result.url) {
         // After successful upload, delete old cover image

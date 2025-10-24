@@ -203,7 +203,7 @@ export default function New() {
 
     try {
       // 先上传新的 logo
-      const result = await storageService.uploadLogo(file, selectedRepo.name);
+      const result = await storageService.uploadLogo(file);
 
       if (result.success && result.url) {
         // 上传成功后，删除旧的 logo

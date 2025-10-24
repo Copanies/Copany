@@ -15,7 +15,7 @@ export class StorageService {
   /**
    * Upload copany logo to Supabase Storage
    */
-  async uploadLogo(file: File, copanyName: string): Promise<UploadResult> {
+  async uploadLogo(file: File): Promise<UploadResult> {
     try {
       // Validate file type
       if (!this.isValidImageFile(file)) {
@@ -27,7 +27,7 @@ export class StorageService {
 
       // Generate unique filename
       const fileExtension = file.name.split(".").pop();
-      const fileName = `${copanyName}-${Date.now()}.${fileExtension}`;
+      const fileName = `logo_${Date.now()}.${fileExtension}`;
       const filePath = `logos/${fileName}`;
 
       // Upload file to Supabase Storage
@@ -91,7 +91,7 @@ export class StorageService {
   /**
    * Upload copany cover image to Supabase Storage
    */
-  async uploadCoverImage(file: File, copanyName: string): Promise<UploadResult> {
+  async uploadCoverImage(file: File): Promise<UploadResult> {
     try {
       // Validate file type
       if (!this.isValidImageFile(file)) {
@@ -103,7 +103,7 @@ export class StorageService {
 
       // Generate unique filename
       const fileExtension = file.name.split(".").pop();
-      const fileName = `${copanyName}-cover-${Date.now()}.${fileExtension}`;
+      const fileName = `cover_image_${Date.now()}.${fileExtension}`;
       const filePath = `covers/${fileName}`;
 
       // Upload file to Supabase Storage
