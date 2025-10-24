@@ -226,7 +226,7 @@ Copany 旨在创造一种自由、透明、成果共享的协作方式。
 
 - 参与贡献：[Copany 合作区](https://copany.app/copany/5?tab=Cooperate)
 
-- Telegram: [Copany 群组](https://t.me/+FMfZz5wKKAAzNmI1)
+- Discord: [Discord 服务器](https://discord.gg/fWPx5dJRHQ)
 
 - 了解更多: [探索 Copany](https://copany.app)
 
