@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
-
+import { useRouter } from "next/navigation";
+import Button from "../commons/Button";
+import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 interface MobileCatBannerProps {
   title: string;
   subtitle?: string;
@@ -19,7 +21,7 @@ export default function MobileCatBanner({
 }: MobileCatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     // Generate only 4 cat avatars for mobile (bottom row only)
     const avatars = Array.from({ length: 4 }, () =>
@@ -57,6 +59,19 @@ export default function MobileCatBanner({
               ))}
             </div>
           )}
+          <Button
+            variant="ghost"
+            size="md"
+            className="mt-3 -mb-3"
+            onClick={() => {
+              router.push("/copany/5");
+            }}
+          >
+            <div className="flex flex-row items-center gap-2">
+              <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2} />
+              <p className="!text-nowrap font-semiblod">Learn More</p>
+            </div>
+          </Button>
         </div>
 
         {/* Bottom cats row */}

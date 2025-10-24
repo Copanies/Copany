@@ -17,6 +17,7 @@ import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { useState, useEffect } from "react";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useCurrentUser } from "@/hooks/currentUser";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -198,6 +199,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
 
 function NewCopanyCard() {
   const router = useRouter();
+  const { data: user } = useCurrentUser();
   const [isHovered, setIsHovered] = useState(false);
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
 
@@ -213,7 +215,11 @@ function NewCopanyCard() {
     <li
       className="cursor-pointer sm:mx-0"
       onClick={() => {
-        router.push(`/new`);
+        if (user) {
+          router.push(`/new`);
+        } else {
+          router.push(`/signup`);
+        }
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
