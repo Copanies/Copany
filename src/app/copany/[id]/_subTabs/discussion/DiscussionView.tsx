@@ -257,6 +257,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               selectedValue={selectedDropdownValue}
               onSelect={handleDropdownSelect}
               showBackground={false}
+              marginX={2}
               size="md"
             />
           </div>

@@ -192,6 +192,7 @@ export default function UserView({ userId }: UserViewProps) {
             selectedValue={null}
             onSelect={handleDropdownSelect}
             showBackground={false}
+            marginX={2}
             size="lg"
             className=""
           />

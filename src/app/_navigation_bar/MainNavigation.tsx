@@ -184,7 +184,9 @@ export default function MainNavigation() {
         selectedValue={null}
         onSelect={handleDropdownSelect}
         showBackground={false}
+        marginX={0}
         className="cursor-pointer"
+        showPadding={false}
         header={userHeader}
         size="lg"
       />

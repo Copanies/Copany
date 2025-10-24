@@ -178,6 +178,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                   }
                 }}
                 showBackground={false}
+                marginX={2}
                 size="md"
                 onOpenChange={(open) => {
                   setOpenMenuCommentId(open ? String(comment.id) : null);
@@ -376,6 +377,7 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                               }
                             }}
                             showBackground={false}
+                            marginX={2}
                             size="md"
                             onOpenChange={(open) => {
                               setOpenMenuCommentId(

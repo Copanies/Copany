@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { Copany } from "@/types/database.types";
 import TabView from "@/components/commons/TabView";
 import ReadmeView from "./_subTabs/readme/ReadmeView";
 import LicenseView from "./_subTabs/license/LicenseView";
@@ -20,6 +21,10 @@ import LicenseBadge from "@/components/copany/LicenseBadge";
 import { EMPTY_STRING } from "@/utils/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import StarButton from "@/components/copany/StarButton";
+import AssetLinkModal from "./_subTabs/settings/AssetLinkModal";
+import { useState } from "react";
+import GithubIcon from "@/assets/github_logo.svg";
+import GithubDarkIcon from "@/assets/github_logo_dark.svg";
 import {
   BookOpenIcon,
   ScaleIcon,
@@ -36,6 +41,7 @@ interface CopanyViewProps {
 
 export default function CopanyView({ copanyId }: CopanyViewProps) {
   const isDarkMode = useDarkMode();
+  const [isConnectRepoModalOpen, setIsConnectRepoModalOpen] = useState(false);
   console.log(`[CopanyView] 🚀 Component initialized:`, {
     copanyId,
   });
@@ -65,6 +71,21 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   // Check if the current user is the copany creator
   const isCreator = currentUser && currentUser.id === copany.created_by;
+
+  // Handle connect repo button click
+  const handleConnectRepo = () => {
+    setIsConnectRepoModalOpen(true);
+  };
+
+  // Handle copany update from modal
+  const handleCopanyUpdate = (updatedCopany: Copany) => {
+    // 更新 React Query 缓存以保持 UI 同步
+    queryClient.setQueryData(["copany", copanyId], updatedCopany);
+    queryClient.invalidateQueries({
+      queryKey: ["copany", copanyId],
+    });
+    queryClient.invalidateQueries({ queryKey: ["copanies"] });
+  };
 
   // Build tabs array, only include Settings tab if user is creator
   const tabs = [
@@ -204,7 +225,10 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
                 copanyId={copany.id}
               />
             </div>
-            <AssetLinksSection copany={copany} />
+            <AssetLinksSection
+              copany={copany}
+              onConnectRepo={handleConnectRepo}
+            />
             <div className="hidden sm:block">
               <StarButton
                 copanyId={copanyId}
@@ -219,6 +243,25 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       <Suspense fallback={<LoadingView type="label" label="Loading tabs..." />}>
         <TabView tabs={tabs} />
       </Suspense>
+
+      {/* Connect Repo Modal */}
+      <AssetLinkModal
+        isOpen={isConnectRepoModalOpen}
+        onClose={() => setIsConnectRepoModalOpen(false)}
+        assetLinks={[
+          {
+            label: "Github",
+            key: "github_url",
+            value: copany.github_url,
+            icon: GithubIcon,
+            darkIcon: GithubDarkIcon,
+            id: 1,
+          },
+        ]}
+        copany={copany}
+        onCopanyUpdate={handleCopanyUpdate}
+        forceGithubType={true}
+      />
     </div>
   );
 }

@@ -160,6 +160,7 @@ export default function IssueStateSelector({
       selectedValue={currentState}
       onSelect={handleStateChange}
       showBackground={showBackground}
+      marginX={showBackground ? 0 : 2}
       disabled={false}
     />
   );
@@ -311,6 +312,7 @@ function InReviewLabel({
         alt="In Review"
         placeholder="blur"
         blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+        className="w-5 h-5 shrink-0"
       />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">

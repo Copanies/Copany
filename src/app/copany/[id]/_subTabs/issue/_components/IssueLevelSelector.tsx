@@ -97,6 +97,7 @@ export default function IssueLevelSelector({
       selectedValue={currentLevel}
       onSelect={handleLevelChange}
       showBackground={showBackground}
+      marginX={showBackground ? 0 : 2}
       disabled={false}
     />
   );

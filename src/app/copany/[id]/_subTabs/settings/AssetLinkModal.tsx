@@ -21,6 +21,7 @@ export default function AssetLinkModal({
   copany,
   editingAssetLink,
   onCopanyUpdate,
+  forceGithubType = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +39,7 @@ export default function AssetLinkModal({
     currentValue: string;
   } | null;
   onCopanyUpdate: (copany: Copany) => void;
+  forceGithubType?: boolean;
 }) {
   const [assetType, setAssetType] = useState<number | null>(null);
   const [assetLink, setAssetLink] = useState<string | null>(null);
@@ -85,10 +87,15 @@ export default function AssetLinkModal({
       setAssetType(editingAssetLink.type);
       setAssetLink(editingAssetLink.currentValue);
     } else if (isOpen && !editingAssetLink) {
-      setAssetType(null);
-      setAssetLink(null);
+      if (forceGithubType) {
+        setAssetType(1); // GitHub type
+        setAssetLink(null);
+      } else {
+        setAssetType(null);
+        setAssetLink(null);
+      }
     }
-  }, [isOpen, editingAssetLink]);
+  }, [isOpen, editingAssetLink, forceGithubType]);
 
   // extract repository information from GitHub URL
   const extractRepoInfoFromUrl = (url: string) => {
@@ -185,7 +192,26 @@ export default function AssetLinkModal({
         </h1>
         <div className="flex flex-col gap-3 px-8">
           <p className="text-base font-semibold">Asset type</p>
-          {isEditMode && assetType !== null ? (
+          {forceGithubType ? (
+            <div className="w-full flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">
+              <Image
+                src={
+                  isDarkMode
+                    ? assetLinks.find((link) => link.id === 1)?.darkIcon || ""
+                    : assetLinks.find((link) => link.id === 1)?.icon || ""
+                }
+                alt={assetLinks.find((link) => link.id === 1)?.label || ""}
+                className="w-5 h-5 flex-shrink-0"
+                width={20}
+                height={20}
+                placeholder="blur"
+                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+              />
+              <p className="text-base flex-1 text-left">
+                {assetLinks.find((link) => link.id === 1)?.label || ""}
+              </p>
+            </div>
+          ) : isEditMode && assetType !== null ? (
             <div className="w-full flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">
               <Image
                 src={
@@ -212,6 +238,8 @@ export default function AssetLinkModal({
             <Dropdown
               className="w-full"
               showBorder={true}
+              showBackground={false}
+              marginX={0}
               options={assetLinks
                 .filter((link) => {
                   const value = copany[link.key as keyof Copany];
@@ -287,7 +315,7 @@ export default function AssetLinkModal({
           <p className="text-base font-semibold">Asset link</p>
 
           {/* GitHub repository selector */}
-          {assetType === 1 ? (
+          {assetType === 1 || forceGithubType ? (
             <GitHubRepoSelector
               onRepoSelect={handleRepoSelect}
               defaultSelectedRepoId={getDefaultSelectedRepoId()}
@@ -323,10 +351,15 @@ export default function AssetLinkModal({
           </Button>
           <Button
             variant="primary"
-            disabled={assetType === null || !assetLink || isLoading}
+            disabled={
+              (assetType === null && !forceGithubType) ||
+              !assetLink ||
+              isLoading
+            }
             onClick={() => {
-              if (assetType !== null) {
-                updateCopanyAssetLinkAction(assetType, assetLink || "");
+              const currentAssetType = forceGithubType ? 1 : assetType;
+              if (currentAssetType !== null) {
+                updateCopanyAssetLinkAction(currentAssetType, assetLink || "");
               }
             }}
           >

@@ -18,6 +18,8 @@ interface DropdownProps {
   showBackground?: boolean;
   showBorder?: boolean;
   className?: string;
+  showPadding?: boolean;
+  marginX?: number;
   header?: ReactNode; // 新增可选头部容器
   size?: "sm" | "md" | "lg";
   onOpenChange?: (open: boolean) => void;
@@ -31,6 +33,8 @@ export default function Dropdown({
   onSelect,
   showBackground = false,
   showBorder = false,
+  showPadding = true,
+  marginX = 0,
   size = "md",
   className = "",
   header,
@@ -207,17 +211,17 @@ export default function Dropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`w-full flex items-center px-2 py-1 rounded-md text-base font-medium transition-all duration-200 ${
+        className={`w-full flex items-center rounded-md text-base font-medium transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground
             ? "bg-gray-100 dark:bg-gray-800"
-            : "bg-transparent dark:bg-transparent -mx-2"
-        } ${
+            : "bg-transparent dark:bg-transparent"
+        } ${marginX > 0 ? `-mx-${marginX}` : ""} ${
           showBorder
-            ? "border border-gray-300 dark:border-gray-700 !mx-0 !px-3 !py-2"
+            ? "border border-gray-300 dark:border-gray-700 !px-3 !py-2"
             : ""
-        }`}
+        } ${showPadding ? `px-2 py-1` : "p-0"}`}
       >
         {trigger}
       </button>
