@@ -1,7 +1,7 @@
 <div align="center">
 <picture>
-  <source media="(max-width: 520px)" srcset="https://github.com/Copanies/Copany/blob/main/copany_icon_stroke.png" width="168">
-  <img src="https://github.com/Copanies/Copany/blob/main/copany_icon_stroke.png" width="256">
+  <source media="(max-width: 520px)" srcset="https://github.com/Copanies/Copany/blob/main/copany_icon_stroke.png?raw=true" width="168">
+  <img src="https://github.com/Copanies/Copany/blob/main/copany_icon_stroke.png?raw=true" width="256">
 </picture>
 </div>
 
