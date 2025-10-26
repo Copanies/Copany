@@ -42,15 +42,33 @@ export function useCopanies() {
         const res = await fetch(`/api/copany?type=list&page=${page}`);
         if (!res.ok) throw new Error("request failed");
         const json = await res.json();
+        
+        // Validate data format - discard old cache format
+        if (Array.isArray(json)) {
+          // Old format detected, discard and refetch from server
+          throw new Error("Old cache format detected");
+        }
+        
+        // Validate new format
+        if (!json || typeof json !== 'object' || !('copanies' in json)) {
+          throw new Error("Invalid data format");
+        }
+        
         return json as PaginatedCopanies;
       } catch {
         return await getCopaniesAction(page);
       }
     },
     getNextPageParam: (lastPage, allPages) => {
-      // First check if lastPage exists and has the required structure
+      // Validate both lastPage and allPages exist
       if (!lastPage || !allPages) return undefined;
-      // Then check if there are more pages
+      
+      // Validate lastPage has the expected structure
+      if (typeof lastPage !== 'object' || !('hasMore' in lastPage)) {
+        return undefined;
+      }
+      
+      // Check if there are more pages
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
