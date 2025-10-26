@@ -161,17 +161,25 @@ export default function MainNavigation() {
       },
       {
         value: 1,
+        label: "Stars",
+        href: "/stars",
+      },
+      {
+        value: 2,
         label: "Logout",
       },
     ];
 
     const handleDropdownSelect = (value: number) => {
       switch (value) {
-        case 1:
-          handleLogout();
-          break;
         case 0:
           router.push(`/user/${user.id}`);
+          break;
+        case 1:
+          router.push("/stars");
+          break;
+        case 2:
+          handleLogout();
           break;
         default:
           break;
@@ -339,16 +347,18 @@ export default function MainNavigation() {
             className="!px-1"
             onClick={() => router.push(`/copany/${copanyId}`)}
           >
-            <div className="text-base truncate max-w-[30vw] sm:max-w-[40vw] md:max-w-[50vw] text-gray-900 dark:text-gray-100">
+            <div className="text-base truncate max-w-[50vw] text-gray-900 dark:text-gray-100">
               {copanyData?.name || ""}
             </div>
           </Button>
         ) : pathname === "/uselicense" ? (
-          <span className="text-sm hidden sm:inline">
+          <span className="text-base hidden sm:inline">
             How to use COSL License
           </span>
         ) : pathname === "/new" ? (
-          <span className="text-sm hidden sm:inline">Create new copany</span>
+          <span className="text-base hidden sm:inline">Create new copany</span>
+        ) : pathname === "/stars" ? (
+          <span className="text-base">Stars</span>
         ) : (
           <></>
         )}

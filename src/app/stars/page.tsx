@@ -14,7 +14,9 @@ export default function StarsPage() {
   const { data: allCopanies, isLoading: loadingAll } = useCopanies();
   const { data: starred, isLoading: loadingIds } = useMyStarredCopanies();
   const ids = starred?.ids || [];
-  const list = (allCopanies || []).filter((c) => ids.includes(String(c.id)));
+  const list = (
+    allCopanies?.pages.flatMap((page) => page.copanies) || []
+  ).filter((c) => ids.includes(String(c.id)));
   const isLoading = loadingAll || loadingIds;
   const router = useRouter();
   return (
