@@ -13,7 +13,7 @@ export default function BasicNavigation() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-end justify-start px-8 w-full bg-transparent h-[80px]">
       <Image
-        className="w-12 h-12 cursor-pointer hover:opacity-80"
+        className="w-12 h-12 cursor-pointer hover:opacity-80 bg-white dark:bg-background-dark rounded-md"
         alt="Copany Logo"
         src={isDarkMode ? copanylogoDark : copanylogo}
         width={48}
