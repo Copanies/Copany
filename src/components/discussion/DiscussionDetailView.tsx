@@ -12,19 +12,11 @@ import {
   ArrowUpIcon,
   EllipsisHorizontalIcon,
 } from "@heroicons/react/24/outline";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import {
   useDiscussion,
   useDiscussionById,
   useDeleteDiscussion,
 } from "@/hooks/discussions";
-import {
-  useDiscussionVoteState,
-  useToggleDiscussionVote,
-} from "@/hooks/discussionVotes";
 import { useCreateDiscussionComment } from "@/hooks/discussionComments";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -39,6 +31,7 @@ import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
 import DiscussionEditForm from "./DiscussionEditForm";
+import VoteButton from "./VoteButton";
 
 interface DiscussionDetailViewProps {
   discussionId: string;
@@ -69,10 +62,6 @@ export default function DiscussionDetailView({
     ? discussionWithCopany.isLoading || discussionWithoutCopany.isLoading
     : discussionWithoutCopany.isLoading;
 
-  const { countQuery, flagQuery } = useDiscussionVoteState(discussionId, {
-    countInitialData: discussion?.vote_up_count,
-  });
-  const voteToggle = useToggleDiscussionVote(discussionId);
   const createCommentMutation = useCreateDiscussionComment(discussionId);
   const deleteDiscussion = useDeleteDiscussion(copanyId || null);
 
@@ -288,33 +277,11 @@ export default function DiscussionDetailView({
 
         {/* Vote button */}
         <div className="flex items-center gap-3 mt-3">
-          <Button
+          <VoteButton
+            discussionId={discussionId}
             size="sm"
-            variant={"secondary"}
-            onClick={() => voteToggle.mutate({ toVote: !flagQuery.data })}
-            disabled={voteToggle.isPending || !currentUser}
-            disableTooltipConent={!currentUser ? "Sign in to vote" : undefined}
-          >
-            <div className="flex items-center gap-2">
-              <Image
-                src={
-                  flagQuery.data
-                    ? isDarkMode
-                      ? arrowshape_up_fill_dark
-                      : arrowshape_up_fill
-                    : isDarkMode
-                    ? arrowshape_up_dark
-                    : arrowshape_up
-                }
-                alt="Vote"
-                width={16}
-                height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-              />
-              <span>{countQuery.data ?? 0}</span>
-            </div>
-          </Button>
+            count={discussion?.vote_up_count}
+          />
           <Button
             size="sm"
             variant="secondary"
