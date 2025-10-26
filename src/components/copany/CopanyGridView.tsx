@@ -205,7 +205,11 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   );
 }
 
-function NewCopanyCard() {
+interface NewCopanyCardProps {
+  innerRef?: React.Ref<HTMLLIElement>;
+}
+
+function NewCopanyCard({ innerRef }: NewCopanyCardProps) {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const [isHovered, setIsHovered] = useState(false);
@@ -221,6 +225,7 @@ function NewCopanyCard() {
 
   return (
     <li
+      ref={innerRef}
       className="cursor-pointer sm:mx-0"
       onClick={() => {
         if (user) {
@@ -351,13 +356,11 @@ export default function CopanyGridView({
           />
         ))}
         {showNewCopanyCard && (
-          <li
-            ref={
+          <NewCopanyCard
+            innerRef={
               copanies.length === 0 || !hasNextPage ? lastElementRef : undefined
             }
-          >
-            <NewCopanyCard />
-          </li>
+          />
         )}
       </ul>
 

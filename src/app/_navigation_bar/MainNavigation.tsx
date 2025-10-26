@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import copany_logo from "@/assets/copany_logo.svg";
 import copany_logo_dark from "@/assets/copany_logo_dark.svg";
@@ -68,17 +68,7 @@ export default function MainNavigation() {
     }
   };
 
-  // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const renderUserSection = () => {
-    if (!isMounted) {
-      return <div className="p-2 w-8"></div>;
-    }
-
     if (loading) {
       return <div className="p-2 w-8"></div>;
     }
@@ -271,7 +261,7 @@ export default function MainNavigation() {
     }
 
     return options;
-  }, [user, userCopanies, isDarkMode]);
+  }, [userCopanies, isDarkMode]);
 
   // Handle copany navigation dropdown selection
   const handleCopanyNavSelect = useCallback(
