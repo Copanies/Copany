@@ -12,9 +12,9 @@ import {
   getDiscussionByIdAction,
 } from "@/actions/discussion.actions";
 
-function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
+function listKey(copanyId: string) { return ["discussions", copanyId, "v2"] as const; } // v2: Added version to handle PaginatedDiscussions structure change
 function discussionKey(discussionId: string) { return ["discussion", discussionId] as const; }
-function allDiscussionsKey() { return ["discussions", "all"] as const; }
+function allDiscussionsKey() { return ["discussions", "all", "v2"] as const; } // v2: Added version to handle PaginatedDiscussions structure change
 
 export function useDiscussions(copanyId: string) {
   return useInfiniteQuery<PaginatedDiscussions, Error>({
