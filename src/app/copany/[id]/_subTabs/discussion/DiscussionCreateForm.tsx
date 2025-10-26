@@ -12,6 +12,7 @@ import Dropdown from "@/components/commons/Dropdown";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionCreateForm({
   copanyId,
@@ -29,6 +30,7 @@ export default function DiscussionCreateForm({
     copanyId || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const { data: currentUser } = useCurrentUser();
   const { data: userCopanies = [] } = useCopaniesWhereUserIsContributor(
@@ -48,6 +50,10 @@ export default function DiscussionCreateForm({
     setDescription(content);
   }, []);
 
+  const handleCopanyClear = useCallback(() => {
+    setSelectedCopanyId("");
+  }, []);
+
   // Auto-resize title textarea to fit content height
   useEffect(() => {
     const el = titleTextareaRef.current;
@@ -60,13 +66,6 @@ export default function DiscussionCreateForm({
   useEffect(() => {
     titleTextareaRef.current?.focus();
   }, []);
-
-  // Initialize selectedCopanyId when userCopanies are loaded
-  useEffect(() => {
-    if (!copanyId && userCopanies.length > 0 && !selectedCopanyId) {
-      setSelectedCopanyId(userCopanies[0].id);
-    }
-  }, [copanyId, userCopanies, selectedCopanyId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -168,8 +167,31 @@ export default function DiscussionCreateForm({
                       )}
                       <span className="truncate text-base shrink-0 w-fit">
                         {userCopanies.find((c) => c.id === selectedCopanyId)
-                          ?.name || "Select a project"}
+                          ?.name || "Copany"}
                       </span>
+                      {selectedCopanyId && !isSubmitting && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopanyClear();
+                          }}
+                          className="p-0.5 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleCopanyClear();
+                            }
+                          }}
+                        >
+                          <XMarkIcon
+                            className="w-3 h-3 text-gray-500 dark:text-gray-400"
+                            strokeWidth={2}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 }
@@ -210,12 +232,14 @@ export default function DiscussionCreateForm({
                 size="lg"
               />
             )}
-            <DiscussionLabelSelector
-              copanyId={effectiveCopanyId}
-              selectedLabelIds={selectedLabelIds}
-              onLabelChange={setSelectedLabelIds}
-              readOnly={isSubmitting}
-            />
+            {selectedCopanyId && (
+              <DiscussionLabelSelector
+                copanyId={effectiveCopanyId}
+                selectedLabelIds={selectedLabelIds}
+                onLabelChange={setSelectedLabelIds}
+                readOnly={isSubmitting}
+              />
+            )}
           </div>
         </div>
         <div className="flex justify-end px-3 py-3 border-t border-gray-200 dark:border-gray-800">

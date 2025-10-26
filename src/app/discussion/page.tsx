@@ -6,9 +6,9 @@ import Footer from "@/components/commons/Footer";
 
 export default function DiscussionPageView() {
   return (
-    <main className="min-h-screen">
+    <main className="">
       <MainNavigation />
-      <div className="max-w-[820px] justify-center mx-auto w-full mt-5 px-5">
+      <div className="max-w-[820px] justify-center mx-auto w-full mt-5 px-5 min-h-screen">
         <DiscussionView />
       </div>
       <Footer />

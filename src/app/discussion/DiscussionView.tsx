@@ -68,7 +68,7 @@ export default function DiscussionView() {
   const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
   if (isLoading) {
-    return <LoadingView type="label" />;
+    return <LoadingView type="page" />;
   }
   if (!discussions || discussions.length === 0) {
     return (
@@ -81,7 +81,7 @@ export default function DiscussionView() {
             />
           }
           title="No discussions yet"
-          description="There are no discussions across all projects yet."
+          description="There are no discussions across all copanies yet."
         />
       </div>
     );
@@ -90,9 +90,7 @@ export default function DiscussionView() {
   return (
     <div className="flex flex-col gap-3 pb-[200px] min-h-[calc(100vh-200px)]">
       <section className="flex-1 flex flex-col gap-3">
-        <Suspense
-          fallback={<LoadingView type="label" label="Loading discussions..." />}
-        >
+        <Suspense fallback={<LoadingView type="page" />}>
           <ul className="flex flex-col gap-3">
             {discussions.map((d) => (
               <li key={d.id} className="">
