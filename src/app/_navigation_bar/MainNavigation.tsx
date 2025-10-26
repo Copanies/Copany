@@ -311,13 +311,13 @@ export default function MainNavigation() {
         )}
 
         <Image
-          className="cursor-pointer rounded-md hover:opacity-80"
+          className="cursor-pointer rounded-md hover:opacity-80 w-8 h-8"
           src={isDarkMode ? copany_logo_dark : copany_logo}
           alt="logo"
-          width={36}
-          height={36}
+          width={32}
+          height={32}
           placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(36, 36, isDarkMode)}
+          blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
           onClick={() => router.push("/")}
         />
 
@@ -328,18 +328,16 @@ export default function MainNavigation() {
             className="!px-1"
             onClick={() => router.push(`/copany/${copanyId}`)}
           >
-            <div className="text-base truncate max-w-[30vw] sm:max-w-[40vw] md:max-w-[50vw] font-semibold text-gray-900 dark:text-gray-100">
+            <div className="text-base truncate max-w-[30vw] sm:max-w-[40vw] md:max-w-[50vw] text-gray-900 dark:text-gray-100">
               {copanyData?.name || ""}
             </div>
           </Button>
         ) : pathname === "/uselicense" ? (
-          <span className="text-sm font-semibold hidden sm:inline">
+          <span className="text-sm hidden sm:inline">
             How to use COSL License
           </span>
         ) : pathname === "/new" ? (
-          <span className="text-sm font-semibold hidden sm:inline">
-            Create new copany
-          </span>
+          <span className="text-sm hidden sm:inline">Create new copany</span>
         ) : (
           <></>
         )}
