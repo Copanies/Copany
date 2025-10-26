@@ -102,6 +102,20 @@ export default function DiscussionView() {
     <div className="flex flex-col gap-3 pb-[200px] min-h-[calc(100vh-200px)]">
       <section className="flex-1 flex flex-col gap-3">
         <Suspense fallback={<LoadingView type="page" />}>
+          <div className="flex mb-3">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="min-w-fit w-fit"
+              size="md"
+              disabled={!currentUser}
+              disableTooltipConent="Sign in to create a discussion"
+            >
+              <div className="flex flex-row items-center gap-1">
+                <span className="text-base">New Discussion</span>
+              </div>
+            </Button>
+          </div>
+
           <ul className="flex flex-col gap-3">
             {discussions.map((d) => (
               <li key={d.id} className="">
@@ -134,17 +148,6 @@ export default function DiscussionView() {
           )}
         </Suspense>
       </section>
-
-      {/* Floating Action Button */}
-      {currentUser && (
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-[32px] sm:bottom-[60px] right-[32px] sm:right-[60px] w-10 h-10 bg-gray-800 hover:bg-gray-800/80 dark:bg-gray-100 dark:hover:bg-gray-100/80 border-gray-800 dark:border-gray-100 text-white dark:text-black rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center z-50 hover:cursor-pointer"
-          aria-label="Create new discussion"
-        >
-          <PlusIcon className="w-5 h-5" strokeWidth={2} />
-        </button>
-      )}
 
       {/* Create Discussion Modal */}
       <Modal
