@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "update-copany-hot-score": {
+      "schedule": "0 0 * * *"
+    }
+  }
+}
+

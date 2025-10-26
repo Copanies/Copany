@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { Copany } from "@/types/database.types";
+import type { PaginatedCopanies } from "@/services/copany.service";
 import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopaniesAction,  getCopaniesWhereUserIsContributorAction, getCopaniesByIdsAction } from "@/actions/copany.actions";
 import { listMyStarredCopanyIdsAction } from "@/actions/star.actions";
 
@@ -33,20 +34,28 @@ export function useCopany(
 }
 
 export function useCopanies() {
-  return useQuery<Copany[]>({
+  return useInfiniteQuery<PaginatedCopanies, Error>({
     queryKey: copaniesKey(),
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = typeof pageParam === 'number' ? pageParam : 1;
       try {
-        const res = await fetch(`/api/copany?type=list`);
+        const res = await fetch(`/api/copany?type=list&page=${page}`);
         if (!res.ok) throw new Error("request failed");
         const json = await res.json();
-        return json.copanies as Copany[];
+        return json as PaginatedCopanies;
       } catch {
-        return await getCopaniesAction();
+        return await getCopaniesAction(page);
       }
     },
+    getNextPageParam: (lastPage, allPages) => {
+      // First check if lastPage exists and has the required structure
+      if (!lastPage || !allPages) return undefined;
+      // Then check if there are more pages
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
     staleTime: 1 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 
@@ -54,6 +63,11 @@ export function useCopaniesWhereUserIsContributor(userId: string) {
   return useQuery<Copany[]>({
     queryKey: copaniesWhereUserIsContributorKey(userId),
     queryFn: async () => {
+      // If userId is empty or invalid, return empty array
+      if (!userId || userId.trim() === "") {
+        return [];
+      }
+      
       try {
         const res = await fetch(`/api/copany?userId=${encodeURIComponent(userId)}&type=userContributor`);
         if (!res.ok) throw new Error("request failed");
@@ -65,6 +79,8 @@ export function useCopaniesWhereUserIsContributor(userId: string) {
     },
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
+    // Disable query when userId is empty
+    enabled: !!userId && userId.trim() !== "",
   });
 }
 

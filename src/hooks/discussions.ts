@@ -31,6 +31,9 @@ export function useDiscussions(copanyId: string) {
       }
     },
     getNextPageParam: (lastPage, allPages) => {
+      // First check if lastPage exists and has the required structure
+      if (!lastPage || !allPages) return undefined;
+      // Then check if there are more pages
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
@@ -133,6 +136,9 @@ export function useAllDiscussions() {
       }
     },
     getNextPageParam: (lastPage, allPages) => {
+      // First check if lastPage exists and has the required structure
+      if (!lastPage || !allPages) return undefined;
+      // Then check if there are more pages
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,

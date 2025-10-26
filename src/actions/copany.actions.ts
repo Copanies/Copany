@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/actions/auth.actions";
-import { CopanyService } from "@/services/copany.service";
+import { CopanyService, type PaginatedCopanies } from "@/services/copany.service";
 import { Copany } from "@/types/database.types";
 
 import { CopanyContributorService } from "@/services/copanyContributor.service";
@@ -42,6 +42,7 @@ export async function createCopanyAction(
       license: null,
       cover_image_url: null,
       isDefaultUseCOSL: false,
+      hot_score: 0, // Will be calculated by trigger
       ...copanyData, // 用户提供的数据会覆盖默认值
     };
 
@@ -106,10 +107,9 @@ export async function getCopanyByIdAction(copanyId: string) {
 /**
  * Get copanies list - Server Action
  */
-export async function getCopaniesAction(): Promise<Copany[]> {
+export async function getCopaniesAction(page: number = 1): Promise<PaginatedCopanies> {
   try {
-    const copanies = await CopanyService.getCopanies();
-    return copanies;
+    return await CopanyService.getCopanies(page);
   } catch (error) {
     console.error("❌ Failed to get copanies:", error);
     throw error;

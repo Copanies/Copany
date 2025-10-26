@@ -22,6 +22,7 @@ export interface Copany {
   license: string | null;
   isDefaultUseCOSL: boolean;
   star_count?: number;
+  hot_score: number;
 }
 
 // Table: issue

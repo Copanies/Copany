@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
       const copany = await getCopanyByIdAction(id);
       return NextResponse.json({ copany });
     } else if (type === "list") {
-      const copanies = await getCopaniesAction();
-      return NextResponse.json({ copanies });
+      const page = searchParams.get("page");
+      const pageNumber = page ? parseInt(page, 10) : 1;
+      const result = await getCopaniesAction(pageNumber);
+      return NextResponse.json(result);
     } else if (type === "userContributor") {
-      if (!userId) {
-        return NextResponse.json({ error: "userId required for userContributor" }, { status: 400 });
+      if (!userId || userId.trim() === "") {
+        return NextResponse.json({ copanies: [] });
       }
       const copanies = await getCopaniesWhereUserIsContributorAction(userId);
       return NextResponse.json({ copanies });

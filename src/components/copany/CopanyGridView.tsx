@@ -1,5 +1,5 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useRef, useEffect } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -22,16 +22,20 @@ import { useCurrentUser } from "@/hooks/currentUser";
 interface CopanyGridViewProps {
   copanies: Copany[];
   showNewCopanyCard?: boolean;
+  fetchNextPage?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
 }
 
 interface CopanyCardProps {
   copany: Copany;
+  innerRef?: React.Ref<HTMLLIElement>;
 }
 
 /**
  * Individual copany card component that can use hooks
  */
-function CopanyCard({ copany }: CopanyCardProps) {
+function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const { data: discussionsData } = useDiscussions(copany.id);
@@ -50,7 +54,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
 
   return (
     <li
-      key={copany.id}
+      ref={innerRef}
       className="cursor-pointer sm:mx-0"
       onClick={() => {
         router.push(`/copany/${copany.id}`);
@@ -304,13 +308,65 @@ function NewCopanyCard() {
 export default function CopanyGridView({
   copanies,
   showNewCopanyCard = true,
+  fetchNextPage,
+  hasNextPage = false,
+  isFetchingNextPage = false,
 }: CopanyGridViewProps) {
+  const lastElementRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!lastElementRef.current || !hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage?.();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(lastElementRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
-      {copanies.map((copany) => (
-        <CopanyCard key={copany.id} copany={copany} />
-      ))}
-      {showNewCopanyCard && <NewCopanyCard />}
-    </ul>
+    <>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
+        {copanies.map((copany, index) => (
+          <CopanyCard
+            key={copany.id}
+            copany={copany}
+            innerRef={
+              index === copanies.length - 1 ? lastElementRef : undefined
+            }
+          />
+        ))}
+        {showNewCopanyCard && (
+          <li
+            ref={
+              copanies.length === 0 || !hasNextPage ? lastElementRef : undefined
+            }
+          >
+            <NewCopanyCard />
+          </li>
+        )}
+      </ul>
+
+      {/* Loading indicator */}
+      {isFetchingNextPage && (
+        <div className="flex justify-center mt-8 pb-10">
+          <LoadingView type="label" label="Loading more copanies..." />
+        </div>
+      )}
+    </>
   );
 }

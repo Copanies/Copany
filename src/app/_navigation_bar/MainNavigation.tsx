@@ -214,8 +214,6 @@ export default function MainNavigation() {
 
   // Build dropdown options for copany navigation
   const copanyNavOptions = useMemo(() => {
-    if (!user) return [];
-
     const options = [];
 
     // Add Explore link
@@ -307,7 +305,7 @@ export default function MainNavigation() {
       {/* Left section - Navigation icon, Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         {/* Bars3 icon for quick navigation (shown when user is logged in) */}
-        {user && copanyNavOptions.length > 0 && (
+        {copanyNavOptions.length > 0 && (
           <Dropdown
             trigger={
               <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300 hover:opacity-80" />
