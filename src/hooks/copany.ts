@@ -7,7 +7,7 @@ import { getCopanyByIdAction, updateCopanyAction, createCopanyAction, getCopanie
 import { listMyStarredCopanyIdsAction } from "@/actions/star.actions";
 
 function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
-function copaniesKey() { return ["copanies"] as const; }
+function copaniesKey() { return ["copanies", "v2"] as const; } // v2: Added version to handle PaginatedCopanies structure change
 function copaniesWhereUserIsContributorKey(userId: string) { return ["copanies", userId] as const; }
 function myStarredCopanyIdsKey() { return ["myStarredCopanyIds"] as const; }
 

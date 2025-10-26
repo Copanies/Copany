@@ -217,8 +217,8 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
           <div className="md:hidden flex flex-col gap-3">
             <Dropdown
               trigger={
-                <div className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
-                  <span className="truncate">
+                <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
+                  <span className="shrink-0 truncate">
                     {activeLabel === "all" ? (
                       "All"
                     ) : (
@@ -231,7 +231,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                             )?.color,
                           }}
                         />
-                        <span className="truncate">{activeLabel}</span>
+                        <span className="shrink-0">{activeLabel}</span>
                       </div>
                     )}
                   </span>
@@ -242,7 +242,6 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               selectedValue={selectedDropdownValue}
               onSelect={handleDropdownSelect}
               showBackground={false}
-              marginX={2}
               size="md"
             />
           </div>
