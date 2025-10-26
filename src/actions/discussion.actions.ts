@@ -8,12 +8,12 @@ export async function listDiscussionsAction(copanyId: string): Promise<Discussio
   return DiscussionService.listByCopany(copanyId);
 }
 
-export async function getDiscussionAction(discussionId: string): Promise<Discussion> {
-  return DiscussionService.get(discussionId);
+export async function getDiscussionAction(discussionId: string, copanyId: string): Promise<Discussion> {
+  return DiscussionService.get(discussionId, copanyId);
 }
 
 export async function createDiscussionAction(params: {
-  copanyId: string;
+  copanyId?: string | null;
   title: string;
   description?: string | null;
   labels?: string[];
@@ -22,7 +22,7 @@ export async function createDiscussionAction(params: {
   const user = await getCurrentUser();
   if (!user) throw new Error("User not found");
   return DiscussionService.create({
-    copany_id: params.copanyId,
+    copany_id: params.copanyId ?? null,
     title: params.title,
     description: params.description ?? null,
     labels: params.labels ?? [],
@@ -48,6 +48,10 @@ export async function deleteDiscussionAction(discussionId: string): Promise<void
 
 export async function listAllDiscussionsAction(): Promise<Discussion[]> {
   return DiscussionService.listAll();
+}
+
+export async function getDiscussionByIdAction(discussionId: string): Promise<Discussion> {
+  return DiscussionService.getById(discussionId);
 }
 
 

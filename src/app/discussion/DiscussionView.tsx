@@ -168,11 +168,15 @@ function DiscussionItem({
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex-1 hover:cursor-pointer min-w-0"
-          onClick={() =>
-            router.push(
-              `/copany/${discussion.copany_id}/discussion/${discussion.id}`
-            )
-          }
+          onClick={() => {
+            if (discussion.copany_id) {
+              router.push(
+                `/copany/${discussion.copany_id}/discussion/${discussion.id}`
+              );
+            } else {
+              router.push(`/discussion/${discussion.id}`);
+            }
+          }}
         >
           <div className="flex flex-col gap-3">
             <div className="flex flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -204,23 +208,25 @@ function DiscussionItem({
                 {formatRelativeTime(discussion.created_at)}
               </time>
 
-              <div className="flex flex-row items-center gap-2 ml-auto">
-                {copany?.logo_url && (
-                  <Image
-                    src={copany?.logo_url}
-                    alt={copany?.name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 rounded-md hover:cursor-pointer hover:opacity-80 transition-all duration-200"
-                    placeholder="blur"
-                    blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/copany/${discussion.copany_id}`);
-                    }}
-                  />
-                )}
-              </div>
+              {discussion.copany_id && (
+                <div className="flex flex-row items-center gap-2 ml-auto">
+                  {copany?.logo_url && (
+                    <Image
+                      src={copany?.logo_url}
+                      alt={copany?.name}
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 rounded-md hover:cursor-pointer hover:opacity-80 transition-all duration-200"
+                      placeholder="blur"
+                      blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/copany/${discussion.copany_id}`);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             <span className="block md:hidden flex flex-row items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -277,11 +283,15 @@ function DiscussionItem({
         <Button
           size="sm"
           variant="secondary"
-          onClick={() =>
-            router.push(
-              `/copany/${discussion.copany_id}/discussion/${discussion.id}`
-            )
-          }
+          onClick={() => {
+            if (discussion.copany_id) {
+              router.push(
+                `/copany/${discussion.copany_id}/discussion/${discussion.id}`
+              );
+            } else {
+              router.push(`/discussion/${discussion.id}`);
+            }
+          }}
         >
           <div className="flex items-center gap-2">
             <ChatBubbleBottomCenterIcon className="w-4 h-4" strokeWidth={1.5} />

@@ -313,7 +313,7 @@ export interface Discussion {
   id: string;
   created_at: string;
   updated_at: string;
-  copany_id: string;
+  copany_id: string | null;
   title: string;
   description: string | null;
   creator_id: string | null;

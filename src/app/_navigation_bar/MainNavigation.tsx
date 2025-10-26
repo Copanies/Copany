@@ -207,11 +207,6 @@ export default function MainNavigation() {
     enabled: !!copanyId,
   });
 
-  // Check if user is on copany detail page
-  const isOnCopanyPage = useMemo(() => {
-    return pathname?.startsWith("/copany/");
-  }, [pathname]);
-
   // Get user's copanies where they are contributors
   const { data: userCopanies } = useCopaniesWhereUserIsContributor(
     user?.id || ""

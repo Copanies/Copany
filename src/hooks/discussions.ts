@@ -8,6 +8,7 @@ import {
   updateDiscussionAction,
   deleteDiscussionAction,
   listAllDiscussionsAction,
+  getDiscussionByIdAction,
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
@@ -55,12 +56,12 @@ export function useDiscussion(copanyId: string, discussionId: string) {
   });
 }
 
-export function useCreateDiscussion(copanyId: string) {
+export function useCreateDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { title: string; description?: string | null; labels?: string[]; issueId?: string | null }) => {
       return createDiscussionAction({
-        copanyId,
+        copanyId: copanyId || null,
         title: vars.title,
         description: vars.description ?? null,
         labels: vars.labels ?? [],
@@ -68,39 +69,67 @@ export function useCreateDiscussion(copanyId: string) {
       });
     },
     onSuccess: (created) => {
-      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => ([created, ...(prev || [])]));
+      // Update specific copany's list if copanyId exists
+      if (copanyId) {
+        qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => ([created, ...(prev || [])]));
+      }
+      // Always update the global discussions list
+      qc.setQueryData<Discussion[]>(allDiscussionsKey(), (prev) => ([created, ...(prev || [])]));
     },
   });
 }
 
-export function useUpdateDiscussion(copanyId: string) {
+export function useUpdateDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { discussionId: string; updates: Partial<Pick<Discussion, "title" | "description" | "labels" | "issue_id">> }) => {
       return updateDiscussionAction(vars.discussionId, vars.updates);
     },
     onSuccess: (updated) => {
-      // Update the discussions list cache (primary cache)
-      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => (prev || []).map((d) => String(d.id) === String(updated.id) ? updated : d));
+      // Update the discussions list cache if copanyId exists
+      if (copanyId) {
+        qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => (prev || []).map((d) => String(d.id) === String(updated.id) ? updated : d));
+      }
+      // Update the global discussions list cache
+      qc.setQueryData<Discussion[]>(allDiscussionsKey(), (prev) => (prev || []).map((d) => String(d.id) === String(updated.id) ? updated : d));
       // Update the single discussion cache (fallback cache)
       qc.setQueryData<Discussion>(discussionKey(updated.id), updated);
     },
   });
 }
 
-export function useDeleteDiscussion(copanyId: string) {
+export function useDeleteDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { discussionId: string }) => {
       await deleteDiscussionAction(vars.discussionId);
     },
     onMutate: async ({ discussionId }) => {
-      await qc.cancelQueries({ queryKey: listKey(copanyId) });
-      const prev = qc.getQueryData<Discussion[]>(listKey(copanyId));
-      if (prev) qc.setQueryData<Discussion[]>(listKey(copanyId), prev.filter((d) => String(d.id) !== String(discussionId)));
-      return { prev } as { prev?: Discussion[] };
+      if (copanyId) {
+        await qc.cancelQueries({ queryKey: listKey(copanyId) });
+        const prev = qc.getQueryData<Discussion[]>(listKey(copanyId));
+        if (prev) qc.setQueryData<Discussion[]>(listKey(copanyId), prev.filter((d) => String(d.id) !== String(discussionId)));
+      }
+      await qc.cancelQueries({ queryKey: allDiscussionsKey() });
+      const prevAll = qc.getQueryData<Discussion[]>(allDiscussionsKey());
+      if (prevAll) qc.setQueryData<Discussion[]>(allDiscussionsKey(), prevAll.filter((d) => String(d.id) !== String(discussionId)));
+      return { prev: copanyId ? qc.getQueryData<Discussion[]>(listKey(copanyId)) : undefined, prevAll } as { prev?: Discussion[]; prevAll?: Discussion[] };
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(listKey(copanyId), ctx.prev); },
+    onError: (_e, _v, ctx) => { 
+      if (copanyId && ctx?.prev) qc.setQueryData(listKey(copanyId), ctx.prev); 
+      if (ctx?.prevAll) qc.setQueryData(allDiscussionsKey(), ctx.prevAll);
+    },
+  });
+}
+
+export function useDiscussionById(discussionId: string) {
+  return useQuery<Discussion>({
+    queryKey: discussionKey(discussionId),
+    queryFn: async () => {
+      return await getDiscussionByIdAction(discussionId);
+    },
+    staleTime: 1 * 60 * 1000,
+    enabled: !!discussionId,
   });
 }
 

@@ -38,7 +38,7 @@ export default function DiscussionCreateForm({
   const isDarkMode = useDarkMode();
 
   // Use the selected copany ID for creating discussion
-  const effectiveCopanyId = copanyId || selectedCopanyId;
+  const effectiveCopanyId = copanyId || selectedCopanyId || null;
   const createDiscussion = useCreateDiscussion(effectiveCopanyId);
 
   const editorDivRef = useRef<HTMLDivElement>(null);
@@ -69,7 +69,7 @@ export default function DiscussionCreateForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (isSubmitting || !title.trim() || !effectiveCopanyId) return;
+    if (isSubmitting || !title.trim()) return;
 
     setIsSubmitting(true);
 
@@ -229,7 +229,7 @@ export default function DiscussionCreateForm({
                 size="lg"
               />
             )}
-            {selectedCopanyId && (
+            {selectedCopanyId && effectiveCopanyId && (
               <DiscussionLabelSelector
                 copanyId={effectiveCopanyId}
                 selectedLabelIds={selectedLabelIds}
@@ -243,7 +243,7 @@ export default function DiscussionCreateForm({
           <Button
             type="submit"
             variant="primary"
-            disabled={!title.trim() || isSubmitting || !effectiveCopanyId}
+            disabled={!title.trim() || isSubmitting}
           >
             <div>
               {isSubmitting ? (

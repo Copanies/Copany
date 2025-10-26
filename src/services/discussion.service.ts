@@ -4,11 +4,20 @@ import type { Discussion } from "@/types/database.types";
 export class DiscussionService {
   static async listByCopany(copanyId: string): Promise<Discussion[]> {
     const supabase = await createSupabaseClient();
-    const { data, error } = await supabase
+    
+    // Handle special case: "null" means we want discussions with null copany_id
+    let query = supabase
       .from("discussion")
-      .select("*")
-      .eq("copany_id", copanyId)
-      .order("created_at", { ascending: false });
+      .select("*");
+    
+    if (copanyId === "null") {
+      query = query.is("copany_id", null);
+    } else {
+      query = query.eq("copany_id", copanyId);
+    }
+    
+    const { data, error } = await query.order("created_at", { ascending: false });
+    
     if (error) {
       console.error("Error fetching discussions:", error);
       throw new Error(`Failed to fetch discussions: ${error.message}`);
@@ -16,12 +25,13 @@ export class DiscussionService {
     return (data as Discussion[]) || [];
   }
 
-  static async get(discussionId: string): Promise<Discussion> {
+  static async get(discussionId: string, copanyId: string): Promise<Discussion> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("discussion")
       .select("*")
       .eq("id", discussionId)
+      .eq("copany_id", copanyId)
       .single();
     if (error) {
       console.error("Error fetching discussion:", error);
@@ -30,8 +40,22 @@ export class DiscussionService {
     return data as Discussion;
   }
 
+  static async getById(discussionId: string): Promise<Discussion> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("discussion")
+      .select("*")
+      .eq("id", discussionId)
+      .single();
+    if (error) {
+      console.error("Error fetching discussion by ID:", error);
+      throw new Error(`Failed to fetch discussion: ${error.message}`);
+    }
+    return data as Discussion;
+  }
+
   static async create(input: {
-    copany_id: string;
+    copany_id: string | null;
     title: string;
     description?: string | null;
     creator_id: string;
