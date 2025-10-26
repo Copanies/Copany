@@ -321,6 +321,7 @@ export interface Discussion {
   issue_id: string | null;
   vote_up_count: number;
   comment_count: number;
+  hot_score: number;
 }
 
 // Table: discussion_label

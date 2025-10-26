@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "update-discussion-hot-score": {
+      "schedule": "0 0 * * *"
+    }
+  }
+}
+

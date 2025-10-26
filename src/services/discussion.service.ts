@@ -1,14 +1,24 @@
 import { createSupabaseClient } from "@/utils/supabase/server";
 import type { Discussion } from "@/types/database.types";
 
+export interface PaginatedDiscussions {
+  discussions: Discussion[];
+  hasMore: boolean;
+}
+
 export class DiscussionService {
-  static async listByCopany(copanyId: string): Promise<Discussion[]> {
+  static async listByCopany(
+    copanyId: string,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedDiscussions> {
     const supabase = await createSupabaseClient();
     
-    // Handle special case: "null" means we want discussions with null copany_id
     let query = supabase
       .from("discussion")
-      .select("*");
+      .select("*")
+      .order("hot_score", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
     
     if (copanyId === "null") {
       query = query.is("copany_id", null);
@@ -16,13 +26,21 @@ export class DiscussionService {
       query = query.eq("copany_id", copanyId);
     }
     
-    const { data, error } = await query.order("created_at", { ascending: false });
+    const { data, error } = await query;
     
     if (error) {
       console.error("Error fetching discussions:", error);
       throw new Error(`Failed to fetch discussions: ${error.message}`);
     }
-    return (data as Discussion[]) || [];
+    
+    if (!data || data.length === 0) {
+      return { discussions: [], hasMore: false };
+    }
+    
+    const discussions = data as Discussion[];
+    const hasMore = data.length === pageSize;
+    
+    return { discussions, hasMore };
   }
 
   static async get(discussionId: string, copanyId: string): Promise<Discussion> {
@@ -115,17 +133,31 @@ export class DiscussionService {
     }
   }
 
-  static async listAll(): Promise<Discussion[]> {
+  static async listAll(
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedDiscussions> {
     const supabase = await createSupabaseClient();
+    
     const { data, error } = await supabase
       .from("discussion")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("hot_score", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    
     if (error) {
       console.error("Error fetching all discussions:", error);
       throw new Error(`Failed to fetch all discussions: ${error.message}`);
     }
-    return (data as Discussion[]) || [];
+    
+    if (!data || data.length === 0) {
+      return { discussions: [], hasMore: false };
+    }
+    
+    const discussions = data as Discussion[];
+    const hasMore = data.length === pageSize;
+    
+    return { discussions, hasMore };
   }
 }
 

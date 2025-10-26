@@ -1,11 +1,14 @@
 "use server";
 
 import { getCurrentUser } from "@/actions/auth.actions";
-import { DiscussionService } from "@/services/discussion.service";
+import { DiscussionService, type PaginatedDiscussions } from "@/services/discussion.service";
 import type { Discussion } from "@/types/database.types";
 
-export async function listDiscussionsAction(copanyId: string): Promise<Discussion[]> {
-  return DiscussionService.listByCopany(copanyId);
+export async function listDiscussionsAction(
+  copanyId: string,
+  page: number = 1
+): Promise<PaginatedDiscussions> {
+  return DiscussionService.listByCopany(copanyId, page);
 }
 
 export async function getDiscussionAction(discussionId: string, copanyId: string): Promise<Discussion> {
@@ -46,8 +49,10 @@ export async function deleteDiscussionAction(discussionId: string): Promise<void
   return DiscussionService.remove(discussionId);
 }
 
-export async function listAllDiscussionsAction(): Promise<Discussion[]> {
-  return DiscussionService.listAll();
+export async function listAllDiscussionsAction(
+  page: number = 1
+): Promise<PaginatedDiscussions> {
+  return DiscussionService.listAll(page);
 }
 
 export async function getDiscussionByIdAction(discussionId: string): Promise<Discussion> {

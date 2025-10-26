@@ -30,7 +30,6 @@ import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
@@ -40,12 +39,22 @@ import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
-  const { data: discussions, isLoading } = useDiscussions(copanyId);
+  const {
+    data: discussionsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useDiscussions(copanyId);
   const { data: labels = [] } = useDiscussionLabels(copanyId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeLabel, setActiveLabel] = useState<string>("all");
   const { data: currentUser } = useCurrentUser();
-  const queryClient = useQueryClient();
+
+  // Flatten all pages of discussions
+  const discussions = useMemo(() => {
+    return discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
+  }, [discussionsData]);
 
   const allLabels = useMemo(() => {
     return labels.map((label) => label.name).sort();
@@ -127,25 +136,9 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
   // Handle discussion creation callback
-  const handleDiscussionCreated = useCallback(
-    (newDiscussion: Discussion) => {
-      queryClient.setQueryData<Discussion[]>(
-        ["discussions", copanyId],
-        (prev) => {
-          const base = prev || [];
-          const exists = base.some(
-            (it) => String(it.id) === String(newDiscussion.id)
-          );
-          return exists
-            ? base.map((it) =>
-                String(it.id) === String(newDiscussion.id) ? newDiscussion : it
-              )
-            : [newDiscussion, ...base];
-        }
-      );
-    },
-    [copanyId, queryClient]
-  );
+  const handleDiscussionCreated = useCallback(() => {
+    // The invalidation will trigger a refetch, so no manual cache update needed
+  }, []);
 
   if (isLoading) {
     return <LoadingView type="label" />;
@@ -297,6 +290,19 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Load More Button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                size="md"
+              >
+                {isFetchingNextPage ? "Loading..." : "Load More"}
+              </Button>
+            </div>
           )}
         </Suspense>
 

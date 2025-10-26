@@ -34,9 +34,20 @@ import Modal from "@/components/commons/Modal";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 
 export default function DiscussionView() {
-  const { data: discussions, isLoading } = useAllDiscussions();
+  const {
+    data: discussionsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useAllDiscussions();
   const { data: currentUser } = useCurrentUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Flatten all pages of discussions
+  const discussions = useMemo(() => {
+    return discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
+  }, [discussionsData]);
 
   // Extract unique copany IDs from discussions
   const copanyIds = useMemo(() => {
@@ -108,6 +119,19 @@ export default function DiscussionView() {
               </li>
             ))}
           </ul>
+
+          {/* Load More Button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                size="md"
+              >
+                {isFetchingNextPage ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
         </Suspense>
       </section>
 

@@ -34,11 +34,15 @@ interface CopanyCardProps {
 function CopanyCard({ copany }: CopanyCardProps) {
   const router = useRouter();
   const isDarkMode = useDarkMode();
-  const { data: discussions } = useDiscussions(copany.id);
+  const { data: discussionsData } = useDiscussions(copany.id);
   const { data: labels } = useDiscussionLabels(copany.id);
 
+  // Flatten all pages of discussions
+  const discussions =
+    discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
+
   // Find the "Begin idea" discussion
-  const beginIdeaDiscussion = discussions?.find((discussion) =>
+  const beginIdeaDiscussion = discussions.find((discussion) =>
     discussion.labels.includes(
       labels?.find((label) => label.name === "Begin idea")?.id || ""
     )
