@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import copany_logo from "@/assets/copany_logo.svg";
 import copany_logo_dark from "@/assets/copany_logo_dark.svg";
@@ -219,8 +219,7 @@ export default function MainNavigation() {
 
   // Build dropdown options for copany navigation
   const copanyNavOptions = useMemo(() => {
-    if (!user || !isOnCopanyPage) return [];
-    if (!userCopanies || userCopanies.length === 0) return [];
+    if (!user) return [];
 
     const options = [];
 
@@ -236,51 +235,70 @@ export default function MainNavigation() {
       label: "Discussion",
     });
 
-    // Add divider
-    options.push({
-      value: -3,
-      label: "",
-      divider: true,
-    });
-
-    // Add user's copanies
-    userCopanies.forEach((copany, index) => {
-      const copanyLogo = copany.logo_url ? (
-        <Image
-          src={copany.logo_url}
-          alt={copany.name}
-          className="w-5 h-5 rounded-md"
-          width={20}
-          height={20}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-        />
-      ) : null;
-
+    if (userCopanies && userCopanies.length > 0) {
+      // Add divider
       options.push({
-        value: index,
-        label: (
-          <div className="flex items-center gap-2">
-            {copanyLogo}
-            <span className="truncate">{copany.name}</span>
-          </div>
-        ),
+        value: -3,
+        label: "",
+        divider: true,
       });
-    });
+
+      // Add user's copanies
+      userCopanies.forEach((copany, index) => {
+        const copanyLogo = copany.logo_url ? (
+          <Image
+            src={copany.logo_url}
+            alt={copany.name}
+            className="w-5 h-5 rounded-md"
+            width={20}
+            height={20}
+            placeholder="blur"
+            blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+          />
+        ) : null;
+
+        options.push({
+          value: index,
+          label: (
+            <div className="flex items-center gap-2">
+              {copanyLogo}
+              <span className="truncate">{copany.name}</span>
+            </div>
+          ),
+        });
+      });
+    }
 
     return options;
-  }, [user, isOnCopanyPage, userCopanies, isDarkMode]);
+  }, [user, userCopanies, isDarkMode]);
 
   // Handle copany navigation dropdown selection
-  const handleCopanyNavSelect = (value: number) => {
-    if (value === -1) {
-      router.push("/");
-    } else if (value === -2) {
-      router.push("/discussion");
-    } else if (value >= 0 && userCopanies && userCopanies[value]) {
-      router.push(`/copany/${userCopanies[value].id}`);
-    }
-  };
+  const handleCopanyNavSelect = useCallback(
+    (value: number) => {
+      console.log(
+        "handleCopanyNavSelect called with value:",
+        value,
+        "pathname:",
+        pathname
+      );
+      try {
+        if (value === -1) {
+          console.log("Navigating to home");
+          router.push("/");
+        } else if (value === -2) {
+          console.log("Navigating to /discussion");
+          router.push("/discussion");
+        } else if (value >= 0 && userCopanies && userCopanies[value]) {
+          const targetUrl = `/copany/${userCopanies[value].id}`;
+          console.log("Navigating to:", targetUrl);
+          router.push(targetUrl);
+        }
+      } catch (error) {
+        console.error("Error in handleCopanyNavSelect:", error);
+      }
+    },
+    [router, userCopanies, pathname]
+  );
 
   // Get selected copany value for dropdown
   const selectedCopanyValue = useMemo(() => {
@@ -293,8 +311,8 @@ export default function MainNavigation() {
     <div className="sticky top-0 z-10 flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark h-[52px]">
       {/* Left section - Navigation icon, Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
-        {/* Bars3 icon for copany navigation (only shown on copany pages when user has copanies) */}
-        {isOnCopanyPage && user && userCopanies && userCopanies.length > 0 && (
+        {/* Bars3 icon for quick navigation (shown when user is logged in) */}
+        {user && copanyNavOptions.length > 0 && (
           <Dropdown
             trigger={
               <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300 hover:opacity-80" />

@@ -54,6 +54,7 @@ export default function Dropdown({
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownContentRef = useRef<HTMLDivElement>(null);
+  const dropdownPortalRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Mount check for portal
@@ -140,10 +141,15 @@ export default function Dropdown({
   // 点击外部关闭下拉菜单
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
+      // Check if click is outside both the trigger container and the portal dropdown
+      const isClickOutsideTrigger =
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+        !dropdownRef.current.contains(event.target as Node);
+      const isClickOutsidePortal =
+        dropdownPortalRef.current &&
+        !dropdownPortalRef.current.contains(event.target as Node);
+
+      if (isClickOutsideTrigger && isClickOutsidePortal) {
         // 阻止事件传播，防止触发被点击元素的点击事件
         event.stopPropagation();
         event.preventDefault();
@@ -197,9 +203,11 @@ export default function Dropdown({
   }, [isOpen, onOpenChange]);
 
   const handleSelect = async (value: number) => {
+    console.log("Dropdown handleSelect called with value:", value);
     try {
       setIsOpen(false);
       setShouldShowDropdown(false);
+      console.log("Calling onSelect with value:", value);
       onSelect(value);
     } catch (error) {
       console.error("Error selecting value:", error);
@@ -341,6 +349,7 @@ export default function Dropdown({
             mounted &&
             createPortal(
               <div
+                ref={dropdownPortalRef}
                 className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[100] ${
                   size === "sm"
                     ? "w-32"
