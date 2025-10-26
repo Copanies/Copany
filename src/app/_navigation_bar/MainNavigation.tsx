@@ -357,10 +357,10 @@ export default function MainNavigation() {
       {/* Center section - Navigation links (only on home and stars pages) */}
       {pathname === "/" || pathname === "/discussion" ? (
         // absolute left-1/2 transform -translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8
-        <div className="absolute left-0 ml-18 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
+        <div className="absolute left-0 ml-23 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-3 sm:gap-6 lg:gap-8">
           <Link
             href="/"
-            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
+            className={`relative cursor-pointer text-base flex-shrink-0 hover:opacity-80 ${
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
@@ -371,7 +371,7 @@ export default function MainNavigation() {
           </Link>
           <Link
             href="/discussion"
-            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
+            className={`relative cursor-pointer text-base flex-shrink-0 hover:opacity-80 ${
               pathname.startsWith("/discussion") ? "font-semibold" : ""
             }`}
           >
