@@ -30,7 +30,6 @@ export default function DiscussionCreateForm({
     copanyId || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
 
   const { data: currentUser } = useCurrentUser();
   const { data: userCopanies = [] } = useCopaniesWhereUserIsContributor(
@@ -143,28 +142,26 @@ export default function DiscussionCreateForm({
                 trigger={
                   <div className="flex items-center gap-2 text-base rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800">
                     <div className="flex items-center gap-2">
-                      {userCopanies.find((c) => c.id === selectedCopanyId)
-                        ?.logo_url && (
-                        <Image
-                          src={
-                            userCopanies.find((c) => c.id === selectedCopanyId)
-                              ?.logo_url!
-                          }
-                          alt={
-                            userCopanies.find((c) => c.id === selectedCopanyId)
-                              ?.name || ""
-                          }
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 rounded-md"
-                          placeholder="blur"
-                          blurDataURL={shimmerDataUrlWithTheme(
-                            24,
-                            24,
-                            isDarkMode
-                          )}
-                        />
-                      )}
+                      {(() => {
+                        const selectedCopany = userCopanies.find(
+                          (c) => c.id === selectedCopanyId
+                        );
+                        return selectedCopany?.logo_url ? (
+                          <Image
+                            src={selectedCopany.logo_url}
+                            alt={selectedCopany.name || ""}
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-md"
+                            placeholder="blur"
+                            blurDataURL={shimmerDataUrlWithTheme(
+                              24,
+                              24,
+                              isDarkMode
+                            )}
+                          />
+                        ) : null;
+                      })()}
                       <span className="truncate text-base shrink-0 w-fit">
                         {userCopanies.find((c) => c.id === selectedCopanyId)
                           ?.name || "Copany"}

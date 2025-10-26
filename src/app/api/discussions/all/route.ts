@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listAllDiscussionsAction } from "@/actions/discussion.actions";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const discussions = await listAllDiscussionsAction();
     return NextResponse.json({ discussions });
