@@ -129,8 +129,8 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
           className={`flex flex-row gap-2 transition-opacity duration-200 ${
             hoveredCommentId === String(comment.id) ||
             openMenuCommentId === String(comment.id)
-              ? "opacity-100"
-              : "opacity-0"
+              ? "opacity-100 md:opacity-100"
+              : "opacity-100 md:opacity-0"
           }`}
         >
           {isLoggedIn ? (
@@ -326,34 +326,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                       className={`flex flex-row gap-2 transition-opacity duration-200 ${
                         hoveredCommentId === String(reply.id) ||
                         openMenuCommentId === String(reply.id)
-                          ? "opacity-100"
-                          : "opacity-0"
+                          ? "opacity-100 md:opacity-100"
+                          : "opacity-100 md:opacity-0"
                       }`}
                     >
-                      {isLoggedIn ? (
-                        <Button
-                          onClick={() =>
-                            setReplyingToCommentId(String(reply.id))
-                          }
-                          variant="ghost"
-                          size="sm"
-                          shape="square"
-                          className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        >
-                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          shape="square"
-                          className="!p-1 text-gray-400"
-                          disabled
-                          disableTooltipConent={pleaseSignInTooltipText}
-                        >
-                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
-                        </Button>
-                      )}
                       {isLoggedIn &&
                         reply.created_by &&
                         String(reply.created_by) === String(currentUserId) && (
@@ -387,6 +363,30 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             }}
                           />
                         )}
+                      {isLoggedIn ? (
+                        <Button
+                          onClick={() =>
+                            setReplyingToCommentId(String(reply.id))
+                          }
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          className="!p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          shape="square"
+                          className="!p-1 text-gray-400"
+                          disabled
+                          disableTooltipConent={pleaseSignInTooltipText}
+                        >
+                          <ArrowTurnUpLeftIcon className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 

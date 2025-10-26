@@ -42,14 +42,14 @@ export default function CatBanner({
     >
       {/* Gradient overlay for visual center focus */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-10 pointer-events-none w-full h-full min-w-[1024px] flex block dark:hidden"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-5 pointer-events-none w-full h-full min-w-[1024px] flex block dark:hidden"
         style={{
           background: `radial-gradient(circle at center, transparent 0%, transparent 50%, rgba(255, 255, 255, 0.9) 80%, rgba(255, 255, 255, 1) 100%)`,
         }}
       ></div>
       {/* Dark mode gradient overlay */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-10 pointer-events-none w-full h-full min-w-[1024px] flex dark:block hidden"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inset-0 z-5 pointer-events-none w-full h-full min-w-[1024px] flex dark:block hidden"
         style={{
           background: `radial-gradient(circle at center, transparent 0%, transparent 50%, rgba(10, 10, 10, 0.9) 80%, rgba(10, 10, 10, 1) 100%)`,
         }}

@@ -11,7 +11,7 @@ export default function BasicNavigation() {
   const isDarkMode = useDarkMode();
   const router = useRouter();
   return (
-    <header className="flex h-16 items-end justify-start px-8 w-full bg-transparent h-[80px]">
+    <header className="sticky top-0 z-10 flex h-16 items-end justify-start px-8 w-full bg-transparent h-[80px]">
       <Image
         className="w-12 h-12 cursor-pointer hover:opacity-80"
         alt="Copany Logo"

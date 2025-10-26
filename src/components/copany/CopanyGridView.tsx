@@ -72,7 +72,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                 />
                 {/* Foreground logo in top-left corner */}
                 {copany.logo_url && (
-                  <div className="absolute top-3 left-3 z-10">
+                  <div className="absolute top-3 left-3 z-5">
                     <Image
                       src={copany.logo_url}
                       alt="Organization Avatar"
@@ -119,7 +119,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   }}
                 ></div>
                 {/* Foreground logo, centered */}
-                <div className="relative z-10 flex items-center justify-center w-full h-auto max-h-32">
+                <div className="relative z-5 flex items-center justify-center w-full h-auto max-h-32">
                   <Image
                     src={copany.logo_url}
                     alt="Organization Avatar"
@@ -141,7 +141,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   } `}
                 ></div>
                 {beginIdeaDiscussion?.description && (
-                  <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
+                  <div className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden">
                     <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
                       <Suspense
                         fallback={
@@ -163,8 +163,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                       </Suspense>
                     </div>
                     {/* Gradient shadow overlay at the bottom - fixed position */}
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
-                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-5"></div>
+                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-5"></div>
                   </div>
                 )}
               </>
@@ -281,7 +281,7 @@ function NewCopanyCard() {
               />
             </div>
 
-            <div className="relative z-10 flex flex-row items-center justify-center gap-2">
+            <div className="relative z-5 flex flex-row items-center justify-center gap-2">
               <PlusIcon className="w-7 h-7 text-gray-900 dark:text-gray-100" />
               <div className="font-medium text-xl text-gray-900 dark:text-gray-100">
                 Start new copany

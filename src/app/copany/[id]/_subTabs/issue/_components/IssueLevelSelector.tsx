@@ -150,13 +150,13 @@ export function renderLevelLabel(
   return (
     <div className="flex flex-row items-center gap-2">
       <div className="border border-gray-300 dark:border-gray-600 rounded-full px-[6px] py-[1px] min-w-[24px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
-        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center ">
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center shrink-0">
           {symbol}
         </span>
       </div>
       {showText && (
-        <div className="flex flex-col gap-0">
-          <span className="text-base text-gray-900 dark:text-gray-100">
+        <div className="flex flex-col gap-0 shrink-0">
+          <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
             {text}
           </span>
           {showDescription && (
