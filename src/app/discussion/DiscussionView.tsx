@@ -10,7 +10,7 @@ import {
 } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { ChatBubbleLeftRightIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
