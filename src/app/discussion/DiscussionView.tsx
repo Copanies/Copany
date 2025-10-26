@@ -33,7 +33,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import Modal from "@/components/commons/Modal";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 
-export default function DiscussionsView() {
+export default function DiscussionView() {
   const { data: discussions, isLoading } = useAllDiscussions();
   const { data: currentUser } = useCurrentUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -201,7 +201,12 @@ function DiscussionItem({
                   <DiscussionLabelChips labelIds={discussion.labels} />
                 )}
               </span>
-              <div className="flex flex-row items-center gap-2">
+              <span>·</span>
+              <time title={discussion.created_at}>
+                {formatRelativeTime(discussion.created_at)}
+              </time>
+
+              <div className="flex flex-row items-center gap-2 ml-auto">
                 {copany?.logo_url && (
                   <Image
                     src={copany?.logo_url}
@@ -214,11 +219,6 @@ function DiscussionItem({
                   />
                 )}
               </div>
-
-              <span>·</span>
-              <time title={discussion.created_at}>
-                {formatRelativeTime(discussion.created_at)}
-              </time>
             </div>
 
             <span className="block md:hidden flex flex-row items-center gap-2 text-gray-600 dark:text-gray-400">

@@ -1,15 +1,15 @@
 "use client";
 
 import MainNavigation from "../_navigation_bar/MainNavigation";
-import DiscussionsView from "./DiscussionsView";
+import DiscussionView from "./DiscussionView";
 import Footer from "@/components/commons/Footer";
 
-export default function DiscussionsPageView() {
+export default function DiscussionPageView() {
   return (
     <main className="min-h-screen">
       <MainNavigation />
       <div className="max-w-[820px] justify-center mx-auto w-full mt-5 px-5">
-        <DiscussionsView />
+        <DiscussionView />
       </div>
       <Footer />
     </main>

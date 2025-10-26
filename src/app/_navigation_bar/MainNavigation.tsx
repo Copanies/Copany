@@ -246,7 +246,7 @@ export default function MainNavigation() {
       </div>
 
       {/* Center section - Navigation links (only on home and stars pages) */}
-      {pathname === "/" || pathname === "/discussions" ? (
+      {pathname === "/" || pathname === "/discussion" ? (
         // absolute left-1/2 transform -translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8
         <div className="absolute left-0 ml-18 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
           <Link
@@ -261,13 +261,13 @@ export default function MainNavigation() {
             )}
           </Link>
           <Link
-            href="/discussions"
+            href="/discussion"
             className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
-              pathname.startsWith("/discussions") ? "font-semibold" : ""
+              pathname.startsWith("/discussion") ? "font-semibold" : ""
             }`}
           >
-            <span>Discussions</span>
-            {pathname.startsWith("/discussions") && (
+            <span>Discussion</span>
+            {pathname.startsWith("/discussion") && (
               <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
           </Link>
