@@ -211,9 +211,13 @@ function DiscussionItem({
                     alt={copany?.name}
                     width={24}
                     height={24}
-                    className="w-6 h-6 rounded-md"
+                    className="w-6 h-6 rounded-md hover:cursor-pointer hover:opacity-80 transition-all duration-200"
                     placeholder="blur"
                     blurDataURL={shimmerDataUrlWithTheme(24, 24, isDarkMode)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/copany/${discussion.copany_id}`);
+                    }}
                   />
                 )}
               </div>
