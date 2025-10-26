@@ -1,57 +1,57 @@
-# Supabase Edge Function: 每月自动计算 Distribute
+# Supabase Edge Function: Monthly Distribute Calculator
 
-这个 Edge Function 用于每月自动计算所有活跃 copany 的 distribute 分配。
+This Edge Function automatically calculates distribute allocation for all active copany each month.
 
-## 功能特性
+## Features
 
-- **自动调度**: 每月 10 号自动执行
-- **批量处理**: 处理所有活跃的 copany
-- **完整逻辑**: 包含交易计算、贡献分数计算、按比例分配
-- **错误处理**: 单个 copany 失败不影响其他 copany
-- **详细日志**: 提供完整的执行日志
+- **Automatic Scheduling**: Executes automatically on the 10th of each month
+- **Batch Processing**: Processes all active copany
+- **Complete Logic**: Includes transaction calculation, contribution score calculation, and proportional distribution
+- **Error Handling**: Failure of a single copany does not affect others
+- **Detailed Logging**: Provides complete execution logs
 
-## 部署步骤
+## Deployment Steps
 
-### 1. 部署 Edge Function
+### 1. Deploy Edge Function
 
 ```bash
-# 部署 Edge Function
+# Deploy Edge Function
 supabase functions deploy monthly-distribute-calculator
 
-# 设置环境变量（如果还没有设置）
+# Set environment variables (if not already set)
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### 2. 配置定时调度
+### 2. Configure Scheduled Execution
 
-Edge Function 已经配置了每月 10 号执行的 cron 表达式：`0 0 0 10 * *`
+The Edge Function is already configured with a cron expression to execute on the 10th of each month: `0 0 0 10 * *`
 
-### 3. 手动测试
+### 3. Manual Testing
 
-可以通过以下方式手动触发：
+You can manually trigger it in the following ways:
 
 ```bash
-# 或通过 API
+# Or via API
 curl -X POST http://localhost:54321/functions/v1/monthly-distribute-calculator \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
   -H "Content-Type: application/json"
 ```
 
-## 计算逻辑
+## Calculation Logic
 
-1. **获取 copany**: 查询所有 copany
-2. **时间范围**: 当前月份（UTC 时间）
-3. **交易计算**:
-   - 获取当月 10 号 0 点前已确认的收入和支出交易
-   - 计算净收入 = 总收入 - 总支出
-4. **贡献分数计算**:
-   - 获取当月 1 号 0 点完成的 issue
-   - 根据 issue 等级计算贡献分数
-5. **按比例分配**:
-   - 根据贡献分数按比例分配净收入
-   - 生成 distribute 记录
+1. **Get Copany**: Query all copany
+2. **Time Range**: Current month (UTC time)
+3. **Transaction Calculation**:
+   - Get confirmed income and expense transactions before the 10th at 00:00 of the current month
+   - Calculate net income = total income - total expenses
+4. **Contribution Score Calculation**:
+   - Get completed issues from the 1st at 00:00 of the current month
+   - Calculate contribution scores based on issue levels
+5. **Proportional Distribution**:
+   - Distribute net income proportionally based on contribution scores
+   - Generate distribute records
 
-## 返回结果
+## Return Results
 
 ```json
 {
@@ -71,35 +71,35 @@ curl -X POST http://localhost:54321/functions/v1/monthly-distribute-calculator \
 }
 ```
 
-## 监控和日志
+## Monitoring and Logging
 
-- 在 Supabase Dashboard 的 Edge Functions 页面查看执行日志
-- 每次执行都会记录详细的处理过程
-- 可以通过日志监控每个 copany 的处理状态
+- View execution logs in the Supabase Dashboard Edge Functions page
+- Each execution records detailed processing information
+- Monitor the processing status of each copany through logs
 
-## 注意事项
+## Notes
 
-1. **权限**: 使用服务角色密钥，具有完整的数据库访问权限
-2. **时区**: 所有时间计算使用 UTC 时区
-3. **错误处理**: 单个 copany 处理失败不会影响其他 copany
-4. **数据安全**: 会删除现有的 distribute 记录后重新生成
-5. **性能**: 对于大量 copany 可能需要较长时间执行
+1. **Permissions**: Uses service role key with full database access permissions
+2. **Time Zone**: All time calculations use UTC time zone
+3. **Error Handling**: Failure to process a single copany does not affect other copany
+4. **Data Security**: Deletes existing distribute records and regenerates them
+5. **Performance**: May take a long time to execute for a large number of copany
 
-## 故障排除
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **权限错误**: 确保设置了正确的 `SUPABASE_SERVICE_ROLE_KEY`
-2. **数据库连接失败**: 检查 Supabase 项目状态
-3. **定时任务未执行**: 检查 cron 表达式配置
-4. **部分 copany 失败**: 查看详细日志确定具体原因
+1. **Permission Error**: Ensure the correct `SUPABASE_SERVICE_ROLE_KEY` is set
+2. **Database Connection Failure**: Check Supabase project status
+3. **Scheduled Task Not Executing**: Check cron expression configuration
+4. **Partial Copany Failure**: Check detailed logs to determine specific cause
 
-### 调试方法
+### Debugging Methods
 
 ```bash
-# 查看 Edge Function 日志
+# View Edge Function logs
 supabase functions logs monthly-distribute-calculator
 
-# 本地测试
+# Local testing
 supabase functions serve monthly-distribute-calculator
 ```

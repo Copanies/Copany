@@ -166,7 +166,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
   ];
 
   return (
-    <div className="max-w-screen-lg mx-auto gap-4 flex flex-col h-full relative mb-8">
+    <div className="max-w-screen-lg mx-auto gap-2 flex flex-col h-full relative mb-8">
       <div
         className={`flex flex-col gap-4 px-5 ${
           copany.cover_image_url ? "pt-0" : "pt-6"

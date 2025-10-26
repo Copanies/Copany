@@ -22,6 +22,7 @@ export interface Copany {
   license: string | null;
   isDefaultUseCOSL: boolean;
   star_count?: number;
+  hot_score: number;
 }
 
 // Table: issue
@@ -313,7 +314,7 @@ export interface Discussion {
   id: string;
   created_at: string;
   updated_at: string;
-  copany_id: string;
+  copany_id: string | null;
   title: string;
   description: string | null;
   creator_id: string | null;
@@ -321,6 +322,7 @@ export interface Discussion {
   issue_id: string | null;
   vote_up_count: number;
   comment_count: number;
+  hot_score: number;
 }
 
 // Table: discussion_label

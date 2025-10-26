@@ -152,7 +152,7 @@ function NoneLabel({ showText }: { showText: boolean }) {
         </svg>
       </div>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           No priority
         </span>
       )}
@@ -199,7 +199,7 @@ function UrgentLabel({ showText }: { showText: boolean }) {
         </svg>
       </div>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           Urgent
         </span>
       )}
@@ -245,7 +245,9 @@ function HighLabel({ showText }: { showText: boolean }) {
         </svg>
       </div>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">High</span>
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
+          High
+        </span>
       )}
     </div>
   );
@@ -291,7 +293,7 @@ function MediumLabel({ showText }: { showText: boolean }) {
       </div>
 
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           Medium
         </span>
       )}
@@ -339,7 +341,9 @@ function LowLabel({ showText }: { showText: boolean }) {
         </svg>
       </div>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">Low</span>
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
+          Low
+        </span>
       )}
     </div>
   );

@@ -6,21 +6,40 @@ import Button from "@/components/commons/Button";
 import { EMPTY_STRING } from "@/utils/constants";
 import type { Discussion } from "@/types/database.types";
 import DiscussionLabelSelector from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelSelector";
+import { useCopaniesWhereUserIsContributor } from "@/hooks/copany";
+import { useCurrentUser } from "@/hooks/currentUser";
+import Dropdown from "@/components/commons/Dropdown";
+import Image from "next/image";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useDarkMode } from "@/utils/useDarkMode";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function DiscussionCreateForm({
   copanyId,
   onDiscussionCreated,
   onClose,
 }: {
-  copanyId: string;
+  copanyId?: string;
   onDiscussionCreated: (newDiscussion: Discussion) => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState<string>(EMPTY_STRING);
   const [description, setDescription] = useState<string>(EMPTY_STRING);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
+  const [selectedCopanyId, setSelectedCopanyId] = useState<string>(
+    copanyId || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const createDiscussion = useCreateDiscussion(copanyId);
+
+  const { data: currentUser } = useCurrentUser();
+  const { data: userCopanies = [] } = useCopaniesWhereUserIsContributor(
+    currentUser?.id || ""
+  );
+  const isDarkMode = useDarkMode();
+
+  // Use the selected copany ID for creating discussion
+  const effectiveCopanyId = copanyId || selectedCopanyId || null;
+  const createDiscussion = useCreateDiscussion(effectiveCopanyId);
 
   const editorDivRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -28,6 +47,10 @@ export default function DiscussionCreateForm({
 
   const handleContentChange = useCallback((content: string) => {
     setDescription(content);
+  }, []);
+
+  const handleCopanyClear = useCallback(() => {
+    setSelectedCopanyId("");
   }, []);
 
   // Auto-resize title textarea to fit content height
@@ -82,7 +105,7 @@ export default function DiscussionCreateForm({
         <div className="px-3 py-3">
           <textarea
             ref={titleTextareaRef}
-            name="title"
+            name="discussion-title"
             value={title}
             onChange={(e) => setTitle(e.target.value.replace(/\r?\n/g, " "))}
             onKeyDown={(e) => {
@@ -102,6 +125,7 @@ export default function DiscussionCreateForm({
             disabled={isSubmitting}
             placeholder="Discussion title"
           />
+
           <div ref={editorDivRef}>
             <MilkdownEditor
               onContentChange={handleContentChange}
@@ -111,13 +135,108 @@ export default function DiscussionCreateForm({
           </div>
         </div>
         <div className="px-5 py-2">
-          <div className="space-y-2">
-            <DiscussionLabelSelector
-              copanyId={copanyId}
-              selectedLabelIds={selectedLabelIds}
-              onLabelChange={setSelectedLabelIds}
-              readOnly={isSubmitting}
-            />
+          <div className="flex flex-row gap-2 items-center">
+            {/* Copany Selector - only show when copanyId is not provided */}
+            {!copanyId && (
+              <Dropdown
+                trigger={
+                  <div className="flex items-center gap-2 text-base rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800">
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const selectedCopany = userCopanies.find(
+                          (c) => c.id === selectedCopanyId
+                        );
+                        return selectedCopany?.logo_url ? (
+                          <Image
+                            src={selectedCopany.logo_url}
+                            alt={selectedCopany.name || ""}
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-md"
+                            placeholder="blur"
+                            blurDataURL={shimmerDataUrlWithTheme(
+                              24,
+                              24,
+                              isDarkMode
+                            )}
+                          />
+                        ) : null;
+                      })()}
+                      <span className="truncate text-base shrink-0 w-fit">
+                        {userCopanies.find((c) => c.id === selectedCopanyId)
+                          ?.name || "Copany"}
+                      </span>
+                      {selectedCopanyId && !isSubmitting && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopanyClear();
+                          }}
+                          className="p-0.5 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleCopanyClear();
+                            }
+                          }}
+                        >
+                          <XMarkIcon
+                            className="w-3 h-3 text-gray-500 dark:text-gray-400"
+                            strokeWidth={2}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                }
+                options={userCopanies.map((copany, index) => ({
+                  value: index,
+                  label: (
+                    <div className="flex items-center gap-2">
+                      {copany.logo_url && (
+                        <Image
+                          src={copany.logo_url}
+                          alt={copany.name}
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-md"
+                          placeholder="blur"
+                          blurDataURL={shimmerDataUrlWithTheme(
+                            20,
+                            20,
+                            isDarkMode
+                          )}
+                        />
+                      )}
+                      <span>{copany.name}</span>
+                    </div>
+                  ) as React.ReactNode,
+                }))}
+                selectedValue={userCopanies.findIndex(
+                  (c) => c.id === selectedCopanyId
+                )}
+                onSelect={(value) => {
+                  const selectedCopany = userCopanies[value];
+                  if (selectedCopany) {
+                    setSelectedCopanyId(selectedCopany.id);
+                  }
+                }}
+                showBackground={false}
+                showPadding={false}
+                size="lg"
+              />
+            )}
+            {selectedCopanyId && effectiveCopanyId && (
+              <DiscussionLabelSelector
+                copanyId={effectiveCopanyId}
+                selectedLabelIds={selectedLabelIds}
+                onLabelChange={setSelectedLabelIds}
+                readOnly={isSubmitting}
+              />
+            )}
           </div>
         </div>
         <div className="flex justify-end px-3 py-3 border-t border-gray-200 dark:border-gray-800">

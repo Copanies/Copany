@@ -3,11 +3,7 @@
 import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
 import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
-import {
-  useToggleDiscussionVote,
-  useDiscussionVoteCounts,
-  useMyVotedDiscussionIds,
-} from "@/hooks/discussionVotes";
+import { useDiscussionVoteCounts } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
@@ -17,10 +13,6 @@ import {
   PlusIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
@@ -30,7 +22,6 @@ import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
@@ -38,14 +29,25 @@ import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import VoteButton from "@/components/discussion/VoteButton";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
-  const { data: discussions, isLoading } = useDiscussions(copanyId);
+  const {
+    data: discussionsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useDiscussions(copanyId);
   const { data: labels = [] } = useDiscussionLabels(copanyId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeLabel, setActiveLabel] = useState<string>("all");
   const { data: currentUser } = useCurrentUser();
-  const queryClient = useQueryClient();
+
+  // Flatten all pages of discussions
+  const discussions = useMemo(() => {
+    return discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
+  }, [discussionsData]);
 
   const allLabels = useMemo(() => {
     return labels.map((label) => label.name).sort();
@@ -122,30 +124,13 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     return (filtered || []).map((discussion) => String(discussion.id));
   }, [filtered]);
 
-  // Batch fetch vote counts and voted status
+  // Batch fetch vote counts
   const { data: voteCounts = {} } = useDiscussionVoteCounts(discussionIds);
-  const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
   // Handle discussion creation callback
-  const handleDiscussionCreated = useCallback(
-    (newDiscussion: Discussion) => {
-      queryClient.setQueryData<Discussion[]>(
-        ["discussions", copanyId],
-        (prev) => {
-          const base = prev || [];
-          const exists = base.some(
-            (it) => String(it.id) === String(newDiscussion.id)
-          );
-          return exists
-            ? base.map((it) =>
-                String(it.id) === String(newDiscussion.id) ? newDiscussion : it
-              )
-            : [newDiscussion, ...base];
-        }
-      );
-    },
-    [copanyId, queryClient]
-  );
+  const handleDiscussionCreated = useCallback(() => {
+    // The invalidation will trigger a refetch, so no manual cache update needed
+  }, []);
 
   if (isLoading) {
     return <LoadingView type="label" />;
@@ -292,11 +277,23 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                         : undefined
                     }
                     voteCounts={voteCounts}
-                    votedDiscussionIds={votedDiscussionIds}
                   />
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Load More Button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                size="md"
+              >
+                {isFetchingNextPage ? "Loading..." : "Load More"}
+              </Button>
+            </div>
           )}
         </Suspense>
 
@@ -328,23 +325,19 @@ function DiscussionItem({
   discussion,
   creator,
   voteCounts,
-  votedDiscussionIds,
 }: {
   copanyId: string;
   discussion: Discussion;
   creator?: UserInfo;
   voteCounts: Record<string, number>;
-  votedDiscussionIds: string[];
 }) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
 
-  // Use batch fetched data instead of individual queries
-  const hasVoted = votedDiscussionIds.includes(String(discussion.id));
+  // Get vote count from batch query (used as initial data for VoteButton)
   const voteCount =
     voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
-  const voteToggle = useToggleDiscussionVote(discussion.id);
 
   return (
     <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 overflow-hidden">
@@ -409,32 +402,11 @@ function DiscussionItem({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
+        <VoteButton
+          discussionId={String(discussion.id)}
           size="sm"
-          variant="secondary"
-          onClick={() => voteToggle.mutate({ toVote: !hasVoted })}
-          disabled={voteToggle.isPending}
-        >
-          <div className="flex items-center gap-2">
-            <Image
-              src={
-                hasVoted
-                  ? isDarkMode
-                    ? arrowshape_up_fill_dark
-                    : arrowshape_up_fill
-                  : isDarkMode
-                  ? arrowshape_up_dark
-                  : arrowshape_up
-              }
-              alt="Vote"
-              width={16}
-              height={16}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-            />
-            <span>{voteCount}</span>
-          </div>
-        </Button>
+          count={voteCount}
+        />
 
         <Button
           size="sm"

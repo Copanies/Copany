@@ -173,7 +173,10 @@ export default function DiscussionLabelSelector({
     const isBeginIdea = label.name === "Begin idea";
 
     return (
-      <div className="flex items-center gap-2" key={label.id}>
+      <div
+        className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md py-1 px-2"
+        key={label.id}
+      >
         <div
           className="w-2 h-2 rounded-full"
           style={{
@@ -213,14 +216,14 @@ export default function DiscussionLabelSelector({
   const renderSelectedLabels = () => {
     if (selectedLabels.length === 0) {
       return (
-        <span className="text-base text-gray-700 dark:text-gray-300 text-base bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
+        <span className="text-base bg-gray-100 dark:bg-gray-800 rounded-md px-2 py-1">
           Labels
         </span>
       );
     }
 
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         {selectedLabels.map((label) => renderLabelChip(label, true))}
       </div>
     );
@@ -326,6 +329,7 @@ export default function DiscussionLabelSelector({
         onSelect={handleDropdownSelect}
         showBackground={showBackground}
         marginX={showBackground ? 2 : 0}
+        showPadding={false}
         disabled={readOnly}
       />
 

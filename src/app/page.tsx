@@ -12,13 +12,22 @@ import LoadingView from "@/components/commons/LoadingView";
  * Home page - Responsible for data fetching and page layout
  */
 export default function Home() {
-  const { data: copanies, isLoading } = useCopanies();
+  const {
+    data: copaniesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCopanies();
   // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
   const safeIsLoading = isLoading || !isMounted;
+
+  // Flatten all pages of copanies
+  const copanies = copaniesData?.pages.flatMap((page) => page.copanies) ?? [];
   return (
     <main className="min-h-screen">
       <MainNavigation />
@@ -52,7 +61,12 @@ export default function Home() {
           />
         </div>
         <div className="px-6 flex flex-col w-full min-h-screen">
-          <CopanyGridView copanies={copanies || []} />
+          <CopanyGridView
+            copanies={copanies || []}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage || false}
+            isFetchingNextPage={isFetchingNextPage || false}
+          />
         </div>
         <Footer />
       </div>

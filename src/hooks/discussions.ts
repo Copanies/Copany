@@ -1,30 +1,42 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
+import type { PaginatedDiscussions } from "@/services/discussion.service";
 import {
   listDiscussionsAction,
   createDiscussionAction,
   updateDiscussionAction,
   deleteDiscussionAction,
+  listAllDiscussionsAction,
+  getDiscussionByIdAction,
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId] as const; }
 function discussionKey(discussionId: string) { return ["discussion", discussionId] as const; }
+function allDiscussionsKey() { return ["discussions", "all"] as const; }
 
 export function useDiscussions(copanyId: string) {
-  return useQuery<Discussion[]>({
+  return useInfiniteQuery<PaginatedDiscussions, Error>({
     queryKey: listKey(copanyId),
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = typeof pageParam === 'number' ? pageParam : 1;
       try {
-        const res = await fetch(`/api/discussions?copanyId=${encodeURIComponent(copanyId)}`);
+        const res = await fetch(`/api/discussions?copanyId=${encodeURIComponent(copanyId)}&page=${page}`);
         if (!res.ok) throw new Error("request failed");
         const json = await res.json();
-        return json.discussions as Discussion[];
+        return json as PaginatedDiscussions;
       } catch {
-        return await listDiscussionsAction(copanyId);
+        return await listDiscussionsAction(copanyId, page);
       }
     },
+    getNextPageParam: (lastPage, allPages) => {
+      // First check if lastPage exists and has the required structure
+      if (!lastPage || !allPages) return undefined;
+      // Then check if there are more pages
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
@@ -32,73 +44,106 @@ export function useDiscussions(copanyId: string) {
 
 // New hook that derives single discussion from list cache (like issues)
 export function useDiscussion(copanyId: string, discussionId: string) {
-  return useQuery<Discussion[], unknown, Discussion | null>({
-    queryKey: listKey(copanyId),
+  return useQuery({
+    queryKey: ["discussion", copanyId, discussionId],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/discussions?copanyId=${encodeURIComponent(copanyId)}`);
-        if (!res.ok) throw new Error("request failed");
-        const json = await res.json();
-        return json.discussions as Discussion[];
-      } catch {
-        return await listDiscussionsAction(copanyId);
-      }
-    },
-    select: (discussions) => {
-      const found = discussions.find((d) => String(d.id) === String(discussionId));
-      return found ?? null;
+      return await getDiscussionByIdAction(discussionId);
     },
     staleTime: 1 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
+    enabled: !!discussionId,
   });
 }
 
-export function useCreateDiscussion(copanyId: string) {
+export function useCreateDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { title: string; description?: string | null; labels?: string[]; issueId?: string | null }) => {
       return createDiscussionAction({
-        copanyId,
+        copanyId: copanyId || null,
         title: vars.title,
         description: vars.description ?? null,
         labels: vars.labels ?? [],
         issueId: vars.issueId ?? null,
       });
     },
-    onSuccess: (created) => {
-      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => ([created, ...(prev || [])]));
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated data
+      if (copanyId) {
+        qc.invalidateQueries({ queryKey: listKey(copanyId) });
+      }
+      qc.invalidateQueries({ queryKey: allDiscussionsKey() });
     },
   });
 }
 
-export function useUpdateDiscussion(copanyId: string) {
+export function useUpdateDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { discussionId: string; updates: Partial<Pick<Discussion, "title" | "description" | "labels" | "issue_id">> }) => {
       return updateDiscussionAction(vars.discussionId, vars.updates);
     },
     onSuccess: (updated) => {
-      // Update the discussions list cache (primary cache)
-      qc.setQueryData<Discussion[]>(listKey(copanyId), (prev) => (prev || []).map((d) => String(d.id) === String(updated.id) ? updated : d));
+      // Invalidate queries to refetch with updated data
+      if (copanyId) {
+        qc.invalidateQueries({ queryKey: listKey(copanyId) });
+      }
+      qc.invalidateQueries({ queryKey: allDiscussionsKey() });
       // Update the single discussion cache (fallback cache)
       qc.setQueryData<Discussion>(discussionKey(updated.id), updated);
     },
   });
 }
 
-export function useDeleteDiscussion(copanyId: string) {
+export function useDeleteDiscussion(copanyId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vars: { discussionId: string }) => {
       await deleteDiscussionAction(vars.discussionId);
     },
-    onMutate: async ({ discussionId }) => {
-      await qc.cancelQueries({ queryKey: listKey(copanyId) });
-      const prev = qc.getQueryData<Discussion[]>(listKey(copanyId));
-      if (prev) qc.setQueryData<Discussion[]>(listKey(copanyId), prev.filter((d) => String(d.id) !== String(discussionId)));
-      return { prev } as { prev?: Discussion[] };
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated data
+      if (copanyId) {
+        qc.invalidateQueries({ queryKey: listKey(copanyId) });
+      }
+      qc.invalidateQueries({ queryKey: allDiscussionsKey() });
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(listKey(copanyId), ctx.prev); },
+  });
+}
+
+export function useDiscussionById(discussionId: string) {
+  return useQuery<Discussion>({
+    queryKey: discussionKey(discussionId),
+    queryFn: async () => {
+      return await getDiscussionByIdAction(discussionId);
+    },
+    staleTime: 1 * 60 * 1000,
+    enabled: !!discussionId,
+  });
+}
+
+export function useAllDiscussions() {
+  return useInfiniteQuery<PaginatedDiscussions, Error>({
+    queryKey: allDiscussionsKey(),
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = typeof pageParam === 'number' ? pageParam : 1;
+      try {
+        const res = await fetch(`/api/discussions/all?page=${page}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json as PaginatedDiscussions;
+      } catch {
+        return await listAllDiscussionsAction(page);
+      }
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // First check if lastPage exists and has the required structure
+      if (!lastPage || !allPages) return undefined;
+      // Then check if there are more pages
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
   });
 }
 

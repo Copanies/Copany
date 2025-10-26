@@ -96,10 +96,10 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
 
   return (
     <div className="flex w-full min-w-0 flex-col h-full min-h-screen">
-      <div className="mx-5 border-b border-gray-200 dark:border-gray-700">
+      <div className="sticky top-[51px] md:top-[52px] z-10 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark">
         <div
           ref={tabContainerRef}
-          className="flex w-full min-w-0 gap-5 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap"
+          className="flex w-full px-5 min-w-0 gap-5 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap"
         >
           {tabs.map((tab) => (
             <button
@@ -113,8 +113,8 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
               }}
               className={`${
                 activeTab === tab.label
-                  ? "cursor-pointer px-0 pb-2 flex-shrink-0 border-b-2 border-secondary"
-                  : "cursor-pointer px-0 pb-[10px] flex-shrink-0"
+                  ? "cursor-pointer px-0 pt-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
+                  : "cursor-pointer px-0 pt-2 pb-[10px] flex-shrink-0"
               }`}
               onClick={() => handleTabClick(tab.label)}
             >

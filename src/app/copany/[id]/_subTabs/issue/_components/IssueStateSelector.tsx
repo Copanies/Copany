@@ -222,7 +222,7 @@ function BacklogLabel({
         />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           Backlog
         </span>
       )}
@@ -246,7 +246,7 @@ function TodoLabel({
       }`}
     >
       <svg
-        className="w-5 h-5"
+        className="w-5 h-5 shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -254,7 +254,9 @@ function TodoLabel({
         <circle cx="12" cy="12" r="8" strokeLinecap="round" strokeWidth={2} />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">Todo</span>
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
+          Todo
+        </span>
       )}
     </div>
   );
@@ -274,7 +276,7 @@ function InProgressLabel({
       }`}
     >
       <svg
-        className="w-5 h-5"
+        className="w-5 h-5 shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -283,7 +285,7 @@ function InProgressLabel({
         <path d="M12 8 A4 4 0 0 1 12 16 Z" fill="currentColor" />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           In Progress
         </span>
       )}
@@ -315,7 +317,7 @@ function InReviewLabel({
         className="w-5 h-5 shrink-0"
       />
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           In Review
         </span>
       )}
@@ -337,7 +339,7 @@ function DoneLabel({
       }`}
     >
       <svg
-        className="w-5 h-5"
+        className="w-5 h-5 shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -352,7 +354,9 @@ function DoneLabel({
         />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">Done</span>
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
+          Done
+        </span>
       )}
     </div>
   );
@@ -373,7 +377,7 @@ function CanceledLabel({
           : "text-gray-500 dark:text-gray-500"
       }`}
     >
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" strokeWidth={2} fill="currentColor" />
         <path
           strokeLinecap="round"
@@ -384,7 +388,7 @@ function CanceledLabel({
         />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           Canceled
         </span>
       )}
@@ -407,7 +411,7 @@ function DuplicateLabel({
           : "text-gray-500 dark:text-gray-500"
       }`}
     >
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" strokeWidth={2} fill="currentColor" />
         <path
           strokeLinecap="round"
@@ -418,7 +422,7 @@ function DuplicateLabel({
         />
       </svg>
       {showText && (
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           Duplicate
         </span>
       )}

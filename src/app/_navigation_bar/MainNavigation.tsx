@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import copany_logo from "@/assets/copany_logo.svg";
 import copany_logo_dark from "@/assets/copany_logo_dark.svg";
@@ -13,9 +13,10 @@ import NotificationBell from "@/app/_navigation_bar/NotificationBell";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useCopaniesWhereUserIsContributor } from "@/hooks/copany";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -67,17 +68,7 @@ export default function MainNavigation() {
     }
   };
 
-  // To prevent inconsistencies between SSR and CSR during initial render, maintain loading state until mounted
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const renderUserSection = () => {
-    if (!isMounted) {
-      return <div className="p-2 w-8"></div>;
-    }
-
     if (loading) {
       return <div className="p-2 w-8"></div>;
     }
@@ -160,17 +151,25 @@ export default function MainNavigation() {
       },
       {
         value: 1,
+        label: "Stars",
+        href: "/stars",
+      },
+      {
+        value: 2,
         label: "Logout",
       },
     ];
 
     const handleDropdownSelect = (value: number) => {
       switch (value) {
-        case 1:
-          handleLogout();
-          break;
         case 0:
           router.push(`/user/${user.id}`);
+          break;
+        case 1:
+          router.push("/stars");
+          break;
+        case 2:
+          handleLogout();
           break;
         default:
           break;
@@ -206,18 +205,128 @@ export default function MainNavigation() {
     enabled: !!copanyId,
   });
 
+  // Get user's copanies where they are contributors
+  const { data: userCopanies } = useCopaniesWhereUserIsContributor(
+    user?.id || ""
+  );
+
+  // Build dropdown options for copany navigation
+  const copanyNavOptions = useMemo(() => {
+    const options = [];
+
+    // Add Explore link
+    options.push({
+      value: -1,
+      label: "Explore",
+    });
+
+    // Add Discussion link
+    options.push({
+      value: -2,
+      label: "Discussion",
+    });
+
+    if (userCopanies && userCopanies.length > 0) {
+      // Add divider
+      options.push({
+        value: -3,
+        label: "",
+        divider: true,
+      });
+
+      // Add user's copanies
+      userCopanies.forEach((copany, index) => {
+        const copanyLogo = copany.logo_url ? (
+          <Image
+            src={copany.logo_url}
+            alt={copany.name}
+            className="w-5 h-5 rounded-md"
+            width={20}
+            height={20}
+            placeholder="blur"
+            blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+          />
+        ) : null;
+
+        options.push({
+          value: index,
+          label: (
+            <div className="flex items-center gap-2">
+              {copanyLogo}
+              <span className="truncate">{copany.name}</span>
+            </div>
+          ),
+        });
+      });
+    }
+
+    return options;
+  }, [userCopanies, isDarkMode]);
+
+  // Handle copany navigation dropdown selection
+  const handleCopanyNavSelect = useCallback(
+    (value: number) => {
+      console.log(
+        "handleCopanyNavSelect called with value:",
+        value,
+        "pathname:",
+        pathname
+      );
+      try {
+        if (value === -1) {
+          console.log("Navigating to home");
+          router.push("/");
+        } else if (value === -2) {
+          console.log("Navigating to /discussion");
+          router.push("/discussion");
+        } else if (value >= 0 && userCopanies && userCopanies[value]) {
+          const targetUrl = `/copany/${userCopanies[value].id}`;
+          console.log("Navigating to:", targetUrl);
+          router.push(targetUrl);
+        }
+      } catch (error) {
+        console.error("Error in handleCopanyNavSelect:", error);
+      }
+    },
+    [router, userCopanies, pathname]
+  );
+
+  // Get selected copany value for dropdown
+  const selectedCopanyValue = useMemo(() => {
+    if (!userCopanies || !copanyId) return null;
+    const index = userCopanies.findIndex((c) => c.id === copanyId);
+    return index >= 0 ? index : null;
+  }, [userCopanies, copanyId]);
+
   return (
-    <div className="relative flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-transparent h-[60px]">
-      {/* Left section - Logo and company name */}
+    <div className="sticky top-0 z-10 flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark h-[52px]">
+      {/* Left section - Navigation icon, Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
+        {/* Bars3 icon for quick navigation (shown when user is logged in) */}
+        {copanyNavOptions.length > 0 && (
+          <Dropdown
+            trigger={
+              <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300 hover:opacity-80" />
+            }
+            options={copanyNavOptions}
+            selectedValue={selectedCopanyValue}
+            onSelect={handleCopanyNavSelect}
+            showBackground={false}
+            marginX={0}
+            className="cursor-pointer"
+            showPadding={false}
+            size="lg"
+          />
+        )}
+
         <Image
-          className="cursor-pointer rounded-md hover:opacity-80"
+          className="cursor-pointer rounded-md hover:opacity-80 w-8 h-8"
           src={isDarkMode ? copany_logo_dark : copany_logo}
           alt="logo"
-          width={36}
-          height={36}
+          width={32}
+          height={32}
           placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(36, 36, isDarkMode)}
+          blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
           onClick={() => router.push("/")}
         />
 
@@ -228,47 +337,47 @@ export default function MainNavigation() {
             className="!px-1"
             onClick={() => router.push(`/copany/${copanyId}`)}
           >
-            <div className="text-base truncate max-w-[30vw] sm:max-w-[40vw] md:max-w-[50vw] font-semibold text-gray-900 dark:text-gray-100">
+            <div className="text-base truncate max-w-[50vw] text-gray-900 dark:text-gray-100">
               {copanyData?.name || ""}
             </div>
           </Button>
         ) : pathname === "/uselicense" ? (
-          <span className="text-sm font-semibold hidden sm:inline">
+          <span className="text-base hidden sm:inline">
             How to use COSL License
           </span>
         ) : pathname === "/new" ? (
-          <span className="text-sm font-semibold hidden sm:inline">
-            Create new copany
-          </span>
+          <span className="text-base hidden sm:inline">Create new copany</span>
+        ) : pathname === "/stars" ? (
+          <span className="text-base">Stars</span>
         ) : (
           <></>
         )}
       </div>
 
       {/* Center section - Navigation links (only on home and stars pages) */}
-      {pathname === "/" || pathname === "/stars" ? (
+      {pathname === "/" || pathname === "/discussion" ? (
         // absolute left-1/2 transform -translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8
-        <div className="absolute left-0 ml-18 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-4 sm:gap-6 lg:gap-8">
+        <div className="absolute left-0 ml-23 sm:ml-0 sm:left-1/2 sm:-translate-x-1/2 flex flex-row gap-3 sm:gap-6 lg:gap-8">
           <Link
             href="/"
-            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
+            className={`relative cursor-pointer text-base flex-shrink-0 hover:opacity-80 ${
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
             <span>Explore</span>
             {pathname === "/" && (
-              <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+              <span className="pointer-events-none absolute left-0 right-0 top-9 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
           </Link>
           <Link
-            href="/stars"
-            className={`relative cursor-pointer flex-shrink-0 text-base hover:opacity-80 ${
-              pathname.startsWith("/stars") ? "font-semibold" : ""
+            href="/discussion"
+            className={`relative cursor-pointer text-base flex-shrink-0 hover:opacity-80 ${
+              pathname.startsWith("/discussion") ? "font-semibold" : ""
             }`}
           >
-            <span>Stars</span>
-            {pathname.startsWith("/stars") && (
-              <span className="pointer-events-none absolute left-0 right-0 top-10 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
+            <span>Discussion</span>
+            {pathname.startsWith("/discussion") && (
+              <span className="pointer-events-none absolute left-0 right-0 top-9 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
           </Link>
         </div>

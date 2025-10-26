@@ -1,26 +1,42 @@
 import { createSupabaseClient } from "@/utils/supabase/server";
 import { Copany } from "@/types/database.types";
 
+export interface PaginatedCopanies {
+  copanies: Copany[];
+  hasMore: boolean;
+}
+
 /**
  * Copany data service - Handles all operations related to Copany data
  */
 export class CopanyService {
   /**
-   * Get all companies list
+   * Get all companies list with pagination and hot score sorting
    */
-  static async getCopanies(): Promise<Copany[]> {
+  static async getCopanies(
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedCopanies> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("copany")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("hot_score", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (error) {
       console.error("Error fetching copanies:", error);
       throw new Error(`Failed to fetch copanies: ${error.message}`);
     }
 
-    return data as Copany[];
+    if (!data || data.length === 0) {
+      return { copanies: [], hasMore: false };
+    }
+
+    const copanies = data as Copany[];
+    const hasMore = data.length === pageSize;
+
+    return { copanies, hasMore };
   }
 
   /**
@@ -145,5 +161,30 @@ export class CopanyService {
       console.error("Failed to update Copany license:", error);
       throw error;
     }
+  }
+
+  /**
+   * Get multiple companies by IDs
+   */
+  static async getCopaniesByIds(ids: string[]): Promise<Record<string, Copany>> {
+    if (ids.length === 0) return {};
+    
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("copany")
+      .select("*")
+      .in("id", ids);
+
+    if (error) {
+      console.error("Error fetching copanies by IDs:", error);
+      throw new Error(`Failed to fetch copanies by IDs: ${error.message}`);
+    }
+
+    const result: Record<string, Copany> = {};
+    (data as Copany[]).forEach((copany) => {
+      result[copany.id] = copany;
+    });
+
+    return result;
   }
 }

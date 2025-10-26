@@ -1,27 +1,55 @@
 import { createSupabaseClient } from "@/utils/supabase/server";
 import type { Discussion } from "@/types/database.types";
 
+export interface PaginatedDiscussions {
+  discussions: Discussion[];
+  hasMore: boolean;
+}
+
 export class DiscussionService {
-  static async listByCopany(copanyId: string): Promise<Discussion[]> {
+  static async listByCopany(
+    copanyId: string,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedDiscussions> {
     const supabase = await createSupabaseClient();
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from("discussion")
       .select("*")
-      .eq("copany_id", copanyId)
-      .order("created_at", { ascending: false });
+      .order("hot_score", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    
+    if (copanyId === "null") {
+      query = query.is("copany_id", null);
+    } else {
+      query = query.eq("copany_id", copanyId);
+    }
+    
+    const { data, error } = await query;
+    
     if (error) {
       console.error("Error fetching discussions:", error);
       throw new Error(`Failed to fetch discussions: ${error.message}`);
     }
-    return (data as Discussion[]) || [];
+    
+    if (!data || data.length === 0) {
+      return { discussions: [], hasMore: false };
+    }
+    
+    const discussions = data as Discussion[];
+    const hasMore = data.length === pageSize;
+    
+    return { discussions, hasMore };
   }
 
-  static async get(discussionId: string): Promise<Discussion> {
+  static async get(discussionId: string, copanyId: string): Promise<Discussion> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase
       .from("discussion")
       .select("*")
       .eq("id", discussionId)
+      .eq("copany_id", copanyId)
       .single();
     if (error) {
       console.error("Error fetching discussion:", error);
@@ -30,8 +58,22 @@ export class DiscussionService {
     return data as Discussion;
   }
 
+  static async getById(discussionId: string): Promise<Discussion> {
+    const supabase = await createSupabaseClient();
+    const { data, error } = await supabase
+      .from("discussion")
+      .select("*")
+      .eq("id", discussionId)
+      .single();
+    if (error) {
+      console.error("Error fetching discussion by ID:", error);
+      throw new Error(`Failed to fetch discussion: ${error.message}`);
+    }
+    return data as Discussion;
+  }
+
   static async create(input: {
-    copany_id: string;
+    copany_id: string | null;
     title: string;
     description?: string | null;
     creator_id: string;
@@ -89,6 +131,33 @@ export class DiscussionService {
       console.error("Error deleting discussion:", error);
       throw new Error(`Failed to delete discussion: ${error.message}`);
     }
+  }
+
+  static async listAll(
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedDiscussions> {
+    const supabase = await createSupabaseClient();
+    
+    const { data, error } = await supabase
+      .from("discussion")
+      .select("*")
+      .order("hot_score", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+    
+    if (error) {
+      console.error("Error fetching all discussions:", error);
+      throw new Error(`Failed to fetch all discussions: ${error.message}`);
+    }
+    
+    if (!data || data.length === 0) {
+      return { discussions: [], hasMore: false };
+    }
+    
+    const discussions = data as Discussion[];
+    const hasMore = data.length === pageSize;
+    
+    return { discussions, hasMore };
   }
 }
 

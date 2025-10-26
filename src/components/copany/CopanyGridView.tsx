@@ -1,5 +1,5 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useRef, useEffect } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -22,23 +22,31 @@ import { useCurrentUser } from "@/hooks/currentUser";
 interface CopanyGridViewProps {
   copanies: Copany[];
   showNewCopanyCard?: boolean;
+  fetchNextPage?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
 }
 
 interface CopanyCardProps {
   copany: Copany;
+  innerRef?: React.Ref<HTMLLIElement>;
 }
 
 /**
  * Individual copany card component that can use hooks
  */
-function CopanyCard({ copany }: CopanyCardProps) {
+function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const router = useRouter();
   const isDarkMode = useDarkMode();
-  const { data: discussions } = useDiscussions(copany.id);
+  const { data: discussionsData } = useDiscussions(copany.id);
   const { data: labels } = useDiscussionLabels(copany.id);
 
+  // Flatten all pages of discussions
+  const discussions =
+    discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
+
   // Find the "Begin idea" discussion
-  const beginIdeaDiscussion = discussions?.find((discussion) =>
+  const beginIdeaDiscussion = discussions.find((discussion) =>
     discussion.labels.includes(
       labels?.find((label) => label.name === "Begin idea")?.id || ""
     )
@@ -46,7 +54,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
 
   return (
     <li
-      key={copany.id}
+      ref={innerRef}
       className="cursor-pointer sm:mx-0"
       onClick={() => {
         router.push(`/copany/${copany.id}`);
@@ -72,7 +80,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                 />
                 {/* Foreground logo in top-left corner */}
                 {copany.logo_url && (
-                  <div className="absolute top-3 left-3 z-10">
+                  <div className="absolute top-3 left-3 z-5">
                     <Image
                       src={copany.logo_url}
                       alt="Organization Avatar"
@@ -119,7 +127,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   }}
                 ></div>
                 {/* Foreground logo, centered */}
-                <div className="relative z-10 flex items-center justify-center w-full h-auto max-h-32">
+                <div className="relative z-5 flex items-center justify-center w-full h-auto max-h-32">
                   <Image
                     src={copany.logo_url}
                     alt="Organization Avatar"
@@ -141,7 +149,7 @@ function CopanyCard({ copany }: CopanyCardProps) {
                   } `}
                 ></div>
                 {beginIdeaDiscussion?.description && (
-                  <div className="relative z-10 flex items-start justify-center w-full h-full overflow-hidden">
+                  <div className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden">
                     <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
                       <Suspense
                         fallback={
@@ -163,8 +171,8 @@ function CopanyCard({ copany }: CopanyCardProps) {
                       </Suspense>
                     </div>
                     {/* Gradient shadow overlay at the bottom - fixed position */}
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
-                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-20"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-5"></div>
+                    <div className="absolute -top-1 left-0 right-0 h-8 bg-gradient-to-b from-[#FBF9F5] dark:from-[#222221] to-transparent pointer-events-none z-5"></div>
                   </div>
                 )}
               </>
@@ -197,7 +205,11 @@ function CopanyCard({ copany }: CopanyCardProps) {
   );
 }
 
-function NewCopanyCard() {
+interface NewCopanyCardProps {
+  innerRef?: React.Ref<HTMLLIElement>;
+}
+
+function NewCopanyCard({ innerRef }: NewCopanyCardProps) {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const [isHovered, setIsHovered] = useState(false);
@@ -213,6 +225,7 @@ function NewCopanyCard() {
 
   return (
     <li
+      ref={innerRef}
       className="cursor-pointer sm:mx-0"
       onClick={() => {
         if (user) {
@@ -281,7 +294,7 @@ function NewCopanyCard() {
               />
             </div>
 
-            <div className="relative z-10 flex flex-row items-center justify-center gap-2">
+            <div className="relative z-5 flex flex-row items-center justify-center gap-2">
               <PlusIcon className="w-7 h-7 text-gray-900 dark:text-gray-100" />
               <div className="font-medium text-xl text-gray-900 dark:text-gray-100">
                 Start new copany
@@ -300,13 +313,63 @@ function NewCopanyCard() {
 export default function CopanyGridView({
   copanies,
   showNewCopanyCard = true,
+  fetchNextPage,
+  hasNextPage = false,
+  isFetchingNextPage = false,
 }: CopanyGridViewProps) {
+  const lastElementRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!lastElementRef.current || !hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage?.();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(lastElementRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
-      {copanies.map((copany) => (
-        <CopanyCard key={copany.id} copany={copany} />
-      ))}
-      {showNewCopanyCard && <NewCopanyCard />}
-    </ul>
+    <>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
+        {copanies.map((copany, index) => (
+          <CopanyCard
+            key={copany.id}
+            copany={copany}
+            innerRef={
+              index === copanies.length - 1 ? lastElementRef : undefined
+            }
+          />
+        ))}
+        {showNewCopanyCard && (
+          <NewCopanyCard
+            innerRef={
+              copanies.length === 0 || !hasNextPage ? lastElementRef : undefined
+            }
+          />
+        )}
+      </ul>
+
+      {/* Loading indicator */}
+      {isFetchingNextPage && (
+        <div className="flex justify-center mt-8 pb-10">
+          <LoadingView type="label" label="Loading more copanies..." />
+        </div>
+      )}
+    </>
   );
 }
