@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface DropdownOption {
@@ -8,6 +9,7 @@ interface DropdownOption {
   label: ReactNode;
   disabled?: boolean;
   tooltip?: ReactNode;
+  divider?: boolean;
 }
 
 interface DropdownProps {
@@ -49,9 +51,15 @@ export default function Dropdown({
     showAbove: false,
   });
   const [shouldShowDropdown, setShouldShowDropdown] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownContentRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Mount check for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 计算下拉菜单位置
   const calculateDropdownPosition = useCallback(() => {
@@ -231,7 +239,7 @@ export default function Dropdown({
           {/* 隐藏的DOM元素用于计算高度 */}
           <div
             ref={dropdownContentRef}
-            className={`fixed invisible px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
+            className={`fixed invisible px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[100] ${
               size === "sm"
                 ? "w-32"
                 : size === "md"
@@ -248,106 +256,19 @@ export default function Dropdown({
               </div>
             )}
             <div className="py-1 max-h-128 overflow-y-auto">
-              {options.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
-                    size === "sm"
-                      ? "text-sm"
-                      : size === "md"
-                      ? "text-base"
-                      : size === "lg"
-                      ? "text-base"
-                      : "text-base"
-                  } ${
-                    option.value === selectedValue
-                      ? "bg-gray-100 dark:bg-gray-700 font-medium"
-                      : ""
-                  } ${
-                    option.disabled
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer"
-                  }`}
-                >
-                  <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-                    <Tooltip.Root
-                      open={
-                        option.disabled && option.tooltip ? undefined : false
-                      }
-                    >
-                      <Tooltip.Trigger asChild>
-                        <div className="flex-1 flex items-center justify-between">
-                          {option.label}
-                          {option.value === selectedValue && (
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={3}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                      </Tooltip.Trigger>
-                      {option.disabled && option.tooltip && (
-                        <Tooltip.Portal>
-                          <Tooltip.Content
-                            side="right"
-                            sideOffset={8}
-                            align="center"
-                            className="tooltip-surface"
-                          >
-                            {option.tooltip}
-                          </Tooltip.Content>
-                        </Tooltip.Portal>
-                      )}
-                    </Tooltip.Root>
-                  </Tooltip.Provider>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 实际显示的下拉菜单 */}
-          {shouldShowDropdown && (
-            <div
-              className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 ${
-                size === "sm"
-                  ? "w-32"
-                  : size === "md"
-                  ? "w-48"
-                  : size === "lg"
-                  ? "w-80"
-                  : "w-48"
-              }`}
-              style={{
-                top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`,
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {header && (
-                <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
-                  {header}
-                </div>
-              )}
-              <div className="py-1 max-h-128 overflow-y-auto">
-                {options.map((option) => (
+              {options.map((option) => {
+                if (option.divider) {
+                  return (
+                    <hr
+                      key={option.value}
+                      className="my-1 border-gray-200 dark:border-gray-700"
+                    />
+                  );
+                }
+                return (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation(); // 阻止事件冒泡
-                      if (option.disabled) return;
-                      handleSelect(option.value);
-                    }}
                     className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
                       size === "sm"
                         ? "text-sm"
@@ -356,6 +277,10 @@ export default function Dropdown({
                         : size === "lg"
                         ? "text-base"
                         : "text-base"
+                    } ${
+                      option.value === selectedValue
+                        ? "bg-gray-100 dark:bg-gray-700 font-medium"
+                        : ""
                     } ${
                       option.disabled
                         ? "opacity-50 cursor-not-allowed"
@@ -406,10 +331,122 @@ export default function Dropdown({
                       </Tooltip.Root>
                     </Tooltip.Provider>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+
+          {/* 实际显示的下拉菜单 */}
+          {(shouldShowDropdown &&
+            mounted &&
+            createPortal(
+              <div
+                className={`fixed my-1 px-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[100] ${
+                  size === "sm"
+                    ? "w-32"
+                    : size === "md"
+                    ? "w-48"
+                    : size === "lg"
+                    ? "w-80"
+                    : "w-48"
+                }`}
+                style={{
+                  top: `${dropdownPosition.top}px`,
+                  left: `${dropdownPosition.left}px`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {header && (
+                  <div className="px-2 py-3 border-b border-gray-200 dark:border-gray-600">
+                    {header}
+                  </div>
+                )}
+                <div className="py-1 max-h-128 overflow-y-auto">
+                  {options.map((option) => {
+                    if (option.divider) {
+                      return (
+                        <hr
+                          key={option.value}
+                          className="my-1 border-gray-200 dark:border-gray-700"
+                        />
+                      );
+                    }
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 阻止事件冒泡
+                          if (option.disabled) return;
+                          handleSelect(option.value);
+                        }}
+                        className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
+                          size === "sm"
+                            ? "text-sm"
+                            : size === "md"
+                            ? "text-base"
+                            : size === "lg"
+                            ? "text-base"
+                            : "text-base"
+                        } ${
+                          option.disabled
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer"
+                        }`}
+                      >
+                        <Tooltip.Provider
+                          delayDuration={150}
+                          skipDelayDuration={300}
+                        >
+                          <Tooltip.Root
+                            open={
+                              option.disabled && option.tooltip
+                                ? undefined
+                                : false
+                            }
+                          >
+                            <Tooltip.Trigger asChild>
+                              <div className="flex-1 flex items-center justify-between">
+                                {option.label}
+                                {option.value === selectedValue && (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={3}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                            </Tooltip.Trigger>
+                            {option.disabled && option.tooltip && (
+                              <Tooltip.Portal>
+                                <Tooltip.Content
+                                  side="right"
+                                  sideOffset={8}
+                                  align="center"
+                                  className="tooltip-surface"
+                                >
+                                  {option.tooltip}
+                                </Tooltip.Content>
+                              </Tooltip.Portal>
+                            )}
+                          </Tooltip.Root>
+                        </Tooltip.Provider>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>,
+              document.body
+            )) ||
+            null}
         </>
       )}
     </div>

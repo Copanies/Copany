@@ -13,9 +13,10 @@ import NotificationBell from "@/app/_navigation_bar/NotificationBell";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useCopaniesWhereUserIsContributor } from "@/hooks/copany";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -206,10 +207,109 @@ export default function MainNavigation() {
     enabled: !!copanyId,
   });
 
+  // Check if user is on copany detail page
+  const isOnCopanyPage = useMemo(() => {
+    return pathname?.startsWith("/copany/");
+  }, [pathname]);
+
+  // Get user's copanies where they are contributors
+  const { data: userCopanies } = useCopaniesWhereUserIsContributor(
+    user?.id || ""
+  );
+
+  // Build dropdown options for copany navigation
+  const copanyNavOptions = useMemo(() => {
+    if (!user || !isOnCopanyPage) return [];
+    if (!userCopanies || userCopanies.length === 0) return [];
+
+    const options = [];
+
+    // Add Explore link
+    options.push({
+      value: -1,
+      label: "Explore",
+    });
+
+    // Add Discussion link
+    options.push({
+      value: -2,
+      label: "Discussion",
+    });
+
+    // Add divider
+    options.push({
+      value: -3,
+      label: "",
+      divider: true,
+    });
+
+    // Add user's copanies
+    userCopanies.forEach((copany, index) => {
+      const copanyLogo = copany.logo_url ? (
+        <Image
+          src={copany.logo_url}
+          alt={copany.name}
+          className="w-5 h-5 rounded-md"
+          width={20}
+          height={20}
+          placeholder="blur"
+          blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+        />
+      ) : null;
+
+      options.push({
+        value: index,
+        label: (
+          <div className="flex items-center gap-2">
+            {copanyLogo}
+            <span className="truncate">{copany.name}</span>
+          </div>
+        ),
+      });
+    });
+
+    return options;
+  }, [user, isOnCopanyPage, userCopanies, isDarkMode]);
+
+  // Handle copany navigation dropdown selection
+  const handleCopanyNavSelect = (value: number) => {
+    if (value === -1) {
+      router.push("/");
+    } else if (value === -2) {
+      router.push("/discussion");
+    } else if (value >= 0 && userCopanies && userCopanies[value]) {
+      router.push(`/copany/${userCopanies[value].id}`);
+    }
+  };
+
+  // Get selected copany value for dropdown
+  const selectedCopanyValue = useMemo(() => {
+    if (!userCopanies || !copanyId) return null;
+    const index = userCopanies.findIndex((c) => c.id === copanyId);
+    return index >= 0 ? index : null;
+  }, [userCopanies, copanyId]);
+
   return (
     <div className="sticky top-0 z-10 flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark h-[52px]">
-      {/* Left section - Logo and company name */}
+      {/* Left section - Navigation icon, Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
+        {/* Bars3 icon for copany navigation (only shown on copany pages when user has copanies) */}
+        {isOnCopanyPage && user && userCopanies && userCopanies.length > 0 && (
+          <Dropdown
+            trigger={
+              <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300 hover:opacity-80" />
+            }
+            options={copanyNavOptions}
+            selectedValue={selectedCopanyValue}
+            onSelect={handleCopanyNavSelect}
+            showBackground={false}
+            marginX={0}
+            className="cursor-pointer"
+            showPadding={false}
+            size="lg"
+          />
+        )}
+
         <Image
           className="cursor-pointer rounded-md hover:opacity-80"
           src={isDarkMode ? copany_logo_dark : copany_logo}
