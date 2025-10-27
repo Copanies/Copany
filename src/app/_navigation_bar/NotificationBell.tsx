@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import type {
   Notification,
@@ -32,6 +33,7 @@ import { listNotificationsAction } from "@/actions/notification.actions";
 import { formatAbbreviatedCount } from "@/utils/number";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import LoadingView from "@/components/commons/LoadingView";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -68,9 +70,16 @@ export default function NotificationBell() {
   } | null>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
   const isDarkMode = useDarkMode();
   // Local list for pagination-append
   const [list, setList] = useState<Notification[]>(EMPTY_NOTIFICATIONS);
+
+  // Mount check for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     // Only update when the reference really changes to avoid render loops
     setList((prev) => (prev === baseNotifications ? prev : baseNotifications));
@@ -651,7 +660,7 @@ export default function NotificationBell() {
           e.stopPropagation();
           openTarget(n);
         }}
-        className="w-full text-left px-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
+        className="w-full text-left pl-2 pr-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
       >
         <div className="flex flex-col gap-1">
           <div className="flex flex-col md:flex-row md:items-center md:gap-2 gap-1 w-full">
@@ -788,54 +797,60 @@ export default function NotificationBell() {
         <BellIcon unreadCount={unreadCount} />
       </Button>
 
-      {isOpen && panelPosition && (
-        <div
-          ref={panelRef}
-          className="fixed z-50 pt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg box-border"
-          style={{
-            top: panelPosition.top,
-            left: panelPosition.left,
-            width: panelPosition.width,
-          }}
-        >
-          <div className="px-4 pt-1 pb-2 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
-            <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              Notifications
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              shape="square"
-              className="-mr-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                closePanel();
-              }}
-            >
-              <XMarkIcon className="w-4 h-4" />
-            </Button>
-          </div>
+      {isOpen &&
+        panelPosition &&
+        mounted &&
+        createPortal(
           <div
-            className="py-2 max-h-128 overflow-y-auto p-2"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) {
-                fetchMore();
-              }
+            ref={panelRef}
+            className="fixed z-[100] pt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg box-border"
+            style={{
+              top: panelPosition.top,
+              left: panelPosition.left,
+              width: panelPosition.width,
             }}
           >
-            {list.map(renderItem)}
-            {list.length === 0 && (
-              <div className="px-2 py-4 text-base text-gray-500 dark:text-gray-400">
-                No notifications
+            <div className="px-4 pt-1 pb-2 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Notifications
               </div>
-            )}
-            {isLoadingMore && (
-              <div className="px-2 py-2 text-base text-gray-400">Loading…</div>
-            )}
-          </div>
-        </div>
-      )}
+              <Button
+                size="sm"
+                variant="ghost"
+                shape="square"
+                className="-mr-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closePanel();
+                }}
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </Button>
+            </div>
+            <div
+              className="py-2 max-h-128 overflow-y-auto p-2"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) {
+                  fetchMore();
+                }
+              }}
+            >
+              {list.map(renderItem)}
+              {list.length === 0 && (
+                <div className="px-2 py-4 text-base text-gray-500 dark:text-gray-400">
+                  No notifications
+                </div>
+              )}
+              {isLoadingMore && (
+                <div className="flex justify-center mt-4">
+                  <LoadingView type="label" />
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

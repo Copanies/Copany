@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { useMemo } from "react";
 import { useAllDiscussions } from "@/hooks/discussions";
 import {
@@ -21,7 +21,7 @@ import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
-import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
+import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
@@ -31,7 +31,7 @@ import type { Copany } from "@/types/database.types";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Modal from "@/components/commons/Modal";
-import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
+import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 
 export default function DiscussionView() {
   const {
@@ -78,6 +78,33 @@ export default function DiscussionView() {
   const { data: voteCounts = {} } = useDiscussionVoteCounts(discussionIds);
   const { data: votedDiscussionIds = [] } = useMyVotedDiscussionIds();
 
+  // IntersectionObserver for infinite scrolling
+  const lastElementRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!lastElementRef.current || !hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(lastElementRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   if (isLoading) {
     return <LoadingView type="page" />;
   }
@@ -117,8 +144,13 @@ export default function DiscussionView() {
           </div>
 
           <ul className="flex flex-col gap-3">
-            {discussions.map((d) => (
-              <li key={d.id} className="">
+            {discussions.map((d, index) => (
+              <li
+                key={d.id}
+                ref={
+                  index === discussions.length - 1 ? lastElementRef : undefined
+                }
+              >
                 <DiscussionItem
                   discussion={d}
                   copany={copaniesMap[String(d.copany_id)]}
@@ -134,16 +166,10 @@ export default function DiscussionView() {
             ))}
           </ul>
 
-          {/* Load More Button */}
-          {hasNextPage && (
+          {/* Loading indicator */}
+          {isFetchingNextPage && (
             <div className="flex justify-center mt-4">
-              <Button
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                size="md"
-              >
-                {isFetchingNextPage ? "Loading..." : "Load More"}
-              </Button>
+              <LoadingView type="label" label="Loading more discussions..." />
             </div>
           )}
         </Suspense>

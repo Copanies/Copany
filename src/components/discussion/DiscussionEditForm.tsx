@@ -6,7 +6,7 @@ import { useUpdateDiscussion } from "@/hooks/discussions";
 import Button from "@/components/commons/Button";
 import { EMPTY_STRING } from "@/utils/constants";
 import type { Discussion } from "@/types/database.types";
-import DiscussionLabelSelector from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelSelector";
+import DiscussionLabelSelector from "@/components/discussion/DiscussionLabelSelector";
 
 interface DiscussionEditFormProps {
   copanyId: string | null;

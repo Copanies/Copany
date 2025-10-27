@@ -23,7 +23,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
-import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
+import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import DiscussionCommentTimeline from "@/app/copany/[id]/@discussion_slot/discussion/[discussionId]/DiscussionCommentTimeline";
 import { formatRelativeTime } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
@@ -47,19 +47,17 @@ export default function DiscussionDetailView({
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
 
-  // Fetch discussion - always call both hooks to satisfy Rules of Hooks
-  // Pass a dummy copanyId "null" when copanyId is actually null or undefined
-  const effectiveCopanyId = copanyId || "null";
-  const discussionWithCopany = useDiscussion(effectiveCopanyId, discussionId);
+  // Fetch discussion - derive from list cache using select
+  // Always call both hooks to satisfy Rules of Hooks, use enabled to control execution
+  const discussionWithCopany = useDiscussion(copanyId || "", discussionId);
   const discussionWithoutCopany = useDiscussionById(discussionId);
 
   // Use appropriate data based on whether copanyId exists
-  // If copanyId was null/undefined, use the discussion from useDiscussionById
   const discussion = copanyId
-    ? discussionWithCopany.data || discussionWithoutCopany.data
+    ? discussionWithCopany.data
     : discussionWithoutCopany.data;
   const isLoading = copanyId
-    ? discussionWithCopany.isLoading || discussionWithoutCopany.isLoading
+    ? discussionWithCopany.isLoading
     : discussionWithoutCopany.isLoading;
 
   const createCommentMutation = useCreateDiscussionComment(discussionId);
@@ -123,28 +121,47 @@ export default function DiscussionDetailView({
 
   // Handle edit completion
   const handleDiscussionUpdated = (updatedDiscussion: Discussion) => {
-    // Manually update discussions list cache to ensure immediate effect
+    // Update list cache - derived discussions will update automatically via select
+    type InfiniteData = {
+      pages: { discussions: Discussion[]; hasMore: boolean }[];
+      pageParams: unknown[];
+    };
+
     if (copanyId) {
-      queryClient.setQueryData(
-        ["discussions", copanyId],
-        (prev: Discussion[] | undefined) => {
-          if (!prev) return prev;
-          return prev.map((d) =>
-            String(d.id) === String(updatedDiscussion.id)
-              ? updatedDiscussion
-              : d
-          );
+      queryClient.setQueryData<InfiniteData>(
+        ["discussions", copanyId, "v2"],
+        (prev) => {
+          if (!prev?.pages) return prev;
+          return {
+            ...prev,
+            pages: prev.pages.map((page) => ({
+              ...page,
+              discussions: page.discussions.map((d) =>
+                String(d.id) === String(updatedDiscussion.id)
+                  ? updatedDiscussion
+                  : d
+              ),
+            })),
+          };
         }
       );
     }
     // Update global discussions list cache
-    queryClient.setQueryData(
-      ["discussions", "all"],
-      (prev: Discussion[] | undefined) => {
-        if (!prev) return prev;
-        return prev.map((d) =>
-          String(d.id) === String(updatedDiscussion.id) ? updatedDiscussion : d
-        );
+    queryClient.setQueryData<InfiniteData>(
+      ["discussions", "all", "v2"],
+      (prev) => {
+        if (!prev?.pages) return prev;
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({
+            ...page,
+            discussions: page.discussions.map((d) =>
+              String(d.id) === String(updatedDiscussion.id)
+                ? updatedDiscussion
+                : d
+            ),
+          })),
+        };
       }
     );
     setShowEditModal(false);
