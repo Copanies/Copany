@@ -21,7 +21,7 @@ import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
-import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
+import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
@@ -31,7 +31,7 @@ import type { Copany } from "@/types/database.types";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Modal from "@/components/commons/Modal";
-import DiscussionCreateForm from "@/app/copany/[id]/_subTabs/discussion/DiscussionCreateForm";
+import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 
 export default function DiscussionView() {
   const {

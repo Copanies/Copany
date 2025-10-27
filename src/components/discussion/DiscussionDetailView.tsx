@@ -23,7 +23,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
-import DiscussionLabelChips from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelChips";
+import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import DiscussionCommentTimeline from "@/app/copany/[id]/@discussion_slot/discussion/[discussionId]/DiscussionCommentTimeline";
 import { formatRelativeTime } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";

@@ -5,7 +5,7 @@ import { useCreateDiscussion } from "@/hooks/discussions";
 import Button from "@/components/commons/Button";
 import { EMPTY_STRING } from "@/utils/constants";
 import type { Discussion } from "@/types/database.types";
-import DiscussionLabelSelector from "@/app/copany/[id]/_subTabs/discussion/DiscussionLabelSelector";
+import DiscussionLabelSelector from "@/components/discussion/DiscussionLabelSelector";
 import { useCopaniesWhereUserIsContributor } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Dropdown from "@/components/commons/Dropdown";
@@ -124,6 +124,10 @@ export default function DiscussionCreateForm({
             className="w-full bg-transparent pl-3 pr-10 py-2 text-gray-900 dark:text-gray-100 focus:border-0 focus:outline-none focus:ring-0 text-xl font-semibold resize-none overflow-hidden break-words"
             disabled={isSubmitting}
             placeholder="Discussion title"
+            autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
           />
 
           <div ref={editorDivRef}>
