@@ -33,6 +33,7 @@ import { listNotificationsAction } from "@/actions/notification.actions";
 import { formatAbbreviatedCount } from "@/utils/number";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import LoadingView from "@/components/commons/LoadingView";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -659,7 +660,7 @@ export default function NotificationBell() {
           e.stopPropagation();
           openTarget(n);
         }}
-        className="w-full text-left px-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
+        className="w-full text-left pl-2 pr-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
       >
         <div className="flex flex-col gap-1">
           <div className="flex flex-col md:flex-row md:items-center md:gap-2 gap-1 w-full">
@@ -842,8 +843,8 @@ export default function NotificationBell() {
                 </div>
               )}
               {isLoadingMore && (
-                <div className="px-2 py-2 text-base text-gray-400">
-                  Loading…
+                <div className="flex justify-center mt-4">
+                  <LoadingView type="label" />
                 </div>
               )}
             </div>
