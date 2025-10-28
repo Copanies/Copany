@@ -23,6 +23,10 @@ steps:
         "NEXT_PUBLIC_FIGMA_CLIENT_ID=${_NEXT_PUBLIC_FIGMA_CLIENT_ID}",
         "--build-arg",
         "FIGMA_CLIENT_SECRET=${_FIGMA_CLIENT_SECRET}",
+        "--build-arg",
+        "NEXT_PUBLIC_DISCORD_CLIENT_ID=${_NEXT_PUBLIC_DISCORD_CLIENT_ID}",
+        "--build-arg",
+        "DISCORD_CLIENT_SECRET=${_DISCORD_CLIENT_SECRET}",
         ".",
       ]
 images:
