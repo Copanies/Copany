@@ -1,14 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
-import InreviewIcon from "@/assets/in_review_state.svg";
-import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -21,6 +18,8 @@ import {
 } from "@/utils/constants";
 import { issuesKey } from "@/hooks/issues";
 import UserAvatar from "@/components/commons/UserAvatar";
+import InReviewStateIcon from "@/components/commons/InReviewStateIcon";
+import InReviewStateDarkIcon from "@/components/icon/InReviewStateDarkIcon";
 
 interface IssueReviewPanelProps {
   copanyId: string;
@@ -162,13 +161,10 @@ export default function IssueReviewPanel({
           <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex flex-row items-center gap-2">
             {hasAnyApproved ? (
               <CheckIcon className="w-6 h-6 text-white bg-[#058E00] dark:bg-[#058E00] rounded-full p-1" />
+            ) : isDarkMode ? (
+              <InReviewStateDarkIcon />
             ) : (
-              <Image
-                src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
-                alt="In Review"
-                width={20}
-                height={20}
-              />
+              <InReviewStateIcon />
             )}
             {hasAnyApproved
               ? "Issue approved"
