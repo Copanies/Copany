@@ -10,7 +10,7 @@
 <p align="center">
     <strong>Together, we are free.</strong><br>
     <span>English</span>
-    <a href="https://github.com/Copanies/Copany/blob/main/README_zh.md">中文</a>
+    <a href="https://github.com/Copanies/Copany/blob/main/README.zh.md">中文</a>
 </p>
 
 ## Background
