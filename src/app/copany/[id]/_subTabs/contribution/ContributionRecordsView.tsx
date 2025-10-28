@@ -18,7 +18,7 @@ import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { TableCellsIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
-import HistoryIssueCreateModal from "./_components/HistoryIssueCreateModal";
+import HistoryIssueCreateModal from "../../../../../components/contribution/HistoryIssueCreateModal";
 
 // Helper function to format date
 function formatDate(year: number, month: number, day: number): string {
