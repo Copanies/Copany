@@ -87,7 +87,7 @@
             font-weight: bold;
             font-size: 14px;
             padding: 12px 24px;
-            margin: 20px 0;
+            margin: 16px 0;
             border-radius: 4px;
             text-decoration: none;
           "
@@ -95,7 +95,36 @@
           Confirm Email
         </a>
 
-        <p style="color: #888; font-size: 12px; margin-top: 20px">
+        <p
+          style="
+            color: #666;
+            font-size: 12px;
+            margin-top: 15px;
+            line-height: 18px;
+          "
+        >
+          💡 Tip: If you're opening this on a mobile device and the button
+          doesn't work, please copy the link below and open it in your browser
+          (Chrome, Safari, etc.)
+        </p>
+
+        <div
+          style="
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 15px 0;
+            word-break: break-all;
+            text-align: left;
+            font-size: 11px;
+            color: #666;
+            font-family: monospace;
+          "
+        >
+          {{ .ConfirmationURL }}
+        </div>
+
+        <p style="color: #888; font-size: 12px; margin-top: 15px">
           If you did not sign up for Copany, you can safely ignore this email.
         </p>
       </td>
