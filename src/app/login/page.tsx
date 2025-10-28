@@ -9,7 +9,6 @@ import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import Footer from "@/components/commons/Footer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import {
   signInWithEmail,
   signInWithGitHub,
@@ -158,8 +157,6 @@ export default function Login() {
                 src={figmaIcon}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
@@ -183,8 +180,6 @@ export default function Login() {
                 src={isDarkMode ? githubIconBlack : githubIconWhite}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
@@ -209,8 +204,6 @@ export default function Login() {
                 src={googleIcon}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">

@@ -17,6 +17,7 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateIssueAssigneeAction } from "@/actions/issue.actions";
 import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
+import UserAvatar from "@/components/commons/UserAvatar";
 interface AssignmentRequestPanelProps {
   issueId: string;
   copanyId: string | null;
@@ -103,21 +104,13 @@ export default function AssignmentRequestPanel({
               <div className="flex items-center gap-2">
                 <div className="flex flex-row items-center gap-0 -ml-2">
                   <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
-                  {requester?.avatar_url ? (
-                    <Image
-                      src={requester.avatar_url}
-                      alt={requesterName}
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 rounded-full"
-                      placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-                    />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                      {requesterName?.[0]?.toUpperCase() || ""}
-                    </div>
-                  )}
+                  <UserAvatar
+                    name={requesterName}
+                    avatarUrl={requester?.avatar_url || null}
+                    email={requester?.email}
+                    size="sm"
+                    showTooltip={true}
+                  />
                 </div>
                 <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {requesterName} wants to be assigned
@@ -136,25 +129,13 @@ export default function AssignmentRequestPanel({
                       <div className="w-5 h-5 rounded-full flex items-center justify-center">
                         <div className="w-2 h-2 rounded-full bg-yellow-600" />
                       </div>
-                      {avatar ? (
-                        <Image
-                          src={avatar}
-                          alt={name}
-                          width={16}
-                          height={16}
-                          className="w-4 h-4 rounded-full"
-                          placeholder="blur"
-                          blurDataURL={shimmerDataUrlWithTheme(
-                            16,
-                            16,
-                            isDarkMode
-                          )}
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300">
-                          {name?.slice(0, 2).toUpperCase() || ""}
-                        </div>
-                      )}
+                      <UserAvatar
+                        name={name}
+                        avatarUrl={avatar || null}
+                        email={recipient?.email}
+                        size="sm"
+                        showTooltip={true}
+                      />
                       <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                         {name}
                       </span>

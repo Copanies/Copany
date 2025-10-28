@@ -10,7 +10,6 @@ import arrowshape_up from "@/assets/arrowshape_up.svg";
 import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
 import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
 import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/currentUser";
@@ -92,8 +91,6 @@ export default function VoteButton({
           alt="Vote"
           width={16}
           height={16}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
           className="transition-opacity duration-200"
         />
         <span className="transition-all duration-200">{voteCount}</span>

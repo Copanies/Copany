@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
@@ -21,6 +20,7 @@ import {
   EMPTY_USER_INFOS_OBJECT,
 } from "@/utils/constants";
 import { issuesKey } from "@/hooks/issues";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 interface IssueReviewPanelProps {
   copanyId: string;
@@ -168,8 +168,6 @@ export default function IssueReviewPanel({
                 alt="In Review"
                 width={20}
                 height={20}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
             )}
             {hasAnyApproved
@@ -205,25 +203,13 @@ export default function IssueReviewPanel({
                     )}
                   </div>
                   <div className="flex flex-row items-center gap-1">
-                    {avatar ? (
-                      <Image
-                        src={avatar}
-                        alt={name}
-                        width={16}
-                        height={16}
-                        className="w-4 h-4 rounded-full"
-                        placeholder="blur"
-                        blurDataURL={shimmerDataUrlWithTheme(
-                          16,
-                          16,
-                          isDarkMode
-                        )}
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-                        {name?.slice(0, 2).toUpperCase() || ""}
-                      </div>
-                    )}
+                    <UserAvatar
+                      name={name}
+                      avatarUrl={avatar || null}
+                      email={info?.email}
+                      size="sm"
+                      showTooltip={true}
+                    />
                     <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                       {name}
                     </span>

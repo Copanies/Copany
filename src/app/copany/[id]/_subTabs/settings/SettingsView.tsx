@@ -761,8 +761,6 @@ export default function SettingsView({
                       className="w-5 h-5"
                       width={20}
                       height={20}
-                      placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
                     <p className="text-base font-semibold text-center">
                       {link.label}
@@ -840,8 +838,6 @@ export default function SettingsView({
               className="w-8 h-8 rounded-md p-2 bg-gray-100 dark:bg-gray-900"
               width={32}
               height={32}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
             />
             <div className="flex flex-col gap-0">
               <p className="text-base font-medium">GitHub</p>

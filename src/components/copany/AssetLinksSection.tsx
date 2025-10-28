@@ -1,6 +1,5 @@
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
@@ -67,12 +66,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.apple_app_store_url) {
               window.open(copany.apple_app_store_url, "_blank");
@@ -87,12 +80,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.google_play_store_url) {
               window.open(copany.google_play_store_url, "_blank");
@@ -107,12 +94,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.website_url) {
               window.open(copany.website_url, "_blank");
@@ -127,12 +108,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.discord_url) {
               window.open(copany.discord_url, "_blank");
@@ -147,12 +122,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.telegram_url) {
               window.open(copany.telegram_url, "_blank");
@@ -167,12 +136,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.notion_url) {
               window.open(copany.notion_url, "_blank");
@@ -187,12 +150,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.figma_url) {
               window.open(copany.figma_url, "_blank");
@@ -207,12 +164,6 @@ export default function AssetLinksSection({
           className={`${sizeClasses[size]} cursor-pointer`}
           width={iconWidth}
           height={iconHeight}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            iconWidth,
-            iconHeight,
-            isDarkMode
-          )}
           onClick={() => {
             if (copany.github_url) {
               window.open(copany.github_url, "_blank");
@@ -228,8 +179,6 @@ export default function AssetLinksSection({
               className="w-4 h-4"
               width={16}
               height={16}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
             />
             <p className="text-base ">Connect a repo</p>
           </div>

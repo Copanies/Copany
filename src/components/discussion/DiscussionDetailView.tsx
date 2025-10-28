@@ -28,6 +28,7 @@ import DiscussionCommentTimeline from "@/app/copany/[id]/@discussion_slot/discus
 import { formatRelativeTime } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
+import UserAvatar from "@/components/commons/UserAvatar";
 import Dropdown from "@/components/commons/Dropdown";
 import Modal from "@/components/commons/Modal";
 import DiscussionEditForm from "./DiscussionEditForm";
@@ -198,21 +199,13 @@ export default function DiscussionDetailView({
         {/* Creator info */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex flex-row items-center gap-3">
-            {creator?.avatar_url ? (
-              <Image
-                src={creator.avatar_url}
-                alt={creator.name}
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full"
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm text-gray-700 dark:text-gray-200">
-                {(creator?.name || "").slice(0, 1).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              name={creator?.name || ""}
+              avatarUrl={creator?.avatar_url || null}
+              email={creator?.email}
+              size="lg"
+              showTooltip={true}
+            />
             <div className="flex flex-row items-center gap-2">
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}

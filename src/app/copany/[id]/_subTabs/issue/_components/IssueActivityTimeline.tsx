@@ -36,6 +36,7 @@ import { useAssignmentRequests } from "@/hooks/assignmentRequests";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 interface IssueActivityTimelineProps {
   issueId: string;
@@ -399,25 +400,17 @@ export default function IssueActivityTimeline({
           (item.payload as IssueActivityPayload)?.to_level ?? null,
           false
         );
-      if (item.actor_id && userInfos[item.actor_id]?.avatar_url)
+      if (item.actor_id)
         return (
-          <Image
-            src={userInfos[item.actor_id]!.avatar_url}
-            alt={userInfos[item.actor_id]!.name || ""}
-            width={20}
-            height={20}
-            className="w-5 h-5 rounded-full"
-            placeholder="blur"
-            blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+          <UserAvatar
+            name={userInfos[item.actor_id]?.name || ""}
+            avatarUrl={userInfos[item.actor_id]?.avatar_url || null}
+            email={userInfos[item.actor_id]?.email}
+            size="sm"
+            showTooltip={true}
           />
         );
-      return (
-        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-          {(item.actor_id &&
-            userInfos[item.actor_id]?.name?.slice(0, 2).toUpperCase()) ||
-            ""}
-        </div>
-      );
+      return null;
     }
     // In timeline, comment and assignment request panel items should not render extra avatar on the left
     return null;

@@ -34,6 +34,7 @@ import { formatAbbreviatedCount } from "@/utils/number";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import LoadingView from "@/components/commons/LoadingView";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -620,14 +621,12 @@ export default function NotificationBell() {
       <div className="relative w-8 h-8">
         {n.actor_id && actorUsers[n.actor_id]?.avatar_url ? (
           <div className="flex w-8 h-8">
-            <Image
-              src={actorUsers[n.actor_id]!.avatar_url}
-              alt={actorUsers[n.actor_id]!.name || ""}
-              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
-              width={32}
-              height={32}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
+            <UserAvatar
+              name={actorUsers[n.actor_id]!.name || ""}
+              avatarUrl={actorUsers[n.actor_id]!.avatar_url}
+              email={actorUsers[n.actor_id]!.email}
+              size="lg"
+              showTooltip={true}
             />
           </div>
         ) : (

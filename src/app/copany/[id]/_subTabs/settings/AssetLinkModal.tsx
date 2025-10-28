@@ -5,7 +5,6 @@ import Button from "@/components/commons/Button";
 import { Copany } from "@/types/database.types";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Modal from "@/components/commons/Modal";
 import Dropdown from "@/components/commons/Dropdown";
@@ -13,6 +12,7 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
 import GitHubRepoSelector from "@/components/github/GitHubRepoSelector";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 
 export default function AssetLinkModal({
   isOpen,
@@ -227,8 +227,6 @@ export default function AssetLinkModal({
                 className="w-5 h-5 flex-shrink-0"
                 width={20}
                 height={20}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
               <p className="text-base flex-1 text-left">
                 {assetLinks.find((link) => link.id === assetType)?.label || ""}

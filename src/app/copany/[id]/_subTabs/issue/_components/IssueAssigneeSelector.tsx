@@ -17,6 +17,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -344,21 +345,13 @@ export function renderUserLabel(
 ) {
   const labelContent = (
     <div className="flex items-center gap-2 -my-[1px]">
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={22}
-          height={22}
-          className="w-[22px] h-[22px] rounded-full"
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(22, 22, isDarkMode)}
-        />
-      ) : (
-        <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <UserAvatar
+        name={name}
+        avatarUrl={avatarUrl}
+        email={readOnly ? undefined : email}
+        size="md"
+        showTooltip={!readOnly}
+      />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           {name}
@@ -367,53 +360,7 @@ export function renderUserLabel(
     </div>
   );
 
-  return (
-    <div>
-      {readOnly ? (
-        labelContent
-      ) : (
-        <Tooltip.Provider delayDuration={500} skipDelayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>{labelContent}</Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                side="left"
-                sideOffset={8}
-                align="center"
-                className="tooltip-surface"
-              >
-                <div className="flex items-center gap-2 hover:cursor-pointer">
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt={name}
-                      width={28}
-                      height={28}
-                      className="w-7 h-7 rounded-full"
-                      placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
-                    />
-                  ) : (
-                    <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                      {name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{name}</span>
-                    {email ? (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {email}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-      )}
-    </div>
-  );
+  return labelContent;
 }
 
 export function renderUnassignedLabel(showText: boolean) {
