@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserInfo } from "@/hooks/userInfo";
+import { useCurrentUser } from "@/hooks/currentUser";
 import LoadingView from "@/components/commons/LoadingView";
 import Image from "next/image";
 import TabView from "@/components/commons/TabView";
@@ -32,6 +33,7 @@ interface UserViewProps {
 export default function UserView({ userId }: UserViewProps) {
   const isDarkMode = useDarkMode();
   const { data: user, isLoading: loading } = useUserInfo(userId);
+  const { data: currentUser } = useCurrentUser();
   const [showRandomAvatarModal, setShowRandomAvatarModal] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -39,6 +41,9 @@ export default function UserView({ userId }: UserViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Check if the current user is viewing their own profile
+  const isCurrentUser = currentUser?.id === userId;
 
   if (loading) {
     return <LoadingView type="page" />;
@@ -151,11 +156,15 @@ export default function UserView({ userId }: UserViewProps) {
   };
 
   const tabs = [
-    {
-      label: "Account",
-      icon: <UserCircleIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <AccountView userId={userId} />,
-    },
+    ...(isCurrentUser
+      ? [
+          {
+            label: "Account",
+            icon: <UserCircleIcon strokeWidth={2} className="w-4 h-4" />,
+            content: <AccountView userId={userId} />,
+          },
+        ]
+      : []),
     {
       label: "Working on",
       icon: <Squares2X2Icon strokeWidth={2} className="w-4 h-4" />,
@@ -168,34 +177,46 @@ export default function UserView({ userId }: UserViewProps) {
       <div className="flex flex-row gap-4 items-center">
         {/* Avatar with hover effect and dropdown */}
         <div className="relative inline-block group">
-          <Dropdown
-            trigger={
-              <div className="relative cursor-pointer focus:outline-none">
-                <Image
-                  src={user.avatar_url}
-                  alt={user.name}
-                  width={120}
-                  height={120}
-                  className="rounded-full transition-shadow group-hover:shadow-lg"
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(120, 120, isDarkMode)}
-                />
-                {/* Hover Overlay, controlled by group-hover */}
-                <div className="pointer-events-none absolute inset-0 bg-black/30 dark:bg-gray-800/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="text-white dark:text-gray-100 text-base font-semibold text-center px-0 text-center">
-                    <div>Change avatar</div>
+          {isCurrentUser ? (
+            <Dropdown
+              trigger={
+                <div className="relative cursor-pointer focus:outline-none">
+                  <Image
+                    src={user.avatar_url}
+                    alt={user.name}
+                    width={120}
+                    height={120}
+                    className="rounded-full transition-shadow group-hover:shadow-lg"
+                    placeholder="blur"
+                    blurDataURL={shimmerDataUrlWithTheme(120, 120, isDarkMode)}
+                  />
+                  {/* Hover Overlay, controlled by group-hover */}
+                  <div className="pointer-events-none absolute inset-0 bg-black/30 dark:bg-gray-800/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="text-white dark:text-gray-100 text-base font-semibold text-center px-0 text-center">
+                      <div>Change avatar</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-            options={dropdownOptions}
-            selectedValue={null}
-            onSelect={handleDropdownSelect}
-            showBackground={false}
-            marginX={2}
-            size="lg"
-            className=""
-          />
+              }
+              options={dropdownOptions}
+              selectedValue={null}
+              onSelect={handleDropdownSelect}
+              showBackground={false}
+              marginX={2}
+              size="lg"
+              className=""
+            />
+          ) : (
+            <Image
+              src={user.avatar_url}
+              alt={user.name}
+              width={120}
+              height={120}
+              className="rounded-full transition-shadow"
+              placeholder="blur"
+              blurDataURL={shimmerDataUrlWithTheme(120, 120, isDarkMode)}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
