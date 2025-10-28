@@ -28,6 +28,8 @@ export NEXT_PUBLIC_GOOGLE_CLIENT_ID=$(grep 'NEXT_PUBLIC_GOOGLE_CLIENT_ID:' .env.
 export GOOGLE_CLIENT_SECRET=$(grep 'GOOGLE_CLIENT_SECRET:' .env.build.yaml | sed 's/.*: //')
 export NEXT_PUBLIC_FIGMA_CLIENT_ID=$(grep 'NEXT_PUBLIC_FIGMA_CLIENT_ID:' .env.build.yaml | sed 's/.*: //')
 export FIGMA_CLIENT_SECRET=$(grep 'FIGMA_CLIENT_SECRET:' .env.build.yaml | sed 's/.*: //')
+export NEXT_PUBLIC_DISCORD_CLIENT_ID=$(grep 'NEXT_PUBLIC_DISCORD_CLIENT_ID:' .env.build.yaml | sed 's/.*: //')
+export DISCORD_CLIENT_SECRET=$(grep 'DISCORD_CLIENT_SECRET:' .env.build.yaml | sed 's/.*: //')
 
 # Build Docker image (using exactly the same parameters as cloudbuild.yaml)
 echo -e "${GREEN}🔨 Building Docker image...${NC}"
@@ -41,6 +43,8 @@ docker build \
   --build-arg GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
   --build-arg NEXT_PUBLIC_FIGMA_CLIENT_ID="$NEXT_PUBLIC_FIGMA_CLIENT_ID" \
   --build-arg FIGMA_CLIENT_SECRET="$FIGMA_CLIENT_SECRET" \
+  --build-arg NEXT_PUBLIC_DISCORD_CLIENT_ID="$NEXT_PUBLIC_DISCORD_CLIENT_ID" \
+  --build-arg DISCORD_CLIENT_SECRET="$DISCORD_CLIENT_SECRET" \
   -t gcr.io/copany-820/copany-app \
   .
 
