@@ -20,11 +20,11 @@ import { formatRelativeTime } from "@/utils/time";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import ArrowshapeUpIcon from "@/components/icon/ArrowshapeUpIcon";
+import ArrowshapeUpDarkIcon from "@/components/icon/ArrowshapeUpDarkIcon";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
 import Button from "@/components/commons/Button";
 import Dropdown from "@/components/commons/Dropdown";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
@@ -70,22 +70,17 @@ function VoteButton({
       disableTooltipConent={!isLoggedIn ? "Sign in to vote" : undefined}
     >
       <div className="flex items-center gap-2">
-        <Image
-          src={
-            hasVoted
-              ? isDarkMode
-                ? arrowshape_up_fill_dark
-                : arrowshape_up_fill
-              : isDarkMode
-              ? arrowshape_up_dark
-              : arrowshape_up
-          }
-          alt="Vote"
-          width={16}
-          height={16}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-        />
+        {hasVoted ? (
+          isDarkMode ? (
+            <ArrowshapeUpFillDarkIcon className="w-4 h-4" />
+          ) : (
+            <ArrowshapeUpFillIcon className="w-4 h-4" />
+          )
+        ) : isDarkMode ? (
+          <ArrowshapeUpDarkIcon className="w-4 h-4" />
+        ) : (
+          <ArrowshapeUpIcon className="w-4 h-4" />
+        )}
         <span>{voteCount ?? 0}</span>
       </div>
     </Button>

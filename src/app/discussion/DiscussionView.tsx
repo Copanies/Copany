@@ -11,11 +11,11 @@ import {
 import type { Discussion } from "@/types/database.types";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
+import ArrowshapeUpIcon from "@/components/icon/ArrowshapeUpIcon";
+import ArrowshapeUpDarkIcon from "@/components/icon/ArrowshapeUpDarkIcon";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -306,20 +306,17 @@ function DiscussionItem({
           disabled={voteToggle.isPending}
         >
           <div className="flex items-center gap-2">
-            <Image
-              src={
-                hasVoted
-                  ? isDarkMode
-                    ? arrowshape_up_fill_dark
-                    : arrowshape_up_fill
-                  : isDarkMode
-                  ? arrowshape_up_dark
-                  : arrowshape_up
-              }
-              alt="Vote"
-              width={16}
-              height={16}
-            />
+            {hasVoted ? (
+              isDarkMode ? (
+                <ArrowshapeUpFillDarkIcon className="w-4 h-4" />
+              ) : (
+                <ArrowshapeUpFillIcon className="w-4 h-4" />
+              )
+            ) : isDarkMode ? (
+              <ArrowshapeUpDarkIcon className="w-4 h-4" />
+            ) : (
+              <ArrowshapeUpIcon className="w-4 h-4" />
+            )}
             <span>{voteCount}</span>
           </div>
         </Button>

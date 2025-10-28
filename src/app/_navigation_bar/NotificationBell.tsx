@@ -19,9 +19,9 @@ import {
   ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
 import { renderStateLabel } from "@/components/issue/IssueStateSelector";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
 import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
 import { useUsersInfo } from "@/hooks/userInfo";
@@ -563,13 +563,9 @@ export default function NotificationBell() {
         );
       case "discussion_voted":
         return isDarkMode ? (
-          <Image
-            src={arrowshape_up_fill_dark}
-            alt="Arrow Up"
-            className="w-6 h-6"
-          />
+          <ArrowshapeUpFillDarkIcon className="w-6 h-6" />
         ) : (
-          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+          <ArrowshapeUpFillIcon className="w-6 h-6" />
         );
       case "discussion_comment_created":
         return (
@@ -577,13 +573,9 @@ export default function NotificationBell() {
         );
       case "discussion_comment_voted":
         return isDarkMode ? (
-          <Image
-            src={arrowshape_up_fill_dark}
-            alt="Arrow Up"
-            className="w-6 h-6"
-          />
+          <ArrowshapeUpFillDarkIcon className="w-6 h-6" />
         ) : (
-          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+          <ArrowshapeUpFillIcon className="w-6 h-6" />
         );
       case "discussion_comment_reply":
         return (
