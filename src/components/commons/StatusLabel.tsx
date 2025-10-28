@@ -1,7 +1,6 @@
-import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
-import InreviewIcon from "@/assets/in_review_state.svg";
-import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
+import InReviewStateIcon from "@/components/commons/InReviewStateIcon";
+import InReviewStateDarkIcon from "@/components/icon/InReviewStateDarkIcon";
 
 export type StatusType = "in_progress" | "in_review" | "confirmed";
 
@@ -50,12 +49,11 @@ export default function StatusLabel({
           colorful ? "text-indigo-600" : "text-gray-500 dark:text-gray-500"
         }`}
       >
-        <Image
-          src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
-          width={20}
-          height={20}
-          alt="In Review"
-        />
+        {isDarkMode ? (
+          <InReviewStateDarkIcon className="w-5 h-5" />
+        ) : (
+          <InReviewStateIcon className="w-5 h-5" />
+        )}
         {showText && (
           <span className="text-base text-gray-900 dark:text-gray-100">
             In Review

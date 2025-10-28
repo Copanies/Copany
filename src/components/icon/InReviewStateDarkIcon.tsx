@@ -1,0 +1,38 @@
+interface InReviewStateDarkIconProps {
+  className?: string;
+}
+
+export default function InReviewStateDarkIcon({
+  className,
+}: InReviewStateDarkIconProps) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <circle
+        cx="10"
+        cy="10.5"
+        r="7"
+        stroke="#9029FF"
+        style={{
+          stroke: "color(display-p3 0.5658 0.1595 1.0000)",
+          strokeOpacity: 1,
+        }}
+        strokeWidth="2"
+      />
+      <path
+        d="M10 6.5C12.2091 6.5 14 8.29086 14 10.5C14 12.7091 12.2091 14.5 10 14.5C7.79086 14.5 6 12.7091 6 10.5H10V6.5Z"
+        fill="#9029FF"
+        style={{
+          fill: "color(display-p3 0.5658 0.1595 1.0000)",
+          fillOpacity: 1,
+        }}
+      />
+    </svg>
+  );
+}

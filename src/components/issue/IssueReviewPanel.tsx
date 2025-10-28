@@ -1,15 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
-import InreviewIcon from "@/assets/in_review_state.svg";
-import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
 import { useDarkMode } from "@/utils/useDarkMode";
@@ -21,6 +17,9 @@ import {
   EMPTY_USER_INFOS_OBJECT,
 } from "@/utils/constants";
 import { issuesKey } from "@/hooks/issues";
+import UserAvatar from "@/components/commons/UserAvatar";
+import InReviewStateIcon from "@/components/commons/InReviewStateIcon";
+import InReviewStateDarkIcon from "@/components/icon/InReviewStateDarkIcon";
 
 interface IssueReviewPanelProps {
   copanyId: string;
@@ -162,15 +161,10 @@ export default function IssueReviewPanel({
           <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex flex-row items-center gap-2">
             {hasAnyApproved ? (
               <CheckIcon className="w-6 h-6 text-white bg-[#058E00] dark:bg-[#058E00] rounded-full p-1" />
+            ) : isDarkMode ? (
+              <InReviewStateDarkIcon />
             ) : (
-              <Image
-                src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
-                alt="In Review"
-                width={20}
-                height={20}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-              />
+              <InReviewStateIcon />
             )}
             {hasAnyApproved
               ? "Issue approved"
@@ -205,25 +199,14 @@ export default function IssueReviewPanel({
                     )}
                   </div>
                   <div className="flex flex-row items-center gap-1">
-                    {avatar ? (
-                      <Image
-                        src={avatar}
-                        alt={name}
-                        width={16}
-                        height={16}
-                        className="w-4 h-4 rounded-full"
-                        placeholder="blur"
-                        blurDataURL={shimmerDataUrlWithTheme(
-                          16,
-                          16,
-                          isDarkMode
-                        )}
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-                        {name?.slice(0, 2).toUpperCase() || ""}
-                      </div>
-                    )}
+                    <UserAvatar
+                      userId={r.reviewer_id}
+                      name={name}
+                      avatarUrl={avatar || null}
+                      email={info?.email}
+                      size="sm"
+                      showTooltip={true}
+                    />
                     <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                       {name}
                     </span>

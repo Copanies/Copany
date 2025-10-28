@@ -1,9 +1,6 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import {
   IssueActivity,
   IssueActivityType,
@@ -13,16 +10,16 @@ import {
   IssueActivityPayload,
 } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
-import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
-import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
-import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
+import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
+import { renderStateLabel } from "@/components/issue/IssueStateSelector";
 import type { IssueComment } from "@/types/database.types";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
-import IssueCommentCard from "@/app/copany/[id]/_subTabs/issue/_components/IssueCommentCard";
-import IssueReviewPanel from "@/app/copany/[id]/_subTabs/issue/_components/IssueReviewPanel";
-import AssignmentRequestPanel from "@/app/copany/[id]/_subTabs/issue/_components/AssignmentRequestPanel";
+import IssueCommentCard from "@/components/issue/IssueCommentCard";
+import IssueReviewPanel from "@/components/issue/IssueReviewPanel";
+import AssignmentRequestPanel from "@/components/issue/AssignmentRequestPanel";
 import type { AssignmentRequest } from "@/types/database.types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIssueActivity } from "@/hooks/activity";
@@ -36,6 +33,7 @@ import { useAssignmentRequests } from "@/hooks/assignmentRequests";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { EMPTY_ARRAY, EMPTY_OBJECT } from "@/utils/constants";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 interface IssueActivityTimelineProps {
   issueId: string;
@@ -52,7 +50,6 @@ export default function IssueActivityTimeline({
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
-  const isDarkMode = useDarkMode();
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
@@ -399,25 +396,18 @@ export default function IssueActivityTimeline({
           (item.payload as IssueActivityPayload)?.to_level ?? null,
           false
         );
-      if (item.actor_id && userInfos[item.actor_id]?.avatar_url)
+      if (item.actor_id)
         return (
-          <Image
-            src={userInfos[item.actor_id]!.avatar_url}
-            alt={userInfos[item.actor_id]!.name || ""}
-            width={20}
-            height={20}
-            className="w-5 h-5 rounded-full"
-            placeholder="blur"
-            blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
+          <UserAvatar
+            userId={item.actor_id}
+            name={userInfos[item.actor_id]?.name || ""}
+            avatarUrl={userInfos[item.actor_id]?.avatar_url || null}
+            email={userInfos[item.actor_id]?.email}
+            size="sm"
+            showTooltip={true}
           />
         );
-      return (
-        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-          {(item.actor_id &&
-            userInfos[item.actor_id]?.name?.slice(0, 2).toUpperCase()) ||
-            ""}
-        </div>
-      );
+      return null;
     }
     // In timeline, comment and assignment request panel items should not render extra avatar on the left
     return null;

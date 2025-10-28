@@ -34,7 +34,7 @@ export function usePreferredLanguage(): PreferredLanguageResult {
       userAgent: navigator.userAgent.substring(0, 100) + "...", // Truncate for privacy
     });
 
-    // Check if any of the preferred languages is Chinese
+    // Check if the primary preferred language is Chinese
     const chineseLanguageCodes = [
       "zh", // Generic Chinese
       "zh-CN", // Simplified Chinese (China)
@@ -44,20 +44,17 @@ export function usePreferredLanguage(): PreferredLanguageResult {
       "zh-MO", // Traditional Chinese (Macau)
     ];
 
-    const isChinesePreferred = allLanguages.some((lang) =>
-      chineseLanguageCodes.some((chineseCode) =>
-        lang.toLowerCase().startsWith(chineseCode.toLowerCase())
-      )
+    // Only check the primary language (navigator.language), not all languages
+    const isChinesePreferred = chineseLanguageCodes.some((chineseCode) =>
+      primaryLanguage.toLowerCase().startsWith(chineseCode.toLowerCase())
     );
 
     console.log("[usePreferredLanguage] 🔍 Language detection result:", {
       isChinesePreferred,
       detectedLocale: primaryLanguage,
-      matchedChineseCodes: allLanguages.filter((lang) =>
-        chineseLanguageCodes.some((chineseCode) =>
-          lang.toLowerCase().startsWith(chineseCode.toLowerCase())
-        )
-      ),
+      matchedChineseCode: chineseLanguageCodes.find((chineseCode) =>
+        primaryLanguage.toLowerCase().startsWith(chineseCode.toLowerCase())
+      ) || null,
     });
 
     setResult({

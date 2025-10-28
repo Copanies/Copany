@@ -19,11 +19,11 @@ import {
   ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
-import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
-import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
+import { renderStateLabel } from "@/components/issue/IssueStateSelector";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
+import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
+import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { formatRelativeTime } from "@/utils/time";
 import type { UserInfo } from "@/actions/user.actions";
@@ -34,6 +34,7 @@ import { formatAbbreviatedCount } from "@/utils/number";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import LoadingView from "@/components/commons/LoadingView";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 // Stable empty array to avoid re-creating [] on every render,
 // which would otherwise retrigger effects depending on it
@@ -562,13 +563,9 @@ export default function NotificationBell() {
         );
       case "discussion_voted":
         return isDarkMode ? (
-          <Image
-            src={arrowshape_up_fill_dark}
-            alt="Arrow Up"
-            className="w-6 h-6"
-          />
+          <ArrowshapeUpFillDarkIcon className="w-6 h-6" />
         ) : (
-          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+          <ArrowshapeUpFillIcon className="w-6 h-6" />
         );
       case "discussion_comment_created":
         return (
@@ -576,13 +573,9 @@ export default function NotificationBell() {
         );
       case "discussion_comment_voted":
         return isDarkMode ? (
-          <Image
-            src={arrowshape_up_fill_dark}
-            alt="Arrow Up"
-            className="w-6 h-6"
-          />
+          <ArrowshapeUpFillDarkIcon className="w-6 h-6" />
         ) : (
-          <Image src={arrowshape_up_fill} alt="Arrow Up" className="w-6 h-6" />
+          <ArrowshapeUpFillIcon className="w-6 h-6" />
         );
       case "discussion_comment_reply":
         return (
@@ -620,14 +613,13 @@ export default function NotificationBell() {
       <div className="relative w-8 h-8">
         {n.actor_id && actorUsers[n.actor_id]?.avatar_url ? (
           <div className="flex w-8 h-8">
-            <Image
-              src={actorUsers[n.actor_id]!.avatar_url}
-              alt={actorUsers[n.actor_id]!.name || ""}
-              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700"
-              width={32}
-              height={32}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
+            <UserAvatar
+              userId={n.actor_id}
+              name={actorUsers[n.actor_id]!.name || ""}
+              avatarUrl={actorUsers[n.actor_id]!.avatar_url}
+              email={actorUsers[n.actor_id]!.email}
+              size="lg"
+              showTooltip={true}
             />
           </div>
         ) : (

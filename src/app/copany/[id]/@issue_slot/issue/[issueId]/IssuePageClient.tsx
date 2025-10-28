@@ -10,20 +10,20 @@ import {
   AssigneeUser,
 } from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
-import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
-import { renderUserLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
-import IssueEditorView from "@/app/copany/[id]/_subTabs/issue/_components/IssueEditorView";
+import IssueStateSelector from "@/components/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/components/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/components/issue/IssueAssigneeSelector";
+import { renderUserLabel } from "@/components/issue/IssueAssigneeSelector";
+import IssueEditorView from "@/components/issue/IssueEditorView";
 
-import AssignmentRequestModal from "@/app/copany/[id]/_subTabs/issue/_components/AssignmentRequestModal";
-import IssueActivityTimeline from "@/app/copany/[id]/_subTabs/issue/_components/IssueActivityTimeline";
+import AssignmentRequestModal from "@/components/issue/AssignmentRequestModal";
+import IssueActivityTimeline from "@/components/issue/IssueActivityTimeline";
 import { useIssue } from "@/hooks/issues";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingView from "@/components/commons/LoadingView";
 import { useDarkMode } from "@/utils/useDarkMode";
 
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
+import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
 import {
   ChevronLeftIcon,
   ArrowRightIcon,
@@ -374,6 +374,7 @@ export default function IssuePageClient({
                 <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
                 <div className="hover:opacity-80 cursor-pointer">
                   {renderUserLabel(
+                    requesterId,
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.name || ""
@@ -578,6 +579,7 @@ export default function IssuePageClient({
             </div>
             <div className="hover:opacity-80 cursor-pointer">
               {renderUserLabel(
+                String(issueData?.created_by || ""),
                 creatorInfo?.name || "",
                 creatorInfo?.avatar_url || null,
                 true,
@@ -734,6 +736,7 @@ export default function IssuePageClient({
               </div>
               <div className="hover:opacity-80 cursor-pointer">
                 {renderUserLabel(
+                  issueData?.created_by || "",
                   creatorInfo?.name || "",
                   creatorInfo?.avatar_url || null,
                   true,

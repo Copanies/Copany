@@ -5,16 +5,18 @@ import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
+import discordIcon from "@/assets/discord_logo.svg";
+import discordIconDark from "@/assets/discord_logo_dark.svg";
 import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import Footer from "@/components/commons/Footer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import {
   signInWithEmail,
   signInWithGitHub,
   signInWithGoogle,
   signInWithFigma,
+  signInWithDiscord,
 } from "@/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -32,6 +34,7 @@ export default function Login() {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isFigmaLoading, setIsFigmaLoading] = useState(false);
+  const [isDiscordLoading, setIsDiscordLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleInputChange = (field: string, value: string) => {
@@ -124,6 +127,22 @@ export default function Login() {
     }
   };
 
+  const handleDiscordLogin = async () => {
+    setIsDiscordLoading(true);
+    setError("");
+
+    try {
+      await signInWithDiscord();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Discord login failed, please try again"
+      );
+      setIsDiscordLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
@@ -148,9 +167,10 @@ export default function Login() {
                 isEmailLoading ||
                 isGitHubLoading ||
                 isGoogleLoading ||
-                isFigmaLoading
+                isFigmaLoading ||
+                isDiscordLoading
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"
@@ -158,14 +178,13 @@ export default function Login() {
                 src={figmaIcon}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
                 {isFigmaLoading ? "Signing in..." : "Login with Figma"}
               </span>
             </button>
+
             <button
               type="button"
               onClick={handleGitHubLogin}
@@ -173,18 +192,17 @@ export default function Login() {
                 isEmailLoading ||
                 isGitHubLoading ||
                 isGoogleLoading ||
-                isFigmaLoading
+                isFigmaLoading ||
+                isDiscordLoading
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Image
                 className="w-4 h-4"
                 alt="GitHub Logo"
-                src={isDarkMode ? githubIconBlack : githubIconWhite}
+                src={isDarkMode ? githubIconWhite : githubIconBlack}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
@@ -199,7 +217,8 @@ export default function Login() {
                 isEmailLoading ||
                 isGitHubLoading ||
                 isGoogleLoading ||
-                isFigmaLoading
+                isFigmaLoading ||
+                isDiscordLoading
               }
               className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -209,12 +228,35 @@ export default function Login() {
                 src={googleIcon}
                 width={16}
                 height={16}
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
               />
 
               <span className="whitespace-nowrap">
                 {isGoogleLoading ? "Signing in..." : "Login with Google"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDiscordLogin}
+              disabled={
+                isEmailLoading ||
+                isGitHubLoading ||
+                isGoogleLoading ||
+                isFigmaLoading ||
+                isDiscordLoading
+              }
+              className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Image
+                className="w-4 h-4"
+                alt="Discord Logo"
+                src={isDarkMode ? discordIconDark : discordIcon}
+                width={16}
+                height={16}
+              />
+
+              <span className="whitespace-nowrap">
+                {isDiscordLoading ? "Signing in..." : "Login with Discord"}
               </span>
             </button>
           </div>
@@ -276,7 +318,8 @@ export default function Login() {
                   isEmailLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >

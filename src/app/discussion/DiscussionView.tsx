@@ -11,14 +11,13 @@ import {
 import type { Discussion } from "@/types/database.types";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
 import { useUsersInfo } from "@/hooks/userInfo";
+import ArrowshapeUpIcon from "@/components/icon/ArrowshapeUpIcon";
+import ArrowshapeUpDarkIcon from "@/components/icon/ArrowshapeUpDarkIcon";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
 import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
@@ -32,6 +31,8 @@ import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "@/hooks/currentUser";
 import Modal from "@/components/commons/Modal";
 import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
+import UserAvatar from "@/components/commons/UserAvatar";
+import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 
 export default function DiscussionView() {
   const {
@@ -233,21 +234,14 @@ function DiscussionItem({
         >
           <div className="flex flex-col gap-3">
             <div className="flex flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              {creator?.avatar_url ? (
-                <Image
-                  src={creator.avatar_url}
-                  alt={creator.name}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full"
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
-                  {(creator?.name || "").slice(0, 1).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                userId={String(discussion.creator_id || "")}
+                name={creator?.name || ""}
+                avatarUrl={creator?.avatar_url || null}
+                email={creator?.email}
+                size="lg"
+                showTooltip={true}
+              />
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>
@@ -313,22 +307,17 @@ function DiscussionItem({
           disabled={voteToggle.isPending}
         >
           <div className="flex items-center gap-2">
-            <Image
-              src={
-                hasVoted
-                  ? isDarkMode
-                    ? arrowshape_up_fill_dark
-                    : arrowshape_up_fill
-                  : isDarkMode
-                  ? arrowshape_up_dark
-                  : arrowshape_up
-              }
-              alt="Vote"
-              width={16}
-              height={16}
-              placeholder="blur"
-              blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-            />
+            {hasVoted ? (
+              isDarkMode ? (
+                <ArrowshapeUpFillDarkIcon className="w-4 h-4" />
+              ) : (
+                <ArrowshapeUpFillIcon className="w-4 h-4" />
+              )
+            ) : isDarkMode ? (
+              <ArrowshapeUpDarkIcon className="w-4 h-4" />
+            ) : (
+              <ArrowshapeUpIcon className="w-4 h-4" />
+            )}
             <span>{voteCount}</span>
           </div>
         </Button>

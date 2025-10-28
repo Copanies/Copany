@@ -9,14 +9,12 @@ import {
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 interface IssueAssigneeSelectorProps {
   issueId: string;
@@ -219,6 +217,7 @@ export default function IssueAssigneeSelector({
             label: (
               <div className="flex items-center gap-1 justify-between w-full">
                 {renderUserLabel(
+                  currentUser.id,
                   currentUser.user_metadata?.name || "",
                   currentUser.user_metadata?.avatar_url || null,
                   true,
@@ -255,6 +254,7 @@ export default function IssueAssigneeSelector({
         options: otherContributors.map((contributor) => ({
           value: contributor.user_id,
           label: renderUserLabel(
+            contributor.user_id,
             contributor.name,
             contributor.avatar_url,
             true,
@@ -286,6 +286,7 @@ export default function IssueAssigneeSelector({
     // Prioritize currentAssigneeUser information (from IssueWithAssignee)
     if (currentAssigneeUser) {
       return renderUserLabel(
+        currentAssignee,
         currentAssigneeUser.name,
         currentAssigneeUser.avatar_url,
         showText,
@@ -297,6 +298,7 @@ export default function IssueAssigneeSelector({
     // If no assigneeUser information, find current user or contributor information
     if (currentUser && currentAssignee === currentUser.id) {
       return renderUserLabel(
+        currentUser.id,
         currentUser.user_metadata?.name || "",
         currentUser.user_metadata?.avatar_url || null,
         showText,
@@ -310,6 +312,7 @@ export default function IssueAssigneeSelector({
     );
     if (contributor) {
       return renderUserLabel(
+        contributor.user_id,
         contributor.name,
         contributor.avatar_url,
         showText,
@@ -319,7 +322,7 @@ export default function IssueAssigneeSelector({
     }
 
     // If not found, display a default user label
-    return renderUserLabel("", null, showText, isDarkMode, null);
+    return renderUserLabel("", "", null, showText, isDarkMode, null);
   })();
 
   return (
@@ -335,6 +338,7 @@ export default function IssueAssigneeSelector({
 }
 
 export function renderUserLabel(
+  userId: string,
   name: string,
   avatarUrl: string | null,
   showText: boolean,
@@ -344,21 +348,14 @@ export function renderUserLabel(
 ) {
   const labelContent = (
     <div className="flex items-center gap-2 -my-[1px]">
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={22}
-          height={22}
-          className="w-[22px] h-[22px] rounded-full"
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(22, 22, isDarkMode)}
-        />
-      ) : (
-        <div className="w-[22px] h-[22px] bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <UserAvatar
+        userId={userId}
+        name={name}
+        avatarUrl={avatarUrl}
+        email={readOnly ? undefined : email}
+        size="md"
+        showTooltip={!readOnly}
+      />
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100">
           {name}
@@ -367,53 +364,7 @@ export function renderUserLabel(
     </div>
   );
 
-  return (
-    <div>
-      {readOnly ? (
-        labelContent
-      ) : (
-        <Tooltip.Provider delayDuration={500} skipDelayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>{labelContent}</Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                side="left"
-                sideOffset={8}
-                align="center"
-                className="tooltip-surface"
-              >
-                <div className="flex items-center gap-2 hover:cursor-pointer">
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt={name}
-                      width={28}
-                      height={28}
-                      className="w-7 h-7 rounded-full"
-                      placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
-                    />
-                  ) : (
-                    <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                      {name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{name}</span>
-                    {email ? (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {email}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-      )}
-    </div>
-  );
+  return labelContent;
 }
 
 export function renderUnassignedLabel(showText: boolean) {
@@ -431,28 +382,23 @@ export function renderUnassignedLabel(showText: boolean) {
 
 // Small version for compact places like Activity timeline (20px avatar)
 export function renderUserLabelSm(
+  userId: string,
   name: string,
   avatarUrl: string | null,
   showText: boolean,
-  isDarkMode: boolean
+  isDarkMode: boolean,
+  email?: string | null
 ) {
   return (
     <div className="flex items-center gap-1 -my-[1px]">
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={20}
-          height={20}
-          className="w-5 h-5 rounded-full"
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-        />
-      ) : (
-        <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300 font-semibold">
-          {name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <UserAvatar
+        userId={userId}
+        name={name}
+        avatarUrl={avatarUrl}
+        email={email}
+        size="sm"
+        showTooltip={true}
+      />
       {showText && (
         <span className="text-sm text-gray-900 dark:text-gray-100">{name}</span>
       )}

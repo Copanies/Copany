@@ -1,19 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Button from "../commons/Button";
 import {
   useDiscussionVoteState,
   useToggleDiscussionVote,
 } from "@/hooks/discussionVotes";
-import arrowshape_up from "@/assets/arrowshape_up.svg";
-import arrowshape_up_fill from "@/assets/arrowshape_up_fill.svg";
-import arrowshape_up_fill_dark from "@/assets/arrowshape_up_fill_dark.svg";
-import arrowshape_up_dark from "@/assets/arrowshape_up_dark.svg";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/currentUser";
+import ArrowshapeUpIcon from "@/components/icon/ArrowshapeUpIcon";
+import ArrowshapeUpDarkIcon from "@/components/icon/ArrowshapeUpDarkIcon";
+import ArrowshapeUpFillIcon from "@/components/icon/ArrowshapeUpFillIcon";
+import ArrowshapeUpFillDarkIcon from "@/components/icon/ArrowshapeUpFillDarkIcon";
 
 type Size = "sm" | "md";
 
@@ -79,23 +77,17 @@ export default function VoteButton({
       disableTooltipConent={!currentUser ? "Sign in to vote" : undefined}
     >
       <div className="flex items-center gap-2 transition-all duration-200">
-        <Image
-          src={
-            hasVoted
-              ? isDarkMode
-                ? arrowshape_up_fill_dark
-                : arrowshape_up_fill
-              : isDarkMode
-              ? arrowshape_up_dark
-              : arrowshape_up
-          }
-          alt="Vote"
-          width={16}
-          height={16}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
-          className="transition-opacity duration-200"
-        />
+        {hasVoted ? (
+          isDarkMode ? (
+            <ArrowshapeUpFillDarkIcon className="w-4 h-4 transition-opacity duration-200" />
+          ) : (
+            <ArrowshapeUpFillIcon className="w-4 h-4 transition-opacity duration-200" />
+          )
+        ) : isDarkMode ? (
+          <ArrowshapeUpDarkIcon className="w-4 h-4 transition-opacity duration-200" />
+        ) : (
+          <ArrowshapeUpIcon className="w-4 h-4 transition-opacity duration-200" />
+        )}
         <span className="transition-all duration-200">{voteCount}</span>
       </div>
     </Button>

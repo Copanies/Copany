@@ -11,11 +11,11 @@ import {
   CopanyContributorWithUserInfo,
   AssigneeUser,
 } from "@/types/database.types";
-import IssueStateSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
-import IssuePrioritySelector from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
+import IssueStateSelector from "@/components/issue/IssueStateSelector";
+import IssuePrioritySelector from "@/components/issue/IssuePrioritySelector";
+import IssueAssigneeSelector from "@/components/issue/IssueAssigneeSelector";
 import Button from "@/components/commons/Button";
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
+import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
 

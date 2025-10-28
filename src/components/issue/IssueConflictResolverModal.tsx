@@ -112,6 +112,7 @@ export default function IssueConflictResolverModal({
               <div className="flex flex-col gap-1">
                 <p>Editing now</p>
                 {renderUserLabel(
+                  currentUser?.data?.id || "",
                   currentUser?.data?.user_metadata?.name || "",
                   currentUser?.data?.user_metadata?.avatar_url || null,
                   true,
@@ -175,6 +176,7 @@ export default function IssueConflictResolverModal({
                   Updated {formatRelativeTime(conflict?.updatedAt || "")}
                 </span>
                 {renderUserLabel(
+                  updater?.id || "",
                   updater?.name || "",
                   updater?.avatar_url || null,
                   true,

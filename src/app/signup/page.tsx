@@ -5,16 +5,18 @@ import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
+import discordIcon from "@/assets/discord_logo.svg";
+import discordIconDark from "@/assets/discord_logo_dark.svg";
 import Image from "next/image";
 import BasicNavigation from "@/components/commons/BasicNavigation";
 import Footer from "@/components/commons/Footer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import {
   signUpWithEmail,
   signInWithGitHub,
   signInWithGoogle,
   signInWithFigma,
+  signInWithDiscord,
 } from "@/actions/auth.actions";
 import { resendVerificationEmail } from "@/actions/auth.actions";
 import Button from "@/components/commons/Button";
@@ -36,6 +38,7 @@ export default function Signup() {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isFigmaLoading, setIsFigmaLoading] = useState(false);
+  const [isDiscordLoading, setIsDiscordLoading] = useState(false);
   const [error, setError] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
@@ -166,6 +169,22 @@ export default function Signup() {
     }
   };
 
+  const handleDiscordSignup = async () => {
+    setIsDiscordLoading(true);
+    setError("");
+
+    try {
+      await signInWithDiscord();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Discord signup failed, please try again"
+      );
+      setIsDiscordLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-[#FBF9F5] dark:bg-background-dark">
       <BasicNavigation />
@@ -204,9 +223,10 @@ export default function Signup() {
                   isResendLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -214,8 +234,6 @@ export default function Signup() {
                   src={figmaIcon}
                   width={16}
                   height={16}
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
 
                 <span className="whitespace-nowrap">
@@ -231,18 +249,17 @@ export default function Signup() {
                   isResendLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
                   alt="GitHub Logo"
-                  src={isDarkMode ? githubIconBlack : githubIconWhite}
+                  src={isDarkMode ? githubIconWhite : githubIconBlack}
                   width={16}
                   height={16}
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
 
                 <span className="whitespace-nowrap">
@@ -258,7 +275,8 @@ export default function Signup() {
                   isResendLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -268,12 +286,36 @@ export default function Signup() {
                   src={googleIcon}
                   width={16}
                   height={16}
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(16, 16, isDarkMode)}
                 />
 
                 <span className="whitespace-nowrap">
                   {isGoogleLoading ? "Signing up..." : "Sign up with Google"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDiscordSignup}
+                disabled={
+                  isEmailLoading ||
+                  isResendLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading ||
+                  isDiscordLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="Discord Logo"
+                  src={isDarkMode ? discordIconDark : discordIcon}
+                  width={16}
+                  height={16}
+                />
+
+                <span className="whitespace-nowrap">
+                  {isDiscordLoading ? "Signing up..." : "Sign up with Discord"}
                 </span>
               </button>
             </div>
@@ -309,7 +351,9 @@ export default function Signup() {
                       isResendLoading ||
                       isEmailLoading ||
                       isGitHubLoading ||
-                      isGoogleLoading
+                      isGoogleLoading ||
+                      isFigmaLoading ||
+                      isDiscordLoading
                     }
                     className="!p-2"
                   >
@@ -446,7 +490,9 @@ export default function Signup() {
                     isEmailLoading ||
                     isResendLoading ||
                     isGitHubLoading ||
-                    isGoogleLoading
+                    isGoogleLoading ||
+                    isFigmaLoading ||
+                    isDiscordLoading
                   }
                   className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >

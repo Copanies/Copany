@@ -15,9 +15,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
@@ -30,6 +27,7 @@ import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import VoteButton from "@/components/discussion/VoteButton";
+import UserAvatar from "@/components/commons/UserAvatar";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const {
@@ -330,7 +328,6 @@ function DiscussionItem({
   creator?: UserInfo;
   voteCounts: Record<string, number>;
 }) {
-  const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
 
@@ -349,21 +346,14 @@ function DiscussionItem({
         >
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              {creator?.avatar_url ? (
-                <Image
-                  src={creator.avatar_url}
-                  alt={creator.name}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full"
-                  placeholder="blur"
-                  blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-700 dark:text-gray-200">
-                  {(creator?.name || "").slice(0, 1).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                userId={String(discussion.creator_id || "")}
+                name={creator?.name || ""}
+                avatarUrl={creator?.avatar_url || null}
+                email={creator?.email}
+                size="lg"
+                showTooltip={true}
+              />
               <span className="font-semibold text-gray-800 dark:text-gray-200">
                 {creator?.name || ""}
               </span>

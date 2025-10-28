@@ -7,8 +7,8 @@ import { useCopany } from "@/hooks/copany";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useContributors } from "@/hooks/contributors";
 import Button from "@/components/commons/Button";
-import IssueLevelSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
-import IssueAssigneeSelector from "@/app/copany/[id]/_subTabs/issue/_components/IssueAssigneeSelector";
+import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
+import IssueAssigneeSelector from "@/components/issue/IssueAssigneeSelector";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 interface HistoryIssueRow {

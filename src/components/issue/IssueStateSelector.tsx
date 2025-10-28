@@ -5,13 +5,11 @@ import { IssueState, IssueWithAssignee } from "@/types/database.types";
 import { updateIssueStateAction } from "@/actions/issue.actions";
 import { useUpdateIssueState } from "@/hooks/issues";
 import Dropdown from "@/components/commons/Dropdown";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import InreviewIcon from "@/assets/in_review_state.svg";
-import InreviewDarkIcon from "@/assets/in_review_state_dark.svg";
 import { listIssueReviewersAction } from "@/actions/issueReviewer.actions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDarkMode } from "@/utils/useDarkMode";
+import InReviewStateIcon from "@/components/commons/InReviewStateIcon";
+import InReviewStateDarkIcon from "@/components/icon/InReviewStateDarkIcon";
 
 interface IssueStateSelectorProps {
   issueId: string;
@@ -307,15 +305,11 @@ function InReviewLabel({
         colorful ? "text-indigo-600" : "text-gray-500 dark:text-gray-500"
       }`}
     >
-      <Image
-        src={isDarkMode ? InreviewDarkIcon : InreviewIcon}
-        width={20}
-        height={20}
-        alt="In Review"
-        placeholder="blur"
-        blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-        className="w-5 h-5 shrink-0"
-      />
+      {isDarkMode ? (
+        <InReviewStateDarkIcon className="w-5 h-5 shrink-0" />
+      ) : (
+        <InReviewStateIcon className="w-5 h-5 shrink-0" />
+      )}
       {showText && (
         <span className="text-base text-gray-900 dark:text-gray-100 shrink-0">
           In Review

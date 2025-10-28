@@ -36,6 +36,7 @@ export function useHasProviders() {
       hasGitHub: providers.includes('github'),
       hasGoogle: providers.includes('google'),
       hasFigma: providers.includes('figma'),
+      hasDiscord: providers.includes('discord'),
       hasEmail: providers.includes('email'),
       allProviders: providers,
       providersData: userAuth?.providers || []

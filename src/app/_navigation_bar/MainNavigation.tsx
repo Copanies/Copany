@@ -325,8 +325,6 @@ export default function MainNavigation() {
           alt="logo"
           width={32}
           height={32}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
           onClick={() => router.push("/")}
         />
 
