@@ -58,11 +58,6 @@ export default function COP_Tooltip({
     };
   }, [isMobile, isOpen]);
 
-  // 如果禁用了 tooltip，直接返回子元素
-  if (disabled) {
-    return <>{children}</>;
-  }
-
   // 清理定时器，防止内存泄漏
   useEffect(() => {
     return () => {
@@ -71,6 +66,11 @@ export default function COP_Tooltip({
       }
     };
   }, [longPressTimer]);
+
+  // 如果禁用了 tooltip，直接返回子元素（确保 Hooks 已在上方无条件调用）
+  if (disabled) {
+    return <>{children}</>;
+  }
 
   // 移动设备上的处理
   if (isMobile) {

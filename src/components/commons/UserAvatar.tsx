@@ -1,18 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import {
-  DocumentDuplicateIcon,
-  CheckIcon,
-  AtSymbolIcon,
-} from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import COP_Tooltip from "@/components/commons/COP_Tooltip";
 import { useState } from "react";
 import { useUserProviders } from "@/hooks/userProviders";
 import Link from "next/link";
-import googleIcon from "@/assets/google_logo.webp";
+// google provider is currently unused in UI
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
@@ -41,8 +37,7 @@ export default function UserAvatar({
   const [copied, setCopied] = useState(false);
 
   // Get user providers information
-  const { data: providers = [], isLoading: providersLoading } =
-    useUserProviders(userId);
+  const { data: providers = [] } = useUserProviders(userId);
 
   // Size configuration
   const sizeClasses = {
@@ -85,7 +80,7 @@ export default function UserAvatar({
   const googleProvider = providers.find((p) => p.provider === "google");
   const figmaProvider = providers.find((p) => p.provider === "figma");
   const discordProvider = providers.find((p) => p.provider === "discord");
-  const emailProvider = providers.find((p) => p.provider === "email");
+  // emailProvider not used in UI yet
 
   // Render the avatar image or fallback
   const avatarContent = avatarUrl ? (
