@@ -217,6 +217,7 @@ export default function IssueAssigneeSelector({
             label: (
               <div className="flex items-center gap-1 justify-between w-full">
                 {renderUserLabel(
+                  currentUser.id,
                   currentUser.user_metadata?.name || "",
                   currentUser.user_metadata?.avatar_url || null,
                   true,
@@ -253,6 +254,7 @@ export default function IssueAssigneeSelector({
         options: otherContributors.map((contributor) => ({
           value: contributor.user_id,
           label: renderUserLabel(
+            contributor.user_id,
             contributor.name,
             contributor.avatar_url,
             true,
@@ -284,6 +286,7 @@ export default function IssueAssigneeSelector({
     // Prioritize currentAssigneeUser information (from IssueWithAssignee)
     if (currentAssigneeUser) {
       return renderUserLabel(
+        currentAssignee,
         currentAssigneeUser.name,
         currentAssigneeUser.avatar_url,
         showText,
@@ -295,6 +298,7 @@ export default function IssueAssigneeSelector({
     // If no assigneeUser information, find current user or contributor information
     if (currentUser && currentAssignee === currentUser.id) {
       return renderUserLabel(
+        currentUser.id,
         currentUser.user_metadata?.name || "",
         currentUser.user_metadata?.avatar_url || null,
         showText,
@@ -308,6 +312,7 @@ export default function IssueAssigneeSelector({
     );
     if (contributor) {
       return renderUserLabel(
+        contributor.user_id,
         contributor.name,
         contributor.avatar_url,
         showText,
@@ -317,7 +322,7 @@ export default function IssueAssigneeSelector({
     }
 
     // If not found, display a default user label
-    return renderUserLabel("", null, showText, isDarkMode, null);
+    return renderUserLabel("", "", null, showText, isDarkMode, null);
   })();
 
   return (
@@ -333,6 +338,7 @@ export default function IssueAssigneeSelector({
 }
 
 export function renderUserLabel(
+  userId: string,
   name: string,
   avatarUrl: string | null,
   showText: boolean,
@@ -343,6 +349,7 @@ export function renderUserLabel(
   const labelContent = (
     <div className="flex items-center gap-2 -my-[1px]">
       <UserAvatar
+        userId={userId}
         name={name}
         avatarUrl={avatarUrl}
         email={readOnly ? undefined : email}
@@ -375,6 +382,7 @@ export function renderUnassignedLabel(showText: boolean) {
 
 // Small version for compact places like Activity timeline (20px avatar)
 export function renderUserLabelSm(
+  userId: string,
   name: string,
   avatarUrl: string | null,
   showText: boolean,
@@ -384,6 +392,7 @@ export function renderUserLabelSm(
   return (
     <div className="flex items-center gap-1 -my-[1px]">
       <UserAvatar
+        userId={userId}
         name={name}
         avatarUrl={avatarUrl}
         email={email}

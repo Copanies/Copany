@@ -200,6 +200,7 @@ export default function IssueReviewPanel({
                   </div>
                   <div className="flex flex-row items-center gap-1">
                     <UserAvatar
+                      userId={r.reviewer_id}
                       name={name}
                       avatarUrl={avatar || null}
                       email={info?.email}

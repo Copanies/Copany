@@ -614,6 +614,7 @@ export default function NotificationBell() {
         {n.actor_id && actorUsers[n.actor_id]?.avatar_url ? (
           <div className="flex w-8 h-8">
             <UserAvatar
+              userId={n.actor_id}
               name={actorUsers[n.actor_id]!.name || ""}
               avatarUrl={actorUsers[n.actor_id]!.avatar_url}
               email={actorUsers[n.actor_id]!.email}

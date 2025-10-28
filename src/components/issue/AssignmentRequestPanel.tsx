@@ -101,6 +101,7 @@ export default function AssignmentRequestPanel({
                 <div className="flex flex-row items-center gap-0 -ml-2">
                   <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
                   <UserAvatar
+                    userId={requesterId}
                     name={requesterName}
                     avatarUrl={requester?.avatar_url || null}
                     email={requester?.email}
@@ -126,6 +127,7 @@ export default function AssignmentRequestPanel({
                         <div className="w-2 h-2 rounded-full bg-yellow-600" />
                       </div>
                       <UserAvatar
+                        userId={r.recipient_id}
                         name={name}
                         avatarUrl={avatar || null}
                         email={recipient?.email}

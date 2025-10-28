@@ -7,11 +7,13 @@ export interface UserAuthInfo {
   email: string;
   name: string;
   avatar_url: string;
+  discord_id?: string;
   providers: AuthProvider[];
   tokens: {
     github_token?: string;
     google_token?: string;
     figma_token?: string;
+    discord_token?: string;
   };
 }
 
@@ -63,8 +65,12 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
       avatar_url: identity.identity_data?.avatar_url || ''
     })) || [];
 
+    // Extract Discord ID from Discord provider identity
+    const discordIdentity = providers.find(p => p.provider === 'discord');
+    const discordId = discordIdentity?.id || undefined;
+
     // Get tokens from our custom table (persistent storage)
-    const tokens: { github_token?: string; google_token?: string; figma_token?: string } = {};
+    const tokens: { github_token?: string; google_token?: string; figma_token?: string; discord_token?: string } = {};
     
     try {
       // Get GitHub token
@@ -118,6 +124,21 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
         console.log("✅ Figma token found and stored");
       }
       
+      // Get Discord token
+      const { data: discordTokenData, error: discordError } = await supabase.rpc('fn_get_user_provider_token', {
+        p_user_id: detailedUser.id,
+        p_provider: 'discord'
+      });
+      
+      if (discordError) {
+        console.error("❌ Error calling fn_get_user_provider_token for Discord:", discordError);
+      }
+      
+      if (discordTokenData) {
+        tokens.discord_token = discordTokenData;
+        console.log("✅ Discord token found and stored");
+      }
+      
       console.log("Available tokens:", Object.keys(tokens).filter(key => tokens[key as keyof typeof tokens]));
     } catch (error) {
       console.error("Error fetching provider tokens from database:", error);
@@ -144,6 +165,9 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
           case 'figma':
             tokens.figma_token = session.provider_token;
             break;
+          case 'discord':
+            tokens.discord_token = session.provider_token;
+            break;
         }
       }
     }
@@ -157,6 +181,7 @@ export async function getUserAuthInfo(): Promise<UserAuthInfo | null> {
             'Unknown User',
       avatar_url: detailedUser.user_metadata?.avatar_url || 
                   detailedUser.user_metadata?.picture || '',
+      discord_id: discordId,
       providers,
       tokens
     };
@@ -178,7 +203,7 @@ export async function hasProviderLinked(provider: string): Promise<boolean> {
 /**
  * Get specific provider token
  */
-export async function getProviderToken(provider: 'github' | 'google' | 'figma'): Promise<string | null> {
+export async function getProviderToken(provider: 'github' | 'google' | 'figma' | 'discord'): Promise<string | null> {
   console.log(`🔍 Getting ${provider} token from userAuth service...`);
   const userAuth = await getUserAuthInfo();
   

@@ -374,6 +374,7 @@ export default function IssuePageClient({
                 <HandRaisedIcon className="w-5 h-5 -rotate-30 translate-y-0.5 translate-x-1" />
                 <div className="hover:opacity-80 cursor-pointer">
                   {renderUserLabel(
+                    requesterId,
                     reqs[0]?.requester_id &&
                       currentUser?.id === reqs[0].requester_id
                       ? currentUser?.user_metadata?.name || ""
@@ -578,6 +579,7 @@ export default function IssuePageClient({
             </div>
             <div className="hover:opacity-80 cursor-pointer">
               {renderUserLabel(
+                String(issueData?.created_by || ""),
                 creatorInfo?.name || "",
                 creatorInfo?.avatar_url || null,
                 true,
@@ -734,6 +736,7 @@ export default function IssuePageClient({
               </div>
               <div className="hover:opacity-80 cursor-pointer">
                 {renderUserLabel(
+                  issueData?.created_by || "",
                   creatorInfo?.name || "",
                   creatorInfo?.avatar_url || null,
                   true,

@@ -12,11 +12,14 @@ import {
   signInWithGitHub,
   signInWithGoogle,
   signInWithFigma,
+  signInWithDiscord,
 } from "@/actions/auth.actions";
 import googleIcon from "@/assets/google_logo.webp";
 import githubIconBlack from "@/assets/github_logo.svg";
 import githubIconWhite from "@/assets/github_logo_dark.svg";
 import figmaIcon from "@/assets/figma_logo.svg";
+import discordIcon from "@/assets/discord_logo.svg";
+import discordIconDark from "@/assets/discord_logo_dark.svg";
 import alipayIcon from "@/assets/alipay_logo.svg";
 import alipayIconDark from "@/assets/alipay_logo_dark.svg";
 import wiseIcon from "@/assets/wise_logo.png";
@@ -42,6 +45,7 @@ export default function AccountView({ userId }: { userId: string }) {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isFigmaLoading, setIsFigmaLoading] = useState(false);
+  const [isDiscordLoading, setIsDiscordLoading] = useState(false);
   const [isEmailLoading] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [userName, setUserName] = useState("");
@@ -69,6 +73,7 @@ export default function AccountView({ userId }: { userId: string }) {
   const hasGitHub = providersInfo?.hasGitHub || false;
   const hasGoogle = providersInfo?.hasGoogle || false;
   const hasFigma = providersInfo?.hasFigma || false;
+  const hasDiscord = providersInfo?.hasDiscord || false;
   // const hasEmail = providersInfo?.hasEmail || false; // Unused for now
   const linkedProviders = providersInfo?.allProviders || [];
   const providersData = providersInfo?.providersData || [];
@@ -147,6 +152,17 @@ export default function AccountView({ userId }: { userId: string }) {
     } catch (error) {
       console.error("Figma login failed:", error);
       setIsFigmaLoading(false);
+    }
+  };
+
+  const handleDiscordLogin = async () => {
+    if (!isOwnProfile) return;
+    setIsDiscordLoading(true);
+    try {
+      await signInWithDiscord();
+    } catch (error) {
+      console.error("Discord login failed:", error);
+      setIsDiscordLoading(false);
     }
   };
 
@@ -285,19 +301,23 @@ export default function AccountView({ userId }: { userId: string }) {
           <label htmlFor="userName" className="text-sm font-semibold">
             User name
           </label>
-          <div className="flex flex-row gap-3 max-w-full">
-            <input
-              type="text"
-              id="userName"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              className="border border-gray-300 dark:border-gray-700 max-w-full rounded-md px-2 py-1"
-              placeholder="Enter new name"
-            />
-            <Button onClick={handleRenameUser} disabled={isRenaming}>
-              {isRenaming ? "Renaming..." : "Rename"}
-            </Button>
-          </div>
+          {isOwnProfile ? (
+            <div className="flex flex-row gap-3 max-w-full">
+              <input
+                type="text"
+                id="userName"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="border border-gray-300 dark:border-gray-700 max-w-full rounded-md px-2 py-1"
+                placeholder="Enter new name"
+              />
+              <Button onClick={handleRenameUser} disabled={isRenaming}>
+                {isRenaming ? "Renaming..." : "Rename"}
+              </Button>
+            </div>
+          ) : (
+            <p>{userName}</p>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <p className="text-base font-semibold">Email</p>
@@ -441,7 +461,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           {providerData.user_name && (
                             <Link
                               href={`https://github.com/${providerData.user_name}`}
-                              className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
+                              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 underline"
                             >
                               @{providerData.user_name}
                             </Link>
@@ -461,7 +481,7 @@ export default function AccountView({ userId }: { userId: string }) {
                         <span className="font-base">Google Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
-                            <span className="text-gray-500">
+                            <span className="text-gray-700 dark:text-gray-300">
                               @{providerData.user_name}
                             </span>
                           )}
@@ -480,9 +500,31 @@ export default function AccountView({ userId }: { userId: string }) {
                         <span className="font-base">Figma Account</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
-                            <span className="text-gray-500">
+                            <span className="text-gray-700 dark:text-gray-300">
                               @{providerData.user_name}
                             </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {providerData.provider === "discord" && (
+                      <div className="flex flex-row gap-1 items-center">
+                        <Image
+                          className="w-4 h-4"
+                          alt="Discord Logo"
+                          src={isDarkMode ? discordIconDark : discordIcon}
+                          width={16}
+                          height={16}
+                        />
+                        <span className="font-base">Discord Account</span>
+                        <div className="flex flex-row gap-1 items-center pl-2">
+                          {providerData.user_name && (
+                            <Link
+                              href={`https://discord.com/users/${providerData.id}`}
+                              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 underline"
+                            >
+                              @{providerData.user_name}
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -493,7 +535,7 @@ export default function AccountView({ userId }: { userId: string }) {
                         <span className="font-base">Email</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.email && (
-                            <span className="text-gray-500">
+                            <span className="text-gray-700 dark:text-gray-300">
                               {providerData.email}
                             </span>
                           )}
@@ -510,7 +552,7 @@ export default function AccountView({ userId }: { userId: string }) {
         </div>
       </div>
 
-      {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma) && (
+      {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma && hasDiscord) && (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold">Link to Accounts</p>
@@ -528,7 +570,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   isEmailLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-transparent text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -553,7 +596,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   isEmailLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -578,7 +622,8 @@ export default function AccountView({ userId }: { userId: string }) {
                   isEmailLoading ||
                   isGitHubLoading ||
                   isGoogleLoading ||
-                  isFigmaLoading
+                  isFigmaLoading ||
+                  isDiscordLoading
                 }
                 className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -591,6 +636,32 @@ export default function AccountView({ userId }: { userId: string }) {
                 />
                 <span className="whitespace-nowrap">
                   {isFigmaLoading ? "Linking..." : "Link with Figma"}
+                </span>
+              </button>
+            )}
+
+            {!hasDiscord && (
+              <button
+                type="button"
+                onClick={handleDiscordLogin}
+                disabled={
+                  isEmailLoading ||
+                  isGitHubLoading ||
+                  isGoogleLoading ||
+                  isFigmaLoading ||
+                  isDiscordLoading
+                }
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Image
+                  className="w-4 h-4"
+                  alt="Discord Logo"
+                  src={isDarkMode ? discordIconDark : discordIcon}
+                  width={16}
+                  height={16}
+                />
+                <span className="whitespace-nowrap">
+                  {isDiscordLoading ? "Linking..." : "Link with Discord"}
                 </span>
               </button>
             )}

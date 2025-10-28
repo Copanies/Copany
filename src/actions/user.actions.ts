@@ -10,6 +10,16 @@ export interface UserInfo {
   avatar_url: string;
 }
 
+export interface UserProviderInfo {
+  provider: string;
+  id: string;
+  created_at: string;
+  last_sign_in_at: string;
+  email?: string;
+  user_name?: string;
+  avatar_url?: string;
+}
+
 export async function getUserByIdAction(userId: string): Promise<UserInfo | null> {
   try {
     const adminSupabase = await createAdminSupabaseClient();
@@ -77,4 +87,37 @@ export async function getUsersByIdsWithCacheAction(userIds: string[]): Promise<R
 
 export async function updateUserNameAction(userId: string, newName: string) {
   return await UserService.updateUserName(userId, newName);
+}
+
+/**
+ * Get user provider information (GitHub, Discord, etc.)
+ * Returns publicly available provider info without sensitive tokens
+ */
+export async function getUserProvidersAction(userId: string): Promise<UserProviderInfo[]> {
+  try {
+    const adminSupabase = await createAdminSupabaseClient();
+    const { data: userData, error: userError } =
+      await adminSupabase.auth.admin.getUserById(userId);
+    
+    if (userError || !userData.user) {
+      console.error(`Error fetching user providers for ${userId}:`, userError);
+      return [];
+    }
+
+    // Extract provider information from identities
+    const providers: UserProviderInfo[] = userData.user.identities?.map(identity => ({
+      provider: identity.provider || 'unknown',
+      id: identity.id || '',
+      created_at: identity.created_at || '',
+      last_sign_in_at: identity.last_sign_in_at || '',
+      email: identity.identity_data?.email || identity.identity_data?.login || '',
+      user_name: identity.identity_data?.user_name || identity.identity_data?.name || identity.identity_data?.full_name || '',
+      avatar_url: identity.identity_data?.avatar_url || ''
+    })) || [];
+
+    return providers;
+  } catch (error) {
+    console.error(`Error fetching user providers for ${userId}:`, error);
+    return [];
+  }
 } 

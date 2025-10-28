@@ -196,6 +196,7 @@ export default function DiscussionDetailView({
         <div className="flex items-center justify-between mb-2">
           <div className="flex flex-row items-center gap-3">
             <UserAvatar
+              userId={String(discussion?.creator_id || "")}
               name={creator?.name || ""}
               avatarUrl={creator?.avatar_url || null}
               email={creator?.email}

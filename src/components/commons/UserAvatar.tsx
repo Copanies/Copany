@@ -1,13 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { DocumentDuplicateIcon, CheckIcon } from "@heroicons/react/24/outline";
+import {
+  DocumentDuplicateIcon,
+  CheckIcon,
+  AtSymbolIcon,
+} from "@heroicons/react/24/outline";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import COP_Tooltip from "@/components/commons/COP_Tooltip";
 import { useState } from "react";
+import { useUserProviders } from "@/hooks/userProviders";
+import Link from "next/link";
+import googleIcon from "@/assets/google_logo.webp";
+import githubIconBlack from "@/assets/github_logo.svg";
+import githubIconWhite from "@/assets/github_logo_dark.svg";
+import figmaIcon from "@/assets/figma_logo.svg";
+import discordIcon from "@/assets/discord_logo.svg";
+import discordIconDark from "@/assets/discord_logo_dark.svg";
+import Button from "./Button";
 
 interface UserAvatarProps {
+  userId: string;
   name: string;
   avatarUrl: string | null;
   email?: string | null;
@@ -16,6 +30,7 @@ interface UserAvatarProps {
 }
 
 export default function UserAvatar({
+  userId,
   name,
   avatarUrl,
   email,
@@ -24,6 +39,10 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const isDarkMode = useDarkMode();
   const [copied, setCopied] = useState(false);
+
+  // Get user providers information
+  const { data: providers = [], isLoading: providersLoading } =
+    useUserProviders(userId);
 
   // Size configuration
   const sizeClasses = {
@@ -61,6 +80,13 @@ export default function UserAvatar({
     }
   };
 
+  // Get provider display info
+  const githubProvider = providers.find((p) => p.provider === "github");
+  const googleProvider = providers.find((p) => p.provider === "google");
+  const figmaProvider = providers.find((p) => p.provider === "figma");
+  const discordProvider = providers.find((p) => p.provider === "discord");
+  const emailProvider = providers.find((p) => p.provider === "email");
+
   // Render the avatar image or fallback
   const avatarContent = avatarUrl ? (
     <Image
@@ -93,44 +119,118 @@ export default function UserAvatar({
   // Tooltip content
   const tooltipContent = (
     <div
-      className="flex items-center gap-2 hover:cursor-pointer"
+      className="flex items-begin gap-2 hover:cursor-pointer"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={28}
-          height={28}
-          className="w-7 h-7 rounded-full"
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
-        />
-      ) : (
-        <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {initials}
+      <div className="pt-2">
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt={name}
+            width={28}
+            height={28}
+            className="w-7 h-7 rounded-full"
+            placeholder="blur"
+            blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
+          />
+        ) : (
+          <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+            {initials}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0">
+          <span className="text-base font-medium">{name}</span>
+          {/* Email */}
+          {email && (
+            <div className="flex items-center gap-1">
+              <span className="text-sm">{email}</span>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={handleCopyEmail}
+                shape="square"
+              >
+                {copied ? (
+                  <CheckIcon className="w-3 h-3" />
+                ) : (
+                  <DocumentDuplicateIcon className="w-3 h-3" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-      <div className="flex flex-col">
-        <span className="text-sm font-medium">{name}</span>
-        {email && (
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {email}
-            </span>
-            <button
-              onClick={handleCopyEmail}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors hover:cursor-pointer"
-              title="Copy email"
-              type="button"
-            >
-              {copied ? (
-                <CheckIcon className="w-3 h-3" />
-              ) : (
-                <DocumentDuplicateIcon className="w-3 h-3" />
-              )}
-            </button>
+
+        {/* Providers List */}
+        {(githubProvider ||
+          googleProvider ||
+          figmaProvider ||
+          discordProvider) && (
+          <div className="flex flex-col gap-2 mt-1">
+            {/* GitHub */}
+            {githubProvider && githubProvider.user_name && (
+              <div className="flex items-center gap-2">
+                <Image
+                  className="w-4 h-4"
+                  alt="GitHub Logo"
+                  src={isDarkMode ? githubIconWhite : githubIconBlack}
+                  width={16}
+                  height={16}
+                />
+                <Link
+                  href={`https://github.com/${githubProvider.user_name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  @{githubProvider.user_name}
+                </Link>
+              </div>
+            )}
+
+            {/* Figma */}
+            {figmaProvider && figmaProvider.user_name && (
+              <div className="flex items-center gap-2">
+                <Image
+                  className="w-4 h-4"
+                  alt="Figma Logo"
+                  src={figmaIcon}
+                  width={16}
+                  height={16}
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  @{figmaProvider.user_name}
+                </span>
+              </div>
+            )}
+
+            {/* Discord */}
+            {discordProvider && discordProvider.id && (
+              <div className="flex items-center gap-2">
+                <Image
+                  className="w-4 h-4"
+                  alt="Discord Logo"
+                  src={isDarkMode ? discordIconDark : discordIcon}
+                  width={16}
+                  height={16}
+                />
+                <Link
+                  href={`https://discord.com/users/${discordProvider.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {discordProvider.user_name
+                    ? `@${discordProvider.user_name}`
+                    : "Discord"}
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>

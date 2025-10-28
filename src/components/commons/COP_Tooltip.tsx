@@ -18,7 +18,7 @@ interface COP_TooltipProps {
 
 /**
  * 移动友好的 Tooltip 组件
- * 在桌面设备上使用 hover 触发，在移动设备上使用点击触发
+ * 在桌面设备上使用 hover 触发，在移动设备上使用长按触发
  */
 export default function COP_Tooltip({
   content,
@@ -33,6 +33,9 @@ export default function COP_Tooltip({
 }: COP_TooltipProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   // 点击外部关闭 tooltip (只在移动设备上使用)
   useEffect(() => {
@@ -60,12 +63,43 @@ export default function COP_Tooltip({
     return <>{children}</>;
   }
 
+  // 清理定时器，防止内存泄漏
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
+
   // 移动设备上的处理
   if (isMobile) {
-    const handleClick = (e: React.MouseEvent) => {
+    const handleTouchStart = (e: React.TouchEvent) => {
+      // 防止默认行为（如文本选择、长按菜单）
       e.preventDefault();
-      e.stopPropagation();
-      setIsOpen(!isOpen);
+
+      // 设置长按定时器（500ms）
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, 500);
+
+      setLongPressTimer(timer);
+    };
+
+    const handleTouchEnd = () => {
+      // 清除定时器，取消长按
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
+    };
+
+    const handleTouchMove = () => {
+      // 如果手指移动，取消长按
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
     };
 
     return (
@@ -75,7 +109,12 @@ export default function COP_Tooltip({
       >
         <Tooltip.Root open={isOpen} onOpenChange={setIsOpen}>
           <Tooltip.Trigger asChild>
-            <span onClick={handleClick} className="inline-block">
+            <span
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchMove}
+              className="inline-block"
+            >
               {children}
             </span>
           </Tooltip.Trigger>

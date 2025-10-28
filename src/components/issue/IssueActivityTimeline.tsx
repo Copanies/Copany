@@ -399,6 +399,7 @@ export default function IssueActivityTimeline({
       if (item.actor_id)
         return (
           <UserAvatar
+            userId={item.actor_id}
             name={userInfos[item.actor_id]?.name || ""}
             avatarUrl={userInfos[item.actor_id]?.avatar_url || null}
             email={userInfos[item.actor_id]?.email}

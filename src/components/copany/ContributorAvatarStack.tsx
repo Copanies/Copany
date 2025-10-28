@@ -21,38 +21,34 @@ export default function ContributorAvatarStack({
   const contributors = contributorsData || EMPTY_ARRAY;
 
   // create a list of contributors
-  const allContributors = useMemo(
-    () =>
-      [
-        // creator always at the first place
-        {
-          id: copany.created_by,
-          name:
-            contributors.find((c) => c.user_id === copany.created_by)?.name ||
-            EMPTY_STRING,
-          avatar_url:
-            contributors.find((c) => c.user_id === copany.created_by)
-              ?.avatar_url || EMPTY_STRING,
-          email:
-            contributors.find((c) => c.user_id === copany.created_by)?.email ||
-            null,
-          isCreator: true,
-        },
-        // contributors sorted by contribution (excluding creator)
-        ...contributors
-          .filter((c) => c.user_id !== copany.created_by)
-          .sort((a, b) => b.contribution - a.contribution)
-          .slice(0, 2) // only take the top 2 contributors (including creator)
-          .map((c) => ({
-            id: c.user_id,
-            name: c.name,
-            avatar_url: c.avatar_url,
-            email: c.email,
-            isCreator: false,
-          })),
-      ].filter((c) => c.avatar_url),
-    [contributors, copany.created_by]
-  ); // only show users with avatar
+  const allContributors = useMemo(() => {
+    const creatorContributor = contributors.find(
+      (c) => c.user_id === copany.created_by
+    );
+
+    return [
+      // creator always at the first place
+      {
+        id: copany.created_by,
+        name: creatorContributor?.name || EMPTY_STRING,
+        avatar_url: creatorContributor?.avatar_url || EMPTY_STRING,
+        email: creatorContributor?.email || null,
+        isCreator: true,
+      },
+      // contributors sorted by contribution (excluding creator)
+      ...contributors
+        .filter((c) => c.user_id !== copany.created_by)
+        .sort((a, b) => b.contribution - a.contribution)
+        .slice(0, 2) // only take the top 2 contributors (including creator)
+        .map((c) => ({
+          id: c.user_id,
+          name: c.name,
+          avatar_url: c.avatar_url,
+          email: c.email,
+          isCreator: false,
+        })),
+    ].filter((c) => c.avatar_url);
+  }, [contributors, copany.created_by]); // only show users with avatar
 
   return (
     <div className={`flex -space-x-[6px] ${className}`}>
@@ -65,6 +61,7 @@ export default function ContributorAvatarStack({
           }}
         >
           <UserAvatar
+            userId={contributor.id}
             name={contributor.name || ""}
             avatarUrl={contributor.avatar_url || null}
             email={contributor.email}

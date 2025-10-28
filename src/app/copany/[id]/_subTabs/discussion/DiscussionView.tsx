@@ -347,6 +347,7 @@ function DiscussionItem({
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <UserAvatar
+                userId={String(discussion.creator_id || "")}
                 name={creator?.name || ""}
                 avatarUrl={creator?.avatar_url || null}
                 email={creator?.email}
