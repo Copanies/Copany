@@ -64,29 +64,26 @@ export default function UserAvatar({
   };
 
   // Render the avatar image or fallback
-  const avatarContent = (
-    <div className={`${config.container} ${className}`}>
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={config.imageSize}
-          height={config.imageSize}
-          className={`${config.container} rounded-full hover:cursor-pointer`}
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(
-            config.imageSize,
-            config.imageSize,
-            isDarkMode
-          )}
-        />
-      ) : (
-        <div
-          className={`${config.container} bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center ${config.fontSize} font-medium text-gray-600 dark:text-gray-300 hover:cursor-pointer`}
-        >
-          {initials}
-        </div>
+  const avatarContent = avatarUrl ? (
+    <Image
+      src={avatarUrl}
+      alt={name}
+      width={config.imageSize}
+      height={config.imageSize}
+      className={`${config.container} rounded-full hover:cursor-pointer flex-shrink-0`}
+      placeholder="blur"
+      blurDataURL={shimmerDataUrlWithTheme(
+        config.imageSize,
+        config.imageSize,
+        isDarkMode
       )}
+      style={{ display: "block" }}
+    />
+  ) : (
+    <div
+      className={`${config.container} bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center ${config.fontSize} font-medium text-gray-600 dark:text-gray-300 hover:cursor-pointer flex-shrink-0`}
+    >
+      {initials}
     </div>
   );
 
@@ -143,15 +140,13 @@ export default function UserAvatar({
   );
 
   return (
-    <div>
-      <COP_Tooltip
-        content={tooltipContent}
-        side="left"
-        sideOffset={8}
-        align="center"
-      >
-        {avatarContent}
-      </COP_Tooltip>
-    </div>
+    <COP_Tooltip
+      content={tooltipContent}
+      side="left"
+      sideOffset={8}
+      align="center"
+    >
+      {avatarContent}
+    </COP_Tooltip>
   );
 }

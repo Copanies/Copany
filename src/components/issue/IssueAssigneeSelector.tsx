@@ -381,25 +381,18 @@ export function renderUserLabelSm(
   name: string,
   avatarUrl: string | null,
   showText: boolean,
-  isDarkMode: boolean
+  isDarkMode: boolean,
+  email?: string | null
 ) {
   return (
     <div className="flex items-center gap-1 -my-[1px]">
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={name}
-          width={20}
-          height={20}
-          className="w-5 h-5 rounded-full"
-          placeholder="blur"
-          blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
-        />
-      ) : (
-        <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[9px] font-medium text-gray-600 dark:text-gray-300 font-semibold">
-          {name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <UserAvatar
+        name={name}
+        avatarUrl={avatarUrl}
+        email={email}
+        size="sm"
+        showTooltip={true}
+      />
       {showText && (
         <span className="text-sm text-gray-900 dark:text-gray-100">{name}</span>
       )}

@@ -75,9 +75,9 @@ export default function COP_Tooltip({
       >
         <Tooltip.Root open={isOpen} onOpenChange={setIsOpen}>
           <Tooltip.Trigger asChild>
-            <div onClick={handleClick} style={{ display: "inline-block" }}>
+            <span onClick={handleClick} className="inline-block">
               {children}
-            </div>
+            </span>
           </Tooltip.Trigger>
           <Tooltip.Portal>
             <Tooltip.Content
@@ -91,7 +91,6 @@ export default function COP_Tooltip({
               }}
             >
               {content}
-              <Tooltip.Arrow className="fill-white dark:fill-gray-900" />
             </Tooltip.Content>
           </Tooltip.Portal>
         </Tooltip.Root>
@@ -107,7 +106,7 @@ export default function COP_Tooltip({
     >
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <div style={{ display: "inline-block" }}>{children}</div>
+          <span className="inline-block">{children}</span>
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content
@@ -117,7 +116,6 @@ export default function COP_Tooltip({
             className={className}
           >
             {content}
-            <Tooltip.Arrow className="fill-white dark:fill-gray-900" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>

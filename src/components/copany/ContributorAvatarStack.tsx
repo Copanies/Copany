@@ -61,7 +61,7 @@ export default function ContributorAvatarStack({
       {allContributors.map((contributor, index) => (
         <div
           key={contributor.id}
-          className="relative"
+          className="relative flex items-center"
           style={{
             zIndex: allContributors.length - index, // ensure the left avatar is on top
           }}

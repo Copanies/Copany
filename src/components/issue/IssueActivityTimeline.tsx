@@ -13,16 +13,16 @@ import {
   IssueActivityPayload,
 } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
-import { renderLevelLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueLevelSelector";
-import { renderPriorityLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssuePrioritySelector";
-import { renderStateLabel } from "@/app/copany/[id]/_subTabs/issue/_components/IssueStateSelector";
+import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
+import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
+import { renderStateLabel } from "@/components/issue/IssueStateSelector";
 import type { IssueComment } from "@/types/database.types";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
-import IssueCommentCard from "@/app/copany/[id]/_subTabs/issue/_components/IssueCommentCard";
-import IssueReviewPanel from "@/app/copany/[id]/_subTabs/issue/_components/IssueReviewPanel";
-import AssignmentRequestPanel from "@/app/copany/[id]/_subTabs/issue/_components/AssignmentRequestPanel";
+import IssueCommentCard from "@/components/issue/IssueCommentCard";
+import IssueReviewPanel from "@/components/issue/IssueReviewPanel";
+import AssignmentRequestPanel from "@/components/issue/AssignmentRequestPanel";
 import type { AssignmentRequest } from "@/types/database.types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIssueActivity } from "@/hooks/activity";
