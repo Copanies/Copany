@@ -4,9 +4,6 @@ import { useState, useMemo } from "react";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import type { AssignmentRequest } from "@/types/database.types";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import {
   useAssignmentRequests,
@@ -37,7 +34,6 @@ export default function AssignmentRequestPanel({
   onFocusNewComment,
   onActivityChanged,
 }: AssignmentRequestPanelProps) {
-  const isDarkMode = useDarkMode();
   const { data: itemsData } = useAssignmentRequests(issueId);
   const items = (itemsData || EMPTY_ARRAY) as AssignmentRequest[];
   const userIds = Array.from(

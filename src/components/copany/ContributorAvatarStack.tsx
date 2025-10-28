@@ -4,7 +4,6 @@ import { Copany } from "@/types/database.types";
 import { useContributors } from "@/hooks/contributors";
 import { useMemo } from "react";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/utils/constants";
-import { useDarkMode } from "@/utils/useDarkMode";
 import UserAvatar from "@/components/commons/UserAvatar";
 
 interface ContributorAvatarStackProps {
@@ -18,7 +17,6 @@ export default function ContributorAvatarStack({
   size = "md",
   className = "",
 }: ContributorAvatarStackProps) {
-  const isDarkMode = useDarkMode();
   const { data: contributorsData } = useContributors(copany.id);
   const contributors = contributorsData || EMPTY_ARRAY;
 

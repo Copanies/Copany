@@ -1,9 +1,6 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import {
   IssueActivity,
   IssueActivityType,
@@ -53,7 +50,6 @@ export default function IssueActivityTimeline({
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
-  const isDarkMode = useDarkMode();
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(

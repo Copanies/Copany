@@ -2,9 +2,6 @@
 
 import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import { useRouter } from "next/navigation";
 import {
   ChatBubbleBottomCenterIcon,
@@ -43,7 +40,6 @@ export default function DiscussionDetailView({
   discussionId,
   copanyId,
 }: DiscussionDetailViewProps) {
-  const isDarkMode = useDarkMode();
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();

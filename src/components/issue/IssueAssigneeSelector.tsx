@@ -9,11 +9,8 @@ import {
 } from "@/types/database.types";
 import { User } from "@supabase/supabase-js";
 import GroupedDropdown from "@/components/commons/GroupedDropdown";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { UserIcon as UserIconSolid } from "@heroicons/react/24/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { requestAssignmentToEditorsAction } from "@/actions/assignmentRequest.actions";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";

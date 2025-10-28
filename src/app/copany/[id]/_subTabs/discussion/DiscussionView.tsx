@@ -15,9 +15,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import type { UserInfo } from "@/actions/user.actions";
-import Image from "next/image";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
-import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
@@ -331,7 +328,6 @@ function DiscussionItem({
   creator?: UserInfo;
   voteCounts: Record<string, number>;
 }) {
-  const isDarkMode = useDarkMode();
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
 

@@ -13,7 +13,6 @@ interface UserAvatarProps {
   email?: string | null;
   size?: "sm" | "md" | "lg";
   showTooltip?: boolean;
-  className?: string;
 }
 
 export default function UserAvatar({
@@ -22,7 +21,6 @@ export default function UserAvatar({
   email,
   size = "md",
   showTooltip = true,
-  className = "",
 }: UserAvatarProps) {
   const isDarkMode = useDarkMode();
   const [copied, setCopied] = useState(false);

@@ -7,7 +7,6 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useHasProviders } from "@/hooks/userAuth";
 import { useDarkMode } from "@/utils/useDarkMode";
 import LoadingView from "@/components/commons/LoadingView";
-import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { AtSymbolIcon } from "@heroicons/react/24/outline";
 import {
   signInWithGitHub,
