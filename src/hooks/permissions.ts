@@ -8,9 +8,10 @@ import { useCopany } from "./copany";
 export function useIssuePermission(copanyId: string, issue: IssueWithAssignee | null) {
   const { data: currentUser } = useCurrentUser();
   const { data: copany } = useCopany(copanyId);
+  const userId = currentUser?.id || "anonymous";
 
   return useQuery({
-    queryKey: ["issuePermission", copanyId, issue?.id],
+    queryKey: ["issuePermission", copanyId, issue?.id, userId],
     queryFn: async (): Promise<boolean> => {
       if (!issue || !currentUser) return false;
       

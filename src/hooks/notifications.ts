@@ -3,14 +3,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Notification } from "@/types/database.types";
 import { listNotificationsAction, markAllReadAction, markReadAction, unreadCountAction } from "@/actions/notification.actions";
+import { useCurrentUser } from "./currentUser";
 
-function key(before?: string, limit = 20) { return ["notifications", before || "", String(limit)] as const; }
-function unreadKey() { return ["notifications", "unreadCount"] as const; }
+function key(userId: string, before?: string, limit = 20) { return ["notifications", userId, before || "", String(limit)] as const; }
+function unreadKey(userId: string) { return ["notifications", "unreadCount", userId] as const; }
 
 export function useNotifications(params?: { before?: string; limit?: number }) {
   const { before, limit = 20 } = params || {};
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useQuery<{ items: Notification[]; unread: number }>({
-    queryKey: key(before, limit),
+    queryKey: key(userId, before, limit),
+    enabled: !!currentUser,
     queryFn: async () => {
       try {
         const qs = new URLSearchParams();
@@ -33,6 +38,9 @@ export function useNotifications(params?: { before?: string; limit?: number }) {
 
 export function useMarkNotifications() {
   const qc = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useMutation({
     mutationFn: async (vars: { ids?: string[]; all?: boolean }) => {
       try {
@@ -43,8 +51,8 @@ export function useMarkNotifications() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: key() });
-      qc.invalidateQueries({ queryKey: unreadKey() });
+      qc.invalidateQueries({ queryKey: ["notifications", userId], exact: false });
+      qc.invalidateQueries({ queryKey: unreadKey(userId) });
     }
   });
 }

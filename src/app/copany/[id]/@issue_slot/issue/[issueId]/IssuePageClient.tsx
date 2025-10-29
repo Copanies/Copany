@@ -60,6 +60,7 @@ export default function IssuePageClient({
 }: IssuePageClientProps) {
   const [issueData, setIssueData] = useState<IssueWithAssignee | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [issueReady, setIssueReady] = useState(false);
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -212,6 +213,7 @@ export default function IssuePageClient({
     if (rqIssue) {
       setIssueData(rqIssue);
     }
+    setIssueReady(true);
   }, [rqIssue]);
 
   const updateIssueInCache = useCallback(
@@ -422,7 +424,7 @@ export default function IssuePageClient({
     );
   })();
 
-  if (isLoading || isIssueLoading) {
+  if (isLoading || isIssueLoading || !issueReady) {
     return <LoadingView type="page" />;
   }
 

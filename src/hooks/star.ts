@@ -9,20 +9,24 @@ import {
   starAction,
   unstarAction,
 } from "@/actions/star.actions";
+import { useCurrentUser } from "@/hooks/currentUser";
 
 function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
 function copaniesKey() { return ["copanies", "v2"] as const; }
-function hasStarredKey(copanyId: string) {
-  return ["hasStarred", copanyId] as const;
+function hasStarredKey(copanyId: string, userId: string) {
+  return ["hasStarred", copanyId, userId] as const;
 }
-function myStarredListKey() {
-  return ["myStarredCopanyIds"] as const;
+function myStarredListKey(userId: string) {
+  return ["myStarredCopanyIds", userId] as const;
 }
 
 // Simplified hook: only check if current user has starred
 export function useHasStarred(copanyId: string) {
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useQuery<boolean>({
-    queryKey: hasStarredKey(copanyId),
+    queryKey: hasStarredKey(copanyId, userId),
     queryFn: async () => {
       try {
         const res = await fetch(`/api/stars?copanyId=${encodeURIComponent(copanyId)}&type=hasStarred`);
@@ -33,6 +37,7 @@ export function useHasStarred(copanyId: string) {
         return await hasStarredAction(copanyId);
       }
     },
+    enabled: !!currentUser, // Only query when user is logged in
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
@@ -40,6 +45,9 @@ export function useHasStarred(copanyId: string) {
 
 export function useToggleStar(copanyId: string) {
   const qc = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   const doStar = async () => {
     console.log("[useToggleStar] Calling starAction for:", copanyId);
     const result = await starAction(copanyId);
@@ -64,15 +72,15 @@ export function useToggleStar(copanyId: string) {
       
       // Cancel any outgoing refetches
       await Promise.all([
-        qc.cancelQueries({ queryKey: hasStarredKey(copanyId) }),
-        qc.cancelQueries({ queryKey: myStarredListKey() }),
+        qc.cancelQueries({ queryKey: hasStarredKey(copanyId, userId) }),
+        qc.cancelQueries({ queryKey: myStarredListKey(userId) }),
         qc.cancelQueries({ queryKey: copanyKey(copanyId) }),
         qc.cancelQueries({ queryKey: copaniesKey() }),
       ]);
       
       // Snapshot the previous values
-      const prevFlag = qc.getQueryData<boolean>(hasStarredKey(copanyId)) ?? false;
-      const prevListRaw = qc.getQueryData<string[]>(myStarredListKey());
+      const prevFlag = qc.getQueryData<boolean>(hasStarredKey(copanyId, userId)) ?? false;
+      const prevListRaw = qc.getQueryData<string[]>(myStarredListKey(userId));
       const prevList = Array.isArray(prevListRaw) ? prevListRaw : [];
 
       // Snapshot copany data
@@ -93,8 +101,8 @@ export function useToggleStar(copanyId: string) {
         : prevList.filter((id) => String(id) !== String(copanyId));
 
       // Apply optimistic updates for hasStarred and myStarredList
-      qc.setQueryData(hasStarredKey(copanyId), nextFlag);
-      qc.setQueryData(myStarredListKey(), nextList);
+      qc.setQueryData(hasStarredKey(copanyId, userId), nextFlag);
+      qc.setQueryData(myStarredListKey(userId), nextList);
 
       // Update copany cache - single copany
       if (prevCopany) {
@@ -142,8 +150,8 @@ export function useToggleStar(copanyId: string) {
         hasCopanies: !!ctx.prevCopanies,
       });
       
-      qc.setQueryData(hasStarredKey(copanyId), ctx.prevFlag);
-      qc.setQueryData(myStarredListKey(), Array.isArray(ctx.prevList) ? ctx.prevList : []);
+      qc.setQueryData(hasStarredKey(copanyId, userId), ctx.prevFlag);
+      qc.setQueryData(myStarredListKey(userId), Array.isArray(ctx.prevList) ? ctx.prevList : []);
       
       // Rollback copany cache
       if (ctx.prevCopany !== undefined) {
@@ -158,8 +166,8 @@ export function useToggleStar(copanyId: string) {
       
       // Refetch to ensure we have the latest data
       await Promise.all([
-        qc.invalidateQueries({ queryKey: hasStarredKey(copanyId) }),
-        qc.invalidateQueries({ queryKey: myStarredListKey() }),
+        qc.invalidateQueries({ queryKey: hasStarredKey(copanyId, userId) }),
+        qc.invalidateQueries({ queryKey: myStarredListKey(userId) }),
         qc.invalidateQueries({ queryKey: copanyKey(copanyId) }),
         qc.invalidateQueries({ queryKey: copaniesKey() }),
       ]);
@@ -170,8 +178,11 @@ export function useToggleStar(copanyId: string) {
 }
 
 export function useMyStarredCopanyIds() {
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useQuery<string[]>({
-    queryKey: myStarredListKey(),
+    queryKey: myStarredListKey(userId),
     queryFn: async () => {
       try {
         const res = await fetch(`/api/stars?type=myStarredList`);
@@ -183,6 +194,7 @@ export function useMyStarredCopanyIds() {
         return Array.isArray(result) ? result : [];
       }
     },
+    enabled: !!currentUser, // Only query when user is logged in
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     initialData: [], // Ensure initial data is always an empty array
