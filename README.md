@@ -133,7 +133,7 @@ To make work more free — and more meaningful.
 
 ## Quick Start
 
-- Development guidelines: [CONTRIBUTING.md](https://github.com/Copanies/Copany/blob/main/contributing.md/)
+- Development guidelines: [CONTRIBUTING.md](https://github.com/Copanies/Copany/blob/main/CONTRIBUTING.md/)
 - Product design prototype: [Figma Design](https://www.figma.com/design/B5wmCOR2kV9pKCZiq6fDMS/Copany?node-id=2809-4074&t=kkuuZDL8rl0pVeKU-1)
 
 ## How to Contribute
