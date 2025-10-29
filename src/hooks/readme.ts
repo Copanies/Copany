@@ -6,6 +6,14 @@ import { getRepoReadmeWithFilenameAction, getRepoLicenseAction, getRepoLicenseTy
 function readmeKey(githubUrl: string) { return ["readme", githubUrl] as const; }
 function licenseKey(githubUrl: string) { return ["license", githubUrl] as const; }
 
+// Error types for README fetching
+export type ReadmeErrorType = "NETWORK_ERROR" | "NOT_FOUND";
+
+export interface ReadmeResult {
+  content?: string;
+  error?: ReadmeErrorType;
+}
+
 const decodeGitHubContent = (base64String: string): string => {
   const binaryString = typeof atob !== "undefined" ? atob(base64String) : Buffer.from(base64String, "base64").toString("binary");
   const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
@@ -14,10 +22,10 @@ const decodeGitHubContent = (base64String: string): string => {
 };
 
 export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean) {
-  return useQuery<string>({
+  return useQuery<ReadmeResult>({
     queryKey: githubUrl ? [...readmeKey(githubUrl), preferChinese ? "zh" : "en"] : ["readme", "none"],
     queryFn: async () => {
-      if (!githubUrl) return "No README";
+      if (!githubUrl) return { content: "No README", error: "NOT_FOUND" };
       console.log("useRepoReadme", githubUrl, preferChinese);
       
       try {
@@ -27,36 +35,59 @@ export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean
             const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme&filename=README.zh.md`);
             if (res.ok) {
               const json = await res.json();
+              if (json.error) {
+                // If API returns error type, preserve it
+                return { error: json.error as ReadmeErrorType };
+              }
               if (json.content && json.content !== "No README") {
-                return json.content as string;
+                return { content: json.content as string };
               }
+            } else if (res.status >= 500) {
+              // Server error (5xx) indicates network/server issue
+              return { error: "NETWORK_ERROR" };
             }
-          } catch {
-            // Fallback to action if API fails
-            try {
-              const res = await getRepoReadmeWithFilenameAction(githubUrl, "README.zh.md");
-              if (res && !Array.isArray(res) && "content" in res && res.content) {
-                return decodeGitHubContent(res.content);
-              }
-            } catch {
-              // Continue to fallback to default README
-            }
+          } catch (_error) {
+            // Network error (fetch failed, timeout, etc.)
+            return { error: "NETWORK_ERROR" };
           }
         }
         
         // Try default README (either as fallback for Chinese or primary for non-Chinese)
         try {
           const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme`);
-          if (!res.ok) throw new Error("request failed");
+          if (!res.ok) {
+            if (res.status >= 500) {
+              // Server error indicates network/server issue
+              return { error: "NETWORK_ERROR" };
+            }
+            // Try fallback to action
+            throw new Error("request failed");
+          }
           const json = await res.json();
-          return json.content as string;
-        } catch {
-          const res = await getRepoReadmeWithFilenameAction(githubUrl);
-          if (!res || Array.isArray(res) || !("content" in res) || !res.content) return "No README";
-          return decodeGitHubContent(res.content);
+          if (json.error) {
+            // If API returns error type, preserve it
+            return { error: json.error as ReadmeErrorType };
+          }
+          if (json.content === "No README") {
+            return { content: "No README", error: "NOT_FOUND" };
+          }
+          return { content: json.content as string };
+        } catch (_error) {
+          // Fallback to action for network errors or when API fails
+          try {
+            const res = await getRepoReadmeWithFilenameAction(githubUrl);
+            if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
+              return { content: "No README", error: "NOT_FOUND" };
+            }
+            return { content: decodeGitHubContent(res.content) };
+          } catch (_actionError) {
+            // Action failed - likely network error
+            return { error: "NETWORK_ERROR" };
+          }
         }
-      } catch {
-        return "No README";
+      } catch (_error) {
+        // Any other error is treated as network error
+        return { error: "NETWORK_ERROR" };
       }
     },
     enabled: !!githubUrl,

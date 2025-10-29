@@ -20,12 +20,27 @@ export async function GET(request: NextRequest) {
     
     if (type === "readme") {
       const filename = searchParams.get("filename"); // Optional filename parameter
-      const res = await getRepoReadmeWithFilenameAction(githubUrl, filename || undefined);
-      if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
-        return NextResponse.json({ content: "No README" });
+      try {
+        const res = await getRepoReadmeWithFilenameAction(githubUrl, filename || undefined);
+        if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
+          return NextResponse.json({ content: "No README", error: "NOT_FOUND" });
+        }
+        const content = decodeGitHubContent(res.content);
+        return NextResponse.json({ content });
+      } catch (error) {
+        // Check if it's a GitHub API 404 (not found)
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isNotFound = 
+          errorMessage.includes("404") ||
+          (typeof error === "object" && error !== null && "status" in error && (error as { status: number }).status === 404);
+        
+        if (isNotFound) {
+          return NextResponse.json({ content: "No README", error: "NOT_FOUND" });
+        }
+        
+        // All other errors (network errors, 5xx, etc.) are treated as network errors
+        return NextResponse.json({ error: "NETWORK_ERROR" }, { status: 500 });
       }
-      const content = decodeGitHubContent(res.content);
-      return NextResponse.json({ content });
     } else if (type === "license") {
       const license = await getRepoLicenseAction(githubUrl);
       if (!license || Array.isArray(license) || !("content" in license)) {
@@ -37,7 +52,8 @@ export async function GET(request: NextRequest) {
     } else {
       return NextResponse.json({ error: "type required (readme or license)" }, { status: 400 });
     }
-  } catch (_e) {
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  } catch (_error) {
+    // Unhandled errors are treated as network errors
+    return NextResponse.json({ error: "NETWORK_ERROR" }, { status: 500 });
   }
 }

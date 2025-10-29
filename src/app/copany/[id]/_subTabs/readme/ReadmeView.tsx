@@ -3,7 +3,11 @@
 import { Suspense } from "react";
 import MarkdownView from "@/components/commons/MarkdownView";
 import LoadingView from "@/components/commons/LoadingView";
-import { BookOpenIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import {
+  BookOpenIcon,
+  ArrowUpRightIcon,
+  SignalSlashIcon,
+} from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
@@ -46,12 +50,19 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
   const isLoggedIn = !!currentUser;
 
   const {
-    data: readmeContent,
+    data: readmeResult,
     isLoading,
+    isFetching,
     error,
+    refetch,
   } = useRepoReadme(githubUrl, isChinesePreferred);
 
-  if (isLoading) {
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const readmeError = readmeResult?.error;
+  const readmeContent = readmeResult?.content;
+
+  // Show loading state during initial load or refetch
+  if (isLoading || isFetching) {
     return (
       <div className="py-8 text-center">
         <LoadingView type="label" />
@@ -59,17 +70,47 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
     );
   }
 
-  if (error) {
+  // Network error: show network error UI
+  if (readmeError === "NETWORK_ERROR" || error || isOffline) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
-        <p className="text-red-600 dark:text-red-400">
-          Failed to load README content from GitHub.
-        </p>
-      </div>
+      <EmptyPlaceholderView
+        icon={
+          <SignalSlashIcon
+            className="w-16 h-16 text-gray-500 dark:text-gray-400"
+            strokeWidth={1}
+          />
+        }
+        title="Cannot load README"
+        description={
+          <span>
+            Network issue prevents fetching README from GitHub. It may be caused
+            by VPN/proxy connectivity. Please check your connection and try
+            again.{" "}
+            {githubUrl ? (
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Open on GitHub
+                <ArrowUpRightIcon className="w-4 h-4" />
+              </a>
+            ) : null}
+          </span>
+        }
+        buttonTitle="Retry"
+        buttonAction={() => refetch()}
+      />
     );
   }
 
-  if (!readmeContent || readmeContent === "No README") {
+  // No README found (404) or content is "No README"
+  if (
+    readmeError === "NOT_FOUND" ||
+    !readmeContent ||
+    readmeContent === "No README"
+  ) {
     const newReadmeUrl = githubUrl ? generateNewReadmeUrl(githubUrl) : null;
 
     return (
@@ -84,7 +125,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
         description={
           isLoggedIn
             ? "Help people learn about your Copany by adding a README — share its purpose, how it works, and how others can contribute."
-            : "This repository does not have a README yet. Log in to add a README file."
+            : "This repository does not have a README yet."
         }
         buttonIcon={
           isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
