@@ -14,9 +14,9 @@ export default function ReactQueryProvider({ children }: Props) {
     const client = new QueryClient({
       defaultOptions: {
         queries: {
-          // 数据在获取后1分钟内视为新鲜；
-          // 超过1分钟标记为stale，下次访问会立即返回缓存并后台更新
-          staleTime: 1 * 60 * 1000,
+          // 数据在获取后10s内视为新鲜；
+          // 超过10s标记为stale，下次访问会立即返回缓存并后台更新
+          staleTime: 1 * 10 * 1000,
           // 缓存数据在无人使用后保留1天再被清除
           gcTime: 24 * 60 * 60 * 1000, // 1 day
           // 窗口重新获得焦点时，如数据是stale则后台重新获取

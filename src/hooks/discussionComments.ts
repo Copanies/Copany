@@ -19,7 +19,7 @@ export function useDiscussionComments(discussionId: string) {
         return await getDiscussionCommentsAction(discussionId);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

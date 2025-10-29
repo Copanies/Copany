@@ -89,16 +89,12 @@ export default function IssuePageClient({
     data: assignmentRequests = EMPTY_ASSIGNMENT_REQUESTS_ARRAY,
     isLoading: isAssignmentRequestsLoading,
   } = useAssignmentRequests(issueId);
-  const { data: canEdit = false, isLoading: isPermissionLoading } =
-    useIssuePermission(copanyId, issueData);
+  const canEdit = useIssuePermission(copanyId, issueData);
   const isDarkMode = useDarkMode();
 
   // Overall loading state
   const isLoading =
-    isContributorsLoading ||
-    isCopanyLoading ||
-    isAssignmentRequestsLoading ||
-    isPermissionLoading;
+    isContributorsLoading || isCopanyLoading || isAssignmentRequestsLoading;
 
   // Collect user IDs from assignment requests for user info
   const userIds = useMemo(() => {
@@ -146,9 +142,6 @@ export default function IssuePageClient({
     if (!issueData?.created_by) return null;
     return userInfosMap[String(issueData.created_by)] || null;
   }, [issueData?.created_by, userInfosMap]);
-
-  // Permission resolved when we have the data
-  const isPermissionResolved = !isPermissionLoading;
 
   // Read-only tooltip
   const readOnlyTooltip = useMemo(() => {
@@ -443,7 +436,7 @@ export default function IssuePageClient({
         >
           <ChevronLeftIcon className="w-3 h-3 text-gray-900 dark:text-gray-100" />
         </Button>
-        {isPermissionResolved && !canEdit && (
+        {!canEdit && (
           <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
             <Tooltip.Root>
               <Tooltip.Trigger asChild>

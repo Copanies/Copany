@@ -27,7 +27,7 @@ export function useCopany(
         return await getCopanyByIdAction(copanyId);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: options?.enabled ?? true,
   });
@@ -54,7 +54,7 @@ export function useCopanies() {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -77,7 +77,7 @@ export function useCopaniesWhereUserIsContributor(userId: string) {
         return await getCopaniesWhereUserIsContributorAction(userId);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     // Disable query when userId is empty
     enabled: !!userId && userId.trim() !== "",
@@ -97,7 +97,7 @@ export function useMyStarredCopanies() {
         return { ids: await listMyStarredCopanyIdsAction() };
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -145,7 +145,7 @@ export function useCopaniesByIds(ids: string[]) {
         return await getCopaniesByIdsAction(ids);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

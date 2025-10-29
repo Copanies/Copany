@@ -29,7 +29,7 @@ export function useDistributes(copanyId: string) {
         return await getDistributesAction(copanyId);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: !!copanyId,
   });
@@ -72,7 +72,7 @@ export function useTransactions(copanyId: string) {
         return await getTransactionsAction(copanyId);
       }
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     enabled: !!copanyId,
   });

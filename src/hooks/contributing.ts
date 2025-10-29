@@ -45,7 +45,7 @@ export function useRepoContributing(githubUrl?: string | null, preferChinese?: b
       }
     },
     enabled: !!githubUrl,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

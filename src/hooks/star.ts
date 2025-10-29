@@ -38,7 +38,7 @@ export function useHasStarred(copanyId: string) {
       }
     },
     enabled: !!currentUser, // Only query when user is logged in
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -195,7 +195,7 @@ export function useMyStarredCopanyIds() {
       }
     },
     enabled: !!currentUser, // Only query when user is logged in
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     initialData: [], // Ensure initial data is always an empty array
   });

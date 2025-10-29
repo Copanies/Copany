@@ -35,7 +35,7 @@ export function useDiscussions(copanyId: string) {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -66,7 +66,7 @@ export function useDiscussion(copanyId: string, discussionId: string) {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     enabled: !!discussionId && !!copanyId,
   });
 }
@@ -179,7 +179,7 @@ export function useDiscussionById(discussionId: string) {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     enabled: !!discussionId,
   });
 }
@@ -205,7 +205,7 @@ export function useAllDiscussions() {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
