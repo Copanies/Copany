@@ -18,13 +18,14 @@ import Button from "@/components/commons/Button";
 import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
+import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
 
 // ============================================================
 // DEFAULT ISSUE TEMPLATE
 // ============================================================
 const TEMPLATE_EMPTY_PARAGRAPH = "\u200B";
 
-const DEFAULT_ISSUE_TEMPLATE = `## Background
+const DEFAULT_ISSUE_TEMPLATE_EN = `## Background
 
 ${TEMPLATE_EMPTY_PARAGRAPH}
 
@@ -32,15 +33,36 @@ ${TEMPLATE_EMPTY_PARAGRAPH}
 
 ${TEMPLATE_EMPTY_PARAGRAPH}
 
-## Functional Requirements
+## Features
 
 ${TEMPLATE_EMPTY_PARAGRAPH}
 
-## Design
+## Design Spec
 
 ${TEMPLATE_EMPTY_PARAGRAPH}
 
-## Technical Requirements
+## Technical
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+`;
+
+const DEFAULT_ISSUE_TEMPLATE_ZH = `## 背景
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## 目标
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## 功能
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## 设计稿
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## 技术要求
 
 ${TEMPLATE_EMPTY_PARAGRAPH}
 `;
@@ -59,8 +81,13 @@ export default function IssueCreateForm({
   currentUser: User | null;
   contributors: CopanyContributorWithUserInfo[];
 }) {
+  const { isChinesePreferred } = usePreferredLanguage();
+  const defaultTemplate = isChinesePreferred
+    ? DEFAULT_ISSUE_TEMPLATE_ZH
+    : DEFAULT_ISSUE_TEMPLATE_EN;
+
   const [title, setTitle] = useState<string>(EMPTY_STRING);
-  const [description, setDescription] = useState<string>(DEFAULT_ISSUE_TEMPLATE);
+  const [description, setDescription] = useState<string>(defaultTemplate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createIssue = useCreateIssue(copanyId);
 
@@ -193,7 +220,7 @@ export default function IssueCreateForm({
           />
           <div ref={editorDivRef}>
             <MilkdownEditor
-              initialContent={DEFAULT_ISSUE_TEMPLATE}
+              initialContent={defaultTemplate}
               onContentChange={handleContentChange}
               className="min-h-[200px]"
             />

@@ -193,7 +193,12 @@ const nordThemeStyles = `
   /* ===== Heading styles ===== */
   .milkdown-editor.milkdown .ProseMirror h1,
   .milkdown-editor.milkdown .ProseMirror h2,
-  .milkdown-editor.milkdown .ProseMirror h3,
+  .milkdown-editor.milkdown .ProseMirror h3 {
+    font-family: var(--crepe-font-title);
+    font-weight: 700;
+    padding: 2px 0;
+  }
+
   .milkdown-editor.milkdown .ProseMirror h4,
   .milkdown-editor.milkdown .ProseMirror h5,
   .milkdown-editor.milkdown .ProseMirror h6 {
@@ -203,39 +208,28 @@ const nordThemeStyles = `
   }
 
   .milkdown-editor.milkdown .ProseMirror h1 {
-    font-size: 32px;
-    line-height: 40px;
+    font-size: 24px;
+    line-height: 28px;
     margin-top: 24px;
   }
 
   .milkdown-editor.milkdown .ProseMirror h2 {
-    font-size: 28px;
-    line-height: 36px;
+    font-size: 20px;
+    line-height: 26px;
     margin-top: 20px;
   }
 
   .milkdown-editor.milkdown .ProseMirror h3 {
-    font-size: 24px;
-    line-height: 32px;
+    font-size: 18px;
+    line-height: 24px;
     margin-top: 18px;
   }
 
-  .milkdown-editor.milkdown .ProseMirror h4 {
-    font-size: 20px;
-    line-height: 28px;
-    margin-top: 16px;
-  }
-
-  .milkdown-editor.milkdown .ProseMirror h5 {
-    font-size: 18px;
-    line-height: 26px;
-    margin-top: 12px;
-  }
-
+  .milkdown-editor.milkdown .ProseMirror h4,
+  .milkdown-editor.milkdown .ProseMirror h5,
   .milkdown-editor.milkdown .ProseMirror h6 {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 24px;
+    font-size: 18px;
+    line-height: 20px;
     margin-top: 12px;
   }
 
