@@ -19,6 +19,32 @@ import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
 
+// ============================================================
+// DEFAULT ISSUE TEMPLATE
+// ============================================================
+const TEMPLATE_EMPTY_PARAGRAPH = "\u200B";
+
+const DEFAULT_ISSUE_TEMPLATE = `## Background
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## Goal
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## Functional Requirements
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## Design
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+
+## Technical Requirements
+
+${TEMPLATE_EMPTY_PARAGRAPH}
+`;
+
 // Issue form component
 export default function IssueCreateForm({
   copanyId,
@@ -34,7 +60,7 @@ export default function IssueCreateForm({
   contributors: CopanyContributorWithUserInfo[];
 }) {
   const [title, setTitle] = useState<string>(EMPTY_STRING);
-  const [description, setDescription] = useState<string>(EMPTY_STRING);
+  const [description, setDescription] = useState<string>(DEFAULT_ISSUE_TEMPLATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createIssue = useCreateIssue(copanyId);
 
@@ -167,6 +193,7 @@ export default function IssueCreateForm({
           />
           <div ref={editorDivRef}>
             <MilkdownEditor
+              initialContent={DEFAULT_ISSUE_TEMPLATE}
               onContentChange={handleContentChange}
               className="min-h-[200px]"
             />
