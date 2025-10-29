@@ -60,7 +60,7 @@ export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean
       }
     },
     enabled: !!githubUrl,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }
@@ -85,7 +85,7 @@ export function useRepoLicense(githubUrl?: string | null) {
       }
     },
     enabled: !!githubUrl,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
 }

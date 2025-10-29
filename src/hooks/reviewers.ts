@@ -18,7 +18,7 @@ export function useIssueReviewers(issueId: string) {
       }
     },
     refetchInterval: 10 * 60 * 1000, // 10 minutes
-    staleTime: 1 * 60 * 1000
+    staleTime: 1 * 10 * 1000
   });
 }
 
@@ -55,7 +55,7 @@ export function useMultipleIssueReviewers(issueIds: string[]) {
     },
     enabled: stableIds.length > 0,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
-    staleTime: 1 * 60 * 1000
+    staleTime: 1 * 10 * 1000
   });
 }
 

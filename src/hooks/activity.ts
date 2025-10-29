@@ -18,7 +18,7 @@ export function useIssueActivity(issueId: string, limit = 200) {
       }
     },
     refetchInterval: 10 * 60 * 1000, // 10 minutes
-    staleTime: 1 * 60 * 1000
+    staleTime: 1 * 10 * 1000
   });
 }
 

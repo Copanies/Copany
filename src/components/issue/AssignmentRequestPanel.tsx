@@ -183,6 +183,10 @@ export default function AssignmentRequestPanel({
                             e
                           );
                         }
+                        // Explicitly invalidate assignment requests to ensure UI updates
+                        await qc.invalidateQueries({
+                          queryKey: ["assignmentRequests", "issue", issueId],
+                        });
                         await Promise.all([
                           qc.invalidateQueries({
                             queryKey: ["issueActivity", issueId],
@@ -224,6 +228,10 @@ export default function AssignmentRequestPanel({
                         await refuseMutation.mutateAsync(
                           String(target.requester_id)
                         );
+                        // Explicitly invalidate assignment requests to ensure UI updates
+                        await qc.invalidateQueries({
+                          queryKey: ["assignmentRequests", "issue", issueId],
+                        });
                         await Promise.all([
                           qc.invalidateQueries({
                             queryKey: ["issueActivity", issueId],

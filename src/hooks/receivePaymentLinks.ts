@@ -25,7 +25,7 @@ export function usePaymentLinks(userId: string) {
       return result.data || [];
     },
     enabled: !!userId,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchOnWindowFocus: false,
   });
 }
@@ -51,7 +51,7 @@ export function usePaymentLinkByType(userId: string, type: ReceivePaymentLinkTyp
       return result.data;
     },
     enabled: !!userId && !!type,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchOnWindowFocus: false,
   });
 }
@@ -142,7 +142,7 @@ export function usePaymentLinkStatus(userId: string) {
       throw new Error(actionResult.error || "Failed to fetch payment link status");
     },
     enabled: !!userId,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 10 * 1000,
     refetchOnWindowFocus: false,
   });
 }

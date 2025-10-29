@@ -39,7 +39,7 @@ export class CacheManager<T, K = string> {
     this.keyGenerator = keyGenerator || ((key: K) => String(key));
     this.logInfoGenerator = logInfoGenerator;
     this.backgroundRefreshInterval =
-      config.backgroundRefreshInterval || 1 * 60 * 1000; // Default 1 minute
+      config.backgroundRefreshInterval || 1 * 10 * 1000; // Default 1 minute
   }
 
   /**
