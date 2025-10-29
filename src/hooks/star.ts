@@ -1,48 +1,32 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import type { Copany } from "@/types/database.types";
+import type { PaginatedCopanies } from "@/services/copany.service";
 import {
-  getStarCountAction,
   hasStarredAction,
   listMyStarredCopanyIdsAction,
   starAction,
   unstarAction,
 } from "@/actions/star.actions";
+import { useCurrentUser } from "@/hooks/currentUser";
 
-export function starCountKey(copanyId: string) {
-  return ["starCount", copanyId] as const;
+function copanyKey(copanyId: string) { return ["copany", copanyId] as const; }
+function copaniesKey() { return ["copanies", "v2"] as const; }
+function hasStarredKey(copanyId: string, userId: string) {
+  return ["hasStarred", copanyId, userId] as const;
 }
-function hasStarredKey(copanyId: string) {
-  return ["hasStarred", copanyId] as const;
-}
-function myStarredListKey() {
-  return ["myStarredCopanyIds"] as const;
+function myStarredListKey(userId: string) {
+  return ["myStarredCopanyIds", userId] as const;
 }
 
-export function useStarState(
-  copanyId: string,
-  options?: { countInitialData?: number; enableCountQuery?: boolean }
-) {
-  const enableCountQuery = options?.enableCountQuery ?? true;
-  const countQuery = useQuery<number>({
-    queryKey: starCountKey(copanyId),
-    queryFn: async () => {
-      try {
-        const res = await fetch(`/api/stars?copanyId=${encodeURIComponent(copanyId)}&type=count`);
-        if (!res.ok) throw new Error("request failed");
-        const json = await res.json();
-        return json.count as number;
-      } catch {
-        return await getStarCountAction(copanyId);
-      }
-    },
-    staleTime: 1 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
-    enabled: enableCountQuery,
-    initialData: options?.countInitialData,
-  });
-  const flagQuery = useQuery<boolean>({
-    queryKey: hasStarredKey(copanyId),
+// Simplified hook: only check if current user has starred
+export function useHasStarred(copanyId: string) {
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
+  return useQuery<boolean>({
+    queryKey: hasStarredKey(copanyId, userId),
     queryFn: async () => {
       try {
         const res = await fetch(`/api/stars?copanyId=${encodeURIComponent(copanyId)}&type=hasStarred`);
@@ -53,14 +37,17 @@ export function useStarState(
         return await hasStarredAction(copanyId);
       }
     },
+    enabled: !!currentUser, // Only query when user is logged in
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
-  return { countQuery, flagQuery } as const;
 }
 
 export function useToggleStar(copanyId: string) {
   const qc = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   const doStar = async () => {
     console.log("[useToggleStar] Calling starAction for:", copanyId);
     const result = await starAction(copanyId);
@@ -83,46 +70,70 @@ export function useToggleStar(copanyId: string) {
     onMutate: async (vars) => {
       console.log("[useToggleStar] onMutate called:", vars);
       
-      // Cancel any outgoing refetches to prevent overwriting optimistic update
+      // Cancel any outgoing refetches
       await Promise.all([
-        qc.cancelQueries({ queryKey: starCountKey(copanyId) }),
-        qc.cancelQueries({ queryKey: hasStarredKey(copanyId) }),
-        qc.cancelQueries({ queryKey: myStarredListKey() }),
+        qc.cancelQueries({ queryKey: hasStarredKey(copanyId, userId) }),
+        qc.cancelQueries({ queryKey: myStarredListKey(userId) }),
+        qc.cancelQueries({ queryKey: copanyKey(copanyId) }),
+        qc.cancelQueries({ queryKey: copaniesKey() }),
       ]);
       
       // Snapshot the previous values
-      const prevCount = qc.getQueryData<number>(starCountKey(copanyId)) ?? 0;
-      const prevFlag = qc.getQueryData<boolean>(hasStarredKey(copanyId)) ?? false;
-      const prevListRaw = qc.getQueryData<string[]>(myStarredListKey());
-      
-      // Ensure prevList is always an array
+      const prevFlag = qc.getQueryData<boolean>(hasStarredKey(copanyId, userId)) ?? false;
+      const prevListRaw = qc.getQueryData<string[]>(myStarredListKey(userId));
       const prevList = Array.isArray(prevListRaw) ? prevListRaw : [];
 
+      // Snapshot copany data
+      const prevCopany = qc.getQueryData<Copany | null>(copanyKey(copanyId));
+      const prevCopanies = qc.getQueryData<InfiniteData<PaginatedCopanies>>(copaniesKey());
+
       console.log("[useToggleStar] Previous state:", { 
-        prevCount, 
         prevFlag, 
         prevListLength: prevList.length,
-        prevListType: typeof prevListRaw,
-        isArray: Array.isArray(prevListRaw)
+        hasCopany: !!prevCopany,
+        hasCopanies: !!prevCopanies,
       });
 
       // Optimistically update to the new values
-      const nextCount = prevCount + (vars.toStar ? 1 : -1);
       const nextFlag = !!vars.toStar;
       const nextList = vars.toStar
         ? Array.from(new Set([...prevList, String(copanyId)]))
         : prevList.filter((id) => String(id) !== String(copanyId));
 
-      console.log("[useToggleStar] New state:", { nextCount, nextFlag, nextListLength: nextList.length });
+      // Apply optimistic updates for hasStarred and myStarredList
+      qc.setQueryData(hasStarredKey(copanyId, userId), nextFlag);
+      qc.setQueryData(myStarredListKey(userId), nextList);
 
-      // Apply optimistic updates
-      qc.setQueryData(starCountKey(copanyId), Math.max(0, nextCount));
-      qc.setQueryData(hasStarredKey(copanyId), nextFlag);
-      qc.setQueryData(myStarredListKey(), nextList);
+      // Update copany cache - single copany
+      if (prevCopany) {
+        qc.setQueryData<Copany | null>(copanyKey(copanyId), {
+          ...prevCopany,
+          star_count: Math.max(0, (prevCopany.star_count || 0) + (vars.toStar ? 1 : -1)),
+        });
+      }
+
+      // Update copanies list cache
+      if (prevCopanies) {
+        const updatedPages = prevCopanies.pages.map((page) => ({
+          ...page,
+          copanies: page.copanies.map((copany) =>
+            String(copany.id) === String(copanyId)
+              ? {
+                  ...copany,
+                  star_count: Math.max(0, (copany.star_count || 0) + (vars.toStar ? 1 : -1)),
+                }
+              : copany
+          ),
+        }));
+        qc.setQueryData<InfiniteData<PaginatedCopanies>>(copaniesKey(), {
+          ...prevCopanies,
+          pages: updatedPages,
+        });
+      }
 
       console.log("[useToggleStar] Optimistic update applied");
 
-      return { prevCount, prevFlag, prevList } as const;
+      return { prevFlag, prevList, prevCopany, prevCopanies } as const;
     },
     onError: (err, _vars, ctx) => {
       console.error("[useToggleStar] Error occurred:", err);
@@ -133,23 +144,32 @@ export function useToggleStar(copanyId: string) {
       
       // Roll back to previous state on error
       console.log("[useToggleStar] Rolling back to previous state:", {
-        prevCount: ctx.prevCount,
         prevFlag: ctx.prevFlag,
-        prevListLength: Array.isArray(ctx.prevList) ? ctx.prevList.length : 0
+        prevListLength: Array.isArray(ctx.prevList) ? ctx.prevList.length : 0,
+        hasCopany: !!ctx.prevCopany,
+        hasCopanies: !!ctx.prevCopanies,
       });
       
-      qc.setQueryData(starCountKey(copanyId), ctx.prevCount);
-      qc.setQueryData(hasStarredKey(copanyId), ctx.prevFlag);
-      qc.setQueryData(myStarredListKey(), Array.isArray(ctx.prevList) ? ctx.prevList : []);
+      qc.setQueryData(hasStarredKey(copanyId, userId), ctx.prevFlag);
+      qc.setQueryData(myStarredListKey(userId), Array.isArray(ctx.prevList) ? ctx.prevList : []);
+      
+      // Rollback copany cache
+      if (ctx.prevCopany !== undefined) {
+        qc.setQueryData(copanyKey(copanyId), ctx.prevCopany);
+      }
+      if (ctx.prevCopanies !== undefined) {
+        qc.setQueryData(copaniesKey(), ctx.prevCopanies);
+      }
     },
     onSettled: async () => {
       console.log("[useToggleStar] onSettled - Invalidating queries");
       
-      // Always refetch after error or success to ensure we have the latest data
+      // Refetch to ensure we have the latest data
       await Promise.all([
-        qc.invalidateQueries({ queryKey: starCountKey(copanyId) }),
-        qc.invalidateQueries({ queryKey: hasStarredKey(copanyId) }),
-        qc.invalidateQueries({ queryKey: myStarredListKey() }),
+        qc.invalidateQueries({ queryKey: hasStarredKey(copanyId, userId) }),
+        qc.invalidateQueries({ queryKey: myStarredListKey(userId) }),
+        qc.invalidateQueries({ queryKey: copanyKey(copanyId) }),
+        qc.invalidateQueries({ queryKey: copaniesKey() }),
       ]);
       
       console.log("[useToggleStar] Queries invalidated");
@@ -158,8 +178,11 @@ export function useToggleStar(copanyId: string) {
 }
 
 export function useMyStarredCopanyIds() {
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useQuery<string[]>({
-    queryKey: myStarredListKey(),
+    queryKey: myStarredListKey(userId),
     queryFn: async () => {
       try {
         const res = await fetch(`/api/stars?type=myStarredList`);
@@ -171,6 +194,7 @@ export function useMyStarredCopanyIds() {
         return Array.isArray(result) ? result : [];
       }
     },
+    enabled: !!currentUser, // Only query when user is logged in
     staleTime: 1 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000, // 10 minutes
     initialData: [], // Ensure initial data is always an empty array

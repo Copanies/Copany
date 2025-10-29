@@ -3,17 +3,18 @@
 import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import Button from "../commons/Button";
-import { useStarState, useToggleStar } from "@/hooks/star";
+import { useHasStarred, useToggleStar } from "@/hooks/star";
 import { formatAbbreviatedCount } from "@/utils/number";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { useState, useEffect } from "react";
 
 type Size = "sm" | "md";
 
 export default function StarButton({
   copanyId,
   size = "md",
-  count: upstreamCount,
+  count: upstreamCount = 0,
 }: {
   copanyId: string;
   size?: Size;
@@ -21,13 +22,25 @@ export default function StarButton({
 }) {
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
-  const { countQuery, flagQuery } = useStarState(copanyId, {
-    enableCountQuery: upstreamCount == null,
-    countInitialData: upstreamCount ?? undefined,
-  });
+
+  // Only query if user has starred (this is the only information we need from server)
+  const { data: isStarredFromQuery = false } = useHasStarred(copanyId);
+
+  // Manage count and isStarred locally with optimistic updates
+  const [count, setCount] = useState(upstreamCount);
+  const [isStarred, setIsStarred] = useState(isStarredFromQuery);
+
+  // Sync with upstream count when it changes (e.g., from parent re-render with fresh data)
+  useEffect(() => {
+    setCount(upstreamCount);
+  }, [upstreamCount]);
+
+  // Sync with query result
+  useEffect(() => {
+    setIsStarred(isStarredFromQuery);
+  }, [isStarredFromQuery]);
+
   const toggle = useToggleStar(copanyId);
-  const isStarred = !!flagQuery.data;
-  const count = countQuery.data ?? 0;
 
   const abbreviatedCount = formatAbbreviatedCount(count);
 
@@ -39,20 +52,32 @@ export default function StarButton({
       return;
     }
 
+    // Save current values for potential rollback
+    const prevIsStarred = isStarred;
+    const prevCount = count;
+
+    // Optimistically update local state immediately
+    const willBeStarred = !isStarred;
+    setIsStarred(willBeStarred);
+    setCount((prev) => Math.max(0, willBeStarred ? prev + 1 : prev - 1));
+
     console.log("[StarButton] Toggling star:", {
       copanyId,
       currentState: isStarred,
-      newState: !isStarred,
+      newState: willBeStarred,
     });
 
     toggle.mutate(
-      { toStar: !isStarred },
+      { toStar: willBeStarred },
       {
         onSuccess: () => {
           console.log("[StarButton] Star toggle successful");
         },
         onError: (error) => {
           console.error("[StarButton] Star toggle failed:", error);
+          // Rollback on error - revert to previous state
+          setIsStarred(prevIsStarred);
+          setCount(prevCount);
         },
       }
     );

@@ -2,10 +2,6 @@
 
 import { StarService } from "@/services/star.service";
 
-export async function getStarCountAction(copanyId: string) {
-  return StarService.getStarCount(copanyId);
-}
-
 export async function hasStarredAction(copanyId: string) {
   return StarService.hasStarred(copanyId);
 }

@@ -5,13 +5,14 @@ import {
   unvoteDiscussionCommentAction,
   getDiscussionCommentVoteCountsAction,
 } from "@/actions/discussionCommentVote.actions";
+import { useCurrentUser } from "./currentUser";
 
-export function discussionCommentHasVotedKey(commentId: string) {
-  return ["discussionCommentVote", "hasVoted", commentId];
+export function discussionCommentHasVotedKey(commentId: string, userId: string) {
+  return ["discussionCommentVote", "hasVoted", commentId, userId];
 }
 
-function myVotedCommentListKey() {
-  return ["discussionCommentVote", "myVotedList"];
+function myVotedCommentListKey(userId: string) {
+  return ["discussionCommentVote", "myVotedList", userId];
 }
 
 function discussionCommentVoteCountKey(commentId: string) {
@@ -20,6 +21,8 @@ function discussionCommentVoteCountKey(commentId: string) {
 
 export function useToggleDiscussionCommentVote(commentId: string) {
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
 
   return useMutation({
     mutationFn: async ({ toVote }: { toVote: boolean }) => {
@@ -33,24 +36,24 @@ export function useToggleDiscussionCommentVote(commentId: string) {
       // Cancel outgoing refetches
       await Promise.all([
         queryClient.cancelQueries({
-          queryKey: discussionCommentHasVotedKey(commentId),
+          queryKey: discussionCommentHasVotedKey(commentId, userId),
         }),
         queryClient.cancelQueries({
           queryKey: discussionCommentVoteCountKey(commentId),
         }),
         queryClient.cancelQueries({
-          queryKey: myVotedCommentListKey(),
+          queryKey: myVotedCommentListKey(userId),
         }),
       ]);
 
       // Snapshot previous values
       const previousHasVoted = queryClient.getQueryData(
-        discussionCommentHasVotedKey(commentId)
+        discussionCommentHasVotedKey(commentId, userId)
       ) as boolean | undefined;
       const previousCount = queryClient.getQueryData(
         discussionCommentVoteCountKey(commentId)
       ) as number | undefined;
-      const previousList = queryClient.getQueryData(myVotedCommentListKey()) as string[] | undefined;
+      const previousList = queryClient.getQueryData(myVotedCommentListKey(userId)) as string[] | undefined;
 
       // Optimistically update
       const nextFlag = !!toVote;
@@ -59,9 +62,9 @@ export function useToggleDiscussionCommentVote(commentId: string) {
         ? Array.from(new Set([...(previousList || []), String(commentId)]))
         : (previousList || []).filter((id) => String(id) !== String(commentId));
 
-      queryClient.setQueryData(discussionCommentHasVotedKey(commentId), nextFlag);
+      queryClient.setQueryData(discussionCommentHasVotedKey(commentId, userId), nextFlag);
       queryClient.setQueryData(discussionCommentVoteCountKey(commentId), nextCount);
-      queryClient.setQueryData(myVotedCommentListKey(), nextList);
+      queryClient.setQueryData(myVotedCommentListKey(userId), nextList);
 
       return { previousHasVoted, previousCount, previousList };
     },
@@ -69,7 +72,7 @@ export function useToggleDiscussionCommentVote(commentId: string) {
       // Rollback on error
       if (context) {
         queryClient.setQueryData(
-          discussionCommentHasVotedKey(commentId),
+          discussionCommentHasVotedKey(commentId, userId),
           context.previousHasVoted
         );
         queryClient.setQueryData(
@@ -77,7 +80,7 @@ export function useToggleDiscussionCommentVote(commentId: string) {
           context.previousCount
         );
         queryClient.setQueryData(
-          myVotedCommentListKey(),
+          myVotedCommentListKey(userId),
           context.previousList
         );
       }
@@ -86,13 +89,13 @@ export function useToggleDiscussionCommentVote(commentId: string) {
       // Always refetch after success or error
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: discussionCommentHasVotedKey(commentId),
+          queryKey: discussionCommentHasVotedKey(commentId, userId),
         }),
         queryClient.invalidateQueries({
           queryKey: discussionCommentVoteCountKey(commentId),
         }),
         queryClient.invalidateQueries({
-          queryKey: myVotedCommentListKey(),
+          queryKey: myVotedCommentListKey(userId),
         }),
       ]);
     },
@@ -100,9 +103,13 @@ export function useToggleDiscussionCommentVote(commentId: string) {
 }
 
 export function useMyVotedDiscussionCommentIds() {
+  const { data: currentUser } = useCurrentUser();
+  const userId = currentUser?.id || "anonymous";
+  
   return useQuery({
-    queryKey: myVotedCommentListKey(),
+    queryKey: myVotedCommentListKey(userId),
     queryFn: listMyVotedDiscussionCommentIdsAction,
+    enabled: !!currentUser,
     staleTime: 1 * 60 * 1000,
   });
 }
