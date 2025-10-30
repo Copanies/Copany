@@ -311,9 +311,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       return (
         <div className="flex flex-row items-center gap-1">
           <CheckIcon className="w-4 h-4 text-[#058E00]" />
-          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
-            approved
-          </span>
+          <span className="text-gray-500 dark:text-gray-400">approved</span>
         </div>
       );
     } else if (needsMyReview) {
@@ -322,7 +320,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           <div className="w-4 h-4 flex items-center justify-center">
             <div className="w-1 h-1 rounded-full bg-yellow-600" />
           </div>
-          <span className="text-gray-500 dark:text-gray-400 hidden md:block">
+          <span className="text-gray-500 dark:text-gray-400">
             needs your review
           </span>
         </div>
@@ -592,7 +590,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       >
         <div className="relative w-full min-w-0">
           {groupIssuesByState(filteredIssues).map((group) => (
-            <div key={group.state} className="w-full min-w-0">
+            <div key={group.state} className="w-full min-w-0 -mb-px md:-mb-0">
               {/* Group title (click to toggle collapse) */}
               <div
                 className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
@@ -612,7 +610,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
                   return (
                     <div
-                      className="flex w-full min-w-0 flex-row items-center gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none"
+                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-200 dark:border-gray-700 md:border-b-0"
                       key={issue.id}
                       onClick={() => {
                         // Keep current URL parameters
@@ -627,72 +625,154 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                       }}
                       onContextMenu={(e) => handleContextMenu(e, issue.id)}
                     >
-                      <IssueStateSelector
-                        issueId={issue.id}
-                        initialState={issue.state}
-                        showText={false}
-                        readOnly={readOnly}
-                        onStateChange={handleIssueStateUpdated}
-                        onServerUpdated={(serverIssue) => {
-                          queryClient.setQueryData<IssueWithAssignee[]>(
-                            ["issues", copanyId],
-                            (prev) => {
-                              const base = prev || EMPTY_ISSUES_ARRAY;
-                              return base.map((it) =>
-                                String(it.id) === String(serverIssue.id)
-                                  ? serverIssue
-                                  : it
-                              );
-                            }
-                          );
-                        }}
-                      />
-                      <IssuePrioritySelector
-                        issueId={issue.id}
-                        initialPriority={issue.priority}
-                        showText={false}
-                        onPriorityChange={handleIssuePriorityUpdated}
-                        readOnly={readOnly}
-                      />
-                      <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 min-w-0 flex items-center gap-2">
-                        <span className="truncate">
-                          {issue.title || NO_TITLE_TEXT}
-                        </span>
-                        {renderReviewBadge(issue)}
+                      {/* Mobile layout: two lines */}
+                      <div className="flex md:hidden w-full min-w-0 flex-col gap-1">
+                        {/* Line 1: Title only */}
+                        <div className="text-base text-gray-900 dark:text-gray-100 text-left w-full min-w-0 flex items-start gap-2">
+                          <span className="line-clamp-2 md:line-clamp-1 md:truncate break-words">
+                            {issue.title || NO_TITLE_TEXT}
+                          </span>
+                        </div>
+                        {/* Line 2: Status → Priority → Level → Assignee */}
+                        <div className="flex flex-row justify-between w-full">
+                          <div className="flex flex-row items-center gap-2 text-base text-gray-600 dark:text-gray-400">
+                            <IssueStateSelector
+                              issueId={issue.id}
+                              initialState={issue.state}
+                              showText={false}
+                              readOnly={readOnly}
+                              onStateChange={handleIssueStateUpdated}
+                              onServerUpdated={(serverIssue) => {
+                                queryClient.setQueryData<IssueWithAssignee[]>(
+                                  ["issues", copanyId],
+                                  (prev) => {
+                                    const base = prev || EMPTY_ISSUES_ARRAY;
+                                    return base.map((it) =>
+                                      String(it.id) === String(serverIssue.id)
+                                        ? serverIssue
+                                        : it
+                                    );
+                                  }
+                                );
+                              }}
+                            />
+                            <IssuePrioritySelector
+                              issueId={issue.id}
+                              initialPriority={issue.priority}
+                              showText={false}
+                              onPriorityChange={handleIssuePriorityUpdated}
+                              readOnly={readOnly}
+                            />
+                            {renderReviewBadge(issue)}
+                          </div>
+                          <div className="flex flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <IssueLevelSelector
+                              issueId={issue.id}
+                              initialLevel={issue.level}
+                              showText={false}
+                              onLevelChange={handleIssueLevelUpdated}
+                              readOnly={readOnly}
+                            />
+                            <IssueAssigneeSelector
+                              issueId={issue.id}
+                              initialAssignee={issue.assignee}
+                              assigneeUser={issue.assignee_user}
+                              currentUser={currentUser}
+                              contributors={contributors}
+                              showText={false}
+                              onAssigneeChange={handleIssueAssigneeUpdated}
+                              readOnly={readOnly}
+                              disableServerUpdate={false}
+                              hasPendingByMe={(() => {
+                                const meId = currentUser?.id
+                                  ? String(currentUser.id)
+                                  : null;
+                                if (!meId) return false;
+                                const reqIds =
+                                  pendingRequestersByIssue[String(issue.id)] ||
+                                  EMPTY_ARRAY;
+                                return reqIds.includes(meId);
+                              })()}
+                              onRequestAssignment={() => {
+                                setSelectedIssueId(String(issue.id));
+                                setIsRequestModalOpen(true);
+                              }}
+                            />
+                          </div>
+
+                          {renderAssignmentRequestBadge(String(issue.id))}
+                        </div>
                       </div>
-                      {renderAssignmentRequestBadge(String(issue.id))}
-                      <IssueLevelSelector
-                        issueId={issue.id}
-                        initialLevel={issue.level}
-                        showText={false}
-                        onLevelChange={handleIssueLevelUpdated}
-                        readOnly={readOnly}
-                      />
-                      <IssueAssigneeSelector
-                        issueId={issue.id}
-                        initialAssignee={issue.assignee}
-                        assigneeUser={issue.assignee_user}
-                        currentUser={currentUser}
-                        contributors={contributors}
-                        showText={false}
-                        onAssigneeChange={handleIssueAssigneeUpdated}
-                        readOnly={readOnly}
-                        disableServerUpdate={false}
-                        hasPendingByMe={(() => {
-                          const meId = currentUser?.id
-                            ? String(currentUser.id)
-                            : null;
-                          if (!meId) return false;
-                          const reqIds =
-                            pendingRequestersByIssue[String(issue.id)] ||
-                            EMPTY_ARRAY;
-                          return reqIds.includes(meId);
-                        })()}
-                        onRequestAssignment={() => {
-                          setSelectedIssueId(String(issue.id));
-                          setIsRequestModalOpen(true);
-                        }}
-                      />
+
+                      {/* Desktop layout: keep original single line order */}
+                      <div className="hidden md:flex w-full min-w-0 flex-row items-center gap-2">
+                        <IssueStateSelector
+                          issueId={issue.id}
+                          initialState={issue.state}
+                          showText={false}
+                          readOnly={readOnly}
+                          onStateChange={handleIssueStateUpdated}
+                          onServerUpdated={(serverIssue) => {
+                            queryClient.setQueryData<IssueWithAssignee[]>(
+                              ["issues", copanyId],
+                              (prev) => {
+                                const base = prev || EMPTY_ISSUES_ARRAY;
+                                return base.map((it) =>
+                                  String(it.id) === String(serverIssue.id)
+                                    ? serverIssue
+                                    : it
+                                );
+                              }
+                            );
+                          }}
+                        />
+                        <IssuePrioritySelector
+                          issueId={issue.id}
+                          initialPriority={issue.priority}
+                          showText={false}
+                          onPriorityChange={handleIssuePriorityUpdated}
+                          readOnly={readOnly}
+                        />
+                        <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 min-w-0 flex items-center gap-2">
+                          <span className="truncate">
+                            {issue.title || NO_TITLE_TEXT}
+                          </span>
+                          {renderReviewBadge(issue)}
+                        </div>
+                        {renderAssignmentRequestBadge(String(issue.id))}
+                        <IssueLevelSelector
+                          issueId={issue.id}
+                          initialLevel={issue.level}
+                          showText={false}
+                          onLevelChange={handleIssueLevelUpdated}
+                          readOnly={readOnly}
+                        />
+                        <IssueAssigneeSelector
+                          issueId={issue.id}
+                          initialAssignee={issue.assignee}
+                          assigneeUser={issue.assignee_user}
+                          currentUser={currentUser}
+                          contributors={contributors}
+                          showText={false}
+                          onAssigneeChange={handleIssueAssigneeUpdated}
+                          readOnly={readOnly}
+                          disableServerUpdate={false}
+                          hasPendingByMe={(() => {
+                            const meId = currentUser?.id
+                              ? String(currentUser.id)
+                              : null;
+                            if (!meId) return false;
+                            const reqIds =
+                              pendingRequestersByIssue[String(issue.id)] ||
+                              EMPTY_ARRAY;
+                            return reqIds.includes(meId);
+                          })()}
+                          onRequestAssignment={() => {
+                            setSelectedIssueId(String(issue.id));
+                            setIsRequestModalOpen(true);
+                          }}
+                        />
+                      </div>
                     </div>
                   );
                 })}
