@@ -18,6 +18,7 @@ import { useState } from "react";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useCurrentUser } from "@/hooks/currentUser";
+import ExpandableText from "@/components/commons/ExpandableText";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -190,7 +191,10 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               />
             </div>
           </div>
-          <div className="">{copany.description || "No description"}</div>
+          <ExpandableText
+            text={copany.description || "No description"}
+            maxLines={5}
+          />
           <div className="">
             <LicenseBadge
               license={copany.license}
