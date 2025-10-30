@@ -25,6 +25,7 @@ import AssetLinkModal from "./_subTabs/settings/AssetLinkModal";
 import { useState } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import GithubDarkIcon from "@/assets/github_logo_dark.svg";
+import ExpandableText from "@/components/commons/ExpandableText";
 import {
   BookOpenIcon,
   ScaleIcon,
@@ -238,7 +239,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
             </div>
           </div>
         </div>
-        <p className="">{copany.description}</p>
+        <div className="">
+          <ExpandableText text={copany.description || ""} maxLines={2} />
+        </div>
       </div>
       <Suspense fallback={<LoadingView type="label" label="Loading tabs..." />}>
         <TabView tabs={tabs} />

@@ -2,7 +2,7 @@ import React from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "approve";
+  variant?: "primary" | "secondary" | "ghost" | "text" | "danger" | "approve";
   size?: "xs" | "sm" | "md" | "lg";
   children: React.ReactNode;
   shape?: "rectangle" | "square";
@@ -29,6 +29,7 @@ export default function Button({
       "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100",
     ghost:
       "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent dark:border-transparent text-gray-900 dark:text-gray-100",
+    text: "bg-transparent text-blue-500 hover:text-blue-500/80 hover:underline border-transparent border-0",
     danger:
       "hover:bg-red-700 dark:hover:bg-red-700 border-gray-300 hover:border-red-700 dark:border-gray-700 dark:hover:border-red-700 text-red-600 dark:text-red-400 hover:text-white dark:hover:text-white",
     approve:
