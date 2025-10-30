@@ -610,7 +610,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
                   return (
                     <div
-                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-200 dark:border-gray-700 md:border-b-0"
+                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-100 dark:border-gray-800 md:border-b-0"
                       key={issue.id}
                       onClick={() => {
                         // Keep current URL parameters
