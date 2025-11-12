@@ -1,0 +1,144 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "App Store Connect API",
+    "version": "4.1",
+    "x-platforms": {
+      "app_store_connect_api": "App Store Connect API"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.appstoreconnect.apple.com/"
+    }
+  ],
+  "paths": {
+    "/v1/financeReports": {
+      "get": {
+        "tags": [
+          "FinanceReports"
+        ],
+        "operationId": "financeReports_getCollection",
+        "parameters": [
+          {
+            "name": "filter[vendorNumber]",
+            "in": "query",
+            "description": "filter by attribute 'vendorNumber'",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": false,
+            "required": true
+          },
+          {
+            "name": "filter[reportType]",
+            "in": "query",
+            "description": "filter by attribute 'reportType'",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "FINANCIAL",
+                  "FINANCE_DETAIL"
+                ]
+              }
+            },
+            "style": "form",
+            "explode": false,
+            "required": true
+          },
+          {
+            "name": "filter[regionCode]",
+            "in": "query",
+            "description": "filter by attribute 'regionCode'",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": false,
+            "required": true
+          },
+          {
+            "name": "filter[reportDate]",
+            "in": "query",
+            "description": "filter by attribute 'reportDate'",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": false,
+            "required": true
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Parameter error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized error(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "List of FinanceReports",
+            "content": {
+              "application/a-gzip": {
+                "schema": {
+                  "$ref": "#/components/schemas/gzip"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "itc-bearer-token": []
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import SecondaryTabViewView from "@/components/commons/SecondaryTabView";
 import DistributeView from "./DistributeView";
 import TransactionsView from "./TransactionsView";
+import AppStoreConnectView from "./AppStoreConnectView";
 
 export default function FinanceView({ copanyId }: { copanyId: string }) {
   return (
@@ -13,6 +14,10 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
         {
           label: "Transactions",
           content: <TransactionsView copanyId={copanyId} />,
+        },
+        {
+          label: "App Store Connect",
+          content: <AppStoreConnectView copanyId={copanyId} />,
         },
       ]}
       urlParamName="financeTab"
