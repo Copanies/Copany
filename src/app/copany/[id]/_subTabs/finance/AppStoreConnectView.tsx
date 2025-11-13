@@ -11,11 +11,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { Group } from "@visx/group";
 import { LinePath, AreaClosed } from "@visx/shape";
+import { curveMonotoneX } from "@visx/curve";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import { useTooltip, useTooltipInPortal } from "@visx/tooltip";
+import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useAppStoreFinance, useRefreshAppStoreFinance } from "@/hooks/finance";
+import { getMonthlyPeriodSimple } from "@/utils/time";
 
 interface Credentials {
   privateKey: string;
@@ -738,7 +740,11 @@ function FinanceChartView({
   onViewModeChange: (mode: "raw" | "formatted" | "chart") => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
+    null
+  );
   const isDarkMode = useDarkMode();
   const {
     tooltipData,
@@ -751,9 +757,6 @@ function FinanceChartView({
     date: string;
     amountUSD: number;
   }>();
-  const { containerRef: portalRef, TooltipInPortal } = useTooltipInPortal({
-    scroll: true,
-  });
 
   useEffect(() => {
     const updateWidth = () => {
@@ -802,10 +805,33 @@ function FinanceChartView({
   });
 
   const maxAmount = Math.max(...processedData.map((d) => d.amountUSD), 0);
+
+  // Generate at most 5 integer tick values for Y-axis
+  // Step must be a multiple of 10
+  const generateYTickValues = (maxValue: number, numTicks: number = 5) => {
+    if (maxValue === 0) return [0];
+
+    // Calculate raw step value
+    const rawStep = maxValue / (numTicks - 1);
+
+    // Round up to nearest multiple of 10
+    const step = Math.ceil(rawStep / 10) * 10;
+
+    // Generate integer ticks using step
+    const ticks = [];
+    for (let i = 0; i < numTicks; i++) {
+      ticks.push(i * step);
+    }
+    return ticks;
+  };
+
+  const yTickValues = generateYTickValues(maxAmount, 5);
+  const maxYValue = Math.max(...yTickValues);
+
   const yScale = scaleLinear({
     range: [chartHeight, 0],
-    domain: [0, maxAmount * 1.1],
-    nice: true,
+    domain: [0, maxYValue],
+    nice: false,
   });
 
   if (processedData.length === 0) {
@@ -822,14 +848,27 @@ function FinanceChartView({
         Historical Finance Data (USD) - {processedData.length} data points
       </div>
       <div ref={containerRef} className="w-full">
-        <svg width={containerWidth} height={height}>
+        <svg ref={svgRef} width={containerWidth} height={height}>
           <Group left={margin.left} top={margin.top}>
+            {/* Horizontal grid lines */}
+            {yTickValues.map((tickValue, index) => (
+              <line
+                key={`grid-${index}`}
+                x1={0}
+                x2={chartWidth}
+                y1={yScale(tickValue)}
+                y2={yScale(tickValue)}
+                stroke={isDarkMode ? "#4B5563" : "#E7E7E7"}
+                strokeWidth={1}
+              />
+            ))}
             {/* Area under curve */}
             <AreaClosed
               data={processedData}
               x={(d) => xScale(d.date)}
               y={(d) => yScale(d.amountUSD)}
               yScale={yScale}
+              curve={curveMonotoneX}
               fill={
                 isDarkMode
                   ? "rgba(59, 130, 246, 0.2)"
@@ -841,34 +880,157 @@ function FinanceChartView({
               data={processedData}
               x={(d) => xScale(d.date)}
               y={(d) => yScale(d.amountUSD)}
+              curve={curveMonotoneX}
               stroke={isDarkMode ? "#60a5fa" : "#3b82f6"}
               strokeWidth={2}
             />
-            {/* Data points */}
-            {processedData.map((d, i) => (
-              <circle
-                key={i}
-                cx={xScale(d.date)}
-                cy={yScale(d.amountUSD)}
-                r={4}
-                fill={isDarkMode ? "#60a5fa" : "#3b82f6"}
-                onMouseEnter={(e) => {
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    showTooltip({
-                      tooltipLeft: e.clientX - rect.left,
-                      tooltipTop: e.clientY - rect.top,
-                      tooltipData: {
-                        date: d.dateStr,
-                        amountUSD: d.amountUSD,
-                      },
-                    });
+            {/* Invisible overlay for hover detection */}
+            <rect
+              width={chartWidth}
+              height={chartHeight}
+              fill="transparent"
+              onMouseMove={(e) => {
+                const svg = svgRef.current;
+                if (!svg) return;
+
+                const svgRect = svg.getBoundingClientRect();
+                const svgX = e.clientX - svgRect.left - margin.left;
+
+                // Find the closest data point by x-coordinate
+                let closestIndex = 0;
+                let closestPoint = processedData[0];
+                let minDistance = Math.abs(
+                  xScale(processedData[0].date) - svgX
+                );
+
+                for (let i = 0; i < processedData.length; i++) {
+                  const point = processedData[i];
+                  const distance = Math.abs(xScale(point.date) - svgX);
+                  if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = point;
+                    closestIndex = i;
                   }
-                }}
-                onMouseLeave={hideTooltip}
-                style={{ cursor: "pointer" }}
+                }
+
+                setSelectedPointIndex(closestIndex);
+
+                // Calculate data point position in SVG coordinates
+                const pointXInSvg = xScale(closestPoint.date) + margin.left;
+                const pointYInSvg = yScale(closestPoint.amountUSD) + margin.top;
+
+                // Convert to viewport coordinates
+                const pointXInViewport = svgRect.left + pointXInSvg;
+                const pointYInViewport = svgRect.top + pointYInSvg;
+
+                // Calculate tooltip position with 12px safety margin
+                // Tooltip dimensions (approximate)
+                const tooltipWidth = 150;
+                const tooltipHeight = 60;
+                const safetyMargin = 12;
+                const markerRadius = 6; // Data point marker radius
+
+                // Default position: to the right and above the data point
+                let tooltipLeft =
+                  pointXInViewport + markerRadius + safetyMargin;
+                let tooltipTop =
+                  pointYInViewport - tooltipHeight - safetyMargin;
+
+                // Boundary detection
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                // Check if tooltip would go off right edge
+                if (tooltipLeft + tooltipWidth > viewportWidth - safetyMargin) {
+                  // Place to the left of data point
+                  tooltipLeft =
+                    pointXInViewport -
+                    tooltipWidth -
+                    markerRadius -
+                    safetyMargin;
+                }
+
+                // Check if tooltip would go off left edge
+                if (tooltipLeft < safetyMargin) {
+                  tooltipLeft = safetyMargin;
+                }
+
+                // Check if tooltip would go off top edge
+                if (tooltipTop < safetyMargin) {
+                  // Place below data point
+                  tooltipTop = pointYInViewport + markerRadius + safetyMargin;
+                }
+
+                // Check if tooltip would go off bottom edge
+                if (
+                  tooltipTop + tooltipHeight >
+                  viewportHeight - safetyMargin
+                ) {
+                  tooltipTop = viewportHeight - tooltipHeight - safetyMargin;
+                }
+
+                // Ensure tooltip doesn't overlap with data point marker
+                const markerLeft = pointXInViewport - markerRadius;
+                const markerRight = pointXInViewport + markerRadius;
+                const markerTop = pointYInViewport - markerRadius;
+                const markerBottom = pointYInViewport + markerRadius;
+
+                const tooltipRight = tooltipLeft + tooltipWidth;
+                const tooltipBottom = tooltipTop + tooltipHeight;
+
+                // Check for overlap and adjust
+                if (
+                  tooltipLeft < markerRight + safetyMargin &&
+                  tooltipRight > markerLeft - safetyMargin &&
+                  tooltipTop < markerBottom + safetyMargin &&
+                  tooltipBottom > markerTop - safetyMargin
+                ) {
+                  // Overlap detected, adjust position
+                  if (tooltipLeft < pointXInViewport) {
+                    // Tooltip is on the left, move it further left
+                    tooltipLeft = markerLeft - tooltipWidth - safetyMargin;
+                    if (tooltipLeft < safetyMargin) {
+                      tooltipLeft = safetyMargin;
+                    }
+                  } else {
+                    // Tooltip is on the right, move it further right
+                    tooltipLeft = markerRight + safetyMargin;
+                    if (
+                      tooltipLeft + tooltipWidth >
+                      viewportWidth - safetyMargin
+                    ) {
+                      tooltipLeft = viewportWidth - tooltipWidth - safetyMargin;
+                    }
+                  }
+                }
+
+                showTooltip({
+                  tooltipLeft,
+                  tooltipTop,
+                  tooltipData: {
+                    date: closestPoint.dateStr,
+                    amountUSD: closestPoint.amountUSD,
+                  },
+                });
+              }}
+              onMouseLeave={() => {
+                hideTooltip();
+                setSelectedPointIndex(null);
+              }}
+              style={{ cursor: "crosshair" }}
+            />
+            {/* Data point marker */}
+            {selectedPointIndex !== null && (
+              <circle
+                cx={xScale(processedData[selectedPointIndex].date)}
+                cy={yScale(processedData[selectedPointIndex].amountUSD)}
+                r={6}
+                fill={isDarkMode ? "#60a5fa" : "#3b82f6"}
+                stroke="#ffffff"
+                strokeWidth={2}
+                style={{ pointerEvents: "none" }}
               />
-            ))}
+            )}
             {/* X Axis */}
             <AxisBottom
               top={chartHeight}
@@ -883,15 +1045,13 @@ function FinanceChartView({
               })}
               tickFormat={(date) => {
                 const d = date as Date;
-                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-                  2,
-                  "0"
-                )}`;
+                return getMonthlyPeriodSimple(d);
               }}
             />
             {/* Y Axis */}
             <AxisLeft
               scale={yScale}
+              tickValues={yTickValues}
               stroke={isDarkMode ? "#6b7280" : "#9ca3af"}
               tickStroke={isDarkMode ? "#6b7280" : "#9ca3af"}
               tickLabelProps={() => ({
@@ -905,19 +1065,15 @@ function FinanceChartView({
           </Group>
         </svg>
         {tooltipOpen && tooltipData && (
-          <TooltipInPortal
-            left={tooltipLeft}
-            top={tooltipTop}
+          <div
             style={{
-              position: "absolute",
-              backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
-              border: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
-              borderRadius: "4px",
-              padding: "8px 12px",
-              fontSize: "12px",
+              position: "fixed",
+              left: tooltipLeft,
+              top: tooltipTop,
+              zIndex: 1000,
               pointerEvents: "none",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
             }}
+            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 text-sm"
           >
             <div className="text-gray-900 dark:text-gray-100">
               <div className="font-semibold">{tooltipData.date}</div>
@@ -930,10 +1086,9 @@ function FinanceChartView({
                 USD
               </div>
             </div>
-          </TooltipInPortal>
+          </div>
         )}
       </div>
-      <div ref={portalRef} />
     </div>
   );
 }
