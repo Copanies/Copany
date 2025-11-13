@@ -293,53 +293,178 @@ function filterByAppSKU(
   };
 }
 
-// Get exchange rate (simplified - using approximate rates)
-// In production, you should use a real exchange rate API
-function getExchangeRateToUSD(currency: string): number {
+// Exchange rate cache to avoid repeated API calls for the same date
+const exchangeRateCache = new Map<string, number>();
+
+// Get historical exchange rate from API
+// 
+// IMPORTANT NOTES:
+// 1. App Store Connect 财务报告中不包含汇率数据
+//    - 报告中只有 "Partner Share Currency"（结算货币）和 "Customer Currency"（客户支付货币）
+//    - Apple 在结算时已经将客户货币转换为结算货币，但报告中没有显示使用的汇率
+//    - 大多数开发者的结算货币是 USD，所以 "Partner Share Currency" 通常是 USD
+// 
+// 2. 多 API 降级策略（按优先级顺序）：
+//    - exchangerate.host: 完全免费，无限制，稳定可靠（优先使用）
+//    - frankfurter.app: 免费，基于欧洲央行数据，非常稳定（备选）
+//    - exchangerate-api.com: 免费版本每月 1500 次请求（最后备选）
+//    - 如果所有 API 都失败，使用固定汇率作为降级方案
+// 
+// 3. 优化策略：
+//    - 如果 "Partner Share Currency" 已经是 USD，不需要转换（直接返回 1.0）
+//    - 使用缓存避免重复请求相同日期的汇率
+//    - 多个 API 自动降级，确保高可用性
+async function getHistoricalExchangeRateToUSD(
+  currency: string,
+  date: string // YYYY-MM-DD format
+): Promise<number> {
+  const upperCurrency = currency.toUpperCase();
+  
+  // If currency is USD, no conversion needed
+  // Most developers use USD as their settlement currency in App Store Connect
+  if (upperCurrency === "USD") {
+    return 1.0;
+  }
+  
+  // Check cache first to avoid repeated API calls
+  const cacheKey = `${upperCurrency}-${date}`;
+  if (exchangeRateCache.has(cacheKey)) {
+    return exchangeRateCache.get(cacheKey)!;
+  }
+  
+  // Try multiple free APIs in order of preference (fallback strategy)
+  // 1. exchangerate.host - Completely free, no limits, reliable
+  // 2. frankfurter.app - Free, based on ECB data, very stable
+  // 3. exchangerate-api.com - Free tier: 1500/month (backup)
+  
+  const apis = [
+    {
+      name: "exchangerate.host",
+      url: `https://api.exchangerate.host/${date}?base=USD`,
+      parse: (data: any) => {
+        // exchangerate.host returns { rates: { EUR: 0.92, ... } }
+        return data.rates?.[upperCurrency];
+      },
+    },
+    {
+      name: "frankfurter.app",
+      url: `https://api.frankfurter.app/${date}?from=${upperCurrency}&to=USD`,
+      parse: (data: any) => {
+        // frankfurter.app returns { rates: { USD: 1.08 } } when converting from EUR to USD
+        // This gives us the rate to convert from target currency to USD
+        return data.rates?.USD;
+      },
+    },
+    {
+      name: "exchangerate-api.com",
+      url: `https://api.exchangerate-api.com/v4/historical/${date}`,
+      parse: (data: any) => {
+        // exchangerate-api.com returns { rates: { EUR: 0.92, ... } } relative to USD
+        return data.rates?.[upperCurrency];
+      },
+    },
+  ];
+  
+  for (const api of apis) {
+    try {
+      // Create timeout controller for fetch request (5 second timeout)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(api.url, {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.warn(
+          `[DEBUG API] ${api.name} failed for ${date} (status: ${response.status}), trying next API...`
+        );
+        continue; // Try next API
+      }
+      
+      const data = await response.json();
+      const rate = api.parse(data);
+      
+      if (rate === undefined || rate === null) {
+        console.warn(
+          `[DEBUG API] Currency ${upperCurrency} not found in ${api.name} for ${date}, trying next API...`
+        );
+        continue; // Try next API
+      }
+      
+      // Success! Cache the rate and return it
+      exchangeRateCache.set(cacheKey, rate);
+      console.log(
+        `[DEBUG API] Historical exchange rate for ${upperCurrency} on ${date} from ${api.name}: ${rate}`
+      );
+      
+      return rate;
+    } catch (error) {
+      // Handle network errors, timeouts, etc.
+      console.warn(
+        `[DEBUG API] Error fetching from ${api.name} for ${upperCurrency} on ${date}:`,
+        error instanceof Error ? error.message : error
+      );
+      // Continue to next API
+      continue;
+    }
+  }
+  
+  // All APIs failed, use fallback rates
+  console.warn(
+    `[DEBUG API] All exchange rate APIs failed for ${upperCurrency} on ${date}, using fallback rates`
+  );
+  return getFallbackExchangeRateToUSD(upperCurrency);
+}
+
+// Fallback exchange rates (approximate, used when API is unavailable)
+// These are approximate rates and should be replaced with actual historical rates
+function getFallbackExchangeRateToUSD(currency: string): number {
   const rates: Record<string, number> = {
     USD: 1.0,
-    CNY: 0.14, // Chinese Yuan
-    JPY: 0.0067, // Japanese Yen
-    GBP: 1.27, // British Pound
-    EUR: 1.08, // Euro
-    AUD: 0.66, // Australian Dollar
-    CAD: 0.73, // Canadian Dollar
-    KRW: 0.00075, // South Korean Won
-    INR: 0.012, // Indian Rupee
-    BRL: 0.19, // Brazilian Real
-    MXN: 0.059, // Mexican Peso
-    TWD: 0.031, // Taiwan Dollar (New Taiwan Dollar)
-    HKD: 0.128, // Hong Kong Dollar
-    SGD: 0.74, // Singapore Dollar
-    THB: 0.027, // Thai Baht
-    MYR: 0.21, // Malaysian Ringgit
-    PHP: 0.018, // Philippine Peso
-    IDR: 0.000064, // Indonesian Rupiah
-    VND: 0.000041, // Vietnamese Dong
-    NZD: 0.61, // New Zealand Dollar
-    ZAR: 0.054, // South African Rand
-    AED: 0.27, // UAE Dirham
-    SAR: 0.27, // Saudi Riyal
-    ILS: 0.27, // Israeli Shekel
-    CHF: 1.11, // Swiss Franc
-    SEK: 0.095, // Swedish Krona
-    NOK: 0.093, // Norwegian Krone
-    DKK: 0.14, // Danish Krone
-    PLN: 0.25, // Polish Zloty
-    TRY: 0.031, // Turkish Lira
-    RUB: 0.011, // Russian Ruble
-    CZK: 0.043, // Czech Koruna
-    HUF: 0.0028, // Hungarian Forint
-    RON: 0.22, // Romanian Leu
-    CLP: 0.0011, // Chilean Peso
-    ARS: 0.0012, // Argentine Peso
-    COP: 0.00025, // Colombian Peso
-    PEN: 0.27, // Peruvian Sol
-    VES: 0.000028, // Venezuelan Bolivar
+    CNY: 0.14, // Chinese Yuan (approximate)
+    JPY: 0.0067, // Japanese Yen (approximate)
+    GBP: 1.27, // British Pound (approximate)
+    EUR: 1.08, // Euro (approximate)
+    AUD: 0.66, // Australian Dollar (approximate)
+    CAD: 0.73, // Canadian Dollar (approximate)
+    KRW: 0.00075, // South Korean Won (approximate)
+    INR: 0.012, // Indian Rupee (approximate)
+    BRL: 0.19, // Brazilian Real (approximate)
+    MXN: 0.059, // Mexican Peso (approximate)
+    TWD: 0.031, // Taiwan Dollar (approximate)
+    HKD: 0.128, // Hong Kong Dollar (approximate)
+    SGD: 0.74, // Singapore Dollar (approximate)
+    THB: 0.027, // Thai Baht (approximate)
+    MYR: 0.21, // Malaysian Ringgit (approximate)
+    PHP: 0.018, // Philippine Peso (approximate)
+    IDR: 0.000064, // Indonesian Rupiah (approximate)
+    VND: 0.000041, // Vietnamese Dong (approximate)
+    NZD: 0.61, // New Zealand Dollar (approximate)
+    ZAR: 0.054, // South African Rand (approximate)
+    AED: 0.27, // UAE Dirham (approximate)
+    SAR: 0.27, // Saudi Riyal (approximate)
+    ILS: 0.27, // Israeli Shekel (approximate)
+    CHF: 1.11, // Swiss Franc (approximate)
+    SEK: 0.095, // Swedish Krona (approximate)
+    NOK: 0.093, // Norwegian Krone (approximate)
+    DKK: 0.14, // Danish Krone (approximate)
+    PLN: 0.25, // Polish Zloty (approximate)
+    TRY: 0.031, // Turkish Lira (approximate)
+    RUB: 0.011, // Russian Ruble (approximate)
+    CZK: 0.043, // Czech Koruna (approximate)
+    HUF: 0.0028, // Hungarian Forint (approximate)
+    RON: 0.22, // Romanian Leu (approximate)
+    CLP: 0.0011, // Chilean Peso (approximate)
+    ARS: 0.0012, // Argentine Peso (approximate)
+    COP: 0.00025, // Colombian Peso (approximate)
+    PEN: 0.27, // Peruvian Sol (approximate)
+    VES: 0.000028, // Venezuelan Bolivar (approximate)
   };
   
-  const upperCurrency = currency.toUpperCase();
-  const rate = rates[upperCurrency];
+  const rate = rates[currency];
   
   if (rate === undefined) {
     console.warn(
@@ -351,10 +476,30 @@ function getExchangeRateToUSD(currency: string): number {
   return rate;
 }
 
-// Convert amount to USD
-function convertToUSD(amount: string, currency: string): number {
+// Convert amount to USD using historical exchange rate
+// date should be in YYYY-MM-DD format (from transaction date)
+async function convertToUSD(
+  amount: string,
+  currency: string,
+  date?: string // Optional: transaction date in YYYY-MM-DD format for historical rates
+): Promise<number> {
   const numAmount = parseFloat(amount.replace(/[^0-9.-]/g, "")) || 0;
-  const rate = getExchangeRateToUSD(currency);
+  
+  const upperCurrency = currency.toUpperCase();
+  
+  // If currency is USD, no conversion needed
+  if (upperCurrency === "USD") {
+    return numAmount;
+  }
+  
+  // If date is provided, use historical exchange rate
+  if (date) {
+    const rate = await getHistoricalExchangeRateToUSD(upperCurrency, date);
+    return numAmount * rate;
+  }
+  
+  // Fallback to approximate rates if no date provided
+  const rate = getFallbackExchangeRateToUSD(upperCurrency);
   return numAmount * rate;
 }
 
@@ -387,6 +532,24 @@ function parseDateMMDDYYYY(dateStr: string): Date | null {
   return date;
 }
 
+// Convert MM/DD/YYYY format to YYYY-MM-DD format for API calls
+function convertDateToYYYYMMDD(dateStr: string | undefined): string | undefined {
+  if (!dateStr) {
+    return undefined;
+  }
+  
+  const date = parseDateMMDDYYYY(dateStr);
+  if (!date) {
+    return undefined;
+  }
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  
+  return `${year}-${month}-${day}`;
+}
+
 // Calculate transaction month from Transaction Date, return as YYYY-MM format
 function calculateTransactionMonth(
   transactionDateStr: string | undefined,
@@ -413,17 +576,17 @@ function calculateTransactionMonth(
 }
 
 // Extract financial data for chart
-function extractFinancialData(
+async function extractFinancialData(
   parsed: { headers: string[]; rows: string[][] },
   reportDate: string
-): Array<{
+): Promise<Array<{
   date: string; // YYYY-MM format for grouping
   transactionDate: string; // MM/DD/YYYY format for display
   amount: number;
   currency: string;
   amountUSD: number;
   type: string;
-}> {
+}>> {
   console.log(`[DEBUG API] extractFinancialData called for ${reportDate}`);
   const data: Array<{
     date: string; // YYYY-MM format for grouping
@@ -506,46 +669,49 @@ function extractFinancialData(
   console.log(`[DEBUG API] Currency column index: ${finalCurrencyIndex} (Partner Share Currency: ${currencyIndex}, fallback: ${fallbackCurrencyIndex})`);
   console.log(`[DEBUG API] Amount column indices:`, amountIndices);
   
-  if (finalCurrencyIndex === -1) {
-    console.log(`[DEBUG API] No currency column found`);
-    // Try to use a default currency
-    const defaultCurrency = "USD";
-    // Only use the first amount column to avoid duplicate counting
-    if (amountIndices.length > 0) {
-      const { name, index } = amountIndices[0];
-      parsed.rows.forEach((row) => {
-        const amountStr = row[index] || "0";
-        const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, "")) || 0;
-        if (amount !== 0) {
-          // Calculate transaction month from Transaction Date
-          const transactionDateStr =
-            transactionDateIndex !== -1
-              ? row[transactionDateIndex]
-              : undefined;
-          const transactionMonth = calculateTransactionMonth(
-            transactionDateStr,
-            reportDate
-          );
-          // Keep original transaction date for display (MM/DD/YYYY format)
-          const displayDate = transactionDateStr || reportDate;
-          const amountUSD = convertToUSD(amountStr, defaultCurrency);
-          console.log(
-            `[DEBUG API] Row amount=${amountStr}, currency=${defaultCurrency}, amountUSD=${amountUSD}, transactionMonth=${transactionMonth}, transactionDate=${displayDate}`
-          );
-          data.push({
-            date: transactionMonth,
-            transactionDate: displayDate,
-            amount,
-            currency: defaultCurrency,
-            amountUSD,
-            type: name,
-          });
+    if (finalCurrencyIndex === -1) {
+      console.log(`[DEBUG API] No currency column found`);
+      // Try to use a default currency
+      const defaultCurrency = "USD";
+      // Only use the first amount column to avoid duplicate counting
+      if (amountIndices.length > 0) {
+        const { name, index } = amountIndices[0];
+        // Use for...of loop instead of forEach to support await
+        for (const row of parsed.rows) {
+          const amountStr = row[index] || "0";
+          const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, "")) || 0;
+          if (amount !== 0) {
+            // Calculate transaction month from Transaction Date
+            const transactionDateStr =
+              transactionDateIndex !== -1
+                ? row[transactionDateIndex]
+                : undefined;
+            const transactionMonth = calculateTransactionMonth(
+              transactionDateStr,
+              reportDate
+            );
+            // Keep original transaction date for display (MM/DD/YYYY format)
+            const displayDate = transactionDateStr || reportDate;
+            // Convert transaction date to YYYY-MM-DD format for historical exchange rate
+            const transactionDateForAPI = convertDateToYYYYMMDD(transactionDateStr);
+            const amountUSD = await convertToUSD(amountStr, defaultCurrency, transactionDateForAPI);
+            console.log(
+              `[DEBUG API] Row amount=${amountStr}, currency=${defaultCurrency}, amountUSD=${amountUSD}, transactionMonth=${transactionMonth}, transactionDate=${displayDate}`
+            );
+            data.push({
+              date: transactionMonth,
+              transactionDate: displayDate,
+              amount,
+              currency: defaultCurrency,
+              amountUSD,
+              type: name,
+            });
+          }
         }
-      });
+      }
+      console.log(`[DEBUG API] Extracted ${data.length} items without currency column`);
+      return data;
     }
-    console.log(`[DEBUG API] Extracted ${data.length} items without currency column`);
-    return data;
-  }
   
   if (amountIndices.length === 0) {
     console.log(`[DEBUG API] No amount columns found`);
@@ -557,7 +723,9 @@ function extractFinancialData(
     h.toLowerCase().includes("extended partner share")
   );
   
-  parsed.rows.forEach((row, rowIndex) => {
+  // Process rows sequentially to avoid too many concurrent API calls
+  for (let rowIndex = 0; rowIndex < parsed.rows.length; rowIndex++) {
+    const row = parsed.rows[rowIndex];
     const currency = row[finalCurrencyIndex]?.trim() || "USD";
     
     // Calculate transaction month from Transaction Date for this row
@@ -569,6 +737,8 @@ function extractFinancialData(
     );
     // Keep original transaction date for display (MM/DD/YYYY format)
     const displayDate = transactionDateStr || reportDate;
+    // Convert transaction date to YYYY-MM-DD format for historical exchange rate
+    const transactionDateForAPI = convertDateToYYYYMMDD(transactionDateStr);
     
     // Use Extended Partner Share if available, otherwise use first amount column only
     // This ensures each row is only counted once to avoid duplicate revenue
@@ -576,7 +746,7 @@ function extractFinancialData(
       const amountStr = row[extendedPartnerShareIndex] || "0";
       const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, "")) || 0;
       if (amount !== 0) {
-        const amountUSD = convertToUSD(amountStr, currency);
+        const amountUSD = await convertToUSD(amountStr, currency, transactionDateForAPI);
         console.log(
           `[DEBUG API] Row ${rowIndex}: amount=${amountStr}, currency=${currency}, amountUSD=${amountUSD}, transactionMonth=${transactionMonth}, transactionDate=${displayDate}`
         );
@@ -595,7 +765,7 @@ function extractFinancialData(
       const amountStr = row[index] || "0";
       const amount = parseFloat(amountStr.replace(/[^0-9.-]/g, "")) || 0;
       if (amount !== 0) {
-        const amountUSD = convertToUSD(amountStr, currency);
+        const amountUSD = await convertToUSD(amountStr, currency, transactionDateForAPI);
         console.log(
           `[DEBUG API] Row ${rowIndex}: amount=${amountStr}, currency=${currency}, amountUSD=${amountUSD}, transactionMonth=${transactionMonth}, transactionDate=${displayDate}, type=${name}`
         );
@@ -609,7 +779,7 @@ function extractFinancialData(
         });
       }
     }
-  });
+  }
   
   console.log(`[DEBUG API] Extracted ${data.length} financial data items`);
   return data;
@@ -841,8 +1011,8 @@ export async function POST(request: NextRequest) {
           const filtered = filterByAppSKU(parsed, body.appSKU);
           console.log(`[DEBUG API] After filtering by App SKU(s) "${body.appSKU}": ${filtered.rows.length} rows`);
           
-          // Extract financial data
-          const financialData = extractFinancialData(filtered, reportDate);
+          // Extract financial data (now async due to historical exchange rate API calls)
+          const financialData = await extractFinancialData(filtered, reportDate);
           console.log(`[DEBUG API] Extracted financial data: ${financialData.length} items`);
           
           if (filtered.rows.length > 0) {
