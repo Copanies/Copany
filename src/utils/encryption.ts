@@ -82,6 +82,62 @@ export class EncryptionService {
   }
 
   /**
+   * Encrypt App Store Connect credentials using AES-256-GCM
+   * @param plaintext - The credential value to encrypt
+   * @returns Object containing IV, encrypted data, and authentication tag
+   */
+  static encryptAppStoreCredentials(plaintext: string): { iv: string; data: string; tag: string } {
+    try {
+      const key = this.getEncryptionKey();
+      const iv = crypto.randomBytes(this.IV_LENGTH);
+      
+      const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv);
+      cipher.setAAD(Buffer.from('app-store-connect', 'utf8')); // Additional authenticated data
+      
+      let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+      
+      const tag = cipher.getAuthTag();
+      
+      return {
+        iv: iv.toString('hex'),
+        data: encrypted,
+        tag: tag.toString('hex')
+      };
+    } catch (error) {
+      console.error('Encryption error:', error);
+      throw new Error('Failed to encrypt App Store Connect credentials');
+    }
+  }
+
+  /**
+   * Decrypt App Store Connect credentials using AES-256-GCM
+   * @param iv - Initialization vector (hex string)
+   * @param encryptedData - Encrypted data (hex string)
+   * @param authTag - Authentication tag (hex string)
+   * @returns Decrypted credential value
+   */
+  static decryptAppStoreCredentials(iv: string, encryptedData: string, authTag: string): string {
+    try {
+      const key = this.getEncryptionKey();
+      const ivBuffer = Buffer.from(iv, 'hex');
+      const tagBuffer = Buffer.from(authTag, 'hex');
+      
+      const decipher = crypto.createDecipheriv(this.ALGORITHM, key, ivBuffer);
+      decipher.setAuthTag(tagBuffer);
+      decipher.setAAD(Buffer.from('app-store-connect', 'utf8')); // Same AAD as encryption
+      
+      let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      console.error('Decryption error:', error);
+      throw new Error('Failed to decrypt App Store Connect credentials');
+    }
+  }
+
+  /**
    * Validate if a string is a valid payment link format
    * @param link - The payment link to validate
    * @param type - The type of payment link (Wise or Alipay)

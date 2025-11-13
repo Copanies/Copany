@@ -12,9 +12,11 @@ import {
   deleteTransactionAction,
   regenerateDistributesForCurrentMonthAction,
 } from "@/actions/finance.actions";
+import type { FinanceReportData, FinanceChartData } from "@/services/appStoreFinanceData.service";
 
 export function distributesKey(copanyId: string) { return ["distributes", copanyId] as const; }
 export function transactionsKey(copanyId: string) { return ["transactions", copanyId] as const; }
+export function appStoreFinanceKey(copanyId: string) { return ["appStoreFinance", copanyId] as const; }
 
 export function useDistributes(copanyId: string) {
   return useQuery<DistributeRow[]>({
@@ -99,6 +101,56 @@ export function useDeleteTransaction(copanyId: string) {
   return useMutation({
     mutationFn: ({ id }: { id: string }) => deleteTransactionAction(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: transactionsKey(copanyId) }); },
+  });
+}
+
+/**
+ * Hook to get App Store Connect finance data (reports and chart data)
+ */
+export function useAppStoreFinance(copanyId: string) {
+  return useQuery<{
+    reports: FinanceReportData[];
+    chartData: FinanceChartData[];
+  }>({
+    queryKey: appStoreFinanceKey(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/app-store-finance?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return {
+          reports: json.reports || [],
+          chartData: json.chartData || [],
+        };
+      } catch (error) {
+        console.error("Error fetching App Store finance data:", error);
+        return { reports: [], chartData: [] };
+      }
+    },
+    staleTime: 1 * 10 * 1000,
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    enabled: !!copanyId,
+  });
+}
+
+/**
+ * Hook to refresh App Store Connect finance data
+ */
+export function useRefreshAppStoreFinance(copanyId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/app-store-finance?copanyId=${encodeURIComponent(copanyId)}`);
+      if (!res.ok) throw new Error("request failed");
+      const json = await res.json();
+      return {
+        reports: json.reports || [],
+        chartData: json.chartData || [],
+      };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: appStoreFinanceKey(copanyId) });
+    },
   });
 }
 

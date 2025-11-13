@@ -15,6 +15,7 @@ import { scaleLinear, scaleTime } from "@visx/scale";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { useTooltip, useTooltipInPortal } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useAppStoreFinance, useRefreshAppStoreFinance } from "@/hooks/finance";
 
 interface Credentials {
   privateKey: string;
@@ -76,7 +77,6 @@ export default function AppStoreConnectView({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [reports, setReports] = useState<FinanceReport[]>([]);
   const [errors, setErrors] = useState<
     Array<{
       reportType: string;
@@ -96,21 +96,28 @@ export default function AppStoreConnectView({
   const [selectedReport, setSelectedReport] = useState<FinanceReport | null>(
     null
   );
-  const [chartData, setChartData] = useState<
-    Array<{
-      date: string;
-      amountUSD: number;
-      count: number;
-      transactions: Array<{
-        date: string; // YYYY-MM format for grouping
-        transactionDate: string; // MM/DD/YYYY format for display
-        amount: number;
-        currency: string;
-        amountUSD: number;
-        type: string;
-      }>;
-    }>
-  >([]);
+
+  // Use React Query hook to fetch finance data from database
+  const { data: financeData, isLoading: isLoadingFinanceData } =
+    useAppStoreFinance(copanyId);
+  const refreshFinanceData = useRefreshAppStoreFinance(copanyId);
+
+  // Convert database data to component state format
+  const reports = useMemo<FinanceReport[]>(() => {
+    if (!financeData?.reports) return [];
+    return financeData.reports.map((report) => ({
+      reportType: report.reportType,
+      regionCode: report.regionCode,
+      reportDate: report.reportDate,
+      data: report.rawData || "",
+      parsed: report.parsedData,
+      filtered: report.filteredData,
+    }));
+  }, [financeData?.reports]);
+
+  const chartData = useMemo(() => {
+    return financeData?.chartData || [];
+  }, [financeData?.chartData]);
 
   const handleFetchReports = async (credentials: Credentials) => {
     console.log("[DEBUG] handleFetchReports called with credentials:", {
@@ -123,11 +130,9 @@ export default function AppStoreConnectView({
 
     setIsLoading(true);
     setIsModalOpen(false);
-    setReports([]);
     setErrors([]);
     setSummary(null);
     setSelectedReport(null);
-    setChartData([]);
 
     try {
       console.log("[DEBUG] Sending request to /api/app-store-connect");
@@ -136,7 +141,10 @@ export default function AppStoreConnectView({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          ...credentials,
+          copanyId,
+        }),
       });
 
       console.log(
@@ -160,10 +168,6 @@ export default function AppStoreConnectView({
       }
 
       console.log("[DEBUG] Setting state with data");
-      if (data.reports) {
-        console.log("[DEBUG] Setting reports:", data.reports.length, "reports");
-        setReports(data.reports);
-      }
       if (data.errors) {
         console.log("[DEBUG] Setting errors:", data.errors.length, "errors");
         setErrors(data.errors);
@@ -172,14 +176,11 @@ export default function AppStoreConnectView({
         console.log("[DEBUG] Setting summary:", data.summary);
         setSummary(data.summary);
       }
-      if (data.chartData) {
-        console.log(
-          "[DEBUG] Setting chartData:",
-          data.chartData.length,
-          "data points"
-        );
-        setChartData(data.chartData);
-      }
+      // Refresh finance data from database after successful fetch
+      // The API already saves the data, so we just need to refresh the query
+      await refreshFinanceData.mutateAsync();
+      console.log("[DEBUG] Finance data refreshed from database");
+
       console.log("[DEBUG] State updated successfully");
     } catch (error) {
       console.error("[DEBUG] Error fetching reports:", error);
@@ -197,10 +198,10 @@ export default function AppStoreConnectView({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingFinanceData) {
     return (
       <div className="p-4">
-        <LoadingView type="label" label="Fetching finance reports..." />
+        <LoadingView type="label" label="Loading finance reports..." />
       </div>
     );
   }
@@ -208,6 +209,7 @@ export default function AppStoreConnectView({
   // Debug: Log current state
   console.log("[DEBUG] Component render state:", {
     isLoading,
+    isLoadingFinanceData,
     reportsCount: reports.length,
     errorsCount: errors.length,
     chartDataCount: chartData.length,
@@ -216,7 +218,12 @@ export default function AppStoreConnectView({
     hasSelectedReport: !!selectedReport,
   });
 
-  if (reports.length === 0 && chartData.length === 0 && !isLoading) {
+  if (
+    reports.length === 0 &&
+    chartData.length === 0 &&
+    !isLoading &&
+    !isLoadingFinanceData
+  ) {
     console.log("[DEBUG] Showing empty placeholder");
     return (
       <div className="p-4 min-w-0">
@@ -293,15 +300,16 @@ export default function AppStoreConnectView({
           <Button
             size="md"
             variant="secondary"
-            onClick={() => {
-              setReports([]);
+            onClick={async () => {
               setErrors([]);
               setSummary(null);
               setSelectedReport(null);
-              setChartData([]);
+              // Refresh data from database
+              await refreshFinanceData.mutateAsync();
             }}
+            disabled={refreshFinanceData.isPending}
           >
-            Clear
+            {refreshFinanceData.isPending ? "Refreshing..." : "Refresh"}
           </Button>
           <Button size="md" onClick={() => setIsModalOpen(true)}>
             Fetch New Reports

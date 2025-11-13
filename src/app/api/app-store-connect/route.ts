@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { gunzipSync } from "zlib";
+import { createSupabaseClient } from "@/utils/supabase/server";
+import { AppStoreConnectCredentialsService } from "@/services/appStoreConnectCredentials.service";
+import { AppStoreFinanceDataService } from "@/services/appStoreFinanceData.service";
 
 interface FinanceReportRequest {
+  copanyId: string;
   privateKey: string;
   keyId: string;
   issuerId: string;
@@ -857,6 +861,7 @@ export async function POST(request: NextRequest) {
       .filter((sku) => sku.length > 0) || [];
     
     console.log("[DEBUG API] Request body received:", {
+      copanyId: body.copanyId,
       hasPrivateKey: !!body.privateKey,
       keyId: body.keyId,
       issuerId: body.issuerId,
@@ -867,11 +872,12 @@ export async function POST(request: NextRequest) {
       privateKeyLength: body.privateKey?.length || 0,
     });
 
-    const { privateKey, keyId, issuerId, vendorNumber } = body;
+    const { copanyId, privateKey, keyId, issuerId, vendorNumber } = body;
 
     // Validate input
-    if (!privateKey || !keyId || !issuerId || !vendorNumber || !body.appSKU || appSKUList.length === 0) {
+    if (!copanyId || !privateKey || !keyId || !issuerId || !vendorNumber || !body.appSKU || appSKUList.length === 0) {
       console.error("[DEBUG API] Missing required fields:", {
+        copanyId: !!copanyId,
         privateKey: !!privateKey,
         keyId: !!keyId,
         issuerId: !!issuerId,
@@ -880,8 +886,46 @@ export async function POST(request: NextRequest) {
         appSKUListLength: appSKUList.length,
       });
       return NextResponse.json(
-        { error: "Missing required fields: privateKey, keyId, issuerId, vendorNumber, appSKU (supports comma-separated multiple SKUs)" },
+        { error: "Missing required fields: copanyId, privateKey, keyId, issuerId, vendorNumber, appSKU (supports comma-separated multiple SKUs)" },
         { status: 400 }
+      );
+    }
+
+    // Verify user authentication and copany ownership
+    const supabase = await createSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("[DEBUG API] Authentication error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Verify user is copany owner
+    const { data: copany, error: copanyError } = await supabase
+      .from("copany")
+      .select("created_by")
+      .eq("id", copanyId)
+      .single();
+
+    if (copanyError || !copany) {
+      console.error("[DEBUG API] Copany not found:", copanyError);
+      return NextResponse.json(
+        { error: "Copany not found" },
+        { status: 404 }
+      );
+    }
+
+    if (copany.created_by !== user.id) {
+      console.error("[DEBUG API] User is not copany owner:", {
+        userId: user.id,
+        ownerId: copany.created_by,
+      });
+      return NextResponse.json(
+        { error: "Only copany owner can save credentials" },
+        { status: 403 }
       );
     }
 
@@ -1143,6 +1187,55 @@ export async function POST(request: NextRequest) {
         failed: errors.length,
       },
     });
+
+    // Save credentials and finance data to database
+    try {
+      console.log("[DEBUG API] Saving credentials and finance data to database...");
+      
+      // Save credentials (this will delete old credentials first)
+      await AppStoreConnectCredentialsService.saveCredentials(
+        copanyId,
+        user.id,
+        {
+          privateKey,
+          keyId,
+          issuerId,
+          vendorNumber,
+          appSKU: body.appSKU,
+        }
+      );
+      console.log("[DEBUG API] Credentials saved successfully");
+
+      // Prepare finance reports data for saving
+      const financeReports = reports.map((report) => ({
+        reportType: report.reportType,
+        regionCode: report.regionCode,
+        reportDate: report.reportDate,
+        rawData: report.data,
+        parsedData: report.parsed,
+        filteredData: report.filtered,
+      }));
+
+      // Prepare chart data for saving
+      const financeChartData = chartData.map((item) => ({
+        date: item.date,
+        amountUSD: item.amountUSD,
+        count: item.count,
+        transactions: item.transactions,
+      }));
+
+      // Save finance data (this will delete old data first)
+      await AppStoreFinanceDataService.saveFinanceData(
+        copanyId,
+        financeReports,
+        financeChartData
+      );
+      console.log("[DEBUG API] Finance data saved successfully");
+    } catch (saveError) {
+      console.error("[DEBUG API] Error saving data to database:", saveError);
+      // Continue to return the response even if save fails
+      // The user should still see the fetched data
+    }
 
     return NextResponse.json({
       success: true,
