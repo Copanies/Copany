@@ -349,7 +349,7 @@ export default function CopanyGridView({
 
   return (
     <>
-      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 max-w-[820px] justify-center mx-auto w-full">
+      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-8 pb-10 max-w-[1240px] justify-center mx-auto w-full">
         {copanies.map((copany, index) => (
           <CopanyCard
             key={copany.id}
