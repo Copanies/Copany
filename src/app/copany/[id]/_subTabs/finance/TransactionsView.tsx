@@ -8,8 +8,13 @@ import {
   useCreateTransaction,
   useReviewTransaction,
   useDeleteTransaction,
+  useAppStoreFinance,
 } from "@/hooks/finance";
-import type { TransactionRow, TransactionType } from "@/types/database.types";
+import type {
+  TransactionReviewStatus,
+  TransactionRow,
+  TransactionType,
+} from "@/types/database.types";
 import type { UserInfo } from "@/actions/user.actions";
 import { storageService } from "@/services/storage.service";
 import Modal from "@/components/commons/Modal";
@@ -25,6 +30,7 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
+import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
 
 // Helper function to format amount with sign based on transaction type
 function formatAmount(
@@ -37,14 +43,67 @@ function formatAmount(
   return `${sign}${currency} ${absAmount.toFixed(2)}`;
 }
 
+const APP_STORE_ACTOR_ID = "__app_store__";
+const APP_STORE_ACTOR_NAME = "App Store";
+const APP_STORE_STATUS_TEXT = "Auto Confirmed";
+const APP_STORE_DESCRIPTION =
+  "通过 App Store Connect API 自动同步，因银行汇款和汇率差异，实际到账金额以实际为准。";
+
+function getMonthEndISOString(yearMonth: string) {
+  const [yearStr, monthStr] = yearMonth.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) {
+    return new Date().toISOString();
+  }
+  const date = new Date(Date.UTC(year, month, 0, 0, 0, 0));
+  return date.toISOString();
+}
+
 export default function TransactionsView({ copanyId }: { copanyId: string }) {
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: transactions, isLoading: isTransactionsLoading } =
     useTransactions(copanyId);
+  const { data: appStoreFinanceData, isLoading: isAppStoreFinanceLoading } =
+    useAppStoreFinance(copanyId);
   const createTransaction = useCreateTransaction(copanyId);
   const reviewTransaction = useReviewTransaction(copanyId);
   const deleteTransaction = useDeleteTransaction(copanyId);
+  const appStoreChartData = appStoreFinanceData?.chartData;
+
+  const appStoreTransactions = useMemo<TransactionRow[]>(() => {
+    if (!copanyId || !appStoreChartData || appStoreChartData.length === 0) {
+      return [];
+    }
+
+    return appStoreChartData.map((item) => {
+      const occurredAt = getMonthEndISOString(item.date);
+      const normalizedAmount =
+        typeof item.amountUSD === "number" && Number.isFinite(item.amountUSD)
+          ? item.amountUSD
+          : 0;
+
+      return {
+        id: `app-store-${copanyId}-${item.date}`,
+        created_at: occurredAt,
+        updated_at: occurredAt,
+        copany_id: copanyId,
+        actor_id: APP_STORE_ACTOR_ID,
+        type: "income",
+        description: APP_STORE_DESCRIPTION,
+        amount: normalizedAmount,
+        currency: "USD",
+        status: "confirmed",
+        occurred_at: occurredAt,
+        evidence_url: null,
+      };
+    });
+  }, [appStoreChartData, copanyId]);
+
+  const combinedTransactions = useMemo<TransactionRow[]>(() => {
+    return [...(transactions ?? []), ...appStoreTransactions];
+  }, [transactions, appStoreTransactions]);
 
   // Get unique user IDs from transactions for user info
   const transactionUserIds = useMemo(() => {
@@ -57,7 +116,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
 
   // Group transactions by monthly period
   const groupedTransactions = useMemo(() => {
-    if (!transactions || transactions.length === 0) return [];
+    if (!combinedTransactions || combinedTransactions.length === 0) return [];
 
     const groups = new Map<
       string,
@@ -70,7 +129,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
       }
     >();
 
-    transactions.forEach((transaction) => {
+    combinedTransactions.forEach((transaction) => {
       const period = getMonthlyPeriodFrom10th(transaction.occurred_at);
       const key = period.key;
 
@@ -100,7 +159,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [transactions]);
+  }, [combinedTransactions]);
 
   const isOwner = useMemo(() => {
     return !!(copany && currentUser && copany.created_by === currentUser.id);
@@ -149,11 +208,11 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     await createTransaction.mutateAsync(transactionData);
   }
 
-  if (isTransactionsLoading) {
+  if (isTransactionsLoading || isAppStoreFinanceLoading) {
     return <LoadingView type="label" />;
   }
 
-  if (!transactions || transactions.length === 0) {
+  if (!combinedTransactions || combinedTransactions.length === 0) {
     return (
       <div className="p-4 min-w-0">
         <EmptyPlaceholderView
@@ -475,14 +534,22 @@ function TransactionDetailModal({
 }: {
   transaction: TransactionRow;
   isOwner: boolean;
-  userInfo: UserInfo;
+  userInfo?: UserInfo;
   currentUserId?: string;
   onClose: () => void;
   onConfirm: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
-  const actorName = userInfo?.name || "";
-  const actorAvatar = userInfo?.avatar_url || "";
+  const isAppStoreTransaction = transaction.actor_id === APP_STORE_ACTOR_ID;
+  const actorName = isAppStoreTransaction
+    ? APP_STORE_ACTOR_NAME
+    : userInfo?.name || "";
+  const actorAvatar = isAppStoreTransaction
+    ? AppleAppStoreIcon
+    : userInfo?.avatar_url || "";
+  const avatarClassName = isAppStoreTransaction
+    ? "w-5 h-5"
+    : "w-5 h-5 rounded-full";
   const isDarkMode = useDarkMode();
   return (
     <div className="p-6">
@@ -518,7 +585,7 @@ function TransactionDetailModal({
                 alt={actorName}
                 width={20}
                 height={20}
-                className="w-5 h-5 rounded-full"
+                className={avatarClassName}
                 placeholder="blur"
                 blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
@@ -533,7 +600,10 @@ function TransactionDetailModal({
             <span className="text-gray-600 dark:text-gray-400 w-32">
               Status:
             </span>
-            <StatusLabel status={transaction.status} showText={true} />
+            <TransactionStatusDisplay
+              status={transaction.status}
+              isAutoConfirmed={isAppStoreTransaction}
+            />
           </div>
           {transaction.description && (
             <div className="flex flex-row items-center gap-2">
@@ -658,16 +728,22 @@ function TransactionsGroupList({
       <div className="min-w-max" ref={containerRef}>
         {items.map((t) => {
           const userInfo = transactionUsersInfo[t.actor_id];
-          const actorName = userInfo?.name || "";
-          const actorAvatar = userInfo?.avatar_url || "";
+          const isAppStoreTransaction = t.actor_id === APP_STORE_ACTOR_ID;
+          const actorName = isAppStoreTransaction
+            ? APP_STORE_ACTOR_NAME
+            : userInfo?.name || "";
+          const actorAvatar = isAppStoreTransaction
+            ? AppleAppStoreIcon
+            : userInfo?.avatar_url || "";
+          const avatarClassName = isAppStoreTransaction
+            ? "w-5 h-5"
+            : "w-5 h-5 rounded-full";
           const isPendingReview = t.status === "in_review" && isOwner;
 
           return (
             <div
               key={t.id}
-              className={`pl-3 md:pl-4 h-11 items-center group min-w-0 ${
-                isPendingReview ? "bg-purple-100 dark:bg-purple-950/50" : ""
-              }`}
+              className={`pl-3 md:pl-4 h-11 items-center group min-w-0`}
             >
               <div className="flex gap-3 test-base h-11 items-center">
                 <span className="font-medium flex-shrink-0 w-36">
@@ -680,7 +756,7 @@ function TransactionsGroupList({
                       alt={actorName}
                       width={20}
                       height={20}
-                      className="w-5 h-5 rounded-full"
+                      className={avatarClassName}
                       placeholder="blur"
                       blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
                     />
@@ -699,18 +775,17 @@ function TransactionsGroupList({
                 <span className="flex-shrink-0 w-36">
                   {formatDate(t.occurred_at)}
                 </span>
-                <span className="text-gray-700 dark:text-gray-300 flex-shrink-0 w-36">
-                  <StatusLabel status={t.status} showText={true} />
-                </span>
+                <div className="text-gray-700 dark:text-gray-300 flex-shrink-0 w-36">
+                  <TransactionStatusDisplay
+                    status={t.status}
+                    isAutoConfirmed={isAppStoreTransaction}
+                  />
+                </div>
                 <span className="flex-1 min-w-0 truncate w-40">
                   {t.description ? t.description : "No description"}
                 </span>
                 <div
-                  className={`sticky right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 ${
-                    isPendingReview
-                      ? "bg-purple-100 dark:bg-background-dark"
-                      : "bg-white dark:bg-background-dark"
-                  }`}
+                  className={`sticky right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark`}
                 >
                   <div
                     data-role="actions"
@@ -738,4 +813,25 @@ function TransactionsGroupList({
       </div>
     </div>
   );
+}
+
+function TransactionStatusDisplay({
+  status,
+  isAutoConfirmed,
+}: {
+  status: TransactionReviewStatus;
+  isAutoConfirmed: boolean;
+}) {
+  if (isAutoConfirmed) {
+    return (
+      <div className="flex flex-row items-center gap-1">
+        <StatusLabel status="confirmed" showText={false} />
+        <span className="text-base text-gray-900 dark:text-gray-100">
+          {APP_STORE_STATUS_TEXT}
+        </span>
+      </div>
+    );
+  }
+
+  return <StatusLabel status={status} showText={true} />;
 }
