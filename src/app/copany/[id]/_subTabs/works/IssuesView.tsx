@@ -40,6 +40,8 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import { useCopany } from "@/hooks/copany";
 import { useMultipleIssueReviewers } from "@/hooks/reviewers";
 import { issuesUiStateManager } from "@/utils/cache";
+import CopanyRightPanel from "@/components/copany/CopanyRightPanel";
+import CopanyHeader from "@/components/copany/CopanyHeader";
 import {
   EMPTY_STRING,
   EMPTY_ISSUES_ARRAY,
@@ -561,8 +563,21 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
     );
   };
 
+  if (!copany) {
+    return (
+      <div className="min-h-screen w-full min-w-0 flex flex-col gap-3">
+        <LoadingView type="label" label="Loading copany..." />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen w-full min-w-0 flex flex-col gap-3">
+    <div className="min-h-screen w-full min-w-0 flex flex-col gap-3 px-4">
+      <CopanyHeader
+        copany={copany}
+        showCoverImage={false}
+        showDescription={false}
+      />
       <div className="flex w-full min-w-0 items-center justify-between px-0 gap-3">
         {newIssueButton()}
         <input
@@ -585,57 +600,134 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
           className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
         />
       </div>
-      <Suspense
-        fallback={<LoadingView type="label" label="Loading issues..." />}
-      >
-        <div className="relative w-full min-w-0">
-          {groupIssuesByState(filteredIssues).map((group) => (
-            <div key={group.state} className="w-full min-w-0 -mb-px md:-mb-0">
-              {/* Group title (click to toggle collapse) */}
-              <div
-                className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
-                onClick={() => toggleGroupCollapse(group.state)}
-              >
-                <div className="flex flex-row items-center gap-2">
-                  {group.label}
-                  <span className="text-base text-gray-600 dark:text-gray-400">
-                    {group.issues.length}
-                  </span>
-                </div>
-              </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 min-w-0">
+          <Suspense
+            fallback={<LoadingView type="label" label="Loading issues..." />}
+          >
+            <div className="relative w-full min-w-0">
+              {groupIssuesByState(filteredIssues).map((group) => (
+                <div
+                  key={group.state}
+                  className="w-full min-w-0 -mb-px md:-mb-0"
+                >
+                  {/* Group title (click to toggle collapse) */}
+                  <div
+                    className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                    onClick={() => toggleGroupCollapse(group.state)}
+                  >
+                    <div className="flex flex-row items-center gap-2">
+                      {group.label}
+                      <span className="text-base text-gray-600 dark:text-gray-400">
+                        {group.issues.length}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Issues in this state (hidden when collapsed) */}
-              {!collapsedGroups[group.state] &&
-                group.issues.map((issue) => {
-                  const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
-                  return (
-                    <div
-                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-100 dark:border-gray-800 md:border-b-0"
-                      key={issue.id}
-                      onClick={() => {
-                        // Keep current URL parameters
-                        const params = new URLSearchParams(
-                          searchParams.toString()
-                        );
-                        router.push(
-                          `/copany/${copanyId}/issue/${
-                            issue.id
-                          }?${params.toString()}`
-                        );
-                      }}
-                      onContextMenu={(e) => handleContextMenu(e, issue.id)}
-                    >
-                      {/* Mobile layout: two lines */}
-                      <div className="flex md:hidden w-full min-w-0 flex-col gap-1">
-                        {/* Line 1: Title only */}
-                        <div className="text-base text-gray-900 dark:text-gray-100 text-left w-full min-w-0 flex items-start gap-2">
-                          <span className="line-clamp-2 md:line-clamp-1 md:truncate break-words">
-                            {issue.title || NO_TITLE_TEXT}
-                          </span>
-                        </div>
-                        {/* Line 2: Status → Priority → Level → Assignee */}
-                        <div className="flex flex-row justify-between w-full">
-                          <div className="flex flex-row items-center gap-2 text-base text-gray-600 dark:text-gray-400">
+                  {/* Issues in this state (hidden when collapsed) */}
+                  {!collapsedGroups[group.state] &&
+                    group.issues.map((issue) => {
+                      const readOnly = !(
+                        canEditByIssue[String(issue.id)] ?? false
+                      );
+                      return (
+                        <div
+                          className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-100 dark:border-gray-800 md:border-b-0"
+                          key={issue.id}
+                          onClick={() => {
+                            // Keep current URL parameters
+                            const params = new URLSearchParams(
+                              searchParams.toString()
+                            );
+                            router.push(
+                              `/copany/${copanyId}/issue/${
+                                issue.id
+                              }?${params.toString()}`
+                            );
+                          }}
+                          onContextMenu={(e) => handleContextMenu(e, issue.id)}
+                        >
+                          {/* Mobile layout: two lines */}
+                          <div className="flex md:hidden w-full min-w-0 flex-col gap-1">
+                            {/* Line 1: Title only */}
+                            <div className="text-base text-gray-900 dark:text-gray-100 text-left w-full min-w-0 flex items-start gap-2">
+                              <span className="line-clamp-2 md:line-clamp-1 md:truncate break-words">
+                                {issue.title || NO_TITLE_TEXT}
+                              </span>
+                            </div>
+                            {/* Line 2: Status → Priority → Level → Assignee */}
+                            <div className="flex flex-row justify-between w-full">
+                              <div className="flex flex-row items-center gap-2 text-base text-gray-600 dark:text-gray-400">
+                                <IssueStateSelector
+                                  issueId={issue.id}
+                                  initialState={issue.state}
+                                  showText={false}
+                                  readOnly={readOnly}
+                                  onStateChange={handleIssueStateUpdated}
+                                  onServerUpdated={(serverIssue) => {
+                                    queryClient.setQueryData<
+                                      IssueWithAssignee[]
+                                    >(["issues", copanyId], (prev) => {
+                                      const base = prev || EMPTY_ISSUES_ARRAY;
+                                      return base.map((it) =>
+                                        String(it.id) === String(serverIssue.id)
+                                          ? serverIssue
+                                          : it
+                                      );
+                                    });
+                                  }}
+                                />
+                                <IssuePrioritySelector
+                                  issueId={issue.id}
+                                  initialPriority={issue.priority}
+                                  showText={false}
+                                  onPriorityChange={handleIssuePriorityUpdated}
+                                  readOnly={readOnly}
+                                />
+                                {renderReviewBadge(issue)}
+                              </div>
+                              <div className="flex flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <IssueLevelSelector
+                                  issueId={issue.id}
+                                  initialLevel={issue.level}
+                                  showText={false}
+                                  onLevelChange={handleIssueLevelUpdated}
+                                  readOnly={readOnly}
+                                />
+                                <IssueAssigneeSelector
+                                  issueId={issue.id}
+                                  initialAssignee={issue.assignee}
+                                  assigneeUser={issue.assignee_user}
+                                  currentUser={currentUser}
+                                  contributors={contributors}
+                                  showText={false}
+                                  onAssigneeChange={handleIssueAssigneeUpdated}
+                                  readOnly={readOnly}
+                                  disableServerUpdate={false}
+                                  hasPendingByMe={(() => {
+                                    const meId = currentUser?.id
+                                      ? String(currentUser.id)
+                                      : null;
+                                    if (!meId) return false;
+                                    const reqIds =
+                                      pendingRequestersByIssue[
+                                        String(issue.id)
+                                      ] || EMPTY_ARRAY;
+                                    return reqIds.includes(meId);
+                                  })()}
+                                  onRequestAssignment={() => {
+                                    setSelectedIssueId(String(issue.id));
+                                    setIsRequestModalOpen(true);
+                                  }}
+                                />
+                              </div>
+
+                              {renderAssignmentRequestBadge(String(issue.id))}
+                            </div>
+                          </div>
+
+                          {/* Desktop layout: keep original single line order */}
+                          <div className="hidden md:flex w-full min-w-0 flex-row items-center gap-2">
                             <IssueStateSelector
                               issueId={issue.id}
                               initialState={issue.state}
@@ -663,9 +755,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                               onPriorityChange={handleIssuePriorityUpdated}
                               readOnly={readOnly}
                             />
-                            {renderReviewBadge(issue)}
-                          </div>
-                          <div className="flex flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 min-w-0 flex items-center gap-2">
+                              <span className="truncate">
+                                {issue.title || NO_TITLE_TEXT}
+                              </span>
+                              {renderReviewBadge(issue)}
+                            </div>
+                            {renderAssignmentRequestBadge(String(issue.id))}
                             <IssueLevelSelector
                               issueId={issue.id}
                               initialLevel={issue.level}
@@ -699,96 +795,34 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                               }}
                             />
                           </div>
-
-                          {renderAssignmentRequestBadge(String(issue.id))}
                         </div>
-                      </div>
+                      );
+                    })}
+                </div>
+              ))}
 
-                      {/* Desktop layout: keep original single line order */}
-                      <div className="hidden md:flex w-full min-w-0 flex-row items-center gap-2">
-                        <IssueStateSelector
-                          issueId={issue.id}
-                          initialState={issue.state}
-                          showText={false}
-                          readOnly={readOnly}
-                          onStateChange={handleIssueStateUpdated}
-                          onServerUpdated={(serverIssue) => {
-                            queryClient.setQueryData<IssueWithAssignee[]>(
-                              ["issues", copanyId],
-                              (prev) => {
-                                const base = prev || EMPTY_ISSUES_ARRAY;
-                                return base.map((it) =>
-                                  String(it.id) === String(serverIssue.id)
-                                    ? serverIssue
-                                    : it
-                                );
-                              }
-                            );
-                          }}
-                        />
-                        <IssuePrioritySelector
-                          issueId={issue.id}
-                          initialPriority={issue.priority}
-                          showText={false}
-                          onPriorityChange={handleIssuePriorityUpdated}
-                          readOnly={readOnly}
-                        />
-                        <div className="text-base text-gray-900 dark:text-gray-100 text-left flex-1 min-w-0 flex items-center gap-2">
-                          <span className="truncate">
-                            {issue.title || NO_TITLE_TEXT}
-                          </span>
-                          {renderReviewBadge(issue)}
-                        </div>
-                        {renderAssignmentRequestBadge(String(issue.id))}
-                        <IssueLevelSelector
-                          issueId={issue.id}
-                          initialLevel={issue.level}
-                          showText={false}
-                          onLevelChange={handleIssueLevelUpdated}
-                          readOnly={readOnly}
-                        />
-                        <IssueAssigneeSelector
-                          issueId={issue.id}
-                          initialAssignee={issue.assignee}
-                          assigneeUser={issue.assignee_user}
-                          currentUser={currentUser}
-                          contributors={contributors}
-                          showText={false}
-                          onAssigneeChange={handleIssueAssigneeUpdated}
-                          readOnly={readOnly}
-                          disableServerUpdate={false}
-                          hasPendingByMe={(() => {
-                            const meId = currentUser?.id
-                              ? String(currentUser.id)
-                              : null;
-                            if (!meId) return false;
-                            const reqIds =
-                              pendingRequestersByIssue[String(issue.id)] ||
-                              EMPTY_ARRAY;
-                            return reqIds.includes(meId);
-                          })()}
-                          onRequestAssignment={() => {
-                            setSelectedIssueId(String(issue.id));
-                            setIsRequestModalOpen(true);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Right-click menu */}
+              <ContextMenu
+                show={contextMenu.show}
+                x={contextMenu.x}
+                y={contextMenu.y}
+                items={contextMenuItems}
+                onClose={handleCloseContextMenu}
+              />
             </div>
-          ))}
-
-          {/* Right-click menu */}
-          <ContextMenu
-            show={contextMenu.show}
-            x={contextMenu.x}
-            y={contextMenu.y}
-            items={contextMenuItems}
-            onClose={handleCloseContextMenu}
+          </Suspense>
+        </div>
+        <div className="w-full lg:w-[340px] xl:w-[360px] flex-shrink-0">
+          <CopanyRightPanel
+            copanyId={copanyId}
+            copany={copany}
+            showAbout={true}
+            showIssues={false}
+            showDiscussions={true}
+            showContributions={true}
           />
         </div>
-      </Suspense>
+      </div>
       {/* Create Issue modal */}
       {createIssueModal()}
 

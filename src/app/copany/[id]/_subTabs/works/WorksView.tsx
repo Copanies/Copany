@@ -1,5 +1,5 @@
 import IssuesView from "./IssuesView";
 
-export default function CooperateView({ copanyId }: { copanyId: string }) {
+export default function WorksView({ copanyId }: { copanyId: string }) {
   return <IssuesView copanyId={copanyId} />;
 }
