@@ -7,10 +7,10 @@ import TabView from "@/components/commons/TabView";
 import AboutView from "./_subTabs/about/AboutView";
 import LoadingView from "@/components/commons/LoadingView";
 import WorksView from "./_subTabs/works/WorksView";
-import ContributionView from "./_subTabs/contribution/ContributionView";
-import FinanceView from "./_subTabs/finance/FinanceView";
+import ContributionView from "./_subTabs/contribution&finance/ContributionView";
+import FinanceView from "./_subTabs/contribution&finance/FinanceView";
 import SettingsView from "./_subTabs/settings/SettingsView";
-import DiscussionView from "./_subTabs/discussion/DiscussionView";
+import DiscussionView from "./_subTabs/works/DiscussionView";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpenIcon,
@@ -20,6 +20,7 @@ import {
   Cog6ToothIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import ContributionFinanceView from "./_subTabs/contribution&finance/ContributionFinanceView";
 
 interface CopanyViewProps {
   copanyId: string;
@@ -66,44 +67,15 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
           },
         ]
       : []),
-    ...(copany.github_url
-      ? [
-          {
-            label: "Works",
-            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
-            content: <WorksView copanyId={copanyId} />,
-          },
-          {
-            label: "Discussion",
-            icon: (
-              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
-            ),
-            content: <DiscussionView copanyId={copanyId} />,
-          },
-        ]
-      : [
-          {
-            label: "Discussion",
-            icon: (
-              <ChatBubbleLeftRightIcon strokeWidth={2} className="w-4 h-4" />
-            ),
-            content: <DiscussionView copanyId={copanyId} />,
-          },
-          {
-            label: "Works",
-            icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
-            content: <WorksView copanyId={copanyId} />,
-          },
-        ]),
     {
-      label: "Contribution",
-      icon: <ChartPieIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <ContributionView copany={copany} />,
+      label: "Works",
+      icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
+      content: <WorksView copany={copany} />,
     },
     {
-      label: "Finance",
+      label: "Contribution & Finance",
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <FinanceView copanyId={copanyId} />,
+      content: <ContributionFinanceView copany={copany} />,
     },
     ...(isCreator
       ? [
@@ -114,7 +86,6 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
               <SettingsView
                 copany={copany}
                 onCopanyUpdate={(updatedCopany) => {
-                  // 更新 React Query 缓存以保持 UI 同步
                   queryClient.setQueryData(["copany", copanyId], updatedCopany);
                   queryClient.invalidateQueries({
                     queryKey: ["copany", copanyId],

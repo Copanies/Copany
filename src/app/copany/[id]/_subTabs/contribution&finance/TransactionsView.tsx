@@ -9,6 +9,7 @@ import {
   useReviewTransaction,
   useDeleteTransaction,
   useAppStoreFinance,
+  useRefreshAppStoreFinance,
 } from "@/hooks/finance";
 import type {
   TransactionReviewStatus,
@@ -31,6 +32,7 @@ import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
+import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 
 // Helper function to format amount with sign based on transaction type
 function formatAmount(
@@ -67,6 +69,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
     useTransactions(copanyId);
   const { data: appStoreFinanceData, isLoading: isAppStoreFinanceLoading } =
     useAppStoreFinance(copanyId);
+  const refreshAppStoreFinance = useRefreshAppStoreFinance(copanyId);
   const createTransaction = useCreateTransaction(copanyId);
   const reviewTransaction = useReviewTransaction(copanyId);
   const deleteTransaction = useDeleteTransaction(copanyId);
@@ -166,6 +169,8 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
   }, [copany, currentUser]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialTransactionType, setInitialTransactionType] =
+    useState<TransactionType>("income");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewTransaction, setViewTransaction] = useState<TransactionRow | null>(
     null
@@ -223,10 +228,15 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
             />
           }
           title="Add first transactions"
-          description="Transaction log records Copany’s income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner."
+          description="Transaction log records Copany's income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner."
           buttonIcon={<PlusIcon className="w-4 h-4" />}
           buttonTitle="New Transaction"
-          buttonAction={() => currentUser && setIsModalOpen(true)}
+          buttonAction={() => {
+            if (currentUser) {
+              setInitialTransactionType("income");
+              setIsModalOpen(true);
+            }
+          }}
           size="lg"
         />
         <TransactionModal
@@ -234,6 +244,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onCreate={handleCreate}
+          initialType={initialTransactionType}
         />
       </div>
     );
@@ -241,30 +252,56 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="p-0 w-full min-w-0">
-      <div className="flex items-center justify-between px-0 md:px-4 pt-2 pb-3">
-        {/* <div className="text-base text-gray-600">Transactions</div> */}
-        <Button
-          size="md"
-          onClick={() => setIsModalOpen(true)}
-          disabled={!currentUser}
-          disableTooltipConent="Sign in to add a transaction"
-        >
-          <div className="flex flex-row items-center gap-1">
-            <span>New Transaction</span>
-          </div>
-        </Button>
+      <div className="flex items-center justify-between px-0 pb-3">
+        <div className="text-base font-semibold">收入与支出记录</div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="md"
+            variant="primary"
+            onClick={() => {
+              setInitialTransactionType("income");
+              setIsModalOpen(true);
+            }}
+            disabled={!currentUser}
+            disableTooltipConent="Sign in to add a transaction"
+          >
+            <div className="flex flex-row items-center gap-1">
+              <span>Income</span>
+            </div>
+          </Button>
+          <Button
+            size="md"
+            variant="secondary"
+            onClick={() => {
+              setInitialTransactionType("expense");
+              setIsModalOpen(true);
+            }}
+            disabled={!currentUser}
+            disableTooltipConent="Sign in to add a transaction"
+          >
+            <div className="flex flex-row items-center gap-1">
+              <span>Expense</span>
+            </div>
+          </Button>
+          <ConnectToAppStoreConnect
+            copanyId={copanyId}
+            onSuccess={async () => {
+              await refreshAppStoreFinance.mutateAsync();
+            }}
+          />
+        </div>
       </div>
 
-      <div className="w-full mx-auto border-b border-gray-200 dark:border-gray-700">
+      <div className="w-full mx-auto rounded-lg border border-gray-200 dark:border-gray-700">
         {groupedTransactions.map((group) => (
           <div key={group.period.key} className="w-full">
             {/* Period Header */}
-            <div className="flex flex-1 px-3 md:px-4 w-full h-11 items-center bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 ">
+            <div className="flex flex-1 px-3 md:px-4 w-full h-11 items-center bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
               <div className="flex items-center justify-between w-full">
-                <span className="test-base font-medium text-gray-900 dark:text-gray-100 truncate">
+                <span className="test-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                   {group.period.key}
                 </span>
-                <div className="flex items-center gap-4 test-base">
+                <div className="flex items-center gap-4 test-sm">
                   <span className="truncate">
                     {formatAmount(
                       group.netAmount,
@@ -294,6 +331,7 @@ export default function TransactionsView({ copanyId }: { copanyId: string }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreate={handleCreate}
+        initialType={initialTransactionType}
       />
 
       {/* Transaction View Modal */}
@@ -342,6 +380,7 @@ function TransactionModal({
   isOpen,
   onClose,
   onCreate,
+  initialType = "income",
 }: {
   copanyId: string;
   isOpen: boolean;
@@ -358,8 +397,9 @@ function TransactionModal({
     > & { copany_id?: string; evidence_url?: string | null },
     file?: File | null
   ) => Promise<void>;
+  initialType?: TransactionType;
 }) {
-  const [type, setType] = useState<TransactionType>("income");
+  const [type, setType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState<number>();
   const [currency, setCurrency] = useState<string>("USD");
   const [occurredAt, setOccurredAt] = useState<string>(
@@ -367,6 +407,18 @@ function TransactionModal({
   );
   const [description, setDescription] = useState<string>("");
   const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
+
+  // Update type when initialType changes and modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setType(initialType);
+      // Reset form when modal opens
+      setAmount(undefined);
+      setDescription("");
+      setEvidenceUrl(null);
+      setOccurredAt(new Date().toISOString().slice(0, 16));
+    }
+  }, [isOpen, initialType]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
@@ -745,8 +797,8 @@ function TransactionsGroupList({
               key={t.id}
               className={`pl-3 md:pl-4 h-11 items-center group min-w-0`}
             >
-              <div className="flex gap-3 test-base h-11 items-center">
-                <span className="font-medium flex-shrink-0 w-36">
+              <div className="flex gap-3 test-sm h-11 items-center">
+                <span className="font-medium text-sm flex-shrink-0 w-36">
                   {formatAmount(t.amount, t.currency, t.type)}
                 </span>
                 <div className="flex items-center gap-2 flex-shrink-0 w-36">
@@ -768,24 +820,24 @@ function TransactionsGroupList({
                       {actorName.slice(0, 1).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-gray-900 dark:text-gray-100 truncate">
+                  <span className="text-gray-900 text-sm dark:text-gray-100 truncate">
                     {actorName}
                   </span>
                 </div>
-                <span className="flex-shrink-0 w-36">
+                <span className="flex-shrink-0 text-sm w-36">
                   {formatDate(t.occurred_at)}
                 </span>
-                <div className="text-gray-700 dark:text-gray-300 flex-shrink-0 w-36">
+                <div className="text-gray-700 text-sm dark:text-gray-300 flex-shrink-0 w-36">
                   <TransactionStatusDisplay
                     status={t.status}
                     isAutoConfirmed={isAppStoreTransaction}
                   />
                 </div>
-                <span className="flex-1 min-w-0 truncate w-40">
+                <span className="flex-1 min-w-0 text-sm truncate w-40">
                   {t.description ? t.description : "No description"}
                 </span>
                 <div
-                  className={`sticky right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark`}
+                  className={`sticky rounded-r-lg right-0 h-11 flex items-center justify-start gap-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark`}
                 >
                   <div
                     data-role="actions"
@@ -798,7 +850,7 @@ function TransactionsGroupList({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="!text-base !border-0"
+                        className="!text-sm !border-0"
                         onClick={() => onOpenView(t)}
                       >
                         View

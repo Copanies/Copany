@@ -20,12 +20,14 @@ import UserAvatar from "@/components/commons/UserAvatar";
 import { ScaleIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import ExpandableText from "@/components/commons/ExpandableText";
+import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import { formatAbbreviatedCount } from "@/utils/number";
 
 interface CopanyRightPanelProps {
   copanyId: string;
   copany: Copany;
   showAbout?: boolean;
+  showFinance?: boolean;
   showIssues?: boolean;
   showDiscussions?: boolean;
   showContributions?: boolean;
@@ -35,6 +37,7 @@ export default function CopanyRightPanel({
   copanyId,
   copany,
   showAbout = true,
+  showFinance = true,
   showIssues = true,
   showDiscussions = true,
   showContributions = true,
@@ -153,6 +156,24 @@ export default function CopanyRightPanel({
           </div>
         </div>
       </div>
+    </div>
+  ) : null;
+
+  const financeSection = showFinance ? (
+    <div className="flex flex-col gap-3">
+      <div>
+        <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          Finance
+        </p>
+      </div>
+      <FinanceOverviewChart
+        copanyId={copanyId}
+        size="small"
+        showLatestRevenue={false}
+        showAvgMonthlyRevenue={true}
+        showOneYearRevenue={false}
+        showAllRevenue={false}
+      />
     </div>
   ) : null;
 
@@ -276,10 +297,10 @@ export default function CopanyRightPanel({
   return (
     <div className="flex flex-col gap-4">
       {aboutSection}
+      {financeSection}
       {issuesSection}
       {discussionsSection}
       {contributionsSection}
     </div>
   );
 }
-

@@ -18,6 +18,7 @@ import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useAppStoreFinance, useRefreshAppStoreFinance } from "@/hooks/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
+import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 
 interface Credentials {
   privateKey: string;
@@ -240,13 +241,19 @@ export default function AppStoreConnectView({
           description="Connect to App Store Connect API to fetch finance reports for your app. Upload your P8 private key, Key ID, Issuer ID, and App SKU to get started."
           buttonIcon={<DocumentTextIcon className="w-4 h-4" />}
           buttonTitle="Fetch Reports"
-          buttonAction={() => setIsModalOpen(true)}
+          buttonAction={() => {
+            // This will be handled by the ConnectToAppStoreConnect component
+            // We'll use a ref or state to trigger it, but for now, we'll keep the modal approach
+            setIsModalOpen(true);
+          }}
           size="lg"
         />
         <CredentialsModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onFetch={handleFetchReports}
+          onFetch={async (credentials: Credentials) => {
+            await handleFetchReports(credentials);
+          }}
         />
       </div>
     );
@@ -313,9 +320,12 @@ export default function AppStoreConnectView({
           >
             {refreshFinanceData.isPending ? "Refreshing..." : "Refresh"}
           </Button>
-          <Button size="md" onClick={() => setIsModalOpen(true)}>
-            Fetch New Reports
-          </Button>
+          <ConnectToAppStoreConnect
+            copanyId={copanyId}
+            onSuccess={async () => {
+              await refreshFinanceData.mutateAsync();
+            }}
+          />
         </div>
       </div>
 
@@ -358,12 +368,6 @@ export default function AppStoreConnectView({
       ) : (
         <ReportsListView reports={reports} onSelectReport={setSelectedReport} />
       )}
-
-      <CredentialsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onFetch={handleFetchReports}
-      />
     </div>
   );
 }

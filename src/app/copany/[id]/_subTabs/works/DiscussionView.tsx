@@ -157,7 +157,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
   return (
     <div className="flex flex-col md:flex-row gap-5 overflow-x-hidden">
       {/* Desktop sidebar */}
-      <div className="hidden md:block w-44 shrink-0">
+      {/* <div className="hidden md:block w-44 shrink-0">
         <div className="sticky top-4 flex flex-col gap-3">
           <h3 className="text-base font-normal text-gray-900 dark:text-gray-100">
             Label
@@ -197,9 +197,9 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <section className="flex-1 flex flex-col gap-3 md:border-l border-gray-200 dark:border-gray-700 md:pl-5 pb-[200px] min-h-[calc(100vh-200px)]">
+      <section className="flex-1 flex flex-col gap-3 pb-[200px] min-h-[calc(100vh-200px)]">
         <div className="flex flex-row gap-2 justify-between items-center">
           <Button
             onClick={() => setIsModalOpen(true)}

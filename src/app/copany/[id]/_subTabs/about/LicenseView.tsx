@@ -201,7 +201,7 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
               </div>
             </div>
           )}
-          <pre className="whitespace-pre-wrap break-words font-mono text-sm p-4 bg-gray-50 dark:bg-transparent rounded-lg">
+          <pre className="whitespace-pre-wrap break-words font-mono text-sm rounded-lg">
             {coslLicenseContent}
           </pre>
         </div>

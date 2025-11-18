@@ -165,18 +165,16 @@ export default function ContributionRecordsView({
       )}
 
       {/* All Contribution Records */}
-      <div className="relative border-b border-gray-200 dark:border-gray-700">
+      <div className="relative rounded-lg border border-gray-200 dark:border-gray-700">
         {groupedContributions.map((group) => (
           <div key={group.period.key} className="">
             {/* Period Header */}
             <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
               <div className="flex items-center w-full justify-between">
-                <h3 className="text-base font-medium">
+                <h3 className="text-sm font-medium">
                   {getMonthlyPeriodSimple(group.period.start)}
                 </h3>
-                <span className="text-base font-medium">
-                  {group.totalCP} CP
-                </span>
+                <span className="text-sm font-medium">{group.totalCP} CP</span>
               </div>
             </div>
 
@@ -311,22 +309,22 @@ function ContributionRecordsList({
                 </div>
 
                 {/* CP */}
-                <span className="text-left w-20 text-gray-900 dark:text-gray-100">
+                <span className="text-left text-sm w-20 text-gray-900 dark:text-gray-100">
                   {cp} CP
                 </span>
 
                 {/* Level */}
-                <div className="text-left w-12">
+                <div className="text-left text-sm w-12">
                   {renderLevelLabel(contribution.issue_level, false, false)}
                 </div>
 
                 {/* Title */}
-                <span className="text-left w-64 text-gray-900 dark:text-gray-100 truncate">
+                <span className="text-left text-sm w-64 text-gray-900 dark:text-gray-100 truncate">
                   {contribution.issue_title}
                 </span>
 
                 {/* Closed At */}
-                <span className="text-left w-32 text-gray-600 dark:text-gray-400">
+                <span className="text-left text-sm w-32 text-gray-600 dark:text-gray-400">
                   {closedAt}
                 </span>
 

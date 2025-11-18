@@ -1,0 +1,320 @@
+"use client";
+
+import { useState } from "react";
+import Button from "@/components/commons/Button";
+import Modal from "@/components/commons/Modal";
+import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
+import Image from "next/image";
+
+interface Credentials {
+  privateKey: string;
+  keyId: string;
+  issuerId: string;
+  vendorNumber: string;
+  appSKU: string;
+}
+
+interface FinanceReportResponse {
+  success: boolean;
+  reports?: unknown[];
+  errors?: Array<{
+    reportType: string;
+    regionCode: string;
+    reportDate: string;
+    error: string;
+  }>;
+  summary?: {
+    total: number;
+    success: number;
+    failed: number;
+  };
+  chartData?: unknown[];
+  error?: string;
+}
+
+interface ConnectToAppStoreConnectProps {
+  copanyId: string;
+  onSuccess?: () => void;
+}
+
+export default function ConnectToAppStoreConnect({
+  copanyId,
+  onSuccess,
+}: ConnectToAppStoreConnectProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleFetchReports = async (credentials: Credentials) => {
+    console.log("[DEBUG] handleFetchReports called with credentials:", {
+      keyId: credentials.keyId,
+      issuerId: credentials.issuerId,
+      vendorNumber: credentials.vendorNumber,
+      appSKU: credentials.appSKU,
+      privateKeyLength: credentials.privateKey?.length || 0,
+    });
+
+    setIsLoading(true);
+    setIsModalOpen(false);
+
+    try {
+      console.log("[DEBUG] Sending request to /api/app-store-connect");
+      const response = await fetch("/api/app-store-connect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...credentials,
+          copanyId,
+        }),
+      });
+
+      console.log(
+        "[DEBUG] Response status:",
+        response.status,
+        response.statusText
+      );
+      const data: FinanceReportResponse = await response.json();
+      console.log("[DEBUG] Response data:", {
+        success: data.success,
+        reportsCount: data.reports?.length || 0,
+        errorsCount: data.errors?.length || 0,
+        summary: data.summary,
+        chartDataCount: data.chartData?.length || 0,
+        error: data.error,
+      });
+
+      if (!response.ok || !data.success) {
+        console.error("[DEBUG] Request failed:", data.error);
+        throw new Error(data.error || "Failed to fetch reports");
+      }
+
+      console.log("[DEBUG] Fetch successful, calling onSuccess");
+      // Call onSuccess callback to refresh data
+      if (onSuccess) {
+        await onSuccess();
+      }
+      console.log("[DEBUG] State updated successfully");
+    } catch (error) {
+      console.error("[DEBUG] Error fetching reports:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      console.log("[DEBUG] Loading completed");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        size="md"
+        onClick={() => setIsModalOpen(true)}
+        disabled={isLoading}
+      >
+        <div className="flex flex-row items-center gap-2">
+          <Image
+            src={AppleAppStoreIcon}
+            alt="Apple App Store"
+            width={20}
+            height={20}
+          />
+          <span className="text-base text-gray-900 dark:text-gray-100">
+            {isLoading ? "Connecting..." : "Connect to App Store Connect"}
+          </span>
+        </div>
+      </Button>
+      <CredentialsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFetch={handleFetchReports}
+      />
+    </>
+  );
+}
+
+function CredentialsModal({
+  isOpen,
+  onClose,
+  onFetch,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onFetch: (credentials: Credentials) => Promise<void>;
+}) {
+  const [privateKeyFile, setPrivateKeyFile] = useState<File | null>(null);
+  const [privateKeyContent, setPrivateKeyContent] = useState<string>("");
+  const [keyId, setKeyId] = useState<string>("");
+  const [issuerId, setIssuerId] = useState<string>("");
+  const [vendorNumber, setVendorNumber] = useState<string>("");
+  const [appSKU, setAppSKU] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".p8")) {
+      setError("Please select a .p8 file");
+      return;
+    }
+
+    setPrivateKeyFile(file);
+    setError(null);
+
+    try {
+      const content = await file.text();
+      setPrivateKeyContent(content);
+    } catch (err) {
+      setError("Failed to read file");
+      setPrivateKeyFile(null);
+      setPrivateKeyContent("");
+    }
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+
+    if (!privateKeyContent || !keyId || !issuerId || !vendorNumber || !appSKU) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onFetch({
+        privateKey: privateKeyContent,
+        keyId,
+        issuerId,
+        vendorNumber,
+        appSKU,
+      });
+      // Reset form on success
+      setPrivateKeyFile(null);
+      setPrivateKeyContent("");
+      setKeyId("");
+      setIssuerId("");
+      setVendorNumber("");
+      setAppSKU("");
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch reports");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="md">
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+          App Store Connect Credentials
+        </h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              P8 Private Key File
+            </label>
+            <input
+              type="file"
+              accept=".p8"
+              onChange={handleFileChange}
+              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 text-sm"
+            />
+            {privateKeyFile && (
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                Selected: {privateKeyFile.name}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              Key ID
+            </label>
+            <input
+              type="text"
+              value={keyId}
+              onChange={(e) => setKeyId(e.target.value)}
+              placeholder="Enter your Key ID"
+              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              Issuer ID
+            </label>
+            <input
+              type="text"
+              value={issuerId}
+              onChange={(e) => setIssuerId(e.target.value)}
+              placeholder="Enter your Issuer ID"
+              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              Vendor Number
+            </label>
+            <input
+              type="text"
+              value={vendorNumber}
+              onChange={(e) => setVendorNumber(e.target.value)}
+              placeholder="Enter your Vendor Number"
+              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
+            />
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Used for API requests to fetch finance reports
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              App SKU
+            </label>
+            <input
+              type="text"
+              value={appSKU}
+              onChange={(e) => setAppSKU(e.target.value)}
+              placeholder="Enter your App SKU"
+              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
+            />
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Used to filter finance data for this specific app
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-4 justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Fetching..." : "Fetch Reports"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
