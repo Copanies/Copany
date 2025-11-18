@@ -150,14 +150,10 @@ export default function FinanceOverviewChart({
     return <LoadingView type="label" label="Converting currency data..." />;
   }
 
-  if (chartData.length === 0) {
-    return null;
-  }
-
   return (
     <div className="w-full space-y-4">
       {/* Statistics Section */}
-      {hasAnyStats && (
+      {hasAnyStats && chartData.length > 0 && (
         <div className="flex flex-col gap-2 w-full">
           {showLatestRevenue && (
             <div className="flex flex-row gap-2">
@@ -233,7 +229,7 @@ export default function FinanceOverviewChart({
         </div>
       )}
 
-      {/* Chart Section */}
+      {/* Chart Section - Always show chart, even when no data */}
       <FinanceChartView
         chartData={chartData}
         size={size}

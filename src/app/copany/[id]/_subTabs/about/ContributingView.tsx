@@ -10,7 +10,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
 import { EMPTY_STRING } from "@/utils/constants";
 
-interface HowToContributionViewProps {
+interface ContributingViewProps {
   githubUrl?: string | null;
 }
 
@@ -33,9 +33,7 @@ const generateNewContributingUrl = (
   }
 };
 
-export default function HowToContributionView({
-  githubUrl,
-}: HowToContributionViewProps) {
+export default function ContributingView({ githubUrl }: ContributingViewProps) {
   const { isChinesePreferred } = usePreferredLanguage();
   const { data: currentUser } = useCurrentUser();
   const isLoggedIn = !!currentUser;
@@ -106,7 +104,7 @@ export default function HowToContributionView({
     <Suspense
       fallback={<LoadingView type="label" label="Loading CONTRIBUTING..." />}
     >
-      <div className="pl-0 md:pl-5">
+      <div className="pl-0">
         <MarkdownView content={content} />
       </div>
     </Suspense>

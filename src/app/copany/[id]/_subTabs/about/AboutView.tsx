@@ -4,6 +4,7 @@ import { Copany } from "@/types/database.types";
 import SecondaryTabViewView from "@/components/commons/SecondaryTabView";
 import ReadmeView from "./ReadmeView";
 import LicenseView from "./LicenseView";
+import ContributingView from "./ContributingView";
 import CopanyRightPanel from "@/components/copany/CopanyRightPanel";
 import CopanyHeader from "@/components/copany/CopanyHeader";
 
@@ -20,6 +21,10 @@ export default function AboutView({ copany }: AboutViewProps) {
     {
       label: "License",
       content: <LicenseView githubUrl={copany.github_url} copany={copany} />,
+    },
+    {
+      label: "Contributing",
+      content: <ContributingView githubUrl={copany.github_url} />,
     },
   ];
 

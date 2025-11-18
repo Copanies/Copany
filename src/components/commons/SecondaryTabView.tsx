@@ -58,8 +58,8 @@ export default function SecondaryTabViewView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex flex-col w-full h-full min-h-screen rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex flex-row w-full shrink-0 overflow-x-auto scrollbar-hide gap-4 border-b border-gray-200 dark:border-gray-700 px-5 pt-[2px]">
+    <div className="flex flex-col w-full h-fit md:h-full md:min-h-screen rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-row w-full shrink-0 overflow-x-auto scrollbar-hide gap-4 border-b border-gray-200 dark:border-gray-700 px-4 md:px-5 pt-[2px]">
         {tabs.map((tab) => (
           <button
             key={tab.label}
@@ -74,7 +74,7 @@ export default function SecondaryTabViewView({
           </button>
         ))}
       </div>
-      <div className="flex-1 min-w-0 py-4 px-5">{tabContents}</div>
+      <div className="flex-1 min-w-0 py-4 px-4 md:px-5">{tabContents}</div>
     </div>
   );
 }

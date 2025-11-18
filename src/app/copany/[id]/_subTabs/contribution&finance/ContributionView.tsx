@@ -1,7 +1,7 @@
 "use client";
 
 import ContributionOverviewView from "./ContributionOverviewView";
-import HowToContributionView from "./HowToContributionView";
+import HowToContributionView from "../about/ContributingView";
 import ContributionRecordsView from "./ContributionRecordsView";
 import SecondaryTabViewView from "@/components/commons/SecondaryTabView";
 import { Copany } from "@/types/database.types";

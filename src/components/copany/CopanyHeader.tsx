@@ -66,7 +66,7 @@ export default function CopanyHeader({
             />
           </div>
         )}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex flex-row justify-between items-center gap-4">
           <div className="flex flex-row gap-3 items-center">
             {copany.logo_url && (
               <Image
@@ -80,26 +80,17 @@ export default function CopanyHeader({
               />
             )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>
-            <div className="block sm:hidden flex flex-1 justify-end">
-              <StarButton
-                copanyId={copany.id}
-                size="md"
-                count={copany.star_count}
-              />
-            </div>
           </div>
           <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             <AssetLinksSection
               copany={copany}
               onConnectRepo={handleConnectRepo}
             />
-            <div className="hidden sm:block">
-              <StarButton
-                copanyId={copany.id}
-                size="md"
-                count={copany.star_count}
-              />
-            </div>
+            <StarButton
+              copanyId={copany.id}
+              size="md"
+              count={copany.star_count}
+            />
           </div>
         </div>
         {showDescription && copany.description && (
@@ -132,4 +123,3 @@ export default function CopanyHeader({
     </>
   );
 }
-

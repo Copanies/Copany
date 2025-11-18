@@ -75,7 +75,25 @@ export default function FinanceChartView({
     };
   }, []);
 
+  const hasNoData = chartData.length === 0;
+
   const processedData = useMemo(() => {
+    if (hasNoData) {
+      // Generate empty flat line data for "no data" display (same as MiniFinanceChart)
+      const now = new Date();
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          date,
+          amountUSD: 0,
+          dateStr: `${date.getFullYear()}-${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}`,
+        });
+      }
+      return months;
+    }
     return chartData
       .map((item) => ({
         date: new Date(item.date + "-01"),
@@ -83,15 +101,15 @@ export default function FinanceChartView({
         dateStr: item.date,
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [chartData]);
+  }, [chartData, hasNoData]);
 
   const [containerHeight, setContainerHeight] = useState(
-    size === "small" ? 240 : 400
+    size === "small" ? 180 : 400
   );
 
   useEffect(() => {
     if (size === "small") {
-      setContainerHeight(240);
+      setContainerHeight(180);
       return;
     }
 
@@ -117,7 +135,7 @@ export default function FinanceChartView({
     };
   }, [size]);
 
-  const height = size === "small" ? 240 : Math.max(containerHeight, 400);
+  const height = size === "small" ? 180 : Math.max(containerHeight, 400);
   const margin =
     size === "small"
       ? { top: 10, right: 10, bottom: 10, left: 10 }
@@ -178,17 +196,22 @@ export default function FinanceChartView({
 
   const yScale = scaleLinear({
     range: [chartHeight, 0],
-    domain: [minYValue, maxYValue],
+    domain: hasNoData
+      ? [0, 1] // For no data, use a fixed domain (0 maps to bottom)
+      : [minYValue, maxYValue],
     nice: false,
   });
 
-  if (processedData.length === 0) {
-    return (
-      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-        {emptyMessage}
-      </div>
-    );
-  }
+  const lineColor = hasNoData
+    ? isDarkMode
+      ? "rgba(156, 163, 175, 0.5)"
+      : "rgba(107, 114, 128, 0.5)"
+    : "#7987FF";
+  const areaColor = hasNoData
+    ? "transparent"
+    : isDarkMode
+    ? "rgba(121, 135, 255, 0.2)"
+    : "rgba(121, 135, 255, 0.1)";
 
   return (
     <div className="w-full h-full flex flex-col space-y-4">
@@ -240,11 +263,7 @@ export default function FinanceChartView({
               y={(d) => yScale(d.amountUSD)}
               yScale={yScale}
               curve={curveMonotoneX}
-              fill={
-                isDarkMode
-                  ? "rgba(121, 135, 255, 0.2)"
-                  : "rgba(121, 135, 255, 0.1)"
-              }
+              fill={areaColor}
             />
             {/* Line */}
             <LinePath
@@ -252,8 +271,10 @@ export default function FinanceChartView({
               x={(d) => xScale(d.date)}
               y={(d) => yScale(d.amountUSD)}
               curve={curveMonotoneX}
-              stroke="#7987FF"
-              strokeWidth={5}
+              stroke={lineColor}
+              strokeWidth={size === "small" ? 3 : 5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             {/* Invisible overlay for hover detection */}
             <rect
@@ -396,7 +417,7 @@ export default function FinanceChartView({
                 cx={xScale(processedData[selectedPointIndex].date)}
                 cy={yScale(processedData[selectedPointIndex].amountUSD)}
                 r={6}
-                fill="#7987FF"
+                fill={lineColor}
                 stroke="#ffffff"
                 strokeWidth={2}
                 style={{ pointerEvents: "none" }}

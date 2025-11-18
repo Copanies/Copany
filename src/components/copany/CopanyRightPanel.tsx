@@ -22,6 +22,7 @@ import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import ExpandableText from "@/components/commons/ExpandableText";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import { formatAbbreviatedCount } from "@/utils/number";
+import Button from "@/components/commons/Button";
 
 interface CopanyRightPanelProps {
   copanyId: string;
@@ -161,10 +162,23 @@ export default function CopanyRightPanel({
 
   const financeSection = showFinance ? (
     <div className="flex flex-col gap-3">
-      <div>
-        <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Finance
-        </p>
+      <div className="flex items-start justify-between -mr-2">
+        <div>
+          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Finance
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigateToTab("Contribution & Finance", {
+              contributionFinanceTab: "Finance",
+            })
+          }
+        >
+          View More
+        </Button>
       </div>
       <FinanceOverviewChart
         copanyId={copanyId}
@@ -179,27 +193,32 @@ export default function CopanyRightPanel({
 
   const issuesSection = showIssues ? (
     <div className="flex flex-col gap-3">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Issues
           </p>
         </div>
-        <button
-          className="text-sm text-secondary hover:text-secondary/80 transition"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigateToTab("Works")}
         >
           View More
-        </button>
+        </Button>
       </div>
       <div className="flex flex-col gap-0">
         {topIssues.length === 0 && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            No issues yet. Start by creating one in Works.
+            No issues yet.
           </div>
         )}
         {topIssues.map((issue) => (
-          <div key={issue.id} className="flex flex-row items-center gap-2 py-2">
+          <div
+            key={issue.id}
+            className="flex flex-row items-center gap-2 py-2 px-2 -mx-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 rounded transition"
+            onClick={() => router.push(`/copany/${copanyId}/issue/${issue.id}`)}
+          >
             {renderPriorityLabel(issue.priority ?? IssuePriority.None, false)}
             {renderStateLabel(issue.state ?? IssueState.Backlog, false)}
             <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-1 w-full">
@@ -214,27 +233,34 @@ export default function CopanyRightPanel({
 
   const discussionsSection = showDiscussions ? (
     <div className="">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Discussions
           </p>
         </div>
-        <button
-          className="text-sm text-secondary hover:text-secondary/80 transition"
-          onClick={() => navigateToTab("Discussion")}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigateToTab("Works", { worksTab: "Discussion" })}
         >
           View More
-        </button>
+        </Button>
       </div>
       <div className="mt-4 flex flex-col gap-3">
         {topDiscussions.length === 0 && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            No discussions yet. Spark the first conversation.
+            No discussions yet.
           </div>
         )}
         {topDiscussions.map((discussion) => (
-          <div key={discussion.id} className="flex flex-col gap-1">
+          <div
+            key={discussion.id}
+            className="flex flex-col gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 rounded p-2 -m-2 transition"
+            onClick={() =>
+              router.push(`/copany/${copanyId}/discussion/${discussion.id}`)
+            }
+          >
             <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
               {discussion.title}
             </p>
@@ -246,23 +272,28 @@ export default function CopanyRightPanel({
 
   const contributionsSection = showContributions ? (
     <div className="">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Contribution
           </p>
         </div>
-        <button
-          className="text-base text-secondary hover:text-secondary/80 transition"
-          onClick={() => navigateToTab("Contribution")}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigateToTab("Contribution & Finance", {
+              contributionFinanceTab: "Overview",
+            })
+          }
         >
           View More
-        </button>
+        </Button>
       </div>
       <div className="mt-4 flex flex-col gap-3">
         {topContributors.length === 0 && (
           <div className="text-base text-gray-500 dark:text-gray-400">
-            No contribution data yet. Complete issues to earn CP.
+            No contribution data yet.
           </div>
         )}
         {topContributors.map((contributor) => (

@@ -212,7 +212,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               <span className="text-base">New Discussion</span>
             </div>
           </Button>
-          <div className="md:hidden flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <Dropdown
               trigger={
                 <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
@@ -336,7 +336,7 @@ function DiscussionItem({
     voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 overflow-hidden">
+    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3">
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex-1 hover:cursor-pointer min-w-0"
@@ -373,7 +373,7 @@ function DiscussionItem({
               )}
             </span>
             <div className="flex flex-col gap-1 min-w-0">
-              <div className="text-lg font-semibold break-words">
+              <div className="text-base font-semibold break-words">
                 {discussion.title}
               </div>
               {discussion.description && (

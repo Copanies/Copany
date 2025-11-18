@@ -562,8 +562,8 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex w-full min-w-0 items-center justify-between px-0 gap-3">
+    <div className="flex flex-col gap-3 -mx-4 md:-mx-5 -mb-4">
+      <div className="flex w-full min-w-0 items-center justify-between px-0 gap-3 px-4 md:px-5">
         {newIssueButton()}
         <input
           type="text"
@@ -588,12 +588,12 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       <Suspense
         fallback={<LoadingView type="label" label="Loading issues..." />}
       >
-        <div className="relative w-full min-w-0 -px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="relative w-full min-w-0">
           {groupIssuesByState(filteredIssues).map((group) => (
-            <div key={group.state} className="w-full min-w-0 -mb-px md:-mb-0">
+            <div key={group.state} className="w-full min-w-0 ">
               {/* Group title (click to toggle collapse) */}
               <div
-                className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                className="px-3 md:px-4 py-2 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 cursor-pointer select-none -mb-[0.5px] md:-mb-0"
                 onClick={() => toggleGroupCollapse(group.state)}
               >
                 <div className="flex flex-row items-center gap-2">
@@ -610,7 +610,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
                   const readOnly = !(canEditByIssue[String(issue.id)] ?? false);
                   return (
                     <div
-                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-b border-gray-100 dark:border-gray-800 md:border-b-0"
+                      className="flex w-full min-w-0 flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 py-2 px-3 md:px-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer select-none border-t border-gray-100 dark:border-gray-800 md:border-t-0"
                       key={issue.id}
                       onClick={() => {
                         // Keep current URL parameters

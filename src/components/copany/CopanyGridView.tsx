@@ -1,24 +1,26 @@
 "use client";
-import { Suspense, useRef, useEffect } from "react";
+import { Suspense, useRef, useEffect, useMemo, useState } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AssetLinksSection from "@/components/copany/AssetLinksSection";
-import ContributorAvatarStack from "@/components/copany/ContributorAvatarStack";
-import LicenseBadge from "@/components/copany/LicenseBadge";
-import StarButton from "@/components/copany/StarButton";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ScaleIcon } from "@heroicons/react/24/outline";
+import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
-import { useState } from "react";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useCurrentUser } from "@/hooks/currentUser";
 import ExpandableText from "@/components/commons/ExpandableText";
+import { useTransactions, useAppStoreFinance } from "@/hooks/finance";
+import { convertTransactionsToChartData } from "@/utils/finance";
+import type { ChartDataPoint } from "@/utils/finance";
+import { formatAbbreviatedCount } from "@/utils/number";
+import MiniFinanceChart from "@/components/finance/MiniFinanceChart";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -41,6 +43,8 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const isDarkMode = useDarkMode();
   const { data: discussionsData } = useDiscussions(copany.id);
   const { data: labels } = useDiscussionLabels(copany.id);
+  const { data: transactions = [] } = useTransactions(copany.id);
+  const { data: appStoreFinanceData } = useAppStoreFinance(copany.id);
 
   // Flatten all pages of discussions
   const discussions =
@@ -51,6 +55,140 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
     discussion.labels.includes(
       labels?.find((label) => label.name === "Begin idea")?.id || ""
     )
+  );
+
+  // Process finance data
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [isConvertingData, setIsConvertingData] = useState(false);
+
+  // Convert App Store finance data to transactions format
+  const appStoreTransactions = useMemo(() => {
+    if (
+      !copany.id ||
+      !appStoreFinanceData?.chartData ||
+      appStoreFinanceData.chartData.length === 0
+    ) {
+      return [];
+    }
+
+    return appStoreFinanceData.chartData
+      .map((item) => {
+        const [yearStr, monthStr] = item.date.split("-");
+        const year = Number(yearStr);
+        const month = Number(monthStr);
+        if (!Number.isFinite(year) || !Number.isFinite(month)) {
+          return null;
+        }
+        const occurredAt = new Date(
+          Date.UTC(year, month, 0, 0, 0, 0)
+        ).toISOString();
+        const normalizedAmount =
+          typeof item.amountUSD === "number" && Number.isFinite(item.amountUSD)
+            ? item.amountUSD
+            : 0;
+
+        return {
+          id: `app-store-${copany.id}-${item.date}`,
+          created_at: occurredAt,
+          updated_at: occurredAt,
+          copany_id: copany.id,
+          actor_id: "__app_store__",
+          type: "income" as const,
+          description:
+            "通过 App Store Connect API 自动同步，因银行汇款和汇率差异，实际到账金额以实际为准。",
+          amount: normalizedAmount,
+          currency: "USD",
+          status: "confirmed" as const,
+          occurred_at: occurredAt,
+          evidence_url: null,
+        };
+      })
+      .filter((tx): tx is NonNullable<typeof tx> => tx !== null);
+  }, [appStoreFinanceData?.chartData, copany.id]);
+
+  // Combine regular transactions with App Store transactions
+  const combinedTransactions = useMemo(() => {
+    return [...(transactions ?? []), ...appStoreTransactions];
+  }, [transactions, appStoreTransactions]);
+
+  // Convert transactions to chart data format
+  useEffect(() => {
+    if (!combinedTransactions || combinedTransactions.length === 0) {
+      setChartData([]);
+      return;
+    }
+
+    setIsConvertingData(true);
+    convertTransactionsToChartData(combinedTransactions)
+      .then((data) => {
+        setChartData(data);
+        setIsConvertingData(false);
+      })
+      .catch((error) => {
+        console.error("[CopanyCard] Failed to convert transactions:", error);
+        setChartData([]);
+        setIsConvertingData(false);
+      });
+  }, [combinedTransactions]);
+
+  // Calculate AMR (Avg Monthly Revenue)
+  const amr = useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return 0;
+    }
+    return (
+      chartData.reduce((sum, item) => sum + item.amountUSD, 0) /
+      chartData.length
+    );
+  }, [chartData]);
+
+  const amrLabel = (
+    <div className="flex items-center gap-1">
+      {chartData.length > 0 && amr !== 0 ? (
+        <>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+          >
+            <path
+              d="M7.63398 2.5C8.01888 1.83333 8.98112 1.83333 9.36603 2.5L14.5622 11.5C14.9471 12.1667 14.466 13 13.6962 13H3.30385C2.53405 13 2.05292 12.1667 2.43782 11.5L7.63398 2.5Z"
+              fill="#27AE60"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+            AMR {amr < 0 ? "-" : ""}$
+            {Math.abs(amr).toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </span>
+        </>
+      ) : (
+        <>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+          >
+            <path
+              d="M7.63398 2.5C8.01888 1.83333 8.98112 1.83333 9.36603 2.5L14.5622 11.5C14.9471 12.1667 14.466 13 13.6962 13H3.30385C2.53405 13 2.05292 12.1667 2.43782 11.5L7.63398 2.5Z"
+              fill="#9CA3AF"
+              className="dark:fill-gray-500"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap">
+            暂无收益
+          </span>
+        </>
+      )}
+    </div>
   );
 
   return (
@@ -179,29 +317,83 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               </>
             )}
           </div>
-          <div className="flex flex-row items-center gap-2">
-            <div className="font-semibold text-lg">{copany.name}</div>
-            <AssetLinksSection copany={copany} size="sm" />
-            <div className="ml-auto flex items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-row justify-between min-w-0 gap-2">
+              <div className="flex flex-row min-w-0 gap-2">
+                <div className="font-semibold text-lg">{copany.name}</div>
+                <AssetLinksSection copany={copany} size="sm" />
+              </div>
+              {amrLabel}
+            </div>
+            <div className="flex flex-row min-w-0 gap-2">
+              <div className="flex flex-col gap-2">
+                <ExpandableText
+                  contentClassName="text-sm"
+                  text={copany.description || "No description"}
+                  maxLines={5}
+                />
+                {/* About info row */}
+                <div className="flex flex-row items-center gap-x-2 gap-y-1 flex-wrap">
+                  {/* COSL protocol status */}
+                  <div className="flex flex-row items-center gap-1.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 16 16"
+                      fill={copany.isDefaultUseCOSL ? "#27AE60" : "#E74C3C"}
+                      className="w-3 h-3 shrink-0"
+                    >
+                      <circle cx="8" cy="8" r="8" />
+                    </svg>
+                    <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                      {copany.isDefaultUseCOSL
+                        ? "采用 COSL 协议，按贡献分配收益"
+                        : "未采用 COSL 协议，无法保证贡献者收益"}
+                    </span>
+                  </div>
+                  {/* Star count */}
+                  <div className="flex flex-row items-center gap-1.5">
+                    <StarSolidIcon className="w-4 h-4 text-[#FF9D0B] shrink-0" />
+                    <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                      {formatAbbreviatedCount(copany.star_count ?? 0)}
+                    </span>
+                  </div>
+                  {/* License */}
+                  {copany.license && (
+                    <div className="flex flex-row items-center gap-1.5">
+                      <ScaleIcon
+                        className="w-4 h-4 text-gray-600 dark:text-gray-400 shrink-0"
+                        strokeWidth={2}
+                      />
+                      <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                        {copany.license}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {!isConvertingData && (
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {/* Mini chart */}
+                  <MiniFinanceChart
+                    chartData={chartData.length > 0 ? chartData : []}
+                    isDarkMode={isDarkMode}
+                    hasNoData={chartData.length === 0}
+                  />
+                </div>
+              )}
+            </div>
+            {/* Finance info in top-right */}
+
+            {/* <div className="flex items-center gap-2 shrink-0">
               <ContributorAvatarStack copany={copany} size="lg" />
               <StarButton
                 copanyId={String(copany.id)}
                 size="sm"
                 count={copany.star_count}
               />
-            </div>
-          </div>
-          <ExpandableText
-            text={copany.description || "No description"}
-            maxLines={5}
-          />
-          <div className="">
-            <LicenseBadge
-              license={copany.license}
-              isDefaultUseCOSL={copany.isDefaultUseCOSL}
-              size="sm"
-              copanyId={copany.id}
-            />
+            </div> */}
           </div>
         </div>
       </div>
