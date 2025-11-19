@@ -23,6 +23,10 @@ export interface Copany {
   isDefaultUseCOSL: boolean;
   star_count?: number;
   hot_score: number;
+  mission: string | null;
+  vision: string | null;
+  distribution_delay_days: number | null;
+  distribution_day_of_month: number | null;
 }
 
 // Table: issue

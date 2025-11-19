@@ -160,6 +160,35 @@ export default function CopanyRightPanel({
     </div>
   ) : null;
 
+  const missionVisionSection =
+    copany.mission || copany.vision ? (
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Mission & Vision
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {copany.mission && (
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Mission
+              </p>
+              <ExpandableText text={copany.mission} maxLines={3} />
+            </div>
+          )}
+          {copany.vision && (
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Vision
+              </p>
+              <ExpandableText text={copany.vision} maxLines={3} />
+            </div>
+          )}
+        </div>
+      </div>
+    ) : null;
+
   const financeSection = showFinance ? (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between -mr-2">
@@ -172,7 +201,7 @@ export default function CopanyRightPanel({
           variant="ghost"
           size="sm"
           onClick={() =>
-            navigateToTab("DistributeAndFinance", {
+            navigateToTab("Distribute & Finance", {
               distributeFinanceTab: "Overview",
             })
           }
@@ -328,6 +357,7 @@ export default function CopanyRightPanel({
   return (
     <div className="flex flex-col gap-4">
       {aboutSection}
+      {missionVisionSection}
       {financeSection}
       {issuesSection}
       {discussionsSection}

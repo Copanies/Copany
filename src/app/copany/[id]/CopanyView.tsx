@@ -68,7 +68,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       content: <WorksView copany={copany} />,
     },
     {
-      label: "DistributeAndFinance",
+      label: "Distribute & Finance",
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
       content: <DistributeFinanceView copany={copany} />,
     },

@@ -43,6 +43,10 @@ export async function createCopanyAction(
       cover_image_url: null,
       isDefaultUseCOSL: false,
       hot_score: 0, // Will be calculated by trigger
+      mission: null,
+      vision: null,
+      distribution_delay_days: 60,
+      distribution_day_of_month: 10,
       ...copanyData, // 用户提供的数据会覆盖默认值
     };
 

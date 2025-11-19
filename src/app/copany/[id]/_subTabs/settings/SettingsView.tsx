@@ -7,7 +7,7 @@ import {
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
@@ -23,7 +23,12 @@ import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  PencilIcon,
+  TrashIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
+import Dropdown from "@/components/commons/Dropdown";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
@@ -83,8 +88,49 @@ export default function SettingsView({
     useState<string>(EMPTY_STRING);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Delete Asset Link related states
+  const [isDeleteAssetLinkModalOpen, setIsDeleteAssetLinkModalOpen] =
+    useState(false);
+  const [deletingAssetLink, setDeletingAssetLink] = useState<{
+    type: number;
+    label: string;
+  } | null>(null);
+  const [isDeletingAssetLink, setIsDeletingAssetLink] = useState(false);
+
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
+
+  // Mission, Vision, and Distribution related states
+  const [mission, setMission] = useState(copany.mission || EMPTY_STRING);
+  const [vision, setVision] = useState(copany.vision || EMPTY_STRING);
+  const initialDelayDays = copany.distribution_delay_days ?? 60;
+  // Determine initial unit: if delay is divisible by 30, prefer months
+  const initialUnit: "days" | "months" =
+    initialDelayDays % 30 === 0 ? "months" : "days";
+  const [distributionDelayDays, setDistributionDelayDays] =
+    useState<number>(initialDelayDays);
+  const [distributionDelayUnit, setDistributionDelayUnit] = useState<
+    "days" | "months"
+  >(initialUnit);
+  const [distributionDayOfMonth, setDistributionDayOfMonth] = useState<number>(
+    copany.distribution_day_of_month ?? 10
+  );
+  const [isUpdatingMission, setIsUpdatingMission] = useState(false);
+  const [isUpdatingVision, setIsUpdatingVision] = useState(false);
+  const [isUpdatingDistribution, setIsUpdatingDistribution] = useState(false);
+
+  // Sync copany prop changes to local state
+  useEffect(() => {
+    setName(copany.name);
+    setDescription(copany.description || EMPTY_STRING);
+    setMission(copany.mission || EMPTY_STRING);
+    setVision(copany.vision || EMPTY_STRING);
+    const delayDays = copany.distribution_delay_days ?? 60;
+    setDistributionDelayDays(delayDays);
+    const unit: "days" | "months" = delayDays % 30 === 0 ? "months" : "days";
+    setDistributionDelayUnit(unit);
+    setDistributionDayOfMonth(copany.distribution_day_of_month ?? 10);
+  }, [copany]);
 
   // React Query mutations
   const updateCopanyMutation = useMutation({
@@ -227,16 +273,83 @@ export default function SettingsView({
     }
   }
 
+  async function updateMission() {
+    setIsUpdatingMission(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        mission: mission || null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingMission(false);
+    }
+  }
+
+  async function updateVision() {
+    setIsUpdatingVision(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        vision: vision || null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingVision(false);
+    }
+  }
+
+  async function updateDistribution() {
+    setIsUpdatingDistribution(true);
+    try {
+      // Convert months to days if unit is months
+      const delayDays =
+        distributionDelayUnit === "months"
+          ? distributionDelayDays * 30
+          : distributionDelayDays;
+
+      const updatedCopany = {
+        ...copany,
+        distribution_delay_days: delayDays,
+        distribution_day_of_month: distributionDayOfMonth,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingDistribution(false);
+    }
+  }
+
   async function deleteAssetLink(assetType: number) {
+    setIsDeletingAssetLink(true);
     try {
       const updatedCopany = {
         ...copany,
         [assetLinks.find((link) => link.id === assetType)?.key || ""]: null,
       };
       await updateCopanyMutateRef.current(updatedCopany);
+      setIsDeleteAssetLinkModalOpen(false);
+      setDeletingAssetLink(null);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsDeletingAssetLink(false);
     }
+  }
+
+  function openDeleteAssetLinkModal(assetType: number, label: string) {
+    setDeletingAssetLink({ type: assetType, label });
+    setIsDeleteAssetLinkModalOpen(true);
+  }
+
+  function closeDeleteAssetLinkModal() {
+    setIsDeleteAssetLinkModalOpen(false);
+    setDeletingAssetLink(null);
   }
 
   function openEditModal(assetType: number, currentValue: string) {
@@ -457,8 +570,11 @@ export default function SettingsView({
           <h1 className="text-2xl font-bold">General</h1>
           <div className="flex flex-col gap-2">{renameSection()}</div>
           <div className="flex flex-col gap-2">{descriptionSection()}</div>
+          <div className="flex flex-col gap-2">{missionSection()}</div>
+          <div className="flex flex-col gap-2">{visionSection()}</div>
           <div className="flex flex-col gap-2">{logoSection()}</div>
           <div className="flex flex-col gap-2">{coverImageSection()}</div>
+          <div className="flex flex-col gap-2">{distributionSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
           <h1 className="text-2xl font-bold">Finance</h1>
@@ -541,6 +657,50 @@ export default function SettingsView({
             </div>
           </div>
         </Modal>
+
+        {/* Delete Asset Link confirmation modal */}
+        <Modal
+          isOpen={isDeleteAssetLinkModalOpen}
+          onClose={closeDeleteAssetLinkModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Delete Asset Link
+            </h2>
+
+            <div className="mb-6">
+              <p className="text-base text-gray-700 dark:text-gray-300">
+                Are you sure you want to delete the{" "}
+                <span className="font-semibold">
+                  &quot;{deletingAssetLink?.label}&quot;
+                </span>{" "}
+                link? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex flex-row justify-end gap-3">
+              <Button
+                onClick={closeDeleteAssetLinkModal}
+                variant="secondary"
+                disabled={isDeletingAssetLink}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (deletingAssetLink) {
+                    deleteAssetLink(deletingAssetLink.type);
+                  }
+                }}
+                variant="danger"
+                disabled={isDeletingAssetLink}
+              >
+                {isDeletingAssetLink ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );
@@ -583,6 +743,175 @@ export default function SettingsView({
         >
           {isUpdatingDescription ? "Updating..." : "Update Description"}
         </Button>
+      </div>
+    );
+  }
+
+  function missionSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Mission</label>
+        <textarea
+          value={mission}
+          onChange={(e) => setMission(e.target.value)}
+          className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
+          placeholder="Enter the mission of your copany"
+        />
+        <Button
+          onClick={updateMission}
+          disabled={isUpdatingMission}
+          className="w-fit"
+        >
+          {isUpdatingMission ? "Updating..." : "Update Mission"}
+        </Button>
+      </div>
+    );
+  }
+
+  function visionSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Vision</label>
+        <textarea
+          value={vision}
+          onChange={(e) => setVision(e.target.value)}
+          className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
+          placeholder="Enter the vision of your copany"
+        />
+        <Button
+          onClick={updateVision}
+          disabled={isUpdatingVision}
+          className="w-fit"
+        >
+          {isUpdatingVision ? "Updating..." : "Update Vision"}
+        </Button>
+      </div>
+    );
+  }
+
+  function distributionSection() {
+    // Calculate display value based on unit
+    const displayDelayValue =
+      distributionDelayUnit === "months"
+        ? Math.round(distributionDelayDays / 30)
+        : distributionDelayDays;
+
+    // Format delay text for display
+    const delayText =
+      distributionDelayUnit === "months"
+        ? `${displayDelayValue} month${displayDelayValue !== 1 ? "s" : ""}`
+        : `${displayDelayValue} day${displayDelayValue !== 1 ? "s" : ""}`;
+
+    // Dropdown options for delay unit
+    const delayUnitOptions = [
+      { value: 0, label: "Months" },
+      { value: 1, label: "Days" },
+    ];
+
+    // Map unit to number: months = 0, days = 1
+    const selectedDelayUnitValue = distributionDelayUnit === "months" ? 0 : 1;
+
+    // Handle dropdown selection
+    const handleDelayUnitSelect = (value: number) => {
+      const unit = value === 0 ? "months" : "days";
+      setDistributionDelayUnit(unit);
+      // Convert current value when switching units
+      if (unit === "months") {
+        setDistributionDelayDays(Math.round(distributionDelayDays / 30) * 30);
+      }
+    };
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Distribution Settings</label>
+
+        <div className="flex flex-col gap-4">
+          {/* Distribution Delay */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Distribution Delay</label>
+            <div className="flex flex-row gap-2 items-center">
+              <input
+                type="number"
+                min="1"
+                value={displayDelayValue}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 1;
+                  if (distributionDelayUnit === "months") {
+                    setDistributionDelayDays(value * 30);
+                  } else {
+                    setDistributionDelayDays(value);
+                  }
+                }}
+                className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+              />
+              <Dropdown
+                trigger={
+                  <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[100px] h-[34px]">
+                    <span className="shrink-0 truncate">
+                      {distributionDelayUnit === "months" ? "Months" : "Days"}
+                    </span>
+                    <ChevronDownIcon className="w-4 h-4 shrink-0" />
+                  </div>
+                }
+                options={delayUnitOptions}
+                selectedValue={selectedDelayUnitValue}
+                onSelect={handleDelayUnitSelect}
+                showBackground={false}
+                size="md"
+              />
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+              The time delay before calculating distribution.
+            </p>
+          </div>
+
+          {/* Distribution Day of Month */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">
+              Distribution Day of Month
+            </label>
+            <div className="flex flex-row gap-2 items-center">
+              <input
+                type="number"
+                min="1"
+                max="31"
+                value={distributionDayOfMonth}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 1 && value <= 31) {
+                    setDistributionDayOfMonth(value);
+                  }
+                }}
+                className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+              />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                day of each month
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+              The day of each month when distribution calculation starts.
+            </p>
+          </div>
+
+          {/* Update Button */}
+          <Button
+            onClick={updateDistribution}
+            disabled={isUpdatingDistribution}
+            className="w-fit"
+          >
+            {isUpdatingDistribution
+              ? "Updating..."
+              : "Update Distribution Settings"}
+          </Button>
+
+          {/* Explanation Text */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+            Assuming distribution starts on the {distributionDayOfMonth}th of
+            each month, the system will calculate revenue generated {delayText}{" "}
+            ago and user contribution ratios up to the end of that month to
+            create distribution records.
+          </p>
+        </div>
       </div>
     );
   }
@@ -642,7 +971,7 @@ export default function SettingsView({
                 : "Upload new picture"}
             </Button>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 1MB
             </p>
 
@@ -731,7 +1060,7 @@ export default function SettingsView({
                 : "Upload cover image"}
             </Button>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 5MB
             </p>
 
@@ -749,53 +1078,84 @@ export default function SettingsView({
 
   function assetLinksSection() {
     return (
-      <div className="flex flex-col gap-5">
-        {assetLinks.map((link) => {
-          if (link.value) {
-            return (
-              <div className="flex flex-col gap-1" key={link.id}>
-                <div className="flex flex-row gap-3 items-center" key={link.id}>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Image
-                      src={isDarkMode ? link.darkIcon : link.icon}
-                      alt={link.label || ""}
-                      className="w-5 h-5"
-                      width={20}
-                      height={20}
-                    />
-                    <p className="text-base font-semibold text-center">
-                      {link.label}
-                    </p>
-                  </div>
-                  <div className="flex flex-row gap-1">
-                    <button
-                      onClick={() => openEditModal(link.id, link.value || "")}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                      title="Edit"
+      <div className="flex flex-col gap-3 max-w-full">
+        {assetLinks.some((link) => link.value) && (
+          <div className="flex flex-col px-4 rounded-lg border border-gray-200 dark:border-gray-700 max-w-screen-sm">
+            {assetLinks.map((link, idx) => {
+              if (link.value) {
+                // Determine if this is the last visible (with value) link
+                // Find last index where value is truthy
+                const validLinks = assetLinks.filter((l) => l.value);
+                const lastIndex = assetLinks.findIndex(
+                  (l) => l.id === validLinks[validLinks.length - 1]?.id
+                );
+
+                const isLast = idx === lastIndex;
+                return (
+                  <div
+                    className={`flex flex-col gap-1 py-2 px-4 -mx-4${
+                      isLast
+                        ? ""
+                        : " border-b border-gray-200 dark:border-gray-700"
+                    }`}
+                    key={link.id}
+                  >
+                    <div
+                      className="flex flex-row gap-3 items-center"
+                      key={link.id}
                     >
-                      <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => deleteAssetLink(link.id)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                      title="Delete"
-                    >
-                      <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    </button>
+                      <div className="flex flex-row gap-2 items-center justify-between w-full">
+                        <div className="flex flex-row gap-2 items-center">
+                          <Image
+                            src={isDarkMode ? link.darkIcon : link.icon}
+                            alt={link.label || ""}
+                            className="w-6 h-6"
+                            width={24}
+                            height={24}
+                          />
+                          <div className="flex flex-col gap-0">
+                            <p className="text-base font-medium">
+                              {link.label}
+                            </p>
+                            <a
+                              href={link.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline inline-block break-all max-w-full w-fit text-sm text-gray-500 dark:text-gray-400"
+                            >
+                              {link.value}
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row gap-1">
+                          <button
+                            onClick={() =>
+                              openEditModal(link.id, link.value || "")
+                            }
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                            title="Edit"
+                          >
+                            <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              openDeleteAssetLinkModal(link.id, link.label)
+                            }
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <a
-                  href={link.value}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline inline-block break-all max-w-full w-fit text-base text-gray-500 dark:text-gray-400"
-                >
-                  {link.value}
-                </a>
-              </div>
-            );
-          }
-        })}
+                );
+              }
+            })}
+          </div>
+        )}
         <Button
           className="w-fit"
           onClick={() => {

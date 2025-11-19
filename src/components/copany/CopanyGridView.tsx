@@ -320,8 +320,10 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
           <div className="flex flex-col gap-1">
             <div className="flex flex-row justify-between min-w-0 gap-2">
               <div className="flex flex-row min-w-0 gap-2">
-                <div className="font-semibold text-lg">{copany.name}</div>
-                <AssetLinksSection copany={copany} size="sm" />
+                <div className="font-semibold text-lg truncate max-w-full text-ellipsis overflow-hidden">
+                  {copany.name}
+                </div>
+                {/* <AssetLinksSection copany={copany} size="sm" /> */}
               </div>
               {amrLabel}
             </div>
@@ -364,7 +366,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                     <div className="flex flex-row items-center gap-1.5">
                       <ScaleIcon
                         className="w-4 h-4 text-gray-600 dark:text-gray-400 shrink-0"
-                        strokeWidth={2}
+                        strokeWidth={1.5}
                       />
                       <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
                         {copany.license}

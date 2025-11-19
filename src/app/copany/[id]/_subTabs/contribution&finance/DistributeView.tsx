@@ -148,7 +148,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
           buttonTitle="View Finance"
           buttonAction={() => {
             router.push(
-              `/copany/${copanyId}?tab=DistributeAndFinance&distributeFinanceTab=Finance`
+              `/copany/${copanyId}?tab=Distribute & Finance&distributeFinanceTab=Overview`
             );
           }}
         />
