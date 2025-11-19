@@ -16,17 +16,32 @@ import GithubDarkIcon from "@/assets/github_logo_dark.svg";
 interface CopanyHeaderProps {
   copany: Copany;
   showCoverImage?: boolean;
-  showDescription?: boolean;
 }
 
 export default function CopanyHeader({
   copany,
   showCoverImage = false,
-  showDescription = false,
 }: CopanyHeaderProps) {
   const isDarkMode = useDarkMode();
   const [isConnectRepoModalOpen, setIsConnectRepoModalOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  // Count the number of asset links
+  const countAssetLinks = () => {
+    let count = 0;
+    if (copany.apple_app_store_url) count++;
+    if (copany.google_play_store_url) count++;
+    if (copany.website_url) count++;
+    if (copany.discord_url) count++;
+    if (copany.telegram_url) count++;
+    if (copany.notion_url) count++;
+    if (copany.figma_url) count++;
+    if (copany.github_url) count++;
+    return count;
+  };
+
+  const assetLinksCount = countAssetLinks();
+  const shouldShowInlineOnMobile = assetLinksCount <= 2;
 
   // Handle connect repo button click
   const handleConnectRepo = () => {
@@ -81,7 +96,7 @@ export default function CopanyHeader({
             )}
             <h1 className="text-2xl font-bold">{copany.name}</h1>
           </div>
-          <div className="flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
+          <div className="hidden md:flex flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
             <AssetLinksSection
               copany={copany}
               onConnectRepo={handleConnectRepo}
@@ -92,12 +107,31 @@ export default function CopanyHeader({
               count={copany.star_count}
             />
           </div>
+          {shouldShowInlineOnMobile && (
+            <div className="flex md:hidden flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
+              <AssetLinksSection
+                copany={copany}
+                onConnectRepo={handleConnectRepo}
+              />
+              <StarButton
+                copanyId={copany.id}
+                size="md"
+                count={copany.star_count}
+              />
+            </div>
+          )}
         </div>
-        {showDescription && copany.description && (
-          <div className="">
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-              {copany.description}
-            </p>
+        {!shouldShowInlineOnMobile && (
+          <div className="flex md:hidden flex-row justify-between flex-wrap items-center gap-3 gap-y-4">
+            <AssetLinksSection
+              copany={copany}
+              onConnectRepo={handleConnectRepo}
+            />
+            <StarButton
+              copanyId={copany.id}
+              size="md"
+              count={copany.star_count}
+            />
           </div>
         )}
       </div>

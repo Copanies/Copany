@@ -145,10 +145,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             </>
           }
           buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-          buttonTitle="View Transactions"
+          buttonTitle="View Finance"
           buttonAction={() => {
             router.push(
-              `/copany/${copanyId}?tab=Finance&financeTab=Transactions`
+              `/copany/${copanyId}?tab=DistributeAndFinance&distributeFinanceTab=Finance`
             );
           }}
         />

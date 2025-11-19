@@ -43,7 +43,7 @@ function formatDate(year: number, month: number, day: number): string {
   });
 }
 
-export default function ContributionOverviewView({
+export default function OverviewView({
   copanyId,
 }: ContributionOverviewViewProps) {
   const router = useRouter();

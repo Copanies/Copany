@@ -187,10 +187,10 @@ export default function AssetLinkModal({
       }}
     >
       <div className="flex flex-col gap-5">
-        <h1 className="text-lg font-bold px-8 pt-8">
+        <h1 className="text-lg font-bold px-6 pt-6">
           {isEditMode ? "Edit asset link" : "Add asset link"}
         </h1>
-        <div className="flex flex-col gap-3 px-8">
+        <div className="flex flex-col gap-3 px-6">
           <p className="text-base">Asset type</p>
           {forceGithubType ? (
             <div className="w-full flex flex-row gap-2 items-center border border-gray-300 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">

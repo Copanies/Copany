@@ -172,8 +172,8 @@ export default function CopanyRightPanel({
           variant="ghost"
           size="sm"
           onClick={() =>
-            navigateToTab("Contribution & Finance", {
-              contributionFinanceTab: "Finance",
+            navigateToTab("DistributeAndFinance", {
+              distributeFinanceTab: "Overview",
             })
           }
         >

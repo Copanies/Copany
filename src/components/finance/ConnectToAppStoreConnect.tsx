@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
-import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
+import AppleAppStoreConnectIcon from "@/assets/apple_app_store_connect_logo.png";
 import Image from "next/image";
 
 interface Credentials {
@@ -35,11 +35,15 @@ interface FinanceReportResponse {
 interface ConnectToAppStoreConnectProps {
   copanyId: string;
   onSuccess?: () => void;
+  showIcon?: boolean;
+  buttonText?: string;
 }
 
 export default function ConnectToAppStoreConnect({
   copanyId,
   onSuccess,
+  showIcon = true,
+  buttonText,
 }: ConnectToAppStoreConnectProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,14 +116,18 @@ export default function ConnectToAppStoreConnect({
         disabled={isLoading}
       >
         <div className="flex flex-row items-center gap-2">
-          <Image
-            src={AppleAppStoreIcon}
-            alt="Apple App Store"
-            width={20}
-            height={20}
-          />
+          {showIcon && (
+            <Image
+              src={AppleAppStoreConnectIcon}
+              alt="Apple App Store"
+              width={20}
+              height={20}
+            />
+          )}
           <span className="text-base text-gray-900 dark:text-gray-100">
-            {isLoading ? "Connecting..." : "Connect to App Store Connect"}
+            {isLoading
+              ? "Connecting..."
+              : buttonText || "Connect to App Store Connect"}
           </span>
         </div>
       </Button>

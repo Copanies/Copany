@@ -588,7 +588,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
       <Suspense
         fallback={<LoadingView type="label" label="Loading issues..." />}
       >
-        <div className="relative w-full min-w-0">
+        <div className="relative w-full min-w-0 pb-2">
           {groupIssuesByState(filteredIssues).map((group) => (
             <div key={group.state} className="w-full min-w-0 ">
               {/* Group title (click to toggle collapse) */}

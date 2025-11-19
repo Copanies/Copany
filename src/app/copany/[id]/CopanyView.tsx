@@ -7,20 +7,15 @@ import TabView from "@/components/commons/TabView";
 import AboutView from "./_subTabs/about/AboutView";
 import LoadingView from "@/components/commons/LoadingView";
 import WorksView from "./_subTabs/works/WorksView";
-import ContributionView from "./_subTabs/contribution&finance/ContributionView";
-import FinanceView from "./_subTabs/contribution&finance/FinanceView";
 import SettingsView from "./_subTabs/settings/SettingsView";
-import DiscussionView from "./_subTabs/works/DiscussionView";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpenIcon,
   UserGroupIcon,
-  ChartPieIcon,
   ReceiptPercentIcon,
   Cog6ToothIcon,
-  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
-import ContributionFinanceView from "./_subTabs/contribution&finance/ContributionFinanceView";
+import DistributeFinanceView from "./_subTabs/contribution&finance/DistributeFinanceView";
 
 interface CopanyViewProps {
   copanyId: string;
@@ -73,9 +68,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
       content: <WorksView copany={copany} />,
     },
     {
-      label: "Contribution & Finance",
+      label: "DistributeAndFinance",
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
-      content: <ContributionFinanceView copany={copany} />,
+      content: <DistributeFinanceView copany={copany} />,
     },
     ...(isCreator
       ? [

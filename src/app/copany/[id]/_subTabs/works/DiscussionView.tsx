@@ -199,7 +199,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
       </div> */}
 
-      <section className="flex-1 flex flex-col gap-3 pb-[200px] min-h-[calc(100vh-200px)]">
+      <section className="flex-1 flex flex-col gap-3">
         <div className="flex flex-row gap-2 justify-between items-center">
           <Button
             onClick={() => setIsModalOpen(true)}

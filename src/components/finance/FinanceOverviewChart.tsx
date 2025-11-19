@@ -27,7 +27,7 @@ export default function FinanceOverviewChart({
   const { data: transactions = [] } = useTransactions(copanyId);
   const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
 
-  // Convert App Store finance data to transactions format (similar to TransactionsView)
+  // Convert App Store finance data to transactions format (similar to FinanceView)
   const appStoreTransactions = useMemo(() => {
     if (
       !copanyId ||
@@ -146,14 +146,16 @@ export default function FinanceOverviewChart({
     showOneYearRevenue ||
     showAllRevenue;
 
+  const hasNoData = chartData.length === 0;
+
   if (isConvertingData) {
     return <LoadingView type="label" label="Converting currency data..." />;
   }
 
   return (
     <div className="w-full space-y-4">
-      {/* Statistics Section */}
-      {hasAnyStats && chartData.length > 0 && (
+      {/* Statistics Section - Show even when no data */}
+      {hasAnyStats && (
         <div className="flex flex-col gap-2 w-full">
           {showLatestRevenue && (
             <div className="flex flex-row gap-2">
@@ -161,11 +163,19 @@ export default function FinanceOverviewChart({
                 Latest Revenue
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {stats.latestRevenue < 0 ? "-" : ""}$
-                {Math.abs(stats.latestRevenue).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {hasNoData ? (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    暂无收益
+                  </span>
+                ) : (
+                  <>
+                    {stats.latestRevenue < 0 ? "-" : ""}$
+                    {Math.abs(stats.latestRevenue).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -183,18 +193,29 @@ export default function FinanceOverviewChart({
                   >
                     <path
                       d="M7.63398 2.5C8.01888 1.83333 8.98112 1.83333 9.36603 2.5L14.5622 11.5C14.9471 12.1667 14.466 13 13.6962 13H3.30385C2.53405 13 2.05292 12.1667 2.43782 11.5L7.63398 2.5Z"
-                      fill="#27AE60"
+                      fill={hasNoData ? "#9ca3af" : "#27AE60"}
                     />
                   </svg>
                 )}
                 <span>Avg Monthly Revenue</span>
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {stats.avgMonthlyRevenue < 0 ? "-" : ""}$
-                {Math.abs(stats.avgMonthlyRevenue).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {hasNoData ? (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    暂无收益
+                  </span>
+                ) : (
+                  <>
+                    {stats.avgMonthlyRevenue < 0 ? "-" : ""}$
+                    {Math.abs(stats.avgMonthlyRevenue).toLocaleString(
+                      undefined,
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -204,11 +225,19 @@ export default function FinanceOverviewChart({
                 One Year Revenue
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {stats.oneYearRevenue < 0 ? "-" : ""}$
-                {Math.abs(stats.oneYearRevenue).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {hasNoData ? (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    暂无收益
+                  </span>
+                ) : (
+                  <>
+                    {stats.oneYearRevenue < 0 ? "-" : ""}$
+                    {Math.abs(stats.oneYearRevenue).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -218,11 +247,19 @@ export default function FinanceOverviewChart({
                 All Revenue
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {stats.allRevenue < 0 ? "-" : ""}$
-                {Math.abs(stats.allRevenue).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {hasNoData ? (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    暂无收益
+                  </span>
+                ) : (
+                  <>
+                    {stats.allRevenue < 0 ? "-" : ""}$
+                    {Math.abs(stats.allRevenue).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </>
+                )}
               </div>
             </div>
           )}

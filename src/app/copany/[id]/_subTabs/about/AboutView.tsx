@@ -30,11 +30,7 @@ export default function AboutView({ copany }: AboutViewProps) {
 
   return (
     <div className="flex flex-col gap-4 px-4">
-      <CopanyHeader
-        copany={copany}
-        showCoverImage={false}
-        showDescription={false}
-      />
+      <CopanyHeader copany={copany} showCoverImage={false} />
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
           <SecondaryTabViewView tabs={tabs} urlParamName="aboutSubTab" />

@@ -23,17 +23,15 @@ import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import {
-  PencilIcon,
-  TrashIcon,
-  ArrowUpRightIcon,
-} from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
-import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
+import CopanyHeader from "@/components/copany/CopanyHeader";
+import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
+import AppleAppStoreConnectLogo from "@/assets/apple_app_store_connect_logo.png";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -452,95 +450,98 @@ export default function SettingsView({
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-8 px-0">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">General</h1>
-        <div className="flex flex-col gap-2">{renameSection()}</div>
-        <div className="flex flex-col gap-2">{descriptionSection()}</div>
-        <div className="flex flex-col gap-2">{logoSection()}</div>
-        <div className="flex flex-col gap-2">{coverImageSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Assest links</h1>
-        <div className="flex flex-col gap-2">{assetLinksSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Connected accounts</h1>
-        <div className="flex flex-col gap-2">{connectSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
-          Danger Zone
-        </h1>
-        <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
-      </div>
+    <div className="flex flex-col gap-4 px-4">
+      <CopanyHeader copany={copany} showCoverImage={false} />
+      <div className="flex flex-col gap-8 pb-8 px-0">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">General</h1>
+          <div className="flex flex-col gap-2">{renameSection()}</div>
+          <div className="flex flex-col gap-2">{descriptionSection()}</div>
+          <div className="flex flex-col gap-2">{logoSection()}</div>
+          <div className="flex flex-col gap-2">{coverImageSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Finance</h1>
+          <div className="flex flex-col gap-2">{connectSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Assest links</h1>
+          <div className="flex flex-col gap-2">{assetLinksSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
+            Danger Zone
+          </h1>
+          <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
+        </div>
 
-      {/* Delete confirmation modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        size="md"
-      >
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            Delete {copany.name}
-          </h2>
+        {/* Delete confirmation modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Delete {copany.name}
+            </h2>
 
-          {/* Copany information display */}
-          <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            {copany.logo_url ? (
-              <Image
-                src={copany.logo_url}
-                alt={copany.name}
-                width={96}
-                height={96}
-                className="w-24 h-24 rounded-lg"
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
-              />
-            ) : (
-              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-base">No Logo</span>
-              </div>
-            )}
-            <div>
-              <h3 className="font-semibold text-gray-900 text-center dark:text-gray-100">
-                {copany.name}
-              </h3>
-              {copany.description && (
-                <p className="text-base text-gray-500 text-center dark:text-gray-400">
-                  {copany.description}
-                </p>
+            {/* Copany information display */}
+            <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              {copany.logo_url ? (
+                <Image
+                  src={copany.logo_url}
+                  alt={copany.name}
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-lg"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                  <span className="text-gray-400 text-base">No Logo</span>
+                </div>
               )}
+              <div>
+                <h3 className="font-semibold text-gray-900 text-center dark:text-gray-100">
+                  {copany.name}
+                </h3>
+                {copany.description && (
+                  <p className="text-base text-gray-500 text-center dark:text-gray-400">
+                    {copany.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                To confirm, type{" "}
+                <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
+                in the box below
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
+              />
+            </div>
+
+            <div className="flex w-full">
+              <Button
+                disabled={deleteConfirmName !== copany.name || isDeleting}
+                className="w-full"
+                onClick={handleDeleteCopany}
+                variant="danger"
+              >
+                {isDeleting ? "Deleting..." : "Delete this Copany"}
+              </Button>
             </div>
           </div>
-
-          <div className="mb-4">
-            <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-              To confirm, type{" "}
-              <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
-              in the box below
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmName}
-              onChange={(e) => setDeleteConfirmName(e.target.value)}
-              className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
-            />
-          </div>
-
-          <div className="flex w-full">
-            <Button
-              disabled={deleteConfirmName !== copany.name || isDeleting}
-              className="w-full"
-              onClick={handleDeleteCopany}
-              variant="danger"
-            >
-              {isDeleting ? "Deleting..." : "Delete this Copany"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      </div>
     </div>
   );
 
@@ -606,7 +607,7 @@ export default function SettingsView({
                   alt="Copany Logo"
                   width={96}
                   height={96}
-                  className="w-24 h-24 rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  className="w-24 h-24 rounded-lg"
                   placeholder="blur"
                   blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
                   onLoad={() => setIsImageLoading(false)}
@@ -752,7 +753,7 @@ export default function SettingsView({
         {assetLinks.map((link) => {
           if (link.value) {
             return (
-              <div className="flex flex-col gap-2" key={link.id}>
+              <div className="flex flex-col gap-1" key={link.id}>
                 <div className="flex flex-row gap-3 items-center" key={link.id}>
                   <div className="flex flex-row gap-2 items-center">
                     <Image
@@ -830,7 +831,7 @@ export default function SettingsView({
   function connectSection() {
     return (
       <div className="flex flex-col gap-3 max-w-screen-sm">
-        <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-md w-full justify-between border border-gray-200 dark:border-gray-800">
+        {/* <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-md w-full justify-between border border-gray-200 dark:border-gray-800">
           <div className="flex flex-row gap-2 items-center">
             <Image
               src={isDarkMode ? GithubDarkIcon : GithubIcon}
@@ -875,6 +876,34 @@ export default function SettingsView({
               )}
             </div>
           </Button>
+        </div> */}
+        <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-lg w-full justify-between border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-row gap-2 items-center">
+            <Image
+              src={AppleAppStoreConnectLogo}
+              alt="App Store Connect"
+              className="w-8 h-8"
+              width={32}
+              height={32}
+            />
+            <div className="flex flex-col gap-0">
+              <p className="text-base font-medium">App Store Connect</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Fetch finance reports from App Store Connect
+              </p>
+            </div>
+          </div>
+          <ConnectToAppStoreConnect
+            copanyId={copany.id}
+            showIcon={false}
+            buttonText="Connect"
+            onSuccess={async () => {
+              // Refresh copany data after successful connection
+              queryClient.invalidateQueries({
+                queryKey: ["copany", copany.id],
+              });
+            }}
+          />
         </div>
       </div>
     );
@@ -882,7 +911,7 @@ export default function SettingsView({
 
   function deleteCopanySection() {
     return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-1.5 border-red-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-lg border border-1.5 border-red-500">
         <div className="flex flex-col gap-1">
           <label className="text-base font-semibold ">Delete Copany</label>
           <p className="text-sm">
