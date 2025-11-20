@@ -476,15 +476,6 @@ function TransactionModal({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Description</p>
-            <input
-              className="border px-2 py-1 flex-1 min-w-[200px] rounded-md border-gray-300 dark:border-gray-600"
-              placeholder="Description about this transaction..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
             <p className="font-semibold text-sm">Amount</p>
             <div className="flex flex-row gap-2">
               <div className="relative">
@@ -532,6 +523,15 @@ function TransactionModal({
               type="datetime-local"
               value={occurredAt}
               onChange={(e) => setOccurredAt(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="font-semibold text-sm">Description</p>
+            <input
+              className="border px-2 py-1 flex-1 min-w-[200px] rounded-md border-gray-300 dark:border-gray-600"
+              placeholder="Description about this transaction..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -674,22 +674,23 @@ function TransactionDetailModal({
             <TransactionStatusDisplay
               status={transaction.status}
               isAutoConfirmed={isAppStoreTransaction}
+              size="md"
             />
           </div>
-          {transaction.description && (
-            <div className="flex flex-row items-center gap-2">
-              <span className="text-gray-600 dark:text-gray-400 w-32">
-                Description:
-              </span>
-              <span className="">{transaction.description}</span>
-            </div>
-          )}
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400 w-32">
               Occurred at:
             </span>
             <span className="">{formatDate(transaction.occurred_at)}</span>
           </div>
+          {transaction.description && (
+            <div className="flex flex-row items-start gap-2">
+              <span className="text-gray-600 dark:text-gray-400 w-32 flex-shrink-0">
+                Description:
+              </span>
+              <span className="">{transaction.description}</span>
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-gray-600 dark:text-gray-400  mb-2">
@@ -889,15 +890,21 @@ function TransactionsGroupList({
 function TransactionStatusDisplay({
   status,
   isAutoConfirmed,
+  size = "sm",
 }: {
   status: TransactionReviewStatus;
   isAutoConfirmed: boolean;
+  size?: "sm" | "md";
 }) {
   if (isAutoConfirmed) {
     return (
       <div className="flex flex-row items-center gap-1">
         <StatusLabel status="confirmed" showText={false} />
-        <span className="text-base text-gray-900 dark:text-gray-100">
+        <span
+          className={`text-${
+            size === "sm" ? "sm" : "base"
+          } text-gray-900 dark:text-gray-100`}
+        >
           {APP_STORE_STATUS_TEXT}
         </span>
       </div>
