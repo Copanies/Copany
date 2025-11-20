@@ -197,7 +197,11 @@ export default function FinanceOverviewChart({
                     />
                   </svg>
                 )}
-                <span>Avg Monthly Revenue</span>
+                {!hasNoData && (
+                  <span className="text-gray-900 dark:text-gray-100">
+                    Avg Monthly Revenue
+                  </span>
+                )}
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (

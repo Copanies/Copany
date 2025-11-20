@@ -37,6 +37,7 @@ import { EMPTY_STRING } from "@/utils/constants";
 import CopanyHeader from "@/components/copany/CopanyHeader";
 import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 import AppleAppStoreConnectLogo from "@/assets/apple_app_store_connect_logo.png";
+import { Platform } from "@/types/database.types";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -119,6 +120,12 @@ export default function SettingsView({
   const [isUpdatingVision, setIsUpdatingVision] = useState(false);
   const [isUpdatingDistribution, setIsUpdatingDistribution] = useState(false);
 
+  // Platforms related states
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
+    copany.platforms || []
+  );
+  const [isUpdatingPlatforms, setIsUpdatingPlatforms] = useState(false);
+
   // Sync copany prop changes to local state
   useEffect(() => {
     setName(copany.name);
@@ -130,6 +137,7 @@ export default function SettingsView({
     const unit: "days" | "months" = delayDays % 30 === 0 ? "months" : "days";
     setDistributionDelayUnit(unit);
     setDistributionDayOfMonth(copany.distribution_day_of_month ?? 10);
+    setSelectedPlatforms(copany.platforms || []);
   }, [copany]);
 
   // React Query mutations
@@ -323,6 +331,31 @@ export default function SettingsView({
     } finally {
       setIsUpdatingDistribution(false);
     }
+  }
+
+  async function updatePlatforms() {
+    setIsUpdatingPlatforms(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        platforms: selectedPlatforms.length > 0 ? selectedPlatforms : null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingPlatforms(false);
+    }
+  }
+
+  function handlePlatformToggle(platform: Platform) {
+    setSelectedPlatforms((prev) => {
+      if (prev.includes(platform)) {
+        return prev.filter((p) => p !== platform);
+      } else {
+        return [...prev, platform];
+      }
+    });
   }
 
   async function deleteAssetLink(assetType: number) {
@@ -572,6 +605,7 @@ export default function SettingsView({
           <div className="flex flex-col gap-2">{descriptionSection()}</div>
           <div className="flex flex-col gap-2">{missionSection()}</div>
           <div className="flex flex-col gap-2">{visionSection()}</div>
+          <div className="flex flex-col gap-2">{platformsSection()}</div>
           <div className="flex flex-col gap-2">{logoSection()}</div>
           <div className="flex flex-col gap-2">{coverImageSection()}</div>
           <div className="flex flex-col gap-2">{distributionSection()}</div>
@@ -784,6 +818,59 @@ export default function SettingsView({
           className="w-fit"
         >
           {isUpdatingVision ? "Updating..." : "Update Vision"}
+        </Button>
+      </div>
+    );
+  }
+
+  function platformsSection() {
+    const allPlatforms = [
+      Platform.iOS,
+      Platform.iPadOS,
+      Platform.macOS,
+      Platform.watchOS,
+      Platform.tvOS,
+      Platform.visionOS,
+      Platform.Web,
+    ];
+
+    const platformLabels: Record<Platform, string> = {
+      [Platform.iOS]: "iOS",
+      [Platform.iPadOS]: "iPadOS",
+      [Platform.macOS]: "macOS",
+      [Platform.watchOS]: "watchOS",
+      [Platform.tvOS]: "tvOS",
+      [Platform.visionOS]: "visionOS",
+      [Platform.Web]: "Web",
+    };
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Platforms</label>
+        <div className="flex flex-col gap-2">
+          {allPlatforms.map((platform) => (
+            <label
+              key={platform}
+              className="flex flex-row items-center gap-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={selectedPlatforms.includes(platform)}
+                onChange={() => handlePlatformToggle(platform)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-900 dark:text-gray-100">
+                {platformLabels[platform]}
+              </span>
+            </label>
+          ))}
+        </div>
+        <Button
+          onClick={updatePlatforms}
+          disabled={isUpdatingPlatforms}
+          className="w-fit"
+        >
+          {isUpdatingPlatforms ? "Updating..." : "Update Platforms"}
         </Button>
       </div>
     );

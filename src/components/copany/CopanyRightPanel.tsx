@@ -23,6 +23,7 @@ import ExpandableText from "@/components/commons/ExpandableText";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import { formatAbbreviatedCount } from "@/utils/number";
 import Button from "@/components/commons/Button";
+import PlatformIcons from "@/components/copany/PlatformIcons";
 
 interface CopanyRightPanelProps {
   copanyId: string;
@@ -148,8 +149,8 @@ export default function CopanyRightPanel({
         <div className="flex flex-col gap-[6px]">
           <div className="flex flex-row items-center gap-[6px]">
             <ScaleIcon
-              className="w-5 h-5 text-gray-600 dark:text-gray-400 p-[2px]"
-              strokeWidth={2}
+              className="w-5 h-5 text-gray-900 dark:text-gray-100 p-[2px]"
+              strokeWidth={1.5}
             />
             <span className="text-sm text-gray-900 dark:text-gray-100">
               {copany.license || "No license specified"}
@@ -160,34 +161,23 @@ export default function CopanyRightPanel({
     </div>
   ) : null;
 
-  const missionVisionSection =
-    copany.mission || copany.vision ? (
-      <div className="flex flex-col gap-3">
-        <div>
-          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Mission & Vision
-          </p>
-        </div>
-        <div className="flex flex-col gap-3">
-          {copany.mission && (
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Mission
-              </p>
-              <ExpandableText text={copany.mission} maxLines={3} />
-            </div>
-          )}
-          {copany.vision && (
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Vision
-              </p>
-              <ExpandableText text={copany.vision} maxLines={3} />
-            </div>
-          )}
-        </div>
-      </div>
-    ) : null;
+  const missionSection = copany.mission ? (
+    <div className="flex flex-col gap-3">
+      <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+        Mission
+      </p>
+      <ExpandableText text={copany.mission} maxLines={3} />
+    </div>
+  ) : null;
+
+  const visionSection = copany.vision ? (
+    <div className="flex flex-col gap-3">
+      <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+        Vision
+      </p>
+      <ExpandableText text={copany.vision} maxLines={3} />
+    </div>
+  ) : null;
 
   const financeSection = showFinance ? (
     <div className="flex flex-col gap-3">
@@ -357,7 +347,8 @@ export default function CopanyRightPanel({
   return (
     <div className="flex flex-col gap-4">
       {aboutSection}
-      {missionVisionSection}
+      {missionSection}
+      {visionSection}
       {financeSection}
       {issuesSection}
       {discussionsSection}

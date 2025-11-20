@@ -1,3 +1,14 @@
+// Platform enum
+export enum Platform {
+  iOS = "ios",
+  iPadOS = "ipados",
+  macOS = "macos",
+  watchOS = "watchos",
+  tvOS = "tvos",
+  visionOS = "visionos",
+  Web = "web",
+}
+
 // Table: copany
 
 export interface Copany {
@@ -27,6 +38,7 @@ export interface Copany {
   vision: string | null;
   distribution_delay_days: number | null;
   distribution_day_of_month: number | null;
+  platforms: Platform[] | null;
 }
 
 // Table: issue

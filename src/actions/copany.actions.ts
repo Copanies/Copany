@@ -47,6 +47,7 @@ export async function createCopanyAction(
       vision: null,
       distribution_delay_days: 60,
       distribution_day_of_month: 10,
+      platforms: null,
       ...copanyData, // 用户提供的数据会覆盖默认值
     };
 
