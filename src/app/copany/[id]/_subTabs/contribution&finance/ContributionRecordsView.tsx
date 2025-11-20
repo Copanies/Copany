@@ -3,14 +3,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useContributions } from "@/hooks/contributions";
 import { useUsersInfo } from "@/hooks/userInfo";
-import { useCopany } from "@/hooks/copany";
-import { useCurrentUser } from "@/hooks/currentUser";
 import type { Contribution } from "@/types/database.types";
 import { IssueLevel, LEVEL_SCORES } from "@/types/database.types";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import LoadingView from "@/components/commons/LoadingView";
 import Button from "@/components/commons/Button";
-import Modal from "@/components/commons/Modal";
 import { getMonthlyPeriod, getMonthlyPeriodSimple } from "@/utils/time";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -18,7 +15,7 @@ import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { TableCellsIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
-import HistoryIssueCreateModal from "../../../../../components/contribution/HistoryIssueCreateModal";
+import AddHistoryContributionButton from "@/components/contribution/AddHistoryContributionButton";
 
 // Helper function to format date
 function formatDate(year: number, month: number, day: number): string {
@@ -38,14 +35,6 @@ export default function ContributionRecordsView({
   const router = useRouter();
   const { data: contributions, isLoading: isContributionsLoading } =
     useContributions(copanyId);
-  const { data: copany } = useCopany(copanyId);
-  const { data: currentUser } = useCurrentUser();
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-
-  // Check if current user is owner
-  const isOwner = useMemo(() => {
-    return !!(copany && currentUser && copany.created_by === currentUser.id);
-  }, [copany, currentUser]);
 
   // Filter contributions with valid level
   const validContributions = useMemo(() => {
@@ -127,42 +116,22 @@ export default function ContributionRecordsView({
           title="No contribution records"
           description="Contribution records are generated from completed issues. Complete some issues to see contribution records here."
           buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="Add History Issues"
-          buttonAction={() => setIsHistoryModalOpen(true)}
-          buttonDisabled={!isOwner}
-          buttonTooltip="Only the owner can add history issues"
+          buttonTitle="Add History Contribution"
+          buttonAction={() => {}}
+          buttonDisabled={true}
+          buttonTooltip="Only the owner can add history contribution"
+          customButton={<AddHistoryContributionButton copanyId={copanyId} />}
         />
-
-        {/* Modal */}
-        <Modal
-          isOpen={isHistoryModalOpen}
-          onClose={() => setIsHistoryModalOpen(false)}
-          size="lg"
-        >
-          <HistoryIssueCreateModal
-            copanyId={copanyId}
-            isOpen={isHistoryModalOpen}
-            onClose={() => setIsHistoryModalOpen(false)}
-            onSuccess={() => {
-              setIsHistoryModalOpen(false);
-              // Contributions will auto-refresh via React Query
-            }}
-          />
-        </Modal>
       </div>
     );
   }
 
   return (
     <div className="p-0">
-      {/* Add History Issues button - only visible to owner */}
-      {isOwner && (
-        <div className="px-0 md:px-4 pt-2 pb-3">
-          <Button onClick={() => setIsHistoryModalOpen(true)}>
-            Add History Issues
-          </Button>
-        </div>
-      )}
+      {/* Add History Contribution button - only visible to owner */}
+      <div className="px-0 md:px-4 pt-2 pb-3">
+        <AddHistoryContributionButton copanyId={copanyId} />
+      </div>
 
       {/* All Contribution Records */}
       <div className="relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -189,23 +158,6 @@ export default function ContributionRecordsView({
           </div>
         ))}
       </div>
-
-      {/* Modal */}
-      <Modal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setIsHistoryModalOpen(false)}
-        size="lg"
-      >
-        <HistoryIssueCreateModal
-          copanyId={copanyId}
-          isOpen={isHistoryModalOpen}
-          onClose={() => setIsHistoryModalOpen(false)}
-          onSuccess={() => {
-            setIsHistoryModalOpen(false);
-            // Contributions will auto-refresh via React Query
-          }}
-        />
-      </Modal>
     </div>
   );
 }

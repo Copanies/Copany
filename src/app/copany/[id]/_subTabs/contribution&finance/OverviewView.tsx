@@ -26,6 +26,7 @@ import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "@/components/commons/Button";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
+import AddHistoryContributionButton from "@/components/contribution/AddHistoryContributionButton";
 
 interface ContributionOverviewViewProps {
   copanyId: string;
@@ -391,9 +392,12 @@ export default function OverviewView({
 
       {/* Contribution Records Section */}
       <div className="flex flex-col w-full gap-3">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Contribution Records
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Contribution Records
+          </h3>
+          <AddHistoryContributionButton copanyId={copanyId} />
+        </div>
         {groupedContributions.length > 0 ? (
           <div className="relative rounded-lg border border-gray-200 dark:border-gray-700">
             {groupedContributions.map((group) => (

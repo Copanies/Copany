@@ -65,13 +65,18 @@ export default function HistoryIssueCreateModal({
 
   const addRow = () => {
     const newId = (rows.length + 1).toString();
+    // Inherit Completion Date from the last row, or use defaultDate if no rows exist
+    const lastRowClosedAt =
+      rows.length > 0
+        ? rows[rows.length - 1].closedAt
+        : defaultDate.toISOString().split("T")[0];
     setRows([
       ...rows,
       {
         id: newId,
         title: "",
         level: IssueLevel.level_C,
-        closedAt: defaultDate.toISOString().split("T")[0],
+        closedAt: lastRowClosedAt,
         assignee: currentUser?.id || null,
       },
     ]);
@@ -123,7 +128,7 @@ export default function HistoryIssueCreateModal({
     <div className="p-6">
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Add History Issues
+          Add History Contribution
         </h2>
       </div>
       {/* Desktop Header - Hidden on mobile */}
