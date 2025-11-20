@@ -94,7 +94,47 @@ export default function ConnectToAppStoreConnect({
         throw new Error(data.error || "Failed to fetch reports");
       }
 
-      console.log("[DEBUG] Fetch successful, calling onSuccess");
+      console.log(
+        "[DEBUG] Fetch successful, calculating distributions for all months"
+      );
+
+      // Calculate distributions for all historical months
+      try {
+        const distributeResponse = await fetch(
+          "/api/calculate-copany-distributions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ copanyId }),
+          }
+        );
+
+        const distributeData = await distributeResponse.json();
+
+        if (!distributeResponse.ok) {
+          console.warn(
+            "[DEBUG] Failed to calculate distributions:",
+            distributeData.error
+          );
+          // Don't throw error, just log warning - the App Store Connect connection was successful
+        } else {
+          console.log("[DEBUG] Distribution calculation completed:", {
+            totalMonths: distributeData.totalMonths,
+            successfulMonths: distributeData.successfulMonths,
+            totalInserted: distributeData.totalInserted,
+          });
+        }
+      } catch (distributeError) {
+        console.warn(
+          "[DEBUG] Error calculating distributions:",
+          distributeError
+        );
+        // Don't throw error, just log warning - the App Store Connect connection was successful
+      }
+
+      console.log("[DEBUG] Calling onSuccess callback");
       // Call onSuccess callback to refresh data
       if (onSuccess) {
         await onSuccess();

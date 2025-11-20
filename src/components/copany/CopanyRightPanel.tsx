@@ -166,7 +166,11 @@ export default function CopanyRightPanel({
       <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
         Mission
       </p>
-      <ExpandableText text={copany.mission} maxLines={3} />
+      <ExpandableText
+        text={copany.mission}
+        maxLines={3}
+        contentClassName="text-sm"
+      />
     </div>
   ) : null;
 
@@ -175,7 +179,11 @@ export default function CopanyRightPanel({
       <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
         Vision
       </p>
-      <ExpandableText text={copany.vision} maxLines={3} />
+      <ExpandableText
+        text={copany.vision}
+        maxLines={3}
+        contentClassName="text-sm"
+      />
     </div>
   ) : null;
 

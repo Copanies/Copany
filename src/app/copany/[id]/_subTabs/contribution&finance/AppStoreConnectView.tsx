@@ -179,10 +179,48 @@ export default function AppStoreConnectView({
         console.log("[DEBUG] Setting summary:", data.summary);
         setSummary(data.summary);
       }
+
       // Refresh finance data from database after successful fetch
       // The API already saves the data, so we just need to refresh the query
       await refreshFinanceData.mutateAsync();
       console.log("[DEBUG] Finance data refreshed from database");
+
+      // Calculate distributions for all historical months
+      console.log("[DEBUG] Calculating distributions for all months");
+      try {
+        const distributeResponse = await fetch(
+          "/api/calculate-copany-distributions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ copanyId }),
+          }
+        );
+
+        const distributeData = await distributeResponse.json();
+
+        if (!distributeResponse.ok) {
+          console.warn(
+            "[DEBUG] Failed to calculate distributions:",
+            distributeData.error
+          );
+          // Don't throw error, just log warning - the App Store Connect connection was successful
+        } else {
+          console.log("[DEBUG] Distribution calculation completed:", {
+            totalMonths: distributeData.totalMonths,
+            successfulMonths: distributeData.successfulMonths,
+            totalInserted: distributeData.totalInserted,
+          });
+        }
+      } catch (distributeError) {
+        console.warn(
+          "[DEBUG] Error calculating distributions:",
+          distributeError
+        );
+        // Don't throw error, just log warning - the App Store Connect connection was successful
+      }
 
       console.log("[DEBUG] State updated successfully");
     } catch (error) {

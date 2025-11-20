@@ -48,7 +48,24 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
   // Fetch user info for distribute users
   const { data: distributeUsersInfo = {} } = useUsersInfo(distributeUserIds);
 
-  // Group distributes by monthly period
+  // Calculate current distribution month based on copany settings
+  const currentDistributionMonth = useMemo(() => {
+    if (!copany) return null;
+
+    const delayDays = copany.distribution_delay_days ?? 60;
+    const now = new Date();
+    const distributionDate = new Date(now);
+    distributionDate.setUTCDate(distributionDate.getUTCDate() - delayDays);
+    const distributionYear = distributionDate.getUTCFullYear();
+    const distributionMonthIndex = distributionDate.getUTCMonth();
+
+    return `${distributionYear}-${String(distributionMonthIndex + 1).padStart(
+      2,
+      "0"
+    )}`;
+  }, [copany]);
+
+  // Group distributes by distribution_month
   const groupedDistributes = useMemo(() => {
     const groups = new Map<
       string,
@@ -56,14 +73,50 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
         period: { start: Date; end: Date; key: string };
         items: DistributeRow[];
         totalAmount: number;
-        isEmpty: boolean;
+        distributionMonthKey: string | null;
       }
     >();
+
+    // Helper function to parse YYYY-MM and create period
+    const createPeriodFromMonth = (
+      monthStr: string | null
+    ): { start: Date; end: Date; key: string } => {
+      if (!monthStr) {
+        // Fallback to current month if distribution_month is null
+        return getMonthlyPeriod(new Date());
+      }
+
+      const [yearStr, monthPart] = monthStr.split("-");
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthPart, 10) - 1; // JavaScript months are 0-indexed
+
+      const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+      const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      const key = `${months[month]} ${year}`;
+
+      return { start, end, key };
+    };
 
     // Add existing distributes to groups
     if (distributes && distributes.length > 0) {
       distributes.forEach((distribute) => {
-        const period = getMonthlyPeriod(distribute.created_at);
+        const period = createPeriodFromMonth(distribute.distribution_month);
         const key = period.key;
 
         if (!groups.has(key)) {
@@ -71,7 +124,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             period,
             items: [],
             totalAmount: 0,
-            isEmpty: false,
+            distributionMonthKey: distribute.distribution_month,
           });
         }
 
@@ -81,25 +134,28 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
       });
     }
 
-    // Check if current month has any distributes
-    const currentMonthPeriod = getMonthlyPeriod(new Date());
-    const currentMonthKey = currentMonthPeriod.key;
-
-    if (!groups.has(currentMonthKey)) {
-      // Add current month group with empty state
-      groups.set(currentMonthKey, {
-        period: currentMonthPeriod,
-        items: [],
-        totalAmount: 0,
-        isEmpty: true,
-      });
-    }
-
     // Sort groups by start date (newest first)
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
   }, [distributes]);
+
+  // Separate current distribution month and historical records
+  const currentDistributionGroup = useMemo(() => {
+    if (!currentDistributionMonth) return null;
+    return (
+      groupedDistributes.find(
+        (group) => group.distributionMonthKey === currentDistributionMonth
+      ) || null
+    );
+  }, [groupedDistributes, currentDistributionMonth]);
+
+  const historicalGroups = useMemo(() => {
+    if (!currentDistributionMonth) return groupedDistributes;
+    return groupedDistributes.filter(
+      (group) => group.distributionMonthKey !== currentDistributionMonth
+    );
+  }, [groupedDistributes, currentDistributionMonth]);
 
   const [_uploadingId, _setUploadingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,10 +175,12 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     return <LoadingView type="label" />;
   }
 
-  // Check if there are any non-empty groups
-  const hasNonEmptyGroups = groupedDistributes.some((group) => !group.isEmpty);
+  // Check if there are any groups with items
+  const hasGroupsWithItems =
+    (currentDistributionGroup && currentDistributionGroup.items.length > 0) ||
+    historicalGroups.some((group) => group.items.length > 0);
 
-  if (!hasNonEmptyGroups) {
+  if (!hasGroupsWithItems) {
     return (
       <div className="p-4">
         <EmptyPlaceholderView
@@ -137,11 +195,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
             <>
               Distribution records are automatically generated based on the
               transaction log and each contributor&apos;s allocation ratio. The
-              records are generated on the 10th day of each month at 00:00 UTC.
-              The next results will be available in
-              <br />
-              <CountdownTimer className="font-semibold text-gray-700 dark:text-gray-300" />
-              .
+              records are generated daily based on the distribution settings.
             </>
           }
           buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
@@ -157,52 +211,101 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
   }
 
   return (
-    <div className="p-0">
-      <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        {groupedDistributes.map((group) => (
-          <div key={group.period.key} className="">
-            {/* Period Header */}
-            <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center w-full justify-between">
-                <h3 className="test-base font-medium">
-                  {getMonthlyPeriodSimple(group.period.start)}
-                </h3>
-                <span className="test-base font-medium">
-                  {formatAmount(
-                    group.totalAmount,
-                    group.items[0]?.currency || "USD"
-                  )}
-                </span>
+    <div className="p-0 flex flex-col gap-6">
+      {/* Current Distribution Section */}
+      {currentDistributionGroup &&
+        currentDistributionGroup.items.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Current Distribution Month
+            </p>
+            <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <div className="">
+                {/* Period Header */}
+                <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center w-full justify-between">
+                    <h3 className="test-base font-medium">
+                      {currentDistributionGroup.period.key}
+                    </h3>
+                    <span className="test-base font-medium">
+                      {formatAmount(
+                        currentDistributionGroup.totalAmount,
+                        currentDistributionGroup.items[0]?.currency || "USD"
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Distribute Items */}
+                <DistributeGroupList
+                  items={currentDistributionGroup.items}
+                  distributeUsersInfo={distributeUsersInfo}
+                  isOwner={isOwner}
+                  currentUserId={currentUser?.id}
+                  onOpenTransfer={(id) => {
+                    setSelectedDistributeId(id);
+                    setIsModalOpen(true);
+                  }}
+                  onOpenView={(d) => {
+                    setViewDistribute(d);
+                    setIsViewModalOpen(true);
+                  }}
+                />
               </div>
             </div>
-
-            {/* Distribute Items (group-level horizontal scroll) */}
-            {group.isEmpty ? (
-              <div className="p-4 text-center text-gray-600 dark:text-gray-400">
-                The records are generated on the 10th day of each month at 00:00
-                UTC. The next results will be available in{" "}
-                <CountdownTimer className="font-semibold text-gray-700 dark:text-gray-300" />
-                .
-              </div>
-            ) : (
-              <DistributeGroupList
-                items={group.items}
-                distributeUsersInfo={distributeUsersInfo}
-                isOwner={isOwner}
-                currentUserId={currentUser?.id}
-                onOpenTransfer={(id) => {
-                  setSelectedDistributeId(id);
-                  setIsModalOpen(true);
-                }}
-                onOpenView={(d) => {
-                  setViewDistribute(d);
-                  setIsViewModalOpen(true);
-                }}
-              />
-            )}
           </div>
-        ))}
-      </div>
+        )}
+
+      {/* Historical Distribution Section */}
+      {historicalGroups.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Historical Distribution Records
+          </p>
+          <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            {historicalGroups.map((group) => (
+              <div key={group.period.key} className="">
+                {/* Period Header */}
+                <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center w-full justify-between">
+                    <h3 className="test-base font-medium">
+                      {group.period.key}
+                    </h3>
+                    <span className="test-base font-medium">
+                      {formatAmount(
+                        group.totalAmount,
+                        group.items[0]?.currency || "USD"
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Distribute Items (group-level horizontal scroll) */}
+                {group.items.length === 0 ? (
+                  <div className="p-4 text-center text-gray-600 dark:text-gray-400">
+                    No distribution records for this month.
+                  </div>
+                ) : (
+                  <DistributeGroupList
+                    items={group.items}
+                    distributeUsersInfo={distributeUsersInfo}
+                    isOwner={isOwner}
+                    currentUserId={currentUser?.id}
+                    onOpenTransfer={(id) => {
+                      setSelectedDistributeId(id);
+                      setIsModalOpen(true);
+                    }}
+                    onOpenView={(d) => {
+                      setViewDistribute(d);
+                      setIsViewModalOpen(true);
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Distribute Evidence Modal */}
       <Modal

@@ -24,7 +24,11 @@ import Button from "@/components/commons/Button";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import StatusLabel from "@/components/commons/StatusLabel";
 import LoadingView from "@/components/commons/LoadingView";
-import { BanknotesIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  BanknotesIcon,
+  PlusIcon,
+  ReceiptPercentIcon,
+} from "@heroicons/react/24/outline";
 import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
@@ -119,6 +123,27 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
   // Fetch user info for transaction actors
   const { data: transactionUsersInfo = {} } = useUsersInfo(transactionUserIds);
 
+  // Calculate distribution month based on copany settings
+  const distributionMonth = useMemo(() => {
+    if (!copany) return null;
+
+    const delayDays = copany.distribution_delay_days ?? 60;
+    const now = new Date();
+    const distributionDate = new Date(now);
+    distributionDate.setUTCDate(distributionDate.getUTCDate() - delayDays);
+    const distributionYear = distributionDate.getUTCFullYear();
+    const distributionMonthIndex = distributionDate.getUTCMonth();
+
+    return {
+      year: distributionYear,
+      month: distributionMonthIndex,
+      key: `${distributionYear}-${String(distributionMonthIndex + 1).padStart(
+        2,
+        "0"
+      )}`,
+    };
+  }, [copany]);
+
   // Group transactions by monthly period
   const groupedTransactions = useMemo(() => {
     if (!combinedTransactions || combinedTransactions.length === 0) return [];
@@ -131,12 +156,41 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
         totalIncome: number;
         totalExpense: number;
         netAmount: number;
+        isDistributionMonth: boolean;
       }
     >();
 
     combinedTransactions.forEach((transaction) => {
-      const period = getMonthlyPeriodFrom10th(transaction.occurred_at);
-      const key = period.key;
+      // Group by the actual month of occurred_at, not by the "from 10th" period
+      const occurredDate = new Date(transaction.occurred_at);
+      const year = occurredDate.getUTCFullYear();
+      const month = occurredDate.getUTCMonth();
+
+      const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+      const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      const key = `${months[month]} ${year}`;
+      const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+
+      // Check if this month is the distribution month
+      const isDistributionMonth = distributionMonth?.key === monthKey;
+
+      const period = { start, end, key };
 
       if (!groups.has(key)) {
         groups.set(key, {
@@ -145,6 +199,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
           totalIncome: 0,
           totalExpense: 0,
           netAmount: 0,
+          isDistributionMonth: isDistributionMonth || false,
         });
       }
 
@@ -164,7 +219,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [combinedTransactions]);
+  }, [combinedTransactions, distributionMonth]);
 
   const isOwner = useMemo(() => {
     return !!(copany && currentUser && copany.created_by === currentUser.id);
@@ -317,9 +372,17 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
             {/* Period Header */}
             <div className="flex flex-1 px-3 md:px-4 w-full h-11 items-center bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
               <div className="flex items-center justify-between w-full">
-                <span className="test-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {group.period.key}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="test-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {group.period.key}
+                  </span>
+                  {group.isDistributionMonth && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-sm font-medium rounded-full bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
+                      <ReceiptPercentIcon className="w-4 h-4" />
+                      Distribution Month
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-4 test-sm">
                   <span className="truncate">
                     {formatAmount(
@@ -899,7 +962,7 @@ function TransactionStatusDisplay({
   if (isAutoConfirmed) {
     return (
       <div className="flex flex-row items-center gap-1">
-        <StatusLabel status="confirmed" showText={false} />
+        <StatusLabel status="confirmed" showText={false} size={size} />
         <span
           className={`text-${
             size === "sm" ? "sm" : "base"
@@ -911,5 +974,5 @@ function TransactionStatusDisplay({
     );
   }
 
-  return <StatusLabel status={status} showText={true} />;
+  return <StatusLabel status={status} showText={true} size={size} />;
 }

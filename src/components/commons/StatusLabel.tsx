@@ -8,12 +8,14 @@ interface StatusLabelProps {
   status: StatusType;
   showText?: boolean;
   colorful?: boolean;
+  size?: "sm" | "md";
 }
 
 export default function StatusLabel({
   status,
   showText = true,
   colorful = true,
+  size = "md",
 }: StatusLabelProps) {
   const isDarkMode = useDarkMode();
 
@@ -34,7 +36,11 @@ export default function StatusLabel({
           <path d="M12 8 A4 4 0 0 1 12 16 Z" fill="currentColor" />
         </svg>
         {showText && (
-          <span className="text-base text-gray-900 dark:text-gray-100">
+          <span
+            className={`text-${
+              size === "sm" ? "sm" : "base"
+            } text-gray-900 dark:text-gray-100`}
+          >
             In Progress
           </span>
         )}
@@ -55,7 +61,11 @@ export default function StatusLabel({
           <InReviewStateIcon className="w-5 h-5" />
         )}
         {showText && (
-          <span className="text-base text-gray-900 dark:text-gray-100">
+          <span
+            className={`text-${
+              size === "sm" ? "sm" : "base"
+            } text-gray-900 dark:text-gray-100`}
+          >
             In Review
           </span>
         )}
@@ -86,7 +96,11 @@ export default function StatusLabel({
           />
         </svg>
         {showText && (
-          <span className="text-base text-gray-900 dark:text-gray-100">
+          <span
+            className={`text-${
+              size === "sm" ? "sm" : "base"
+            } text-gray-900 dark:text-gray-100`}
+          >
             Confirmed
           </span>
         )}

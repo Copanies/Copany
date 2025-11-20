@@ -23,12 +23,7 @@ import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import {
-  PencilIcon,
-  TrashIcon,
-  ChevronDownIcon,
-} from "@heroicons/react/24/outline";
-import Dropdown from "@/components/commons/Dropdown";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
@@ -109,14 +104,10 @@ export default function SettingsView({
   const [mission, setMission] = useState(copany.mission || EMPTY_STRING);
   const [vision, setVision] = useState(copany.vision || EMPTY_STRING);
   const initialDelayDays = copany.distribution_delay_days ?? 60;
-  // Determine initial unit: if delay is divisible by 30, prefer months
-  const initialUnit: "days" | "months" =
-    initialDelayDays % 30 === 0 ? "months" : "days";
-  const [distributionDelayDays, setDistributionDelayDays] =
-    useState<number>(initialDelayDays);
-  const [distributionDelayUnit, setDistributionDelayUnit] = useState<
-    "days" | "months"
-  >(initialUnit);
+  // Convert days to months for display (always use months)
+  const initialDelayMonths = Math.round(initialDelayDays / 30);
+  const [distributionDelayMonths, setDistributionDelayMonths] =
+    useState<number>(initialDelayMonths);
   const [distributionDayOfMonth, setDistributionDayOfMonth] = useState<number>(
     copany.distribution_day_of_month ?? 10
   );
@@ -144,9 +135,8 @@ export default function SettingsView({
     setMission(copany.mission || EMPTY_STRING);
     setVision(copany.vision || EMPTY_STRING);
     const delayDays = copany.distribution_delay_days ?? 60;
-    setDistributionDelayDays(delayDays);
-    const unit: "days" | "months" = delayDays % 30 === 0 ? "months" : "days";
-    setDistributionDelayUnit(unit);
+    // Convert days to months for display
+    setDistributionDelayMonths(Math.round(delayDays / 30));
     setDistributionDayOfMonth(copany.distribution_day_of_month ?? 10);
     setSelectedPlatforms(copany.platforms || []);
   }, [copany]);
@@ -325,11 +315,8 @@ export default function SettingsView({
   async function updateDistribution() {
     setIsUpdatingDistribution(true);
     try {
-      // Convert months to days if unit is months
-      const delayDays =
-        distributionDelayUnit === "months"
-          ? distributionDelayDays * 30
-          : distributionDelayDays;
+      // Convert months to days for storage
+      const delayDays = distributionDelayMonths * 30;
 
       const updatedCopany = {
         ...copany,
@@ -959,36 +946,10 @@ export default function SettingsView({
   }
 
   function distributionSection() {
-    // Calculate display value based on unit
-    const displayDelayValue =
-      distributionDelayUnit === "months"
-        ? Math.round(distributionDelayDays / 30)
-        : distributionDelayDays;
-
     // Format delay text for display
-    const delayText =
-      distributionDelayUnit === "months"
-        ? `${displayDelayValue} month${displayDelayValue !== 1 ? "s" : ""}`
-        : `${displayDelayValue} day${displayDelayValue !== 1 ? "s" : ""}`;
-
-    // Dropdown options for delay unit
-    const delayUnitOptions = [
-      { value: 0, label: "Months" },
-      { value: 1, label: "Days" },
-    ];
-
-    // Map unit to number: months = 0, days = 1
-    const selectedDelayUnitValue = distributionDelayUnit === "months" ? 0 : 1;
-
-    // Handle dropdown selection
-    const handleDelayUnitSelect = (value: number) => {
-      const unit = value === 0 ? "months" : "days";
-      setDistributionDelayUnit(unit);
-      // Convert current value when switching units
-      if (unit === "months") {
-        setDistributionDelayDays(Math.round(distributionDelayDays / 30) * 30);
-      }
-    };
+    const delayText = `${distributionDelayMonths} month${
+      distributionDelayMonths !== 1 ? "s" : ""
+    }`;
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
@@ -1003,32 +964,16 @@ export default function SettingsView({
                 <input
                   type="number"
                   min="1"
-                  value={displayDelayValue}
+                  value={distributionDelayMonths}
                   onChange={(e) => {
                     const value = parseInt(e.target.value) || 1;
-                    if (distributionDelayUnit === "months") {
-                      setDistributionDelayDays(value * 30);
-                    } else {
-                      setDistributionDelayDays(value);
-                    }
+                    setDistributionDelayMonths(value);
                   }}
                   className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
                 />
-                <Dropdown
-                  trigger={
-                    <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[100px] h-[34px]">
-                      <span className="shrink-0 truncate">
-                        {distributionDelayUnit === "months" ? "Months" : "Days"}
-                      </span>
-                      <ChevronDownIcon className="w-4 h-4 shrink-0" />
-                    </div>
-                  }
-                  options={delayUnitOptions}
-                  selectedValue={selectedDelayUnitValue}
-                  onSelect={handleDelayUnitSelect}
-                  showBackground={false}
-                  size="md"
-                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  months
+                </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
                 The time delay before calculating distribution.

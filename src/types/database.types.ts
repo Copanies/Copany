@@ -305,6 +305,7 @@ export interface DistributeRow {
   amount: number; // numeric(18,2)
   currency: string; // e.g., USD
   evidence_url: string | null;
+  distribution_month: string | null; // YYYY-MM format, the month for which this distribution is calculated
 }
 
 export type TransactionType = "income" | "expense";
