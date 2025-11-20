@@ -165,7 +165,7 @@ export default function ContributionRecordsView({
       )}
 
       {/* All Contribution Records */}
-      <div className="relative rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {groupedContributions.map((group) => (
           <div key={group.period.key} className="">
             {/* Period Header */}

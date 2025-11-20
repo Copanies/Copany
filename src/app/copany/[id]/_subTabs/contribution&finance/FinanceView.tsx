@@ -10,6 +10,7 @@ import {
   useDeleteTransaction,
   useAppStoreFinance,
   useRefreshAppStoreFinance,
+  useAppStoreConnectStatus,
 } from "@/hooks/finance";
 import type {
   TransactionReviewStatus,
@@ -49,7 +50,7 @@ const APP_STORE_ACTOR_ID = "__app_store__";
 const APP_STORE_ACTOR_NAME = "App Store";
 const APP_STORE_STATUS_TEXT = "Auto Confirmed";
 const APP_STORE_DESCRIPTION =
-  "通过 App Store Connect API 自动同步，因银行汇款和汇率差异，实际到账金额以实际为准。";
+  "Automatically synced via App Store Connect API. The actual received amount may differ due to bank transfer fees and exchange rate differences.";
 
 function getMonthEndISOString(yearMonth: string) {
   const [yearStr, monthStr] = yearMonth.split("-");
@@ -70,6 +71,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
   const { data: appStoreFinanceData, isLoading: isAppStoreFinanceLoading } =
     useAppStoreFinance(copanyId);
   const refreshAppStoreFinance = useRefreshAppStoreFinance(copanyId);
+  const { data: isAppStoreConnected } = useAppStoreConnectStatus(copanyId);
   const createTransaction = useCreateTransaction(copanyId);
   const reviewTransaction = useReviewTransaction(copanyId);
   const deleteTransaction = useDeleteTransaction(copanyId);
@@ -253,7 +255,9 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
   return (
     <div className="p-0 w-full min-w-0">
       <div className="flex items-center justify-between px-0 pb-3">
-        <div className="text-base font-semibold">收入与支出记录</div>
+        <div className="text-base font-semibold">
+          Income and Expense Records
+        </div>
         <div className="flex items-center gap-2">
           <Button
             size="md"
@@ -283,27 +287,31 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
               <span>Expense</span>
             </div>
           </Button>
-          <div className="hidden md:block">
-            <ConnectToAppStoreConnect
-              copanyId={copanyId}
-              onSuccess={async () => {
-                await refreshAppStoreFinance.mutateAsync();
-              }}
-            />
-          </div>
+          {!isAppStoreConnected && (
+            <div className="hidden md:block">
+              <ConnectToAppStoreConnect
+                copanyId={copanyId}
+                onSuccess={async () => {
+                  await refreshAppStoreFinance.mutateAsync();
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="block md:hidden px-0 pb-3">
-        <ConnectToAppStoreConnect
-          copanyId={copanyId}
-          onSuccess={async () => {
-            await refreshAppStoreFinance.mutateAsync();
-          }}
-        />
-      </div>
+      {!isAppStoreConnected && (
+        <div className="block md:hidden px-0 pb-3">
+          <ConnectToAppStoreConnect
+            copanyId={copanyId}
+            onSuccess={async () => {
+              await refreshAppStoreFinance.mutateAsync();
+            }}
+          />
+        </div>
+      )}
 
-      <div className="w-full mx-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="w-full mx-auto rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {groupedTransactions.map((group) => (
           <div key={group.period.key} className="w-full">
             {/* Period Header */}

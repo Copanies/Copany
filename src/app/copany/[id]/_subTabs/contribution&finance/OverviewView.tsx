@@ -10,13 +10,11 @@ import {
 import { useContributions } from "@/hooks/contributions";
 import { useContributors } from "@/hooks/contributors";
 import { useUsersInfo } from "@/hooks/userInfo";
+import { useTransactions, useAppStoreFinance } from "@/hooks/finance";
 import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/contribution/ContributionChart";
-import ContributionPieChart from "@/components/contribution/ContributionPieChart";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import RevenueHistoryTable from "@/components/finance/RevenueHistoryTable";
-import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
-import { ChartPieIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import {
   EMPTY_CONTRIBUTORS_ARRAY,
@@ -57,6 +55,8 @@ export default function OverviewView({
     data: contributors = EMPTY_CONTRIBUTORS_ARRAY,
     isLoading: isContributorsLoading,
   } = useContributors(copanyId);
+  const { data: transactions = [] } = useTransactions(copanyId);
+  const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
 
   const isLoading = isContributionsLoading || isContributorsLoading;
 
@@ -155,6 +155,7 @@ export default function OverviewView({
           totalScore,
         };
       })
+      .filter((item) => item.totalScore > 0) // Filter out users with no contribution
       .sort((a, b) => b.totalScore - a.totalScore) // Sort by total contribution value in descending order
       .map((item, index) => ({
         ...item,
@@ -313,33 +314,18 @@ export default function OverviewView({
     return <LoadingView type="label" />;
   }
 
-  // Check if there is contribution data
-  if (contributions.length === 0) {
-    return (
-      <EmptyPlaceholderView
-        icon={
-          <ChartPieIcon
-            className="w-16 h-16 text-gray-500 dark:text-gray-400"
-            strokeWidth={1}
-          />
-        }
-        title="No contribution yet"
-        description="By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member's share of contributions."
-        buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-        buttonTitle="View issues"
-        buttonAction={() => {
-          router.push(`/copany/${copanyId}?tab=Cooperate`);
-        }}
-      />
-    );
-  }
+  // Check if there is revenue data (transactions or App Store finance data)
+  const hasRevenueData =
+    (transactions && transactions.length > 0) ||
+    (appStoreFinanceData?.chartData &&
+      appStoreFinanceData.chartData.length > 0);
 
   return (
     <div className="flex flex-col min-w-0 gap-6 mb-8">
       {/* Finance Chart Section */}
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          收入趋势
+          Revenue Trend
         </h3>
         <FinanceOverviewChart
           copanyId={copanyId}
@@ -352,53 +338,68 @@ export default function OverviewView({
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          收入历史
+          Revenue History
         </h3>
-        <RevenueHistoryTable copanyId={copanyId} />
+        {hasRevenueData ? (
+          <RevenueHistoryTable copanyId={copanyId} />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Revenue history will appear here once transactions are recorded or
+            App Store Connect is connected.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          贡献者 CP
+          Contributors CP
         </h3>
-        <div className="w-full min-w-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-6">
-            {usersWithContribution.map((userItem) => (
-              <div className="min-w-0" key={userItem.user.id}>
-                <Suspense
-                  fallback={
-                    <LoadingView type="label" label="Loading chart..." />
-                  }
-                >
-                  <ContributionChart
-                    contributions={contributions.filter(
-                      (c) => c.user_id === userItem.user.id
-                    )}
-                    user={userItem.user}
-                    globalMaxCount={globalMaxCount}
-                    globalMaxScore={globalMaxScore}
-                    monthRange={monthRange}
-                    totalContributionScore={totalContributionScore}
-                    rank={userItem.rank}
-                  />
-                </Suspense>
-              </div>
-            ))}
+        {usersWithContribution.length > 0 ? (
+          <div className="w-full min-w-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-6">
+              {usersWithContribution.map((userItem) => (
+                <div className="min-w-0" key={userItem.user.id}>
+                  <Suspense
+                    fallback={
+                      <LoadingView type="label" label="Loading chart..." />
+                    }
+                  >
+                    <ContributionChart
+                      contributions={contributions.filter(
+                        (c) => c.user_id === userItem.user.id
+                      )}
+                      user={userItem.user}
+                      globalMaxCount={globalMaxCount}
+                      globalMaxScore={globalMaxScore}
+                      monthRange={monthRange}
+                      totalContributionScore={totalContributionScore}
+                      rank={userItem.rank}
+                    />
+                  </Suspense>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            By completing Issues, members earn contribution points. When the
+            product becomes profitable, revenue will be distributed based on
+            each member's share of contributions.
+          </p>
+        )}
       </div>
 
       {/* Contribution Records Section */}
-      {groupedContributions.length > 0 && (
-        <div className="flex flex-col w-full gap-3">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            贡献记录
-          </h3>
+      <div className="flex flex-col w-full gap-3">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          Contribution Records
+        </h3>
+        {groupedContributions.length > 0 ? (
           <div className="relative rounded-lg border border-gray-200 dark:border-gray-700">
             {groupedContributions.map((group) => (
               <div key={group.period.key} className="">
                 {/* Period Header */}
-                <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex h-11 items-center w-full px-3 md:px-4 rounded-t-lg bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
                     <h3 className="text-sm font-medium">
                       {getMonthlyPeriodSimple(group.period.start)}
@@ -420,8 +421,13 @@ export default function OverviewView({
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Contribution records will appear here once members complete Issues
+            and earn contribution points.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

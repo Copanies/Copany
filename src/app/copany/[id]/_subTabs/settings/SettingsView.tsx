@@ -38,6 +38,10 @@ import CopanyHeader from "@/components/copany/CopanyHeader";
 import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 import AppleAppStoreConnectLogo from "@/assets/apple_app_store_connect_logo.png";
 import { Platform } from "@/types/database.types";
+import {
+  useAppStoreConnectStatus,
+  useDisconnectAppStoreConnect,
+} from "@/hooks/finance";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -125,6 +129,13 @@ export default function SettingsView({
     copany.platforms || []
   );
   const [isUpdatingPlatforms, setIsUpdatingPlatforms] = useState(false);
+
+  // Disconnect App Store Connect related states
+  const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+  const [disconnectConfirmText, setDisconnectConfirmText] =
+    useState<string>(EMPTY_STRING);
+  const disconnectAppStoreConnect = useDisconnectAppStoreConnect(copany.id);
+  const { data: isAppStoreConnected } = useAppStoreConnectStatus(copany.id);
 
   // Sync copany prop changes to local state
   useEffect(() => {
@@ -595,6 +606,27 @@ export default function SettingsView({
     setDeleteConfirmName(EMPTY_STRING);
   }
 
+  // Handle disconnect App Store Connect
+  async function handleDisconnect() {
+    try {
+      await disconnectAppStoreConnect.mutateAsync();
+      setIsDisconnectModalOpen(false);
+      setDisconnectConfirmText(EMPTY_STRING);
+      // Refresh copany data after successful disconnection
+      queryClient.invalidateQueries({
+        queryKey: ["copany", copany.id],
+      });
+    } catch (error) {
+      console.error("Failed to disconnect App Store Connect:", error);
+    }
+  }
+
+  // Close disconnect modal
+  function handleCloseDisconnectModal() {
+    setIsDisconnectModalOpen(false);
+    setDisconnectConfirmText(EMPTY_STRING);
+  }
+
   return (
     <div className="flex flex-col gap-4 px-4">
       <CopanyHeader copany={copany} showCoverImage={false} />
@@ -608,11 +640,14 @@ export default function SettingsView({
           <div className="flex flex-col gap-2">{platformsSection()}</div>
           <div className="flex flex-col gap-2">{logoSection()}</div>
           <div className="flex flex-col gap-2">{coverImageSection()}</div>
-          <div className="flex flex-col gap-2">{distributionSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
           <h1 className="text-2xl font-bold">Finance</h1>
           <div className="flex flex-col gap-2">{connectSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Distribution Settings</h1>
+          <div className="flex flex-col gap-2">{distributionSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
           <h1 className="text-2xl font-bold">Assest links</h1>
@@ -731,6 +766,53 @@ export default function SettingsView({
                 disabled={isDeletingAssetLink}
               >
                 {isDeletingAssetLink ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Disconnect App Store Connect confirmation modal */}
+        <Modal
+          isOpen={isDisconnectModalOpen}
+          onClose={handleCloseDisconnectModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Disconnect App Store Connect
+            </h2>
+
+            <div className="mb-6">
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                断开连接后操作无法撤销，之后将无法自动获取 App Store Connect
+                中财务数据。
+              </p>
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                To confirm, type{" "}
+                <span className="font-semibold">&quot;DISCONNECT&quot;</span> in
+                the box below
+              </p>
+              <input
+                type="text"
+                value={disconnectConfirmText}
+                onChange={(e) => setDisconnectConfirmText(e.target.value)}
+                className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
+              />
+            </div>
+
+            <div className="flex w-full">
+              <Button
+                disabled={
+                  disconnectConfirmText !== "DISCONNECT" ||
+                  disconnectAppStoreConnect.isPending
+                }
+                className="w-full"
+                onClick={handleDisconnect}
+                variant="danger"
+              >
+                {disconnectAppStoreConnect.isPending
+                  ? "Disconnecting..."
+                  : "Disconnect App Store Connect"}
               </Button>
             </div>
           </div>
@@ -916,40 +998,42 @@ export default function SettingsView({
           {/* Distribution Delay */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Distribution Delay</label>
-            <div className="flex flex-row gap-2 items-center">
-              <input
-                type="number"
-                min="1"
-                value={displayDelayValue}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value) || 1;
-                  if (distributionDelayUnit === "months") {
-                    setDistributionDelayDays(value * 30);
-                  } else {
-                    setDistributionDelayDays(value);
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-row gap-1 items-center">
+                <input
+                  type="number"
+                  min="1"
+                  value={displayDelayValue}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    if (distributionDelayUnit === "months") {
+                      setDistributionDelayDays(value * 30);
+                    } else {
+                      setDistributionDelayDays(value);
+                    }
+                  }}
+                  className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+                />
+                <Dropdown
+                  trigger={
+                    <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[100px] h-[34px]">
+                      <span className="shrink-0 truncate">
+                        {distributionDelayUnit === "months" ? "Months" : "Days"}
+                      </span>
+                      <ChevronDownIcon className="w-4 h-4 shrink-0" />
+                    </div>
                   }
-                }}
-                className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
-              />
-              <Dropdown
-                trigger={
-                  <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 min-w-[100px] h-[34px]">
-                    <span className="shrink-0 truncate">
-                      {distributionDelayUnit === "months" ? "Months" : "Days"}
-                    </span>
-                    <ChevronDownIcon className="w-4 h-4 shrink-0" />
-                  </div>
-                }
-                options={delayUnitOptions}
-                selectedValue={selectedDelayUnitValue}
-                onSelect={handleDelayUnitSelect}
-                showBackground={false}
-                size="md"
-              />
+                  options={delayUnitOptions}
+                  selectedValue={selectedDelayUnitValue}
+                  onSelect={handleDelayUnitSelect}
+                  showBackground={false}
+                  size="md"
+                />
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+                The time delay before calculating distribution.
+              </p>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-              The time delay before calculating distribution.
-            </p>
           </div>
 
           {/* Distribution Day of Month */}
@@ -957,47 +1041,51 @@ export default function SettingsView({
             <label className="text-sm font-medium">
               Distribution Day of Month
             </label>
-            <div className="flex flex-row gap-2 items-center">
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={distributionDayOfMonth}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 1 && value <= 31) {
-                    setDistributionDayOfMonth(value);
-                  }
-                }}
-                className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                day of each month
-              </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-row gap-2 items-center">
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={distributionDayOfMonth}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1 && value <= 31) {
+                      setDistributionDayOfMonth(value);
+                    }
+                  }}
+                  className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  day of each month
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+                The day of each month when distribution calculation starts.
+              </p>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-              The day of each month when distribution calculation starts.
-            </p>
           </div>
 
           {/* Update Button */}
-          <Button
-            onClick={updateDistribution}
-            disabled={isUpdatingDistribution}
-            className="w-fit"
-          >
-            {isUpdatingDistribution
-              ? "Updating..."
-              : "Update Distribution Settings"}
-          </Button>
+          <div className="flex flex-col gap-1">
+            <Button
+              onClick={updateDistribution}
+              disabled={isUpdatingDistribution}
+              className="w-fit"
+            >
+              {isUpdatingDistribution
+                ? "Updating..."
+                : "Update Distribution Settings"}
+            </Button>
 
-          {/* Explanation Text */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-            Assuming distribution starts on the {distributionDayOfMonth}th of
-            each month, the system will calculate revenue generated {delayText}{" "}
-            ago and user contribution ratios up to the end of that month to
-            create distribution records.
-          </p>
+            {/* Explanation Text */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+              Assuming distribution starts on the {distributionDayOfMonth}th of
+              each month, the system will calculate revenue generated{" "}
+              {delayText} ago and user contribution ratios up to the end of that
+              month to create distribution records.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -1340,17 +1428,26 @@ export default function SettingsView({
               </p>
             </div>
           </div>
-          <ConnectToAppStoreConnect
-            copanyId={copany.id}
-            showIcon={false}
-            buttonText="Connect"
-            onSuccess={async () => {
-              // Refresh copany data after successful connection
-              queryClient.invalidateQueries({
-                queryKey: ["copany", copany.id],
-              });
-            }}
-          />
+          {isAppStoreConnected ? (
+            <Button
+              variant="danger"
+              onClick={() => setIsDisconnectModalOpen(true)}
+            >
+              Disconnect
+            </Button>
+          ) : (
+            <ConnectToAppStoreConnect
+              copanyId={copany.id}
+              showIcon={false}
+              buttonText="Connect"
+              onSuccess={async () => {
+                // Refresh copany data after successful connection
+                queryClient.invalidateQueries({
+                  queryKey: ["copany", copany.id],
+                });
+              }}
+            />
+          )}
         </div>
       </div>
     );

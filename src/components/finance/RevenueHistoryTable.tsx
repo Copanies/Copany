@@ -53,7 +53,7 @@ export default function RevenueHistoryTable({
           actor_id: "__app_store__",
           type: "income" as const,
           description:
-            "通过 App Store Connect API 自动同步，因银行汇款和汇率差异，实际到账金额以实际为准。",
+            "Automatically synced via App Store Connect API. The actual received amount may differ due to bank transfer fees and exchange rate differences.",
           amount: normalizedAmount,
           currency: "USD",
           status: "confirmed" as const,

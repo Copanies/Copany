@@ -158,11 +158,11 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
 
   return (
     <div className="p-0">
-      <div className="relative border-b border-gray-200 dark:border-gray-700">
+      <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         {groupedDistributes.map((group) => (
           <div key={group.period.key} className="">
             {/* Period Header */}
-            <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 dark:border-gray-700">
+            <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center w-full justify-between">
                 <h3 className="test-base font-medium">
                   {getMonthlyPeriodSimple(group.period.start)}

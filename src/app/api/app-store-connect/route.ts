@@ -1257,3 +1257,106 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// GET method to check connection status
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const copanyId = searchParams.get("copanyId");
+
+    if (!copanyId) {
+      return NextResponse.json(
+        { error: "Missing copanyId parameter" },
+        { status: 400 }
+      );
+    }
+
+    // Verify user authentication
+    const supabase = await createSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("[DEBUG API] Authentication error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Check if credentials exist for this copany
+    const credentials = await AppStoreConnectCredentialsService.getCredentials(copanyId);
+    const connected = credentials !== null;
+
+    return NextResponse.json({ connected });
+  } catch (error) {
+    console.error("App Store Connect GET error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE method to disconnect App Store Connect
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const copanyId = searchParams.get("copanyId");
+
+    if (!copanyId) {
+      return NextResponse.json(
+        { error: "Missing copanyId parameter" },
+        { status: 400 }
+      );
+    }
+
+    // Verify user authentication
+    const supabase = await createSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("[DEBUG API] Authentication error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Verify user is copany owner
+    const { data: copany, error: copanyError } = await supabase
+      .from("copany")
+      .select("created_by")
+      .eq("id", copanyId)
+      .single();
+
+    if (copanyError || !copany) {
+      console.error("[DEBUG API] Copany not found:", copanyError);
+      return NextResponse.json(
+        { error: "Copany not found" },
+        { status: 404 }
+      );
+    }
+
+    if (copany.created_by !== user.id) {
+      console.error("[DEBUG API] User is not copany owner:", {
+        userId: user.id,
+        ownerId: copany.created_by,
+      });
+      return NextResponse.json(
+        { error: "Only copany owner can disconnect" },
+        { status: 403 }
+      );
+    }
+
+    // Delete credentials
+    await AppStoreConnectCredentialsService.deleteCredentials(copanyId, user.id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("App Store Connect DELETE error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+

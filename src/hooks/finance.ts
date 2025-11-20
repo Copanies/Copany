@@ -17,6 +17,7 @@ import type { FinanceReportData, FinanceChartData } from "@/services/appStoreFin
 export function distributesKey(copanyId: string) { return ["distributes", copanyId] as const; }
 export function transactionsKey(copanyId: string) { return ["transactions", copanyId] as const; }
 export function appStoreFinanceKey(copanyId: string) { return ["appStoreFinance", copanyId] as const; }
+export function appStoreConnectStatusKey(copanyId: string) { return ["appStoreConnectStatus", copanyId] as const; }
 
 export function useDistributes(copanyId: string) {
   return useQuery<DistributeRow[]>({
@@ -149,6 +150,53 @@ export function useRefreshAppStoreFinance(copanyId: string) {
       };
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: appStoreFinanceKey(copanyId) });
+    },
+  });
+}
+
+/**
+ * Hook to check App Store Connect connection status
+ */
+export function useAppStoreConnectStatus(copanyId: string) {
+  return useQuery<boolean>({
+    queryKey: appStoreConnectStatusKey(copanyId),
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/app-store-connect?copanyId=${encodeURIComponent(copanyId)}`);
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json.connected as boolean;
+      } catch (error) {
+        console.error("Error checking App Store Connect status:", error);
+        return false;
+      }
+    },
+    staleTime: 1 * 10 * 1000,
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
+    enabled: !!copanyId,
+  });
+}
+
+/**
+ * Hook to disconnect App Store Connect
+ */
+export function useDisconnectAppStoreConnect(copanyId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/app-store-connect?copanyId=${encodeURIComponent(copanyId)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "Failed to disconnect");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      // Invalidate connection status and finance data queries
+      qc.invalidateQueries({ queryKey: appStoreConnectStatusKey(copanyId) });
       qc.invalidateQueries({ queryKey: appStoreFinanceKey(copanyId) });
     },
   });

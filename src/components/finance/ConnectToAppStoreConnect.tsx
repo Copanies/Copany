@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import AppleAppStoreConnectIcon from "@/assets/apple_app_store_connect_logo.png";
 import Image from "next/image";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 interface Credentials {
   privateKey: string;
@@ -157,6 +158,13 @@ function CredentialsModal({
   const [appSKU, setAppSKU] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Extract Key ID from filename (format: AuthKey_<KEYID>.p8)
+  const extractKeyIdFromFilename = (filename: string): string | null => {
+    const match = filename.match(/AuthKey_(.+)\.p8$/);
+    return match ? match[1] : null;
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,7 +175,17 @@ function CredentialsModal({
       return;
     }
 
+    // Extract Key ID from filename
+    const extractedKeyId = extractKeyIdFromFilename(file.name);
+    if (!extractedKeyId) {
+      setError(
+        "Unable to extract Key ID from filename. Filename format should be: AuthKey_<KEYID>.p8"
+      );
+      return;
+    }
+
     setPrivateKeyFile(file);
+    setKeyId(extractedKeyId);
     setError(null);
 
     try {
@@ -177,6 +195,7 @@ function CredentialsModal({
       setError("Failed to read file");
       setPrivateKeyFile(null);
       setPrivateKeyContent("");
+      setKeyId("");
     }
   };
 
@@ -204,6 +223,10 @@ function CredentialsModal({
       setIssuerId("");
       setVendorNumber("");
       setAppSKU("");
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch reports");
@@ -216,7 +239,7 @@ function CredentialsModal({
     <Modal isOpen={isOpen} onClose={onClose} size="md">
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          App Store Connect Credentials
+          Connect App Store Connect Finance Permissions
         </h2>
 
         {error && (
@@ -231,29 +254,47 @@ function CredentialsModal({
               P8 Private Key File
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               accept=".p8"
               onChange={handleFileChange}
-              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 text-sm"
+              className="hidden"
             />
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-fit"
+            >
+              <div className="flex flex-row items-center gap-2">
+                <PlusIcon className="w-5 h-5" strokeWidth={1.3} />
+                <span>Upload file</span>
+              </div>
+            </Button>
             {privateKeyFile && (
               <div className="text-xs text-gray-600 dark:text-gray-400">
                 Selected: {privateKeyFile.name}
+                {keyId && (
+                  <span className="ml-2 text-gray-500">(Key ID: {keyId})</span>
+                )}
               </div>
             )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-              Key ID
-            </label>
-            <input
-              type="text"
-              value={keyId}
-              onChange={(e) => setKeyId(e.target.value)}
-              placeholder="Enter your Key ID"
-              className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
-            />
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Generate a new key via{" "}
+              <a
+                href="https://appstoreconnect.apple.com/access/integrations/api"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                App Store Connect → API Keys
+              </a>
+              . Inside User & Access, choose Team Keys, click the plus icon, and
+              select the Finance role. Key ID is usually found in the filename
+              (format: AuthKey_
+              <span className="font-mono">KEYID</span>.p8).
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -264,9 +305,21 @@ function CredentialsModal({
               type="text"
               value={issuerId}
               onChange={(e) => setIssuerId(e.target.value)}
-              placeholder="Enter your Issuer ID"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Locate it in{" "}
+              <a
+                href="https://appstoreconnect.apple.com/access/integrations/api"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                App Store Connect → API Keys
+              </a>{" "}
+              alongside your P8 key.
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -277,27 +330,50 @@ function CredentialsModal({
               type="text"
               value={vendorNumber}
               onChange={(e) => setVendorNumber(e.target.value)}
-              placeholder="Enter your Vendor Number"
+              placeholder="xxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Used for API requests to fetch finance reports
+              Review your vendor numbers at{" "}
+              <a
+                href="https://appstoreconnect.apple.com/itc/payments_and_financial_reports#/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Payments and Financial Reports
+              </a>
+              . Add multiple values by separating them with commas.
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-              App SKU
+              SKU
             </label>
             <input
               type="text"
               value={appSKU}
               onChange={(e) => setAppSKU(e.target.value)}
-              placeholder="Enter your App SKU"
+              placeholder="xxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Used to filter finance data for this specific app
+              If revenue is obtained through selling Apps, directly fill in the
+              App SKU (find it in{" "}
+              <a
+                href="https://appstoreconnect.apple.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                App Store Connect
+              </a>{" "}
+              → My Apps → Select App → App Information → General Information);
+              if revenue is obtained through Subscriptions, fill in all
+              Subscription SKUs (find them in App Store Connect → My Apps →
+              Select App → Subscriptions → Select Subscription Product → Product
+              ID), separated by commas.
             </div>
           </div>
         </div>
@@ -319,7 +395,7 @@ function CredentialsModal({
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Fetching..." : "Fetch Reports"}
+            {isSubmitting ? "Connecting..." : "Add"}
           </Button>
         </div>
       </div>
