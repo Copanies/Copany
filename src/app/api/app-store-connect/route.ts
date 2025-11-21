@@ -350,8 +350,10 @@ async function getHistoricalExchangeRateToUSD(
       name: "exchangerate.host",
       url: `https://api.exchangerate.host/${date}?base=USD`,
       parse: (data: ExchangeRateResponse) => {
-        // exchangerate.host returns { rates: { EUR: 0.92, ... } }
-        return data.rates?.[upperCurrency];
+        // exchangerate.host returns { rates: { EUR: 0.92, ... } } meaning 1 USD = 0.92 EUR
+        // To convert EUR to USD, we need the inverse: 1 / 0.92 = 1.087
+        const usdToCurrencyRate = data.rates?.[upperCurrency];
+        return usdToCurrencyRate ? 1 / usdToCurrencyRate : undefined;
       },
     },
     {
@@ -359,7 +361,7 @@ async function getHistoricalExchangeRateToUSD(
       url: `https://api.frankfurter.app/${date}?from=${upperCurrency}&to=USD`,
       parse: (data: ExchangeRateResponse) => {
         // frankfurter.app returns { rates: { USD: 1.08 } } when converting from EUR to USD
-        // This gives us the rate to convert from target currency to USD
+        // This gives us the rate to convert from target currency to USD (already correct)
         return data.rates?.USD;
       },
     },
@@ -367,8 +369,10 @@ async function getHistoricalExchangeRateToUSD(
       name: "exchangerate-api.com",
       url: `https://api.exchangerate-api.com/v4/historical/${date}`,
       parse: (data: ExchangeRateResponse) => {
-        // exchangerate-api.com returns { rates: { EUR: 0.92, ... } } relative to USD
-        return data.rates?.[upperCurrency];
+        // exchangerate-api.com returns { rates: { EUR: 0.92, ... } } relative to USD (base USD)
+        // Meaning 1 USD = 0.92 EUR, so we need the inverse: 1 / 0.92 = 1.087
+        const usdToCurrencyRate = data.rates?.[upperCurrency];
+        return usdToCurrencyRate ? 1 / usdToCurrencyRate : undefined;
       },
     },
   ];
@@ -428,14 +432,15 @@ async function getHistoricalExchangeRateToUSD(
 }
 
 // Fallback exchange rates (approximate, used when API is unavailable)
+// These are currency-to-USD rates (e.g., EUR: 1.08 means 1 EUR = 1.08 USD)
 // These are approximate rates and should be replaced with actual historical rates
 function getFallbackExchangeRateToUSD(currency: string): number {
   const rates: Record<string, number> = {
     USD: 1.0,
-    CNY: 0.14, // Chinese Yuan (approximate)
-    JPY: 0.0067, // Japanese Yen (approximate)
-    GBP: 1.27, // British Pound (approximate)
-    EUR: 1.08, // Euro (approximate)
+    CNY: 0.14, // Chinese Yuan (approximate) - 1 CNY = 0.14 USD
+    JPY: 0.0067, // Japanese Yen (approximate) - 1 JPY = 0.0067 USD
+    GBP: 1.27, // British Pound (approximate) - 1 GBP = 1.27 USD
+    EUR: 1.08, // Euro (approximate) - 1 EUR = 1.08 USD
     AUD: 0.66, // Australian Dollar (approximate)
     CAD: 0.73, // Canadian Dollar (approximate)
     KRW: 0.00075, // South Korean Won (approximate)

@@ -477,12 +477,21 @@ async function getHistoricalExchangeRateToUSD(
     {
       name: 'exchangerate.host',
       url: `https://api.exchangerate.host/${date}?base=USD`,
-      parse: (data: any) => data.rates?.[upperCurrency],
+      parse: (data: any) => {
+        // exchangerate.host returns { rates: { EUR: 0.92, ... } } meaning 1 USD = 0.92 EUR
+        // To convert EUR to USD, we need the inverse: 1 / 0.92 = 1.087
+        const usdToCurrencyRate = data.rates?.[upperCurrency];
+        return usdToCurrencyRate ? 1 / usdToCurrencyRate : undefined;
+      },
     },
     {
       name: 'frankfurter.app',
       url: `https://api.frankfurter.app/${date}?from=${upperCurrency}&to=USD`,
-      parse: (data: any) => data.rates?.USD,
+      parse: (data: any) => {
+        // frankfurter.app returns { rates: { USD: 1.08 } } when converting from EUR to USD
+        // This gives us the rate to convert from target currency to USD (already correct)
+        return data.rates?.USD;
+      },
     },
   ];
   
