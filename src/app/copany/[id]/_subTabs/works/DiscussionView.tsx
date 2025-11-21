@@ -47,10 +47,6 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     return discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
   }, [discussionsData]);
 
-  const allLabels = useMemo(() => {
-    return labels.map((label) => label.name).sort();
-  }, [labels]);
-
   // Create dropdown options
   const dropdownOptions = useMemo(() => {
     const options = [{ value: -1, label: "All" as React.ReactNode }];

@@ -33,7 +33,7 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { formatDate, getMonthlyPeriodFrom10th } from "@/utils/time";
+import { formatDate } from "@/utils/time";
 import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
@@ -892,7 +892,6 @@ function TransactionsGroupList({
           const avatarClassName = isAppStoreTransaction
             ? "w-5 h-5"
             : "w-5 h-5 rounded-full";
-          const isPendingReview = t.status === "in_review" && isOwner;
 
           return (
             <div

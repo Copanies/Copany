@@ -393,7 +393,7 @@ export default function OverviewView({
           <p className="text-sm text-gray-500 dark:text-gray-400">
             By completing Issues, members earn contribution points. When the
             product becomes profitable, revenue will be distributed based on
-            each member's share of contributions.
+            each member&apos;s share of contributions.
           </p>
         )}
       </div>

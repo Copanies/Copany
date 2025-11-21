@@ -231,7 +231,7 @@ function CredentialsModal({
     try {
       const content = await file.text();
       setPrivateKeyContent(content);
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to read file");
       setPrivateKeyFile(null);
       setPrivateKeyContent("");
@@ -268,8 +268,10 @@ function CredentialsModal({
         fileInputRef.current.value = "";
       }
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch reports");
+    } catch (_err) {
+      setError(
+        _err instanceof Error ? _err.message : "Failed to fetch reports"
+      );
     } finally {
       setIsSubmitting(false);
     }

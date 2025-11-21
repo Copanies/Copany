@@ -23,7 +23,6 @@ import ExpandableText from "@/components/commons/ExpandableText";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import { formatAbbreviatedCount } from "@/utils/number";
 import Button from "@/components/commons/Button";
-import PlatformIcons from "@/components/copany/PlatformIcons";
 
 interface CopanyRightPanelProps {
   copanyId: string;

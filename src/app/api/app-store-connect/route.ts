@@ -341,11 +341,15 @@ async function getHistoricalExchangeRateToUSD(
   // 2. frankfurter.app - Free, based on ECB data, very stable
   // 3. exchangerate-api.com - Free tier: 1500/month (backup)
   
+  interface ExchangeRateResponse {
+    rates?: Record<string, number>;
+  }
+
   const apis = [
     {
       name: "exchangerate.host",
       url: `https://api.exchangerate.host/${date}?base=USD`,
-      parse: (data: any) => {
+      parse: (data: ExchangeRateResponse) => {
         // exchangerate.host returns { rates: { EUR: 0.92, ... } }
         return data.rates?.[upperCurrency];
       },
@@ -353,7 +357,7 @@ async function getHistoricalExchangeRateToUSD(
     {
       name: "frankfurter.app",
       url: `https://api.frankfurter.app/${date}?from=${upperCurrency}&to=USD`,
-      parse: (data: any) => {
+      parse: (data: ExchangeRateResponse) => {
         // frankfurter.app returns { rates: { USD: 1.08 } } when converting from EUR to USD
         // This gives us the rate to convert from target currency to USD
         return data.rates?.USD;
@@ -362,7 +366,7 @@ async function getHistoricalExchangeRateToUSD(
     {
       name: "exchangerate-api.com",
       url: `https://api.exchangerate-api.com/v4/historical/${date}`,
-      parse: (data: any) => {
+      parse: (data: ExchangeRateResponse) => {
         // exchangerate-api.com returns { rates: { EUR: 0.92, ... } } relative to USD
         return data.rates?.[upperCurrency];
       },

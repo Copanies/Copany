@@ -396,12 +396,10 @@ export default function AppStoreConnectView({
       ) : viewMode === "chart" ? (
         <FinanceChartView
           chartData={chartData}
-          onViewModeChange={setViewMode}
         />
       ) : viewMode === "monthly" ? (
         <MonthlyRevenueView
           chartData={chartData}
-          onViewModeChange={setViewMode}
         />
       ) : (
         <ReportsListView reports={reports} onSelectReport={setSelectedReport} />
@@ -443,7 +441,7 @@ function CredentialsModal({
     try {
       const content = await file.text();
       setPrivateKeyContent(content);
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to read file");
       setPrivateKeyFile(null);
       setPrivateKeyContent("");
@@ -776,10 +774,8 @@ function ReportDetailView({
 
 function FinanceChartView({
   chartData,
-  onViewModeChange,
 }: {
   chartData: Array<{ date: string; amountUSD: number }>;
-  onViewModeChange: (mode: "raw" | "formatted" | "chart") => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -1137,7 +1133,6 @@ function FinanceChartView({
 
 function MonthlyRevenueView({
   chartData,
-  onViewModeChange,
 }: {
   chartData: Array<{
     date: string;
@@ -1152,10 +1147,8 @@ function MonthlyRevenueView({
       type: string;
     }>;
   }>;
-  onViewModeChange: (mode: "raw" | "formatted" | "chart" | "monthly") => void;
 }) {
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-  const isDarkMode = useDarkMode();
 
   if (chartData.length === 0) {
     return (

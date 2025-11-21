@@ -8,7 +8,6 @@ import { scaleLinear, scaleTime } from "@visx/scale";
 import { AxisBottom } from "@visx/axis";
 import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { getMonthlyPeriodSimple } from "@/utils/time";
 
 export interface FinanceChartDataPoint {
   date: string; // YYYY-MM format
@@ -25,7 +24,6 @@ interface FinanceChartViewProps {
 export default function FinanceChartView({
   chartData,
   size = "large",
-  emptyMessage = "No chart data available.",
 }: FinanceChartViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -438,7 +436,6 @@ export default function FinanceChartView({
                 })}
                 tickFormat={(date, index) => {
                   const d = date as Date;
-                  const monthStr = getMonthlyPeriodSimple(d);
 
                   // Check if this is the first month of a year
                   const isFirstMonth = index === 0;

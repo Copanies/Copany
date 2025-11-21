@@ -3,7 +3,6 @@ import { Suspense, useRef, useEffect, useMemo, useState } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import AssetLinksSection from "@/components/copany/AssetLinksSection";
 import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";

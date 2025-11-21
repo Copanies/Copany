@@ -18,7 +18,8 @@ interface PlatformIconsProps {
 }
 
 // Platform icon mapping
-const platformIconMap: Record<Platform, { light: any; dark?: any }> = {
+type IconType = typeof IphoneIcon;
+const platformIconMap: Record<Platform, { light: IconType; dark?: IconType }> = {
   [Platform.iOS]: { light: IphoneIcon },
   [Platform.iPadOS]: { light: IphoneIcon },
   [Platform.macOS]: { light: MacbookIcon },

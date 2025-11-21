@@ -18,7 +18,6 @@ interface CatBannerProps {
  */
 export default function CatBanner({
   title,
-  subtitle,
   className = "",
 }: CatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
