@@ -165,7 +165,7 @@ export default function FinanceOverviewChart({
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    暂无收益
+                    No Revenue
                   </span>
                 ) : (
                   <>
@@ -197,16 +197,14 @@ export default function FinanceOverviewChart({
                     />
                   </svg>
                 )}
-                {!hasNoData && (
-                  <span className="text-gray-900 dark:text-gray-100">
-                    Avg Monthly Revenue
-                  </span>
-                )}
+                <span className="text-gray-900 dark:text-gray-100">
+                  Avg Monthly Revenue
+                </span>
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    暂无收益
+                    No Revenue
                   </span>
                 ) : (
                   <>
@@ -231,7 +229,7 @@ export default function FinanceOverviewChart({
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    暂无收益
+                    No Revenue
                   </span>
                 ) : (
                   <>
@@ -253,7 +251,7 @@ export default function FinanceOverviewChart({
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    暂无收益
+                    No Revenue
                   </span>
                 ) : (
                   <>

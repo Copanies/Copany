@@ -277,7 +277,7 @@ function CredentialsModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <div className="p-6">
+      <div className="p-6 text-left">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
           Connect App Store Connect Finance Permissions
         </h2>
@@ -326,7 +326,7 @@ function CredentialsModal({
                 href="https://appstoreconnect.apple.com/access/integrations/api"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="underline hover:text-blue-600 dark:hover:text-blue-400"
               >
                 App Store Connect → API Keys
               </a>
@@ -352,7 +352,7 @@ function CredentialsModal({
                 href="https://appstoreconnect.apple.com/access/integrations/api"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="underline hover:text-blue-600 dark:hover:text-blue-400"
               >
                 App Store Connect → API Keys
               </a>{" "}
@@ -377,7 +377,7 @@ function CredentialsModal({
                 href="https://appstoreconnect.apple.com/itc/payments_and_financial_reports#/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="underline hover:text-blue-600 dark:hover:text-blue-400"
               >
                 Payments and Financial Reports
               </a>
@@ -403,7 +403,7 @@ function CredentialsModal({
                 href="https://appstoreconnect.apple.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="underline hover:text-blue-600 dark:hover:text-blue-400"
               >
                 App Store Connect
               </a>{" "}

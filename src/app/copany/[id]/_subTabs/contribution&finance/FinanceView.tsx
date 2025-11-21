@@ -286,15 +286,36 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
           }
           title="Add first transactions"
           description="Transaction log records Copany's income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner."
-          buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="New Transaction"
-          buttonAction={() => {
-            if (currentUser) {
-              setInitialTransactionType("income");
-              setIsModalOpen(true);
-            }
-          }}
           size="lg"
+          customButton={
+            <div className="flex flex-col items-center gap-3 -mx-4">
+              {!isAppStoreConnected && (
+                <ConnectToAppStoreConnect
+                  copanyId={copanyId}
+                  onSuccess={async () => {
+                    await refreshAppStoreFinance.mutateAsync();
+                  }}
+                />
+              )}
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  if (currentUser) {
+                    setInitialTransactionType("income");
+                    setIsModalOpen(true);
+                  }
+                }}
+                disabled={!currentUser}
+                disableTooltipConent="Sign in to add a transaction"
+              >
+                <div className="flex items-center gap-2">
+                  <PlusIcon className="w-4 h-4" />
+                  <p>New Transaction</p>
+                </div>
+              </Button>
+            </div>
+          }
         />
         <TransactionModal
           copanyId={copanyId}

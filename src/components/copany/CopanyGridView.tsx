@@ -185,7 +185,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
             />
           </svg>
           <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            暂无收益
+            No Revenue
           </span>
         </>
       )}
