@@ -532,13 +532,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="Add first issue"
-          description="Issues are the smallest task units in Copany and form the foundation of contributions. By completing an Issue, members earn corresponding contribution points. Each Issue has its own priority, status, and contribution level."
+          titleKey="addFirstIssue"
+          descriptionKey="addFirstIssueDesc"
           buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="New Issue"
+          buttonTitleKey="newIssue"
           buttonAction={() => setIsModalOpen(true)}
           buttonDisabled={!currentUser}
-          buttonTooltip="Sign in to create an issue"
+          buttonTooltipKey="signInToCreateIssue"
         />
         {createIssueModal()}
       </div>

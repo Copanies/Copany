@@ -17,6 +17,8 @@ import { PlusIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useCopaniesWhereUserIsContributor } from "@/hooks/copany";
+import { useTranslations } from "next-intl";
+import { useLanguage } from "@/utils/useLanguage";
 
 export default function MainNavigation() {
   const router = useRouter();
@@ -25,6 +27,8 @@ export default function MainNavigation() {
   const { data: user, isLoading: loading } = useCurrentUser();
   const isDarkMode = useDarkMode();
   const queryClientRef = useRef(queryClient);
+  const t = useTranslations("navigation");
+  const { language, setLanguage } = useLanguage();
   useEffect(() => {
     queryClientRef.current = queryClient;
   }, [queryClient]);
@@ -80,13 +84,13 @@ export default function MainNavigation() {
             href="/signup"
             className="relative cursor-pointer flex-shrink-0 text-base"
           >
-            <span>Sign up</span>
+            <span>{t("signUp")}</span>
           </Link>
           <Link
             href="/login"
             className="relative cursor-pointer flex-shrink-0 text-base"
           >
-            <span>Log in</span>
+            <span>{t("logIn")}</span>
           </Link>
         </div>
       );
@@ -134,7 +138,7 @@ export default function MainNavigation() {
         )}
         <div className="flex-1 min-w-0">
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {userName || "No name set"}
+            {userName || t("noNameSet")}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
             {user.email}
@@ -146,19 +150,40 @@ export default function MainNavigation() {
     const dropdownOptions = [
       {
         value: 0,
-        label: "Profile",
+        label: t("profile"),
         href: `/user/${user.id}`,
       },
       {
         value: 1,
-        label: "Stars",
+        label: t("stars"),
         href: "/stars",
       },
       {
+        value: -1,
+        label: "",
+        divider: true,
+      },
+      {
+        value: 3,
+        label: "English",
+      },
+      {
+        value: 4,
+        label: "中文",
+      },
+      {
+        value: -2,
+        label: "",
+        divider: true,
+      },
+      {
         value: 2,
-        label: "Logout",
+        label: t("logout"),
       },
     ];
+
+    // Get selected language value for dropdown
+    const selectedLanguageValue = language === "en" ? 3 : 4;
 
     const handleDropdownSelect = (value: number) => {
       switch (value) {
@@ -171,6 +196,14 @@ export default function MainNavigation() {
         case 2:
           handleLogout();
           break;
+        case 3:
+          // Set language to English
+          setLanguage("en");
+          break;
+        case 4:
+          // Set language to Chinese
+          setLanguage("zh");
+          break;
         default:
           break;
       }
@@ -180,7 +213,7 @@ export default function MainNavigation() {
       <Dropdown
         trigger={userAvatar}
         options={dropdownOptions}
-        selectedValue={null}
+        selectedValue={selectedLanguageValue}
         onSelect={handleDropdownSelect}
         showBackground={false}
         marginX={0}
@@ -217,13 +250,13 @@ export default function MainNavigation() {
     // Add Explore link
     options.push({
       value: -1,
-      label: "Explore",
+      label: t("explore"),
     });
 
     // Add Discussion link
     options.push({
       value: -2,
-      label: "Discussion",
+      label: t("discussion"),
     });
 
     if (userCopanies && userCopanies.length > 0) {
@@ -345,12 +378,14 @@ export default function MainNavigation() {
           </Button>
         ) : pathname === "/uselicense" ? (
           <span className="text-base hidden sm:inline">
-            How to use COSL License
+            {t("howToUseCoslLicense")}
           </span>
         ) : pathname === "/new" ? (
-          <span className="text-base hidden sm:inline">Create new copany</span>
+          <span className="text-base hidden sm:inline">
+            {t("createNewCopany")}
+          </span>
         ) : pathname === "/stars" ? (
-          <span className="text-base">Stars</span>
+          <span className="text-base">{t("stars")}</span>
         ) : (
           <></>
         )}
@@ -366,7 +401,7 @@ export default function MainNavigation() {
               pathname === "/" ? "font-semibold" : ""
             }`}
           >
-            <span>Explore</span>
+            <span>{t("explore")}</span>
             {pathname === "/" && (
               <span className="pointer-events-none absolute left-0 right-0 top-9 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
@@ -377,7 +412,7 @@ export default function MainNavigation() {
               pathname.startsWith("/discussion") ? "font-semibold" : ""
             }`}
           >
-            <span>Discussion</span>
+            <span>{t("discussion")}</span>
             {pathname.startsWith("/discussion") && (
               <span className="pointer-events-none absolute left-0 right-0 top-9 h-[2px] w-full bg-gray-700 dark:bg-gray-300" />
             )}
@@ -396,7 +431,7 @@ export default function MainNavigation() {
             >
               <div className="flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-2">
                 <PlusIcon className="w-4 h-4" />
-                <span>New copany</span>
+                <span>{t("newCopany")}</span>
               </div>
             </Link>
           </div>

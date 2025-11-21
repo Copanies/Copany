@@ -23,6 +23,7 @@ import ExpandableText from "@/components/commons/ExpandableText";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import { formatAbbreviatedCount } from "@/utils/number";
 import Button from "@/components/commons/Button";
+import { useTranslations } from "next-intl";
 
 interface CopanyRightPanelProps {
   copanyId: string;
@@ -44,6 +45,7 @@ export default function CopanyRightPanel({
   showContributions = true,
 }: CopanyRightPanelProps) {
   const router = useRouter();
+  const t = useTranslations("rightPanel");
 
   // Fetch data for right panel
   const { data: issuesData } = useIssues(copanyId);
@@ -107,15 +109,12 @@ export default function CopanyRightPanel({
     <div className="flex flex-col gap-3">
       <div>
         <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          About
+          {t("about")}
         </p>
       </div>
       <div className="flex flex-col gap-2">
         <ExpandableText
-          text={
-            copany.description ||
-            "Copany empowers builders to collaborate with transparent contribution tracking."
-          }
+          text={copany.description || t("defaultDescription")}
           maxLines={4}
         />
         <div className="flex flex-col gap-[6px]">
@@ -132,8 +131,8 @@ export default function CopanyRightPanel({
             </svg>
             <span className="text-sm text-gray-900 dark:text-gray-100">
               {copany.isDefaultUseCOSL
-                ? "采用 COSL 协议，按贡献分配收益"
-                : "未采用 COSL 协议，无法保证贡献者收益"}
+                ? t("usesCoslProtocol")
+                : t("notUsesCoslProtocol")}
             </span>
           </div>
         </div>
@@ -141,7 +140,7 @@ export default function CopanyRightPanel({
           <div className="flex flex-row items-center gap-[6px]">
             <StarSolidIcon className="w-5 h-5 text-[#FF9D0B]" />
             <span className="text-sm text-gray-900 dark:text-gray-100">
-              {formatAbbreviatedCount(copany.star_count ?? 0)} stars
+              {formatAbbreviatedCount(copany.star_count ?? 0)} {t("stars")}
             </span>
           </div>
         </div>
@@ -152,7 +151,7 @@ export default function CopanyRightPanel({
               strokeWidth={1.5}
             />
             <span className="text-sm text-gray-900 dark:text-gray-100">
-              {copany.license || "No license specified"}
+              {copany.license || t("noLicenseSpecified")}
             </span>
           </div>
         </div>
@@ -163,7 +162,7 @@ export default function CopanyRightPanel({
   const missionSection = copany.mission ? (
     <div className="flex flex-col gap-3">
       <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-        Mission
+        {t("mission")}
       </p>
       <ExpandableText
         text={copany.mission}
@@ -176,7 +175,7 @@ export default function CopanyRightPanel({
   const visionSection = copany.vision ? (
     <div className="flex flex-col gap-3">
       <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-        Vision
+        {t("vision")}
       </p>
       <ExpandableText
         text={copany.vision}
@@ -191,7 +190,7 @@ export default function CopanyRightPanel({
       <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Finance
+            {t("finance")}
           </p>
         </div>
         <Button
@@ -203,7 +202,7 @@ export default function CopanyRightPanel({
             })
           }
         >
-          View More
+          {t("viewMore")}
         </Button>
       </div>
       <FinanceOverviewChart
@@ -222,7 +221,7 @@ export default function CopanyRightPanel({
       <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Issues
+            {t("issues")}
           </p>
         </div>
         <Button
@@ -230,13 +229,13 @@ export default function CopanyRightPanel({
           size="sm"
           onClick={() => navigateToTab("Works")}
         >
-          View More
+          {t("viewMore")}
         </Button>
       </div>
       <div className="flex flex-col gap-0">
         {topIssues.length === 0 && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            No issues yet.
+            {t("noIssuesYet")}
           </div>
         )}
         {topIssues.map((issue) => (
@@ -248,7 +247,7 @@ export default function CopanyRightPanel({
             {renderPriorityLabel(issue.priority ?? IssuePriority.None, false)}
             {renderStateLabel(issue.state ?? IssueState.Backlog, false)}
             <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-1 w-full">
-              {issue.title || "Untitled issue"}
+              {issue.title || t("untitledIssue")}
             </p>
             {renderLevelLabel(issue.level ?? IssueLevel.level_None, false)}
           </div>
@@ -262,7 +261,7 @@ export default function CopanyRightPanel({
       <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Discussions
+            {t("discussions")}
           </p>
         </div>
         <Button
@@ -270,13 +269,13 @@ export default function CopanyRightPanel({
           size="sm"
           onClick={() => navigateToTab("Works", { worksTab: "Discussion" })}
         >
-          View More
+          {t("viewMore")}
         </Button>
       </div>
       <div className="mt-4 flex flex-col gap-3">
         {topDiscussions.length === 0 && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            No discussions yet.
+            {t("noDiscussionsYet")}
           </div>
         )}
         {topDiscussions.map((discussion) => (
@@ -301,7 +300,7 @@ export default function CopanyRightPanel({
       <div className="flex items-start justify-between -mr-2">
         <div>
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Contribution
+            {t("contribution")}
           </p>
         </div>
         <Button
@@ -313,13 +312,13 @@ export default function CopanyRightPanel({
             })
           }
         >
-          View More
+          {t("viewMore")}
         </Button>
       </div>
       <div className="mt-4 flex flex-col gap-3">
         {topContributors.length === 0 && (
           <div className="text-base text-gray-500 dark:text-gray-400">
-            No contribution data yet.
+            {t("noContributionDataYet")}
           </div>
         )}
         {topContributors.map((contributor) => (

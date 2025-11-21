@@ -1,0 +1,140 @@
+{
+  "catBanner": {
+    "findProject": {
+      "title": "Find Projects",
+      "description": "Explore or start a Copany project you care about."
+    },
+    "collaborate": {
+      "title": "Create Together",
+      "description": "Collaborate around a shared vision—discuss, take on, and complete tasks."
+    },
+    "distributeRevenue": {
+      "title": "Share Rewards",
+      "description": "Receive monthly earnings based on your contribution—your work is your “share.”"
+    },
+    "buttons": {
+      "browse": "Browse",
+      "learnMore": "Learn More",
+      "startProject": "Start Project"
+    }
+  },
+  "navigation": {
+    "language": "Language",
+    "chinese": "中文",
+    "english": "English",
+    "profile": "Profile",
+    "stars": "Stars",
+    "logout": "Logout",
+    "signUp": "Sign up",
+    "logIn": "Log in",
+    "explore": "Explore",
+    "discussion": "Discussion",
+    "newCopany": "New copany",
+    "howToUseCoslLicense": "How to use COSL License",
+    "createNewCopany": "Create new copany",
+    "noNameSet": "No name set"
+  },
+  "copanyView": {
+    "about": "About",
+    "works": "Works",
+    "distributeFinance": "Distribute & Finance",
+    "settings": "Settings",
+    "copanyNotFound": "Copany not found",
+    "loadingTabs": "Loading tabs..."
+  },
+  "userView": {
+    "account": "Account",
+    "working_on": "Working on"
+  },
+  "secondaryTabs": {
+    "issues": "Issues",
+    "discussion": "Discussion",
+    "readme": "Readme",
+    "license": "License",
+    "contributing": "Contributing",
+    "overview": "Overview",
+    "distribute": "Distribute",
+    "finance": "Finance"
+  },
+  "mobileCatBanner": {
+    "description": "Start a project or join one you love.\nCreate together with vision and mission.\nEarn what your contribution deserves."
+  },
+  "finance": {
+    "convertingCurrencyData": "Converting currency data...",
+    "latestRevenue": "Latest Revenue",
+    "noRevenue": "No Revenue",
+    "avgMonthlyRevenue": "Avg Monthly Revenue",
+    "avgMonthlyRevenueShort": "AMR",
+    "oneYearRevenue": "One Year Revenue",
+    "allRevenue": "All Revenue",
+    "noFinanceDataAvailable": "No finance data available."
+  },
+  "rightPanel": {
+    "about": "About",
+    "defaultDescription": "No description",
+    "usesCoslProtocol": "Contribution-based revenue",
+    "notUsesCoslProtocol": "Revenue not guaranteed",
+    "stars": "stars",
+    "noLicenseSpecified": "No license specified",
+    "licenseOther": "Other",
+    "licenseNoAssertion": "Other",
+    "mission": "Mission",
+    "vision": "Vision",
+    "finance": "Finance",
+    "viewMore": "View More",
+    "issues": "Issues",
+    "noIssuesYet": "No issues yet.",
+    "untitledIssue": "Untitled issue",
+    "discussions": "Discussions",
+    "noDiscussionsYet": "No discussions yet.",
+    "contribution": "Contribution",
+    "noContributionDataYet": "No contribution data yet.",
+    "contributionBasedRevenue": "Contribution-based revenue",
+    "revenueNotGuaranteed": "Revenue not guaranteed"
+  },
+  "emptyPlaceholder": {
+    "noCopaniesFound": "No copanies found",
+    "noCopaniesFoundDesc": "You are not a contributor of any copany",
+    "viewCopanies": "View Copanies",
+    "addFirstIssue": "Add first issue",
+    "addFirstIssueDesc": "Issues are the smallest task units in Copany and form the foundation of contributions. By completing an Issue, contributors earn corresponding contribution points based on the Issue's level. Each Issue has its own priority, status, and contribution level.",
+    "newIssue": "New Issue",
+    "signInToCreateIssue": "Sign in to create an issue",
+    "noDiscussionsYet": "Add first discussion",
+    "createFirstDiscussion": "You can propose any new ideas/suggestions, report problems, or share project progress in the discussion area.",
+    "newDiscussion": "New discussion",
+    "noDiscussionsForLabel": "No discussions for this label",
+    "tryAnotherLabel": "Try another label.",
+    "addFirstTransactions": "Add first transactions",
+    "addFirstTransactionsDesc": "Transactions record Copany's income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner. If this is an Apple platform project, we recommend connecting to App Store Connect to automatically fetch financial data.",
+    "noDistributeRecords": "No distribute records",
+    "noDistributeRecordsDesc": "Distribution records are automatically generated monthly based on revenue records and contribution ratios. After distribution records are generated, the project owner will transfer funds according to the amounts in the distribution records to the payment methods set by contributors.",
+    "viewFinance": "View Finance",
+    "appStoreConnectReports": "App Store Connect Finance Reports",
+    "appStoreConnectReportsDesc": "Connect to App Store Connect API to fetch finance reports for your app. Upload your P8 private key, Key ID, Issuer ID, and App SKU to get started.",
+    "fetchReports": "Fetch Reports",
+    "cannotLoadReadme": "Cannot load Readme",
+    "cannotLoadReadmeDesc": "Network issue prevents fetching README from GitHub. It may be caused by VPN/proxy connectivity. Please check your connection and try again.",
+    "retry": "Retry",
+    "addReadme": "Add Readme",
+    "addReadmeDesc": "Add a README to help others understand your Copany — share what problems it solves, its vision and goals, how it works, and how others can contribute.",
+    "noReadmeDesc": "This project does not have a README yet.",
+    "addLicense": "Add License",
+    "addLicenseDesc": "Help protect your Copany by adding a License — choose how others can use, modify, and distribute your work.",
+    "addLicenseDescNotOwner": "This project does not have a License yet.",
+    "howToUseCoslLicense": "How to use COSL License",
+    "addContributingGuide": "Add CONTRIBUTING Guide",
+    "addContributingGuideDesc": "Help contributors get started by adding a CONTRIBUTING guide.",
+    "addContributingGuideDescNotLoggedIn": "This repository does not have a CONTRIBUTING guide yet. Log in to add one.",
+    "addContributing": "Add CONTRIBUTING",
+    "noDiscussionsAcrossCopanies": "No discussions yet",
+    "noDiscussionsAcrossCopaniesDesc": "There are no discussions across all copanies yet.",
+    "noStarredCopanies": "No starred copanies yet",
+    "starACopanyToSeeItHere": "Star a copany to see it here.",
+    "viewHomePage": "View Home Page",
+    "noAvailableRepos": "has no available public repositories",
+    "noAvailableReposDesc": "You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started.",
+    "createGitHubRepository": "Create GitHub Repository"
+  }
+}
+

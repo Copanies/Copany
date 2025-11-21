@@ -2,19 +2,23 @@
 
 import IssuesView from "./IssuesView";
 import DiscussionView from "./DiscussionView";
-import SecondaryTabViewView from "@/components/commons/SecondaryTabView";
+import SecondaryTabView from "@/components/commons/SecondaryTabView";
 import CopanyHeader from "@/components/copany/CopanyHeader";
 import CopanyRightPanel from "@/components/copany/CopanyRightPanel";
 import { Copany } from "@/types/database.types";
+import { useTranslations } from "next-intl";
 
 export default function WorksView({ copany }: { copany: Copany }) {
+  const t = useTranslations("secondaryTabs");
   const tabs = [
     {
-      label: "Issues",
+      key: "issues",
+      label: t("issues"),
       content: <IssuesView copanyId={copany.id} />,
     },
     {
-      label: "Discussion",
+      key: "discussion",
+      label: t("discussion"),
       content: <DiscussionView copanyId={copany.id} />,
     },
   ];
@@ -23,7 +27,7 @@ export default function WorksView({ copany }: { copany: Copany }) {
       <CopanyHeader copany={copany} showCoverImage={false} />
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
-          <SecondaryTabViewView tabs={tabs} urlParamName="worksTab" />
+          <SecondaryTabView tabs={tabs} urlParamName="worksTab" />
         </div>
         <div className="w-full lg:w-[340px] xl:w-[360px] flex-shrink-0">
           <CopanyRightPanel

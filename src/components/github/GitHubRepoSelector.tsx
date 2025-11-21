@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
@@ -55,6 +56,7 @@ export default function GitHubRepoSelector({
 }: GitHubRepoSelectorProps) {
   const queryClient = useQueryClient();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("emptyPlaceholder");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownContentRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -511,9 +513,9 @@ export default function GitHubRepoSelector({
                               providersInfo?.providersData.find(
                                 (p) => p.provider === "github"
                               )?.user_name
-                            } has no available public repositories`}
-                            description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                            buttonTitle="Create GitHub Repository"
+                            } ${t("noAvailableRepos")}`}
+                            descriptionKey="noAvailableReposDesc"
+                            buttonTitleKey="createGitHubRepository"
                             buttonIcon={
                               <ArrowUpRightIcon className="w-4 h-4" />
                             }
@@ -678,9 +680,9 @@ export default function GitHubRepoSelector({
                                 providersInfo?.providersData.find(
                                   (p) => p.provider === "github"
                                 )?.user_name
-                              } has no available public repositories`}
-                              description="You need at least one public repository to create a Copany. Go to GitHub to create a new public repository to get started."
-                              buttonTitle="Create GitHub Repository"
+                              } ${t("noAvailableRepos")}`}
+                              descriptionKey="noAvailableReposDesc"
+                              buttonTitleKey="createGitHubRepository"
                               buttonIcon={
                                 <ArrowUpRightIcon className="w-4 h-4" />
                               }

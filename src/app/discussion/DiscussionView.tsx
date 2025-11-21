@@ -119,8 +119,8 @@ export default function DiscussionView() {
               strokeWidth={1}
             />
           }
-          title="No discussions yet"
-          description="There are no discussions across all copanies yet."
+          titleKey="noDiscussionsAcrossCopanies"
+          descriptionKey="noDiscussionsAcrossCopaniesDesc"
         />
       </div>
     );

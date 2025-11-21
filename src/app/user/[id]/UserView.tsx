@@ -25,6 +25,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/commons/Button";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useTranslations } from "next-intl";
 
 interface UserViewProps {
   userId: string;
@@ -41,6 +42,7 @@ export default function UserView({ userId }: UserViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTranslations("userView");
 
   // Check if the current user is viewing their own profile
   const isCurrentUser = currentUser?.id === userId;
@@ -159,21 +161,23 @@ export default function UserView({ userId }: UserViewProps) {
     ...(isCurrentUser
       ? [
           {
-            label: "Account",
+            key: "account",
+            label: t("account"),
             icon: <UserCircleIcon strokeWidth={2} className="w-4 h-4" />,
             content: <AccountView userId={userId} />,
           },
         ]
       : []),
     {
-      label: "Working on",
+      key: "working_on",
+      label: t("working_on"),
       icon: <Squares2X2Icon strokeWidth={2} className="w-4 h-4" />,
       content: <WorkingOnView userId={userId} />,
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4 max-w-[840px] mx-auto py-6 px-5 min-h-screen">
+    <div className="flex flex-col gap-4 max-w-screen-xl mx-auto py-6 px-5 min-h-screen">
       <div className="flex flex-row gap-4 items-center">
         {/* Avatar with hover effect and dropdown */}
         <div className="relative inline-block group">

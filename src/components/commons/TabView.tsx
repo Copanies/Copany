@@ -3,7 +3,12 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface TabViewProps {
-  tabs: { label: string; icon?: React.ReactNode; content: React.ReactNode }[];
+  tabs: {
+    key?: string; // Optional key for URL and identification (defaults to label if not provided)
+    label: string;
+    icon?: React.ReactNode;
+    content: React.ReactNode;
+  }[];
   urlParamName?: string; // Optional URL parameter name
 }
 
@@ -14,11 +19,16 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   const tabContainerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
+  // Helper function to get tab identifier (key or label)
+  const getTabId = (tab: typeof tabs[0]) => tab.key || tab.label;
+
   // Get initial tab from URL, if not found use the first tab
   const getInitialTab = () => {
     const urlTab = searchParams.get(urlParamName);
-    const validTab = tabs.find((tab) => tab.label === urlTab);
-    return validTab ? validTab.label : tabs[0].label;
+    const validTab = tabs.find(
+      (tab) => getTabId(tab) === urlTab || tab.label === urlTab
+    );
+    return validTab ? getTabId(validTab) : getTabId(tabs[0]);
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
@@ -26,22 +36,27 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   // Update activeTab when URL parameters change
   useEffect(() => {
     const urlTab = searchParams.get(urlParamName);
-    if (urlTab && tabs.find((tab) => tab.label === urlTab)) {
-      setActiveTab(urlTab);
+    if (urlTab) {
+      const validTab = tabs.find(
+        (tab) => getTabId(tab) === urlTab || tab.label === urlTab
+      );
+      if (validTab) {
+        setActiveTab(getTabId(validTab));
+      }
     }
   }, [searchParams, urlParamName, tabs]);
 
   // Update URL parameters
-  const updateUrlParam = (tabLabel: string) => {
+  const updateUrlParam = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set(urlParamName, tabLabel);
+    params.set(urlParamName, tabId);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Scroll tab to center
-  const scrollTabToCenter = (tabLabel: string) => {
+  const scrollTabToCenter = (tabId: string) => {
     const container = tabContainerRef.current;
-    const tabElement = tabRefs.current.get(tabLabel);
+    const tabElement = tabRefs.current.get(tabId);
 
     if (!container || !tabElement) return;
 
@@ -75,23 +90,26 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     });
   }, [activeTab]);
 
-  const handleTabClick = (tabLabel: string) => {
-    setActiveTab(tabLabel);
-    updateUrlParam(tabLabel);
-    scrollTabToCenter(tabLabel);
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId);
+    updateUrlParam(tabId);
+    scrollTabToCenter(tabId);
   };
 
   // Use useMemo to cache tab contents
   const tabContents = useMemo(() => {
-    return tabs.map((tab) => (
-      <div
-        key={tab.label}
-        className="max-w-screen-xl w-full mx-auto mx-5"
-        style={{ display: activeTab === tab.label ? "block" : "none" }}
-      >
-        {tab.content}
-      </div>
-    ));
+    return tabs.map((tab) => {
+      const tabId = getTabId(tab);
+      return (
+        <div
+          key={tabId}
+          className="max-w-screen-xl w-full mx-auto mx-5"
+          style={{ display: activeTab === tabId ? "block" : "none" }}
+        >
+          {tab.content}
+        </div>
+      );
+    });
   }, [tabs, activeTab]);
 
   return (
@@ -101,29 +119,32 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
           ref={tabContainerRef}
           className="flex w-full px-5 min-w-0 gap-5 flex-row overflow-x-auto scrollbar-hide whitespace-nowrap"
         >
-          {tabs.map((tab) => (
-            <button
-              key={tab.label}
-              ref={(el) => {
-                if (el) {
-                  tabRefs.current.set(tab.label, el);
-                } else {
-                  tabRefs.current.delete(tab.label);
-                }
-              }}
-              className={`${
-                activeTab === tab.label
-                  ? "cursor-pointer px-0 pt-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
-                  : "cursor-pointer px-0 pt-2 pb-[10px] flex-shrink-0"
-              }`}
-              onClick={() => handleTabClick(tab.label)}
-            >
-              <div className="flex flex-row gap-2 items-center">
-                {tab.icon && <div className="w-4 h-4">{tab.icon}</div>}
-                <span className="text-base">{tab.label}</span>
-              </div>
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const tabId = getTabId(tab);
+            return (
+              <button
+                key={tabId}
+                ref={(el) => {
+                  if (el) {
+                    tabRefs.current.set(tabId, el);
+                  } else {
+                    tabRefs.current.delete(tabId);
+                  }
+                }}
+                className={`${
+                  activeTab === tabId
+                    ? "cursor-pointer px-0 pt-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
+                    : "cursor-pointer px-0 pt-2 pb-[10px] flex-shrink-0"
+                }`}
+                onClick={() => handleTabClick(tabId)}
+              >
+                <div className="flex flex-row gap-2 items-center">
+                  {tab.icon && <div className="w-4 h-4">{tab.icon}</div>}
+                  <span className="text-base">{tab.label}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
       {tabContents}

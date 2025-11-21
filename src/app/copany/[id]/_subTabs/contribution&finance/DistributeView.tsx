@@ -190,16 +190,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="No distribute records"
-          description={
-            <>
-              Distribution records are automatically generated based on the
-              transaction log and each contributor&apos;s allocation ratio. The
-              records are generated daily based on the distribution settings.
-            </>
-          }
+          titleKey="noDistributeRecords"
+          descriptionKey="noDistributeRecordsDesc"
           buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-          buttonTitle="View Finance"
+          buttonTitleKey="viewFinance"
           buttonAction={() => {
             router.push(
               `/copany/${copanyId}?tab=Distribute & Finance&distributeFinanceTab=Overview`

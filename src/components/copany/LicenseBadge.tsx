@@ -2,6 +2,7 @@
 
 import { ScaleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface LicenseBadgeProps {
   license: string | null;
@@ -17,6 +18,7 @@ export default function LicenseBadge({
   copanyId,
 }: LicenseBadgeProps) {
   const router = useRouter();
+  const t = useTranslations("rightPanel");
 
   // Determine the actual license to display
   let displayLicense = license;
@@ -33,7 +35,7 @@ export default function LicenseBadge({
 
   // Handle display text
   const displayText =
-    displayLicense === "NOASSERTION" ? "Other" : displayLicense;
+    displayLicense === "NOASSERTION" ? t("licenseNoAssertion") : displayLicense;
 
   // Handle click to navigate to license tab
   const handleClick = () => {

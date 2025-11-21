@@ -4,10 +4,11 @@ import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { useRouter } from "next/navigation";
 import Button from "../commons/Button";
 import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 interface MobileCatBannerProps {
   title: string;
-  subtitle?: string;
   className?: string;
+  onBrowseProjects?: () => void;
 }
 
 /**
@@ -16,12 +17,14 @@ interface MobileCatBannerProps {
  */
 export default function MobileCatBanner({
   title,
-  subtitle,
   className = "",
+  onBrowseProjects,
 }: MobileCatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const router = useRouter();
+  const t = useTranslations("mobileCatBanner");
+  const tButtons = useTranslations("catBanner.buttons");
   useEffect(() => {
     // Generate only 4 cat avatars for mobile (bottom row only)
     const avatars = Array.from({ length: 4 }, () =>
@@ -49,29 +52,72 @@ export default function MobileCatBanner({
           }`}
           style={{ transitionDelay: "500ms" }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-3">
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-3">
             {title}
           </h1>
-          {subtitle && (
-            <div className="text-base sm:text-lg text-gray-900 text-center dark:text-white space-y-1">
-              {subtitle.split("\n").map((line, index) => (
-                <p key={index}>{line}</p>
-              ))}
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="md"
-            className="mt-3 -mb-3"
-            onClick={() => {
-              router.push("/copany/5");
-            }}
-          >
-            <div className="flex flex-row items-center gap-2">
-              <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2} />
-              <p className="!text-nowrap font-semiblod">Learn More</p>
-            </div>
-          </Button>
+          <p className="text-base text-gray-900 text-center dark:text-white leading-relaxed max-w-screen mx-4 whitespace-pre-line">
+            {t("description")}
+          </p>
+          <div className="flex flex-row items-center gap-2 flex-wrap justify-center">
+            <Button
+              variant="ghost"
+              size="md"
+              className="mt-3 -mb-3"
+              onClick={() => {
+                if (onBrowseProjects) {
+                  onBrowseProjects();
+                } else {
+                  // Fallback: scroll to copany grid if no callback provided
+                  const element = document.getElementById("copany-grid");
+                  if (element) {
+                    const headerHeight = 52; // MainNavigation height
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition =
+                      elementPosition + window.pageYOffset - headerHeight;
+
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: "smooth",
+                    });
+                  }
+                }
+              }}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <p className="!text-nowrap font-semibold">
+                  {tButtons("browse")}
+                </p>
+              </div>
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              className="mt-3 -mb-3"
+              onClick={() => {
+                router.push("/uselicense");
+              }}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <p className="!text-nowrap font-semibold">
+                  {tButtons("learnMore")}
+                </p>
+              </div>
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              className="mt-3 -mb-3"
+              onClick={() => {
+                router.push("/new");
+              }}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <p className="!text-nowrap font-semibold">
+                  {tButtons("startProject")}
+                </p>
+              </div>
+            </Button>
+          </div>
         </div>
 
         {/* Bottom cats row */}

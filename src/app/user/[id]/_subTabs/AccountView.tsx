@@ -293,12 +293,12 @@ export default function AccountView({ userId }: { userId: string }) {
     return <div className="p-8 max-w-[820px] mx-auto">User not found</div>;
   }
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 mt-5 mx-5">
       <div className="flex flex-col gap-5">
         <p className="text-2xl font-bold">General</p>
         {/* Rename User Section */}
         <div className="flex flex-col gap-3 max-w-full">
-          <label htmlFor="userName" className="text-sm font-semibold">
+          <label htmlFor="userName" className="text-base font-semibold">
             User name
           </label>
           {isOwnProfile ? (
@@ -438,7 +438,7 @@ export default function AccountView({ userId }: { userId: string }) {
 
         <p className="text-2xl font-semibold">Accounts</p>
         <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold">Linked Accounts</p>
+          <p className="text-base font-semibold">Linked Accounts</p>
           {linkedProviders.length > 0 ? (
             <div className="flex flex-col gap-3">
               {providersData.map((providerData, index) => (
@@ -555,7 +555,7 @@ export default function AccountView({ userId }: { userId: string }) {
       {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma && hasDiscord) && (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold">Link to Accounts</p>
+            <p className="text-base font-semibold">Link to Accounts</p>
             <p className="text-gray-500 text-sm">
               Only supports linking to GitHub, Google, or Figma accounts with
               the same email address

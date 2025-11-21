@@ -275,10 +275,10 @@ export default function AppStoreConnectView({
               strokeWidth={1}
             />
           }
-          title="App Store Connect Finance Reports"
-          description="Connect to App Store Connect API to fetch finance reports for your app. Upload your P8 private key, Key ID, Issuer ID, and App SKU to get started."
+          titleKey="appStoreConnectReports"
+          descriptionKey="appStoreConnectReportsDesc"
           buttonIcon={<DocumentTextIcon className="w-4 h-4" />}
-          buttonTitle="Fetch Reports"
+          buttonTitleKey="fetchReports"
           buttonAction={() => {
             // This will be handled by the ConnectToAppStoreConnect component
             // We'll use a ref or state to trigger it, but for now, we'll keep the modal approach
@@ -394,13 +394,9 @@ export default function AppStoreConnectView({
           onBack={() => setSelectedReport(null)}
         />
       ) : viewMode === "chart" ? (
-        <FinanceChartView
-          chartData={chartData}
-        />
+        <FinanceChartView chartData={chartData} />
       ) : viewMode === "monthly" ? (
-        <MonthlyRevenueView
-          chartData={chartData}
-        />
+        <MonthlyRevenueView chartData={chartData} />
       ) : (
         <ReportsListView reports={reports} onSelectReport={setSelectedReport} />
       )}

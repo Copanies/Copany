@@ -284,8 +284,8 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="Add first transactions"
-          description="Transaction log records Copany's income and expenses. Anyone can add a transaction, but it only takes effect after approval by the Copany Owner."
+          titleKey="addFirstTransactions"
+          descriptionKey="addFirstTransactionsDesc"
           size="lg"
           customButton={
             <div className="flex flex-col items-center gap-3 -mx-4">

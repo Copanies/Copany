@@ -6,6 +6,7 @@ import { convertTransactionsToChartData } from "@/utils/finance";
 import type { ChartDataPoint } from "@/utils/finance";
 import FinanceChartView from "./FinanceChartView";
 import LoadingView from "@/components/commons/LoadingView";
+import { useTranslations } from "next-intl";
 
 interface FinanceOverviewChartProps {
   copanyId: string;
@@ -26,6 +27,7 @@ export default function FinanceOverviewChart({
 }: FinanceOverviewChartProps) {
   const { data: transactions = [] } = useTransactions(copanyId);
   const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
+  const t = useTranslations("finance");
 
   // Convert App Store finance data to transactions format (similar to FinanceView)
   const appStoreTransactions = useMemo(() => {
@@ -149,7 +151,7 @@ export default function FinanceOverviewChart({
   const hasNoData = chartData.length === 0;
 
   if (isConvertingData) {
-    return <LoadingView type="label" label="Converting currency data..." />;
+    return <LoadingView type="label" label={t("convertingCurrencyData")} />;
   }
 
   return (
@@ -160,12 +162,12 @@ export default function FinanceOverviewChart({
           {showLatestRevenue && (
             <div className="flex flex-row gap-2">
               <div className="text-sm text-gray-900 dark:text-gray-100">
-                Latest Revenue
+                {t("latestRevenue")}
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    No Revenue
+                    {t("noRevenue")}
                   </span>
                 ) : (
                   <>
@@ -198,13 +200,13 @@ export default function FinanceOverviewChart({
                   </svg>
                 )}
                 <span className="text-gray-900 dark:text-gray-100">
-                  Avg Monthly Revenue
+                  {t("avgMonthlyRevenue")}
                 </span>
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    No Revenue
+                    {t("noRevenue")}
                   </span>
                 ) : (
                   <>
@@ -224,12 +226,12 @@ export default function FinanceOverviewChart({
           {showOneYearRevenue && (
             <div className="flex flex-row gap-2">
               <div className="text-sm text-gray-900 dark:text-gray-100">
-                One Year Revenue
+                {t("oneYearRevenue")}
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    No Revenue
+                    {t("noRevenue")}
                   </span>
                 ) : (
                   <>
@@ -246,12 +248,12 @@ export default function FinanceOverviewChart({
           {showAllRevenue && (
             <div className="flex flex-row gap-2">
               <div className="text-sm text-gray-900 dark:text-gray-100">
-                All Revenue
+                {t("allRevenue")}
               </div>
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {hasNoData ? (
                   <span className="text-gray-500 dark:text-gray-400">
-                    No Revenue
+                    {t("noRevenue")}
                   </span>
                 ) : (
                   <>
@@ -272,7 +274,7 @@ export default function FinanceOverviewChart({
       <FinanceChartView
         chartData={chartData}
         size={size}
-        emptyMessage="No finance data available."
+        emptyMessage={t("noFinanceDataAvailable")}
       />
     </div>
   );

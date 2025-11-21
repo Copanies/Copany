@@ -139,10 +139,10 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="No discussions yet"
-          description="Create the first discussion to kick off the conversation."
+          titleKey="noDiscussionsYet"
+          descriptionKey="createFirstDiscussion"
           buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="New discussion"
+          buttonTitleKey="newDiscussion"
           buttonAction={() => setIsModalOpen(true)}
         />
         {createDiscussionModal()}
@@ -252,8 +252,8 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                   strokeWidth={1}
                 />
               }
-              title="No discussions for this label"
-              description="Try another label."
+              titleKey="noDiscussionsForLabel"
+              descriptionKey="tryAnotherLabel"
             />
           ) : (
             <ul className="flex flex-col gap-3">

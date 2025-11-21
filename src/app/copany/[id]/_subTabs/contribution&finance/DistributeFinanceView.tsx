@@ -1,24 +1,29 @@
 "use client";
 
-import SecondaryTabViewView from "@/components/commons/SecondaryTabView";
+import SecondaryTabView from "@/components/commons/SecondaryTabView";
 import FinanceView from "./FinanceView";
 import OverviewView from "./OverviewView";
 import CopanyHeader from "@/components/copany/CopanyHeader";
 import { Copany } from "@/types/database.types";
 import DistributeView from "./DistributeView";
+import { useTranslations } from "next-intl";
 
 export default function DistributeFinanceView({ copany }: { copany: Copany }) {
+  const t = useTranslations("secondaryTabs");
   const tabs = [
     {
-      label: "Overview",
+      key: "overview",
+      label: t("overview"),
       content: <OverviewView copanyId={copany.id} />,
     },
     {
-      label: "Distribute",
+      key: "distribute",
+      label: t("distribute"),
       content: <DistributeView copanyId={copany.id} />,
     },
     {
-      label: "Finance",
+      key: "finance",
+      label: t("finance"),
       content: <FinanceView copanyId={copany.id} />,
     },
   ];
@@ -27,10 +32,7 @@ export default function DistributeFinanceView({ copany }: { copany: Copany }) {
       <CopanyHeader copany={copany} showCoverImage={false} />
       <div className="flex flex-col gap-6">
         <div className="flex-1 min-w-0">
-          <SecondaryTabViewView
-            tabs={tabs}
-            urlParamName="distributeFinanceTab"
-          />
+          <SecondaryTabView tabs={tabs} urlParamName="distributeFinanceTab" />
         </div>
       </div>
     </div>
