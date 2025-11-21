@@ -54,7 +54,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     const delayDays = copany.distribution_delay_days ?? 90;
     const now = new Date();
     const distributionDate = new Date(now);
-    distributionDate.setUTCDate(distributionDate.getUTCDate() - delayDays);
+    // Use setTime with milliseconds to properly handle month boundaries
+    distributionDate.setTime(
+      distributionDate.getTime() - delayDays * 24 * 60 * 60 * 1000
+    );
     const distributionYear = distributionDate.getUTCFullYear();
     const distributionMonthIndex = distributionDate.getUTCMonth();
 
