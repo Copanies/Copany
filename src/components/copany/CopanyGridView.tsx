@@ -329,7 +329,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               {amrLabel}
             </div>
             <div className="flex flex-row min-w-0 gap-2">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <ExpandableText
                   contentClassName="text-sm"
                   text={copany.description || "No description"}
@@ -349,7 +349,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                     >
                       <circle cx="8" cy="8" r="8" />
                     </svg>
-                    <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">
                       {copany.isDefaultUseCOSL
                         ? "Contribution-based revenue"
                         : "Revenue not guaranteed"}
@@ -377,7 +377,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                 </div>
               </div>
               {!isConvertingData && (
-                <div className="flex flex-col items-end gap-1 shrink-0">
+                <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
                   {/* Mini chart */}
                   <MiniFinanceChart
                     chartData={chartData.length > 0 ? chartData : []}
@@ -544,7 +544,7 @@ export default function CopanyGridView({
 
   return (
     <>
-      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-8 pb-10 max-w-[1240px] justify-center mx-auto w-full">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-10 max-w-[1240px] justify-center mx-auto w-full">
         {copanies.map((copany, index) => (
           <CopanyCard
             key={copany.id}
