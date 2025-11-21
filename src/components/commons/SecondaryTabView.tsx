@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface SecondaryTabViewProps {
@@ -20,7 +20,10 @@ export default function SecondaryTabView({
   const searchParams = useSearchParams();
 
   // Helper function to get tab identifier (key or label)
-  const getTabId = (tab: (typeof tabs)[0]) => tab.key || tab.label;
+  const getTabId = useCallback(
+    (tab: (typeof tabs)[0]) => tab.key || tab.label,
+    []
+  );
 
   // Get initial tab from URL, use first tab if not found
   const getInitialTab = () => {
@@ -44,7 +47,7 @@ export default function SecondaryTabView({
         setActiveTab(getTabId(validTab));
       }
     }
-  }, [searchParams, urlParamName, tabs]);
+  }, [searchParams, urlParamName, tabs, getTabId]);
 
   // Update URL parameter
   const updateUrlParam = (tabId: string) => {
@@ -72,7 +75,7 @@ export default function SecondaryTabView({
         </div>
       );
     });
-  }, [tabs, activeTab]);
+  }, [tabs, activeTab, getTabId]);
 
   return (
     <div className="flex flex-col w-full h-fit md:h-full md:min-h-screen rounded-lg border border-gray-200 dark:border-gray-700">

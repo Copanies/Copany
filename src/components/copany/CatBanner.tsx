@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import Button from "../commons/Button";
-import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import hand_draw_right_arrow_01 from "@/assets/hand_draw_right_arrow_01.png";
 import hand_draw_right_arrow_02 from "@/assets/hand_draw_right_arrow_02.png";
 import { useRouter } from "next/navigation";

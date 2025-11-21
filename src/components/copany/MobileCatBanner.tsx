@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { useRouter } from "next/navigation";
 import Button from "../commons/Button";
-import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 interface MobileCatBannerProps {
   title: string;

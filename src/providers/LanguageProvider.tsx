@@ -12,7 +12,9 @@ interface LanguageProviderProps {
 
 export default function LanguageProvider({ children }: LanguageProviderProps) {
   const { language, isInitialized } = useLanguage();
-  const [messages, setMessages] = useState<any>(null);
+  const [messages, setMessages] = useState<Record<string, unknown> | null>(
+    null
+  );
 
   useEffect(() => {
     if (isInitialized) {

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface TabViewProps {
@@ -20,7 +20,10 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Helper function to get tab identifier (key or label)
-  const getTabId = (tab: typeof tabs[0]) => tab.key || tab.label;
+  const getTabId = useCallback(
+    (tab: (typeof tabs)[0]) => tab.key || tab.label,
+    []
+  );
 
   // Get initial tab from URL, if not found use the first tab
   const getInitialTab = () => {
@@ -44,7 +47,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
         setActiveTab(getTabId(validTab));
       }
     }
-  }, [searchParams, urlParamName, tabs]);
+  }, [searchParams, urlParamName, tabs, getTabId]);
 
   // Update URL parameters
   const updateUrlParam = (tabId: string) => {
@@ -110,7 +113,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
         </div>
       );
     });
-  }, [tabs, activeTab]);
+  }, [tabs, activeTab, getTabId]);
 
   return (
     <div className="flex w-full min-w-0 flex-col h-full min-h-screen">

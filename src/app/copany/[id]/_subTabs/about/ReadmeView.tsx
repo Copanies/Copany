@@ -51,7 +51,6 @@ export default function ReadmeView({ githubUrl, copany }: ReadmeViewProps) {
   const t = useTranslations("emptyPlaceholder");
 
   const { data: currentUser } = useCurrentUser();
-  const isLoggedIn = !!currentUser;
 
   // Check if current user is the owner of the copany
   const isOwner = !!(

@@ -294,7 +294,7 @@ export default function MainNavigation() {
     }
 
     return options;
-  }, [userCopanies, isDarkMode]);
+  }, [userCopanies, isDarkMode, t]);
 
   // Handle copany navigation dropdown selection
   const handleCopanyNavSelect = useCallback(
