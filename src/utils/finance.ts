@@ -2,25 +2,27 @@ import type { TransactionRow } from "@/types/database.types";
 import { convertToUSD, getFallbackExchangeRateToUSD } from "./currency";
 
 // Convert transaction date to YYYY-MM format
+// Use UTC methods to ensure consistent behavior across timezones
 function getYearMonth(dateString: string): string {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
     return "";
   }
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
 
 // Convert transaction date to YYYY-MM-DD format for exchange rate API
+// Use UTC methods to ensure consistent behavior across timezones
 function getYearMonthDay(dateString: string): string {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
     return "";
   }
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 

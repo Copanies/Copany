@@ -94,7 +94,12 @@ export function getMonthlyPeriodFrom10th(date: string | Date): {
   const d = new Date(date);
   
   // Convert to UTC to ensure consistent behavior across timezones
-  const utcDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Use UTC methods to read the date components
+  const utcDate = new Date(Date.UTC(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate()
+  ));
   
   let startYear = utcDate.getUTCFullYear();
   let startMonth = utcDate.getUTCMonth();

@@ -310,25 +310,30 @@ function getReportDates(latestDate?: string): string[] {
     console.log(`[DEBUG] Getting report dates after latest date: ${latestDate}`);
     // Parse latest date (YYYY-MM format)
     const [year, month] = latestDate.split('-').map(Number);
-    const latest = new Date(year, month - 1, 1); // month is 0-indexed
+    // Use UTC to ensure consistent behavior across timezones
+    const latest = new Date(Date.UTC(year, month - 1, 1)); // month is 0-indexed
     
     // Get all months from latest date to current month
     let current = new Date(latest);
-    current.setMonth(current.getMonth() + 1); // Start from next month after latest
+    current.setUTCMonth(current.getUTCMonth() + 1); // Start from next month after latest
     
     while (current <= now) {
-      const year = current.getFullYear();
-      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const year = current.getUTCFullYear();
+      const month = String(current.getUTCMonth() + 1).padStart(2, '0');
       dates.push(`${year}-${month}`);
-      current.setMonth(current.getMonth() + 1);
+      current.setUTCMonth(current.getUTCMonth() + 1);
     }
   } else {
     console.log(`[DEBUG] No latest date found, getting last 12 months`);
-    // Get last 12 months
+    // Get last 12 months using UTC
     for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const date = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() - i,
+        1
+      ));
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
       dates.push(`${year}-${month}`);
     }
   }
@@ -550,11 +555,12 @@ function parseDateMMDDYYYY(dateStr: string): Date | null {
   const day = parseInt(match[2], 10);
   const year = parseInt(match[3], 10);
   
-  const date = new Date(year, month, day);
+  // Use UTC to ensure consistent behavior across timezones
+  const date = new Date(Date.UTC(year, month, day));
   if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month ||
-    date.getDate() !== day
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
   ) {
     return null;
   }
@@ -563,6 +569,7 @@ function parseDateMMDDYYYY(dateStr: string): Date | null {
 }
 
 // Convert MM/DD/YYYY to YYYY-MM-DD
+// Use UTC methods to ensure consistent behavior across timezones
 function convertDateToYYYYMMDD(dateStr: string | undefined): string | undefined {
   if (!dateStr) {
     return undefined;
@@ -573,14 +580,15 @@ function convertDateToYYYYMMDD(dateStr: string | undefined): string | undefined 
     return undefined;
   }
   
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   
   return `${year}-${month}-${day}`;
 }
 
 // Calculate transaction month
+// Use UTC methods to ensure consistent behavior across timezones
 function calculateTransactionMonth(
   transactionDateStr: string | undefined,
   fallbackDate: string
@@ -590,8 +598,8 @@ function calculateTransactionMonth(
     : null;
 
   if (transactionDate) {
-    const year = transactionDate.getFullYear();
-    const month = String(transactionDate.getMonth() + 1).padStart(2, '0');
+    const year = transactionDate.getUTCFullYear();
+    const month = String(transactionDate.getUTCMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   }
 
