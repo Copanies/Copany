@@ -653,7 +653,7 @@ export default function NotificationBell() {
         className="w-full text-left pl-2 pr-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
       >
         <div className="flex flex-col gap-1">
-          <div className="flex flex-col md:flex-row md:items-cente gap-1 w-full">
+          <div className="flex flex-col md:flex-row md:items-center gap-1 w-full">
             <div className="flex items-center gap-2 w-full">
               <div className="flex items-center justify-center w-8 h-8">
                 <div className="flex items-center w-8 h-8 justify-center">
