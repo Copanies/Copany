@@ -299,7 +299,11 @@ export default function MainNavigation() {
   }, [userCopanies, copanyId]);
 
   return (
-    <div className="sticky top-0 z-10 flex flex-row w-full items-center px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark h-[52px]">
+    <div
+      className={`sticky top-0 z-10 flex flex-row w-full items-center px-4 sm:px-4 lg:px-4 gap-2 sm:gap-3 bg-white dark:bg-background-dark h-[52px] ${
+        copanyId ? "" : "border-b border-gray-200 dark:border-gray-700"
+      }`}
+    >
       {/* Left section - Navigation icon, Logo and company name */}
       <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0 pr-3">
         {/* Bars3 icon for quick navigation (shown when user is logged in) */}
@@ -382,7 +386,7 @@ export default function MainNavigation() {
       ) : null}
 
       {/* Right section - User actions */}
-      <div className="absolute right-4 sm:right-6 lg:right-8 flex flex-row items-center gap-1 sm:gap-2">
+      <div className="absolute right-4 sm:right-4 lg:right-4 flex flex-row items-center gap-1 sm:gap-2">
         {user && (
           <div className="hidden sm:block">
             {/* {user && <CreateCopanyButton size="lg" />} */}

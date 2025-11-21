@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "sync-app-store-finance": {
+      "schedule": "0 2 * * *"
+    }
+  }
+}
+
+

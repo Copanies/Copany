@@ -11,6 +11,7 @@ interface EmptyPlaceholderViewProps {
   size?: "md" | "lg";
   buttonDisabled?: boolean;
   buttonTooltip?: string;
+  customButton?: ReactNode;
 }
 
 export default function EmptyPlaceholderView({
@@ -23,6 +24,7 @@ export default function EmptyPlaceholderView({
   size = "lg",
   buttonDisabled = false,
   buttonTooltip,
+  customButton,
 }: EmptyPlaceholderViewProps) {
   return (
     <div
@@ -48,19 +50,24 @@ export default function EmptyPlaceholderView({
             {description}
           </p>
         </div>
-        {buttonTitle && buttonAction && (
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={buttonAction}
-            disabled={buttonDisabled}
-            disableTooltipConent={buttonTooltip}
-          >
-            <div className="flex items-center gap-2">
-              {buttonIcon}
-              <p>{buttonTitle}</p>
-            </div>
-          </Button>
+        {customButton ? (
+          customButton
+        ) : (
+          buttonTitle &&
+          buttonAction && (
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={buttonAction}
+              disabled={buttonDisabled}
+              disableTooltipConent={buttonTooltip}
+            >
+              <div className="flex items-center gap-2">
+                {buttonIcon}
+                <p>{buttonTitle}</p>
+              </div>
+            </Button>
+          )
         )}
       </div>
     </div>

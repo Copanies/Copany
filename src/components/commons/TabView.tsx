@@ -86,7 +86,7 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     return tabs.map((tab) => (
       <div
         key={tab.label}
-        className="mt-4 mx-5"
+        className="max-w-screen-xl w-full mx-auto mx-5"
         style={{ display: activeTab === tab.label ? "block" : "none" }}
       >
         {tab.content}

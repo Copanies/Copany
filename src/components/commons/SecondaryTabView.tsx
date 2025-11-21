@@ -58,15 +58,15 @@ export default function SecondaryTabViewView({
   }, [tabs, activeTab]);
 
   return (
-    <div className="flex gap-3 md:gap-0 w-full h-full min-h-screen flex-col md:flex-row">
-      <div className="flex flex-row md:flex-col w-full md:w-40 shrink-0 px-0 md:px-0 md:pr-4 md:border-r border-gray-200 dark:border-gray-700 overflow-x-auto md:overflow-visible scrollbar-hide whitespace-nowrap md:whitespace-normal gap-2 md:gap-0 -mt-1 md:mt-0">
+    <div className="flex flex-col w-full h-fit md:h-full md:min-h-screen rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-row w-full shrink-0 overflow-x-auto scrollbar-hide gap-4 border-b border-gray-200 dark:border-gray-700 px-4 md:px-5 pt-[2px]">
         {tabs.map((tab) => (
           <button
             key={tab.label}
-            className={`text-left flex-shrink-0 cursor-pointer px-3 py-1 rounded-lg ${
+            className={`${
               activeTab === tab.label
-                ? " bg-gray-200 dark:bg-gray-700 md:px-4 md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l-2 md:border-secondary"
-                : "bg-gray-100 dark:bg-gray-800 md:pl-[17px] md:pr-4 md:py-2 md:rounded-none md:bg-transparent md:dark:bg-transparent md:border-l md:border-gray-200 dark:md:border-gray-700"
+                ? "cursor-pointer px-0 pt-2 pb-2 flex-shrink-0 border-b-2 border-secondary"
+                : "cursor-pointer px-0 pt-2 pb-[10px] flex-shrink-0"
             }`}
             onClick={() => handleTabClick(tab.label)}
           >
@@ -74,7 +74,7 @@ export default function SecondaryTabViewView({
           </button>
         ))}
       </div>
-      <div className="flex-1 min-w-0">{tabContents}</div>
+      <div className="flex-1 min-w-0 py-4 px-4 md:px-5">{tabContents}</div>
     </div>
   );
 }

@@ -327,50 +327,50 @@ export default function NotificationBell() {
       case "copany_starred": {
         const name = n.copany_id ? copanies[String(n.copany_id)]?.name : "";
         return name ? (
-          <span className="text-base">{`Copany: ${name}`}</span>
+          <span className="text-sm">{`Copany: ${name}`}</span>
         ) : null;
       }
       case "comment_reply":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "new_comment":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "new_issue":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "mention":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "issue_assigned":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {`@${p.from_user_name}`} → {`@${p.to_user_name}`}
           </span>
         );
       case "issue_state_changed":
         return (
-          <span className="text-base ">
+          <span className="text-sm ">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getStateName(p.from_state)} → {getStateName(p.to_state)}
           </span>
         );
       case "issue_priority_changed":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getPriorityName(p.from_priority)} →{" "}
             {getPriorityName(p.to_priority)}
@@ -378,77 +378,77 @@ export default function NotificationBell() {
         );
       case "issue_level_changed":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}
             {getLevelName(p.from_level)} → {getLevelName(p.to_level)}
           </span>
         );
       case "issue_closed":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "assignment_request_received":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}` : "Issue"}
           </span>
         );
       case "assignment_request_accepted":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Your request was
             accepted
           </span>
         );
       case "assignment_request_refused":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Your request was
             refused
           </span>
         );
       case "review_requested":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}You were
             requested to review
           </span>
         );
       case "review_approved":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Issue ${latestTitle}: ` : "Issue "}Review approved
           </span>
         );
       case "discussion_created":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
           </span>
         );
       case "discussion_voted":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
           </span>
         );
       case "discussion_comment_created":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
           </span>
         );
       case "discussion_comment_voted":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
           </span>
         );
       case "discussion_comment_reply":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {latestTitle ? `Discussion ${latestTitle}` : "Discussion"}
           </span>
         );
@@ -456,7 +456,7 @@ export default function NotificationBell() {
       case "distribute_submitted":
       case "distribute_confirmed":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             {String(n.payload?.currency || "")}{" "}
             {Number(n.payload?.amount || 0).toFixed(2)}
             {n.payload?.contribution_percent
@@ -467,7 +467,7 @@ export default function NotificationBell() {
       case "transaction_created":
       case "transaction_confirmed":
         return (
-          <span className="text-base">
+          <span className="text-sm">
             Transaction: {String(n.payload?.type) === "income" ? "+" : "-"}
             {String(n.payload?.currency || "")}{" "}
             {Number(n.payload?.amount || 0).toFixed(2)}
@@ -480,13 +480,11 @@ export default function NotificationBell() {
         if (!latestTitle) return null;
         // Determine prefix based on whether it's an issue or discussion
         if (n.issue_id || p.issue_title) {
-          return <span className="text-base">{`Issue ${latestTitle}`}</span>;
+          return <span className="text-sm">{`Issue ${latestTitle}`}</span>;
         } else if (n.discussion_id || p.discussion_title) {
-          return (
-            <span className="text-base">{`Discussion ${latestTitle}`}</span>
-          );
+          return <span className="text-sm">{`Discussion ${latestTitle}`}</span>;
         }
-        return <span className="text-base">{latestTitle}</span>;
+        return <span className="text-sm">{latestTitle}</span>;
       }
     }
   };
@@ -655,7 +653,7 @@ export default function NotificationBell() {
         className="w-full text-left pl-2 pr-3 py-2 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md"
       >
         <div className="flex flex-col gap-1">
-          <div className="flex flex-col md:flex-row md:items-center md:gap-2 gap-1 w-full">
+          <div className="flex flex-col md:flex-row md:items-center gap-1 w-full">
             <div className="flex items-center gap-2 w-full">
               <div className="flex items-center justify-center w-8 h-8">
                 <div className="flex items-center w-8 h-8 justify-center">
@@ -689,7 +687,7 @@ export default function NotificationBell() {
                     </div>
                   ) : null}
                 </div>
-                <span className="text-base text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {simpleText(n)}
                 </span>
               </div>
@@ -698,9 +696,7 @@ export default function NotificationBell() {
           <div className="flex flex-col pl-10">
             {renderSecondaryLine(n)}
             {n.payload?.preview && (
-              <span className="text-base line-clamp-2">
-                {n.payload.preview}
-              </span>
+              <span className="text-sm line-clamp-2">{n.payload.preview}</span>
             )}
           </div>
         </div>

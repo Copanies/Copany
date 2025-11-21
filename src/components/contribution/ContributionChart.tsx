@@ -297,7 +297,7 @@ function UserChart({
   const isMobile = containerWidth < 640; // sm breakpoint
   const margin = {
     top: isMobile ? 24 : 32,
-    right: isMobile ? 24 : 32,
+    right: isMobile ? 40 : 50, // Increased right margin to accommodate right Y-axis labels
     bottom: isMobile ? 24 : 32,
     left: isMobile ? 24 : 32,
   };
@@ -1069,7 +1069,7 @@ function ContributionStats({
 
   return (
     <div className="min-w-0">
-      <div className="text-3xl font-normal text-gray-900 dark:text-gray-100 break-words">
+      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
         {userTotalScore} CP - {percentage.toFixed(1)}%
       </div>
       <div className="text-sm text-gray-900 dark:text-gray-100 break-words">

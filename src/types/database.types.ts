@@ -1,3 +1,14 @@
+// Platform enum
+export enum Platform {
+  iOS = "ios",
+  iPadOS = "ipados",
+  macOS = "macos",
+  watchOS = "watchos",
+  tvOS = "tvos",
+  visionOS = "visionos",
+  Web = "web",
+}
+
 // Table: copany
 
 export interface Copany {
@@ -23,6 +34,11 @@ export interface Copany {
   isDefaultUseCOSL: boolean;
   star_count?: number;
   hot_score: number;
+  mission: string | null;
+  vision: string | null;
+  distribution_delay_days: number | null;
+  distribution_day_of_month: number | null;
+  platforms: Platform[] | null;
 }
 
 // Table: issue
@@ -289,6 +305,7 @@ export interface DistributeRow {
   amount: number; // numeric(18,2)
   currency: string; // e.g., USD
   evidence_url: string | null;
+  distribution_month: string | null; // YYYY-MM format, the month for which this distribution is calculated
 }
 
 export type TransactionType = "income" | "expense";

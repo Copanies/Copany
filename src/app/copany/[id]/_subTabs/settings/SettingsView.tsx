@@ -7,7 +7,7 @@ import {
 import Button from "@/components/commons/Button";
 import Modal from "@/components/commons/Modal";
 import { Copany } from "@/types/database.types";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import GithubIcon from "@/assets/github_logo.svg";
 import FigmaIcon from "@/assets/figma_logo.svg";
 import TelegramIcon from "@/assets/telegram_logo.svg";
@@ -23,17 +23,20 @@ import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
-import {
-  PencilIcon,
-  TrashIcon,
-  ArrowUpRightIcon,
-} from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AssetLinkModal from "./AssetLinkModal";
 import { storageService } from "@/services/storage.service";
 import { useRouter } from "next/navigation";
-import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EMPTY_STRING } from "@/utils/constants";
+import CopanyHeader from "@/components/copany/CopanyHeader";
+import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
+import AppleAppStoreConnectLogo from "@/assets/apple_app_store_connect_logo.png";
+import { Platform } from "@/types/database.types";
+import {
+  useAppStoreConnectStatus,
+  useDisconnectAppStoreConnect,
+} from "@/hooks/finance";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -85,8 +88,58 @@ export default function SettingsView({
     useState<string>(EMPTY_STRING);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Delete Asset Link related states
+  const [isDeleteAssetLinkModalOpen, setIsDeleteAssetLinkModalOpen] =
+    useState(false);
+  const [deletingAssetLink, setDeletingAssetLink] = useState<{
+    type: number;
+    label: string;
+  } | null>(null);
+  const [isDeletingAssetLink, setIsDeletingAssetLink] = useState(false);
+
   // Update Description related states
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
+
+  // Mission, Vision, and Distribution related states
+  const [mission, setMission] = useState(copany.mission || EMPTY_STRING);
+  const [vision, setVision] = useState(copany.vision || EMPTY_STRING);
+  const initialDelayDays = copany.distribution_delay_days ?? 90;
+  // Convert days to months for display (always use months)
+  const initialDelayMonths = Math.round(initialDelayDays / 30);
+  const [distributionDelayMonths, setDistributionDelayMonths] =
+    useState<number>(initialDelayMonths);
+  const [distributionDayOfMonth, setDistributionDayOfMonth] = useState<number>(
+    copany.distribution_day_of_month ?? 10
+  );
+  const [isUpdatingMission, setIsUpdatingMission] = useState(false);
+  const [isUpdatingVision, setIsUpdatingVision] = useState(false);
+  const [isUpdatingDistribution, setIsUpdatingDistribution] = useState(false);
+
+  // Platforms related states
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
+    copany.platforms || []
+  );
+  const [isUpdatingPlatforms, setIsUpdatingPlatforms] = useState(false);
+
+  // Disconnect App Store Connect related states
+  const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+  const [disconnectConfirmText, setDisconnectConfirmText] =
+    useState<string>(EMPTY_STRING);
+  const disconnectAppStoreConnect = useDisconnectAppStoreConnect(copany.id);
+  const { data: isAppStoreConnected } = useAppStoreConnectStatus(copany.id);
+
+  // Sync copany prop changes to local state
+  useEffect(() => {
+    setName(copany.name);
+    setDescription(copany.description || EMPTY_STRING);
+    setMission(copany.mission || EMPTY_STRING);
+    setVision(copany.vision || EMPTY_STRING);
+    const delayDays = copany.distribution_delay_days ?? 90;
+    // Convert days to months for display
+    setDistributionDelayMonths(Math.round(delayDays / 30));
+    setDistributionDayOfMonth(copany.distribution_day_of_month ?? 10);
+    setSelectedPlatforms(copany.platforms || []);
+  }, [copany]);
 
   // React Query mutations
   const updateCopanyMutation = useMutation({
@@ -229,16 +282,105 @@ export default function SettingsView({
     }
   }
 
+  async function updateMission() {
+    setIsUpdatingMission(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        mission: mission || null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingMission(false);
+    }
+  }
+
+  async function updateVision() {
+    setIsUpdatingVision(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        vision: vision || null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingVision(false);
+    }
+  }
+
+  async function updateDistribution() {
+    setIsUpdatingDistribution(true);
+    try {
+      // Convert months to days for storage
+      const delayDays = distributionDelayMonths * 30;
+
+      const updatedCopany = {
+        ...copany,
+        distribution_delay_days: delayDays,
+        distribution_day_of_month: distributionDayOfMonth,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingDistribution(false);
+    }
+  }
+
+  async function updatePlatforms() {
+    setIsUpdatingPlatforms(true);
+    try {
+      const updatedCopany = {
+        ...copany,
+        platforms: selectedPlatforms.length > 0 ? selectedPlatforms : null,
+      };
+      await updateCopanyMutateRef.current(updatedCopany);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingPlatforms(false);
+    }
+  }
+
+  function handlePlatformToggle(platform: Platform) {
+    setSelectedPlatforms((prev) => {
+      if (prev.includes(platform)) {
+        return prev.filter((p) => p !== platform);
+      } else {
+        return [...prev, platform];
+      }
+    });
+  }
+
   async function deleteAssetLink(assetType: number) {
+    setIsDeletingAssetLink(true);
     try {
       const updatedCopany = {
         ...copany,
         [assetLinks.find((link) => link.id === assetType)?.key || ""]: null,
       };
       await updateCopanyMutateRef.current(updatedCopany);
+      setIsDeleteAssetLinkModalOpen(false);
+      setDeletingAssetLink(null);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsDeletingAssetLink(false);
     }
+  }
+
+  function openDeleteAssetLinkModal(assetType: number, label: string) {
+    setDeletingAssetLink({ type: assetType, label });
+    setIsDeleteAssetLinkModalOpen(true);
+  }
+
+  function closeDeleteAssetLinkModal() {
+    setIsDeleteAssetLinkModalOpen(false);
+    setDeletingAssetLink(null);
   }
 
   function openEditModal(assetType: number, currentValue: string) {
@@ -451,96 +593,218 @@ export default function SettingsView({
     setDeleteConfirmName(EMPTY_STRING);
   }
 
+  // Handle disconnect App Store Connect
+  async function handleDisconnect() {
+    try {
+      await disconnectAppStoreConnect.mutateAsync();
+      setIsDisconnectModalOpen(false);
+      setDisconnectConfirmText(EMPTY_STRING);
+      // Refresh copany data after successful disconnection
+      queryClient.invalidateQueries({
+        queryKey: ["copany", copany.id],
+      });
+    } catch (error) {
+      console.error("Failed to disconnect App Store Connect:", error);
+    }
+  }
+
+  // Close disconnect modal
+  function handleCloseDisconnectModal() {
+    setIsDisconnectModalOpen(false);
+    setDisconnectConfirmText(EMPTY_STRING);
+  }
+
   return (
-    <div className="flex flex-col gap-8 pb-8 px-0">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">General</h1>
-        <div className="flex flex-col gap-2">{renameSection()}</div>
-        <div className="flex flex-col gap-2">{descriptionSection()}</div>
-        <div className="flex flex-col gap-2">{logoSection()}</div>
-        <div className="flex flex-col gap-2">{coverImageSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Assest links</h1>
-        <div className="flex flex-col gap-2">{assetLinksSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Connected accounts</h1>
-        <div className="flex flex-col gap-2">{connectSection()}</div>
-      </div>
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
-          Danger Zone
-        </h1>
-        <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
-      </div>
+    <div className="flex flex-col gap-4 px-4">
+      <CopanyHeader copany={copany} showCoverImage={false} />
+      <div className="flex flex-col gap-8 pb-8 px-0">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">General</h1>
+          <div className="flex flex-col gap-2">{renameSection()}</div>
+          <div className="flex flex-col gap-2">{descriptionSection()}</div>
+          <div className="flex flex-col gap-2">{missionSection()}</div>
+          <div className="flex flex-col gap-2">{visionSection()}</div>
+          <div className="flex flex-col gap-2">{platformsSection()}</div>
+          <div className="flex flex-col gap-2">{logoSection()}</div>
+          <div className="flex flex-col gap-2">{coverImageSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Finance</h1>
+          <div className="flex flex-col gap-2">{connectSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Distribution Settings</h1>
+          <div className="flex flex-col gap-2">{distributionSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold">Assest links</h1>
+          <div className="flex flex-col gap-2">{assetLinksSection()}</div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
+            Danger Zone
+          </h1>
+          <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
+        </div>
 
-      {/* Delete confirmation modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        size="md"
-      >
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            Delete {copany.name}
-          </h2>
+        {/* Delete confirmation modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Delete {copany.name}
+            </h2>
 
-          {/* Copany information display */}
-          <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            {copany.logo_url ? (
-              <Image
-                src={copany.logo_url}
-                alt={copany.name}
-                width={96}
-                height={96}
-                className="w-24 h-24 rounded-lg"
-                placeholder="blur"
-                blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
-              />
-            ) : (
-              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-base">No Logo</span>
-              </div>
-            )}
-            <div>
-              <h3 className="font-semibold text-gray-900 text-center dark:text-gray-100">
-                {copany.name}
-              </h3>
-              {copany.description && (
-                <p className="text-base text-gray-500 text-center dark:text-gray-400">
-                  {copany.description}
-                </p>
+            {/* Copany information display */}
+            <div className="flex flex-col items-center gap-3 mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              {copany.logo_url ? (
+                <Image
+                  src={copany.logo_url}
+                  alt={copany.name}
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-lg"
+                  placeholder="blur"
+                  blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                  <span className="text-gray-400 text-base">No Logo</span>
+                </div>
               )}
+              <div>
+                <h3 className="font-semibold text-gray-900 text-center dark:text-gray-100">
+                  {copany.name}
+                </h3>
+                {copany.description && (
+                  <p className="text-base text-gray-500 text-center dark:text-gray-400">
+                    {copany.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                To confirm, type{" "}
+                <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
+                in the box below
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
+              />
+            </div>
+
+            <div className="flex w-full">
+              <Button
+                disabled={deleteConfirmName !== copany.name || isDeleting}
+                className="w-full"
+                onClick={handleDeleteCopany}
+                variant="danger"
+              >
+                {isDeleting ? "Deleting..." : "Delete this Copany"}
+              </Button>
             </div>
           </div>
+        </Modal>
 
-          <div className="mb-4">
-            <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-              To confirm, type{" "}
-              <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
-              in the box below
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmName}
-              onChange={(e) => setDeleteConfirmName(e.target.value)}
-              className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
-            />
-          </div>
+        {/* Delete Asset Link confirmation modal */}
+        <Modal
+          isOpen={isDeleteAssetLinkModalOpen}
+          onClose={closeDeleteAssetLinkModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Delete Asset Link
+            </h2>
 
-          <div className="flex w-full">
-            <Button
-              disabled={deleteConfirmName !== copany.name || isDeleting}
-              className="w-full"
-              onClick={handleDeleteCopany}
-              variant="danger"
-            >
-              {isDeleting ? "Deleting..." : "Delete this Copany"}
-            </Button>
+            <div className="mb-6">
+              <p className="text-base text-gray-700 dark:text-gray-300">
+                Are you sure you want to delete the{" "}
+                <span className="font-semibold">
+                  &quot;{deletingAssetLink?.label}&quot;
+                </span>{" "}
+                link? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex flex-row justify-end gap-3">
+              <Button
+                onClick={closeDeleteAssetLinkModal}
+                variant="secondary"
+                disabled={isDeletingAssetLink}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (deletingAssetLink) {
+                    deleteAssetLink(deletingAssetLink.type);
+                  }
+                }}
+                variant="danger"
+                disabled={isDeletingAssetLink}
+              >
+                {isDeletingAssetLink ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+
+        {/* Disconnect App Store Connect confirmation modal */}
+        <Modal
+          isOpen={isDisconnectModalOpen}
+          onClose={handleCloseDisconnectModal}
+          size="md"
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Disconnect App Store Connect
+            </h2>
+
+            <div className="mb-6">
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                断开连接后操作无法撤销，之后将无法自动获取 App Store Connect
+                中财务数据。
+              </p>
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
+                To confirm, type{" "}
+                <span className="font-semibold">&quot;DISCONNECT&quot;</span> in
+                the box below
+              </p>
+              <input
+                type="text"
+                value={disconnectConfirmText}
+                onChange={(e) => setDisconnectConfirmText(e.target.value)}
+                className="w-full px-3 py-1 rounded-md border-1 border-red-600 dark:border-red-400 bg-transparent dark:text-gray-100"
+              />
+            </div>
+
+            <div className="flex w-full">
+              <Button
+                disabled={
+                  disconnectConfirmText !== "DISCONNECT" ||
+                  disconnectAppStoreConnect.isPending
+                }
+                className="w-full"
+                onClick={handleDisconnect}
+                variant="danger"
+              >
+                {disconnectAppStoreConnect.isPending
+                  ? "Disconnecting..."
+                  : "Disconnect App Store Connect"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 
@@ -586,6 +850,192 @@ export default function SettingsView({
     );
   }
 
+  function missionSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Mission</label>
+        <textarea
+          value={mission}
+          onChange={(e) => setMission(e.target.value)}
+          className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
+          placeholder="Enter the mission of your copany"
+        />
+        <Button
+          onClick={updateMission}
+          disabled={isUpdatingMission}
+          className="w-fit"
+        >
+          {isUpdatingMission ? "Updating..." : "Update Mission"}
+        </Button>
+      </div>
+    );
+  }
+
+  function visionSection() {
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Vision</label>
+        <textarea
+          value={vision}
+          onChange={(e) => setVision(e.target.value)}
+          className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
+          placeholder="Enter the vision of your copany"
+        />
+        <Button
+          onClick={updateVision}
+          disabled={isUpdatingVision}
+          className="w-fit"
+        >
+          {isUpdatingVision ? "Updating..." : "Update Vision"}
+        </Button>
+      </div>
+    );
+  }
+
+  function platformsSection() {
+    const allPlatforms = [
+      Platform.iOS,
+      Platform.iPadOS,
+      Platform.macOS,
+      Platform.watchOS,
+      Platform.tvOS,
+      Platform.visionOS,
+      Platform.Web,
+    ];
+
+    const platformLabels: Record<Platform, string> = {
+      [Platform.iOS]: "iOS",
+      [Platform.iPadOS]: "iPadOS",
+      [Platform.macOS]: "macOS",
+      [Platform.watchOS]: "watchOS",
+      [Platform.tvOS]: "tvOS",
+      [Platform.visionOS]: "visionOS",
+      [Platform.Web]: "Web",
+    };
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Platforms</label>
+        <div className="flex flex-col gap-2">
+          {allPlatforms.map((platform) => (
+            <label
+              key={platform}
+              className="flex flex-row items-center gap-2 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={selectedPlatforms.includes(platform)}
+                onChange={() => handlePlatformToggle(platform)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-900 dark:text-gray-100">
+                {platformLabels[platform]}
+              </span>
+            </label>
+          ))}
+        </div>
+        <Button
+          onClick={updatePlatforms}
+          disabled={isUpdatingPlatforms}
+          className="w-fit"
+        >
+          {isUpdatingPlatforms ? "Updating..." : "Update Platforms"}
+        </Button>
+      </div>
+    );
+  }
+
+  function distributionSection() {
+    // Format delay text for display
+    const delayText = `${distributionDelayMonths} month${
+      distributionDelayMonths !== 1 ? "s" : ""
+    }`;
+
+    return (
+      <div className="flex flex-col gap-3 max-w-full">
+        <label className="text-base font-semibold">Distribution Settings</label>
+
+        <div className="flex flex-col gap-4">
+          {/* Distribution Delay */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Distribution Delay</label>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-row gap-2 items-center">
+                <input
+                  type="number"
+                  min="1"
+                  value={distributionDelayMonths}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    setDistributionDelayMonths(value);
+                  }}
+                  className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  months
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+                The time delay before calculating distribution.
+              </p>
+            </div>
+          </div>
+
+          {/* Distribution Day of Month */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">
+              Distribution Day of Month
+            </label>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-row gap-2 items-center">
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={distributionDayOfMonth}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1 && value <= 31) {
+                      setDistributionDayOfMonth(value);
+                    }
+                  }}
+                  className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  day of each month
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+                The day of each month when distribution calculation starts.
+              </p>
+            </div>
+          </div>
+
+          {/* Update Button */}
+          <div className="flex flex-col gap-1">
+            <Button
+              onClick={updateDistribution}
+              disabled={isUpdatingDistribution}
+              className="w-fit"
+            >
+              {isUpdatingDistribution
+                ? "Updating..."
+                : "Update Distribution Settings"}
+            </Button>
+
+            {/* Explanation Text */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
+              Assuming distribution starts on the {distributionDayOfMonth}th of
+              each month, the system will calculate revenue generated{" "}
+              {delayText} ago and user contribution ratios up to the end of that
+              month to create distribution records.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function logoSection() {
     const currentLogoUrl = uploadedLogoUrl || copany.logo_url;
 
@@ -606,7 +1056,7 @@ export default function SettingsView({
                   alt="Copany Logo"
                   width={96}
                   height={96}
-                  className="w-24 h-24 rounded-lg border-1 border-gray-300 dark:border-gray-700"
+                  className="w-24 h-24 rounded-lg"
                   placeholder="blur"
                   blurDataURL={shimmerDataUrlWithTheme(96, 96, isDarkMode)}
                   onLoad={() => setIsImageLoading(false)}
@@ -641,7 +1091,7 @@ export default function SettingsView({
                 : "Upload new picture"}
             </Button>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 1MB
             </p>
 
@@ -730,7 +1180,7 @@ export default function SettingsView({
                 : "Upload cover image"}
             </Button>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               PNG, JPG, JPEG, GIF, WebP • Max 5MB
             </p>
 
@@ -748,53 +1198,84 @@ export default function SettingsView({
 
   function assetLinksSection() {
     return (
-      <div className="flex flex-col gap-5">
-        {assetLinks.map((link) => {
-          if (link.value) {
-            return (
-              <div className="flex flex-col gap-2" key={link.id}>
-                <div className="flex flex-row gap-3 items-center" key={link.id}>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Image
-                      src={isDarkMode ? link.darkIcon : link.icon}
-                      alt={link.label || ""}
-                      className="w-5 h-5"
-                      width={20}
-                      height={20}
-                    />
-                    <p className="text-base font-semibold text-center">
-                      {link.label}
-                    </p>
-                  </div>
-                  <div className="flex flex-row gap-1">
-                    <button
-                      onClick={() => openEditModal(link.id, link.value || "")}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                      title="Edit"
+      <div className="flex flex-col gap-3 max-w-full">
+        {assetLinks.some((link) => link.value) && (
+          <div className="flex flex-col px-4 rounded-lg border border-gray-200 dark:border-gray-700 max-w-screen-sm">
+            {assetLinks.map((link, idx) => {
+              if (link.value) {
+                // Determine if this is the last visible (with value) link
+                // Find last index where value is truthy
+                const validLinks = assetLinks.filter((l) => l.value);
+                const lastIndex = assetLinks.findIndex(
+                  (l) => l.id === validLinks[validLinks.length - 1]?.id
+                );
+
+                const isLast = idx === lastIndex;
+                return (
+                  <div
+                    className={`flex flex-col gap-1 py-2 px-4 -mx-4${
+                      isLast
+                        ? ""
+                        : " border-b border-gray-200 dark:border-gray-700"
+                    }`}
+                    key={link.id}
+                  >
+                    <div
+                      className="flex flex-row gap-3 items-center"
+                      key={link.id}
                     >
-                      <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => deleteAssetLink(link.id)}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                      title="Delete"
-                    >
-                      <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    </button>
+                      <div className="flex flex-row gap-2 items-center justify-between w-full">
+                        <div className="flex flex-row gap-2 items-center">
+                          <Image
+                            src={isDarkMode ? link.darkIcon : link.icon}
+                            alt={link.label || ""}
+                            className="w-6 h-6"
+                            width={24}
+                            height={24}
+                          />
+                          <div className="flex flex-col gap-0">
+                            <p className="text-base font-medium">
+                              {link.label}
+                            </p>
+                            <a
+                              href={link.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline inline-block break-all max-w-full w-fit text-sm text-gray-500 dark:text-gray-400"
+                            >
+                              {link.value}
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row gap-1">
+                          <button
+                            onClick={() =>
+                              openEditModal(link.id, link.value || "")
+                            }
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                            title="Edit"
+                          >
+                            <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              openDeleteAssetLinkModal(link.id, link.label)
+                            }
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <a
-                  href={link.value}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline inline-block break-all max-w-full w-fit text-base text-gray-500 dark:text-gray-400"
-                >
-                  {link.value}
-                </a>
-              </div>
-            );
-          }
-        })}
+                );
+              }
+            })}
+          </div>
+        )}
         <Button
           className="w-fit"
           onClick={() => {
@@ -830,7 +1311,7 @@ export default function SettingsView({
   function connectSection() {
     return (
       <div className="flex flex-col gap-3 max-w-screen-sm">
-        <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-md w-full justify-between border border-gray-200 dark:border-gray-800">
+        {/* <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-md w-full justify-between border border-gray-200 dark:border-gray-800">
           <div className="flex flex-row gap-2 items-center">
             <Image
               src={isDarkMode ? GithubDarkIcon : GithubIcon}
@@ -875,6 +1356,43 @@ export default function SettingsView({
               )}
             </div>
           </Button>
+        </div> */}
+        <div className="flex flex-row gap-2 items-center px-3 py-2 rounded-lg w-full justify-between border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-row gap-2 items-center">
+            <Image
+              src={AppleAppStoreConnectLogo}
+              alt="App Store Connect"
+              className="w-8 h-8"
+              width={32}
+              height={32}
+            />
+            <div className="flex flex-col gap-0">
+              <p className="text-base font-medium">App Store Connect</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Fetch finance reports from App Store Connect
+              </p>
+            </div>
+          </div>
+          {isAppStoreConnected ? (
+            <Button
+              variant="danger"
+              onClick={() => setIsDisconnectModalOpen(true)}
+            >
+              Disconnect
+            </Button>
+          ) : (
+            <ConnectToAppStoreConnect
+              copanyId={copany.id}
+              showIcon={false}
+              buttonText="Connect"
+              onSuccess={async () => {
+                // Refresh copany data after successful connection
+                queryClient.invalidateQueries({
+                  queryKey: ["copany", copany.id],
+                });
+              }}
+            />
+          )}
         </div>
       </div>
     );
@@ -882,7 +1400,7 @@ export default function SettingsView({
 
   function deleteCopanySection() {
     return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-md border border-1.5 border-red-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-lg border border-1.5 border-red-500">
         <div className="flex flex-col gap-1">
           <label className="text-base font-semibold ">Delete Copany</label>
           <p className="text-sm">

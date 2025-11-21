@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import Button from "../commons/Button";
 import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
+import hand_draw_right_arrow_01 from "@/assets/hand_draw_right_arrow_01.png";
+import hand_draw_right_arrow_02 from "@/assets/hand_draw_right_arrow_02.png";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 interface CatBannerProps {
   title: string;
   subtitle?: string;
@@ -15,7 +18,6 @@ interface CatBannerProps {
  */
 export default function CatBanner({
   title,
-  subtitle,
   className = "",
 }: CatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
@@ -23,7 +25,7 @@ export default function CatBanner({
   const router = useRouter();
   useEffect(() => {
     // Generate random cat avatars for the border
-    const avatars = Array.from({ length: 40 }, () =>
+    const avatars = Array.from({ length: 43 }, () =>
       generateRandomCatAvatarClient(false, true)
     );
     setCatAvatars(avatars);
@@ -55,7 +57,7 @@ export default function CatBanner({
         }}
       ></div>
       <div className="relative flex flex-row gap-3 w-fit -mb-8">
-        <div className="flex flex-row gap-3">
+        <div className="flex flex-row gap-0">
           {/* Left cats */}
           {[0, 1, 2, 4, 5, 6].map((groupIdx) => (
             <div key={`cat-group-${groupIdx}`} className="flex flex-col gap-3">
@@ -81,23 +83,53 @@ export default function CatBanner({
         </div>
         <div className="flex flex-col items-center justify-center min-h-[252px]">
           <div
-            className={`flex flex-col items-center justify-center px-8 pt-5 my-auto max-w-screen-lg transition-all duration-700 ease-out ${
+            className={`flex flex-col items-center justify-center px-4 pt-5 my-auto max-w-screen-lg transition-all duration-700 ease-out ${
               isVisible
                 ? `opacity-100 translate-y-0`
                 : `opacity-0 translate-y-4`
             }`}
             style={{ transitionDelay: "500ms" }}
           >
-            <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
+            <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
               {title}
             </h1>
-            {subtitle && (
-              <div className="text-xl text-gray-900 text-center dark:text-white space-y-2">
-                {subtitle.split("\n").map((line, index) => (
-                  <p key={index}>{line}</p>
-                ))}
+            <div className="flex flex-row items-top justify-center gap-4">
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  找到项目
+                </p>
+                <p className="text-gray-900 dark:text-white text-center max-w-60">
+                  寻找感兴趣的 copany 项目, 或发起 copany 项目
+                </p>
               </div>
-            )}
+              <Image
+                src={hand_draw_right_arrow_01}
+                alt="hand_draw_right_arrow_01"
+                className="h-5 w-auto mt-1"
+              />
+
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  合作创造
+                </p>
+                <p className="text-gray-900 dark:text-white text-center max-w-60">
+                  以实现「愿景」为目标, 参与讨论、认领并完成任务
+                </p>
+              </div>
+              <Image
+                src={hand_draw_right_arrow_02}
+                alt="hand_draw_right_arrow_02"
+                className="h-5 w-auto mt-1"
+              />
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  分配收益
+                </p>
+                <p className="text-gray-900 dark:text-white text-center max-w-60">
+                  每月按「贡献比例」获取收益, 可以理解为贡献及“股份”
+                </p>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size="md"
@@ -113,8 +145,8 @@ export default function CatBanner({
             </Button>
           </div>
           {/* Bottom cats */}
-          <div className="flex flex-row gap-3 w-fit">
-            {catAvatars.slice(35, 37).map((avatar, index) => (
+          <div className="flex flex-row gap-0 w-fit">
+            {catAvatars.slice(35, 39).map((avatar, index) => (
               <div
                 key={`bottom-${index}`}
                 className={`transition-all duration-700 ease-out ${
@@ -129,7 +161,7 @@ export default function CatBanner({
                 dangerouslySetInnerHTML={{ __html: avatar }}
               />
             ))}
-            {catAvatars.slice(37, 39).map((avatar, index) => (
+            {catAvatars.slice(39, 43).map((avatar, index) => (
               <div
                 key={`bottom-${index}`}
                 className={`transition-all duration-700 ease-out ${
@@ -145,7 +177,7 @@ export default function CatBanner({
             ))}
           </div>
         </div>
-        <div className="flex flex-row gap-3">
+        <div className="flex flex-row gap-0">
           {/* Right cats */}
           {[7, 8, 9, 10, 11, 12].map((groupIdx) => (
             <div key={`cat-group-${groupIdx}`} className="flex flex-col gap-3">
