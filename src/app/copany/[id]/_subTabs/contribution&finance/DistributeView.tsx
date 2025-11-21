@@ -52,7 +52,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
   const currentDistributionMonth = useMemo(() => {
     if (!copany) return null;
 
-    const delayDays = copany.distribution_delay_days ?? 60;
+    const delayDays = copany.distribution_delay_days ?? 90;
     const now = new Date();
     const distributionDate = new Date(now);
     distributionDate.setUTCDate(distributionDate.getUTCDate() - delayDays);
@@ -224,10 +224,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="test-base font-medium">
+                    <h3 className="text-sm font-medium">
                       {currentDistributionGroup.period.key}
                     </h3>
-                    <span className="test-base font-medium">
+                    <span className="text-sm font-medium">
                       {formatAmount(
                         currentDistributionGroup.totalAmount,
                         currentDistributionGroup.items[0]?.currency || "USD"
@@ -268,10 +268,8 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="test-base font-medium">
-                      {group.period.key}
-                    </h3>
-                    <span className="test-base font-medium">
+                    <h3 className="text-sm font-medium">{group.period.key}</h3>
+                    <span className="text-sm font-medium">
                       {formatAmount(
                         group.totalAmount,
                         group.items[0]?.currency || "USD"
@@ -468,7 +466,7 @@ function DistributeGroupList({
                 isPendingReview ? "bg-purple-100 dark:bg-purple-900/30" : ""
               }`}
             >
-              <div className="flex flex-row items-center h-11 gap-3 text-base">
+              <div className="flex flex-row items-center h-11 gap-3 text-sm">
                 <div className="flex items-center gap-2 w-36">
                   {contributorAvatar ? (
                     <Image
@@ -488,17 +486,17 @@ function DistributeGroupList({
                       {contributorName.slice(0, 1).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-gray-900 dark:text-gray-100">
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
                     {contributorName}
                   </span>
                 </div>
-                <span className="text-left w-20">
+                <span className="text-sm text-left w-20">
                   {d.contribution_percent}%
                 </span>
-                <span className="text-left w-36">
+                <span className="text-sm text-left w-36">
                   {formatAmount(d.amount, d.currency)}
                 </span>
-                <span className="text-left w-36">
+                <span className="text-sm text-left w-36">
                   <StatusLabel status={d.status} showText={true} />
                 </span>
                 <div
@@ -519,7 +517,7 @@ function DistributeGroupList({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="!text-base"
+                        className="!text-sm"
                         onClick={() => onOpenTransfer(d.id)}
                         disabled={!isOwner}
                         disableTooltipConent={
@@ -535,7 +533,7 @@ function DistributeGroupList({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="!text-base"
+                        className="!text-sm"
                         disabled={!canView}
                         disableTooltipConent={
                           !canView ? "No permission to view" : undefined

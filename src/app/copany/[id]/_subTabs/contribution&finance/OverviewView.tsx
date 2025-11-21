@@ -15,6 +15,7 @@ import LoadingView from "@/components/commons/LoadingView";
 import ContributionChart from "@/components/contribution/ContributionChart";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import RevenueHistoryTable from "@/components/finance/RevenueHistoryTable";
+import ContributorIncomeTable from "@/components/finance/ContributorIncomeTable";
 import { useRouter } from "next/navigation";
 import {
   EMPTY_CONTRIBUTORS_ARRAY,
@@ -353,7 +354,14 @@ export default function OverviewView({
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Contributors CP
+          Contributors Income History
+        </h3>
+        <ContributorIncomeTable copanyId={copanyId} />
+      </div>
+
+      <div className="flex flex-col w-full gap-3">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          Contributors Contribution Points
         </h3>
         {usersWithContribution.length > 0 ? (
           <div className="w-full min-w-0">
@@ -399,11 +407,11 @@ export default function OverviewView({
           <AddHistoryContributionButton copanyId={copanyId} />
         </div>
         {groupedContributions.length > 0 ? (
-          <div className="relative rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             {groupedContributions.map((group) => (
               <div key={group.period.key} className="">
                 {/* Period Header */}
-                <div className="flex h-11 items-center w-full px-3 md:px-4 rounded-t-lg bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
                     <h3 className="text-sm font-medium">
                       {getMonthlyPeriodSimple(group.period.start)}
@@ -550,7 +558,7 @@ function ContributionRecordsList({
                 </span>
 
                 {/* Closed At */}
-                <span className="text-left text-sm w-40 text-gray-600 dark:text-gray-400">
+                <span className="text-left text-sm w-40 text-gray-900 dark:text-gray-100">
                   {closedAt}
                 </span>
 

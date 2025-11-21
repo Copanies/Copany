@@ -22,30 +22,27 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
+    console.log('[DEBUG] Initializing Supabase client')
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    console.log('[DEBUG] Supabase client initialized successfully')
 
-    // Calculate the cutoff time (8 hours ago)
-    const cutoffTime = new Date(Date.now() - 8 * 60 * 60 * 1000)
-    
-    console.log(`Updating hot_score for discussions older than ${cutoffTime.toISOString()}`)
+    console.log('Starting hot_score update for all discussions')
 
-    // Get discussions that haven't been updated in the last 8 hours
-    // We check if updated_at is more than 8 hours ago
+    // Get all discussions that need hot_score update
     const { data: discussions, error: fetchError } = await supabase
       .from('discussion')
-      .select('id, vote_up_count, created_at, updated_at')
-      .lt('updated_at', cutoffTime.toISOString())
+      .select('id, vote_up_count, created_at')
 
     if (fetchError) {
       throw new Error(`Failed to fetch discussions: ${fetchError.message}`)
     }
 
     if (!discussions || discussions.length === 0) {
-      console.log('No discussions need hot_score update')
+      console.log('No discussions found')
       return new Response(
         JSON.stringify({
           success: true,
-          message: 'No discussions need hot_score update',
+          message: 'No discussions found',
           updated: 0,
           timestamp: new Date().toISOString()
         }),
@@ -58,16 +55,33 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${discussions.length} discussions to update`)
 
-    // Update each discussion
-    // The trigger will automatically recalculate the hot_score
+    // Calculate and update hot_score for each discussion
+    // Formula: (vote_up_count + 1) / pow((hours_since_creation + 2), 1.5)
     let updatedCount = 0
     const errors: string[] = []
+    const now = Date.now()
 
     for (const discussion of discussions) {
       try {
+        console.log(`[DEBUG] Processing discussion ${discussion.id}`)
+        
+        // Calculate hours since creation
+        const createdAt = new Date(discussion.created_at).getTime()
+        const hoursSinceCreation = (now - createdAt) / (1000 * 60 * 60)
+        console.log(`[DEBUG] Discussion ${discussion.id}: created_at=${discussion.created_at}, hoursSinceCreation=${hoursSinceCreation.toFixed(2)}`)
+        
+        // Calculate hot_score
+        const voteUpCount = discussion.vote_up_count
+        const numerator = voteUpCount + 1
+        const denominator = Math.pow(hoursSinceCreation + 2, 1.5)
+        const hotScore = numerator / denominator
+        
+        console.log(`[DEBUG] Discussion ${discussion.id}: vote_up_count=${voteUpCount}, numerator=${numerator}, denominator=${denominator.toFixed(2)}, hotScore=${hotScore.toFixed(6)}`)
+
+        console.log(`[DEBUG] Updating hot_score for discussion ${discussion.id} to ${hotScore.toFixed(6)}`)
         const { error: updateError } = await supabase
           .from('discussion')
-          .update({ updated_at: new Date().toISOString() })
+          .update({ hot_score: hotScore })
           .eq('id', discussion.id)
 
         if (updateError) {

@@ -127,7 +127,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
   const distributionMonth = useMemo(() => {
     if (!copany) return null;
 
-    const delayDays = copany.distribution_delay_days ?? 60;
+    const delayDays = copany.distribution_delay_days ?? 90;
     const now = new Date();
     const distributionDate = new Date(now);
     distributionDate.setUTCDate(distributionDate.getUTCDate() - delayDays);
@@ -373,18 +373,18 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
             <div className="flex flex-1 px-3 md:px-4 w-full h-11 items-center bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <span className="test-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <span className="text-sm text-gray-900 dark:text-gray-100 truncate">
                     {group.period.key}
                   </span>
                   {group.isDistributionMonth && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 text-sm font-medium rounded-full bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-sm rounded-full bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
                       <ReceiptPercentIcon className="w-4 h-4" />
-                      Distribution Month
+                      <p className="hidden md:block">Distribution Month</p>
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 test-sm">
-                  <span className="truncate">
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="truncat">
                     {formatAmount(
                       group.netAmount,
                       group.items[0]?.currency || "USD",
@@ -755,11 +755,11 @@ function TransactionDetailModal({
             </div>
           )}
         </div>
-        <div>
-          <label className="block text-gray-600 dark:text-gray-400  mb-2">
-            Evidence:
-          </label>
-          {transaction.evidence_url ? (
+        {transaction.evidence_url && (
+          <div>
+            <label className="block text-gray-600 dark:text-gray-400  mb-2">
+              Evidence:
+            </label>
             <PhotoViewer
               src={transaction.evidence_url}
               alt="Evidence"
@@ -776,10 +776,8 @@ function TransactionDetailModal({
                 />
               )}
             />
-          ) : (
-            <div className="text-base text-gray-500">No evidence uploaded.</div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 pt-4 justify-end">

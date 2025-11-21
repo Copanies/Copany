@@ -109,11 +109,11 @@ export default function DistributeDetailModal({
             <span className="">{formatDate(distribute.created_at)}</span>
           </div>
         </div>
-        <div>
-          <label className="block text-gray-600 dark:text-gray-400  mb-2">
-            Evidence:
-          </label>
-          {distribute.evidence_url ? (
+        {distribute.evidence_url && (
+          <div>
+            <label className="block text-gray-600 dark:text-gray-400  mb-2">
+              Evidence:
+            </label>
             <PhotoViewer
               src={distribute.evidence_url}
               alt="Evidence"
@@ -130,10 +130,8 @@ export default function DistributeDetailModal({
                 />
               )}
             />
-          ) : (
-            <div className="text-base text-gray-500">No evidence uploaded.</div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 pt-4 justify-end">

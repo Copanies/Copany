@@ -261,7 +261,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             />
           ) : (
             <ul className="flex flex-col gap-3">
-              {filtered.map((d) => (
+              {filtered.map((d, index) => (
                 <li key={d.id} className="">
                   <DiscussionItem
                     copanyId={copanyId}
@@ -274,6 +274,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                         : undefined
                     }
                     voteCounts={voteCounts}
+                    isLast={index === filtered.length - 1}
                   />
                 </li>
               ))}
@@ -322,11 +323,13 @@ function DiscussionItem({
   discussion,
   creator,
   voteCounts,
+  isLast,
 }: {
   copanyId: string;
   discussion: Discussion;
   creator?: UserInfo;
   voteCounts: Record<string, number>;
+  isLast?: boolean;
 }) {
   const router = useRouter();
   const _remove = useDeleteDiscussion(copanyId);
@@ -336,7 +339,11 @@ function DiscussionItem({
     voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3">
+    <div
+      className={`flex flex-col gap-3 pb-3 ${
+        !isLast ? "border-b border-gray-200 dark:border-gray-700" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex-1 hover:cursor-pointer min-w-0"

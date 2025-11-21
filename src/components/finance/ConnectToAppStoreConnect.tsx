@@ -313,14 +313,14 @@ function CredentialsModal({
               </div>
             </Button>
             {privateKeyFile && (
-              <div className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 Selected: {privateKeyFile.name}
                 {keyId && (
                   <span className="ml-2 text-gray-500">(Key ID: {keyId})</span>
                 )}
               </div>
             )}
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Generate a new key via{" "}
               <a
                 href="https://appstoreconnect.apple.com/access/integrations/api"
@@ -331,9 +331,7 @@ function CredentialsModal({
                 App Store Connect → API Keys
               </a>
               . Inside User & Access, choose Team Keys, click the plus icon, and
-              select the Finance role. Key ID is usually found in the filename
-              (format: AuthKey_
-              <span className="font-mono">KEYID</span>.p8).
+              select the Finance role.
             </div>
           </div>
 
@@ -348,7 +346,7 @@ function CredentialsModal({
               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Locate it in{" "}
               <a
                 href="https://appstoreconnect.apple.com/access/integrations/api"
@@ -373,7 +371,7 @@ function CredentialsModal({
               placeholder="xxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Review your vendor numbers at{" "}
               <a
                 href="https://appstoreconnect.apple.com/itc/payments_and_financial_reports#/"
@@ -398,7 +396,7 @@ function CredentialsModal({
               placeholder="xxxxxxxx"
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
             />
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               If revenue is obtained through selling Apps, directly fill in the
               App SKU (find it in{" "}
               <a

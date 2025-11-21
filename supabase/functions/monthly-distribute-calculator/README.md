@@ -61,12 +61,12 @@ For each copany (assuming today is X month Y day, where Y = `distribution_day_of
 
 - Today: 2024-03-15 (March 15th)
 - `distribution_day_of_month`: 15
-- `distribution_delay_days`: 60
-- Distribution Date: 2024-03-15 - 60 days = 2024-01-15
-- Distribution Month: January 2024
-- Income start: 2024-01-01 00:00:00 UTC
-- Income end: 2024-01-31 23:59:59 UTC
-- Contribution end: 2024-01-31 23:59:59 UTC
+- `distribution_delay_days`: 90
+- Distribution Date: 2024-03-15 - 90 days = 2023-12-16
+- Distribution Month: December 2023
+- Income start: 2023-12-01 00:00:00 UTC
+- Income end: 2023-12-31 23:59:59 UTC
+- Contribution end: 2023-12-31 23:59:59 UTC
 
 ### 3. Income Calculation
 
@@ -158,7 +158,7 @@ supabase functions serve monthly-distribute-calculator
 
 Each copany can configure:
 
-- **distribution_delay_days**: Number of days to look back for income calculation (default: 60)
+- **distribution_delay_days**: Number of days to look back for income calculation (default: 90)
 - **distribution_day_of_month**: Day of the month when distribution should be calculated (default: 10, range: 1-31)
 
 These settings can be configured in the Copany Settings page.

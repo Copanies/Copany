@@ -103,7 +103,7 @@ export default function SettingsView({
   // Mission, Vision, and Distribution related states
   const [mission, setMission] = useState(copany.mission || EMPTY_STRING);
   const [vision, setVision] = useState(copany.vision || EMPTY_STRING);
-  const initialDelayDays = copany.distribution_delay_days ?? 60;
+  const initialDelayDays = copany.distribution_delay_days ?? 90;
   // Convert days to months for display (always use months)
   const initialDelayMonths = Math.round(initialDelayDays / 30);
   const [distributionDelayMonths, setDistributionDelayMonths] =
@@ -134,7 +134,7 @@ export default function SettingsView({
     setDescription(copany.description || EMPTY_STRING);
     setMission(copany.mission || EMPTY_STRING);
     setVision(copany.vision || EMPTY_STRING);
-    const delayDays = copany.distribution_delay_days ?? 60;
+    const delayDays = copany.distribution_delay_days ?? 90;
     // Convert days to months for display
     setDistributionDelayMonths(Math.round(delayDays / 30));
     setDistributionDayOfMonth(copany.distribution_day_of_month ?? 10);
@@ -960,7 +960,7 @@ export default function SettingsView({
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Distribution Delay</label>
             <div className="flex flex-col gap-1">
-              <div className="flex flex-row gap-1 items-center">
+              <div className="flex flex-row gap-2 items-center">
                 <input
                   type="number"
                   min="1"

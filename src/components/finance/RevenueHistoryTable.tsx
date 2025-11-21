@@ -6,7 +6,6 @@ import { convertTransactionsToMonthlyRevenueData } from "@/utils/finance";
 import type { MonthlyRevenueData } from "@/utils/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
-import Button from "@/components/commons/Button";
 
 interface RevenueHistoryTableProps {
   copanyId: string;
@@ -137,7 +136,6 @@ export default function RevenueHistoryTable({
                 <th className="px-4 py-3 text-right">Income</th>
                 <th className="px-4 py-3 text-right">Expense</th>
                 <th className="px-4 py-3 text-right">Net Profit</th>
-                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -157,17 +155,6 @@ export default function RevenueHistoryTable({
                   </td>
                   <td className="px-4 py-3 text-right font-semibold">
                     {formatCurrency(month.netProfitUSD)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        // View button - no action for now
-                      }}
-                    >
-                      View
-                    </Button>
                   </td>
                 </tr>
               ))}

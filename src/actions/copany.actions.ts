@@ -45,7 +45,7 @@ export async function createCopanyAction(
       hot_score: 0, // Will be calculated by trigger
       mission: null,
       vision: null,
-      distribution_delay_days: 60,
+      distribution_delay_days: 90,
       distribution_day_of_month: 10,
       platforms: null,
       ...copanyData, // 用户提供的数据会覆盖默认值

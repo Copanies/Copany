@@ -153,8 +153,8 @@ Deno.serve(async (req) => {
       try {
         console.log(`Processing copany: ${copany.name} (ID: ${copany.id})`)
 
-        // Get distribution settings (defaults: delay_days = 60, day_of_month = 10)
-        const delayDays = copany.distribution_delay_days ?? 60
+        // Get distribution settings (defaults: delay_days = 90, day_of_month = 10)
+        const delayDays = copany.distribution_delay_days ?? 90
         const dayOfMonth = copany.distribution_day_of_month ?? 10
 
         // Warn if delay days is unusually large (more than 1 year)

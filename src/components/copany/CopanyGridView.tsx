@@ -352,8 +352,8 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                     </svg>
                     <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
                       {copany.isDefaultUseCOSL
-                        ? "采用 COSL 协议，按贡献分配收益"
-                        : "未采用 COSL 协议，无法保证贡献者收益"}
+                        ? "Contribution-based revenue"
+                        : "Revenue not guaranteed"}
                     </span>
                   </div>
                   {/* Star count */}

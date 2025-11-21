@@ -22,7 +22,7 @@ export default function MiniFinanceChart({
   hasNoData = false,
 }: MiniFinanceChartProps) {
   const width = 120;
-  const height = 60;
+  const height = 72;
   const margin = { top: 4, right: 4, bottom: 4, left: 4 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
@@ -87,7 +87,7 @@ export default function MiniFinanceChart({
     : "rgba(121, 135, 255, 0.1)";
 
   return (
-    <div className="w-30 h-15 shrink-0">
+    <div className="w-30 h-18 shrink-0">
       <svg width={width} height={height} className="overflow-visible">
         <Group left={margin.left} top={margin.top}>
           {/* Area under curve */}
@@ -115,4 +115,3 @@ export default function MiniFinanceChart({
     </div>
   );
 }
-

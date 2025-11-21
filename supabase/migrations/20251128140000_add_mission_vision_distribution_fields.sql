@@ -8,9 +8,9 @@ alter table public.copany
 alter table public.copany
   add column if not exists vision text;
 
--- Add distribution_delay_days field (integer, nullable, default 60)
+-- Add distribution_delay_days field (integer, nullable, default 90)
 alter table public.copany
-  add column if not exists distribution_delay_days integer default 60;
+  add column if not exists distribution_delay_days integer default 90;
 
 -- Add distribution_day_of_month field (integer, nullable, default 10, range 1-31)
 alter table public.copany
