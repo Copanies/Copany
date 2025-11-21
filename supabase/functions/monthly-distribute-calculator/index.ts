@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         // Debug: Check total confirmed transactions for this copany (regardless of date)
         const { data: allTransactions, error: allTxError } = await supabase
           .from('transactions')
-          .select('id, occurred_at, type, amount, status')/
+          .select('id, occurred_at, type, amount, status')
           .eq('copany_id', copanyIdNum)
           .eq('status', 'confirmed')
           .order('occurred_at', { ascending: false })
