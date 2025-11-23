@@ -68,6 +68,11 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isConvertingData, setIsConvertingData] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isHoveredBeginIdea, setIsHoveredBeginIdea] = useState(false);
+  const [showBottomSection, setShowBottomSection] = useState(true);
+  const topSectionRef = useRef<HTMLDivElement>(null);
+  const [initialHeight, setInitialHeight] = useState<number>(0);
+  const [fullHeight, setFullHeight] = useState<number>(0);
 
   // Convert App Store finance data to transactions format
   const appStoreTransactions = useMemo(() => {
@@ -138,6 +143,81 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
         setIsConvertingData(false);
       });
   }, [combinedTransactions]);
+
+  // Measure heights for animation
+  useEffect(() => {
+    if (!topSectionRef.current || !beginIdeaDiscussion) return;
+
+    const measureHeights = () => {
+      const element = topSectionRef.current;
+      if (!element) return;
+
+      // Temporarily remove aspect-ratio to measure natural height
+      const hadAspect = element.classList.contains("aspect-[1.8]");
+      if (hadAspect) {
+        element.classList.remove("aspect-[1.8]");
+      }
+
+      // Measure initial height (aspect-[1.8] equivalent)
+      const width = element.offsetWidth;
+      const initialH = width / 1.8; // aspect ratio 1.8
+      setInitialHeight(initialH);
+
+      // Measure full height (parent container height)
+      const parent = element.parentElement?.parentElement;
+      if (parent) {
+        const parentHeight = parent.offsetHeight;
+        setFullHeight(parentHeight);
+      }
+
+      // Restore aspect-ratio if it was there
+      if (hadAspect && !isHoveredBeginIdea) {
+        element.classList.add("aspect-[1.8]");
+      }
+    };
+
+    // Delay measurement to ensure DOM is ready
+    const timeoutId = setTimeout(measureHeights, 0);
+
+    // Re-measure on resize
+    const resizeObserver = new ResizeObserver(() => {
+      measureHeights();
+    });
+    if (topSectionRef.current) {
+      resizeObserver.observe(topSectionRef.current);
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, [beginIdeaDiscussion, isHoveredBeginIdea]);
+
+  // Manage bottom section visibility with delay to prevent overflow during animation
+  useEffect(() => {
+    if (!beginIdeaDiscussion) {
+      setShowBottomSection(true);
+      return;
+    }
+
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    if (isHoveredBeginIdea) {
+      // Hide immediately when hovering
+      setShowBottomSection(false);
+    } else {
+      // Delay showing until top section animation completes (500ms)
+      timeoutId = setTimeout(() => {
+        setShowBottomSection(true);
+      }, 350);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isHoveredBeginIdea, beginIdeaDiscussion]);
 
   // Calculate AMR (Avg Monthly Revenue)
   const amr = useMemo(() => {
@@ -210,9 +290,27 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex flex-col gap-4 h-full">
-        <div className="flex flex-col gap-2">
+        <div
+          className={`flex flex-col flex-1 min-h-0 transition-all duration-500 ease-in-out ${
+            isHoveredBeginIdea ? "gap-0" : "gap-2"
+          }`}
+        >
           {/* Different layouts based on whether cover image exists */}
-          <div className="relative flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
+          <div
+            ref={topSectionRef}
+            className={`relative flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-[20px] overflow-hidden transition-all duration-500 ease-in-out ${
+              beginIdeaDiscussion ? "" : "aspect-[1.8]"
+            }`}
+            style={{
+              height:
+                beginIdeaDiscussion && initialHeight > 0 && fullHeight > 0
+                  ? isHoveredBeginIdea
+                    ? `${fullHeight}px`
+                    : `${initialHeight}px`
+                  : undefined,
+              transitionProperty: beginIdeaDiscussion ? "height" : undefined,
+            }}
+          >
             {copany.cover_image_url && copany.logo_url ? (
               <>
                 {/* Cover image layout: fill the space, no blur, logo in top-left */}
@@ -237,13 +335,13 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                       src={copany.logo_url}
                       alt="Organization Avatar"
                       className="rounded-lg object-contain transition-transform duration-500 ease-out"
-                      width={64}
-                      height={64}
+                      width={80}
+                      height={80}
                       style={{
                         transform: isHovered ? "scale(1.15)" : "scale(1)",
                       }}
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(64, 64, isDarkMode)}
+                      blurDataURL={shimmerDataUrlWithTheme(80, 80, isDarkMode)}
                       priority
                     />
                   </div>
@@ -309,7 +407,11 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   } `}
                 ></div>
                 {beginIdeaDiscussion?.description && (
-                  <div className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden">
+                  <div
+                    className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden"
+                    onMouseEnter={() => setIsHoveredBeginIdea(true)}
+                    onMouseLeave={() => setIsHoveredBeginIdea(false)}
+                  >
                     <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
                       <Suspense
                         fallback={
@@ -338,7 +440,13 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               </>
             )}
           </div>
-          <div className="flex flex-col gap-1">
+          <div
+            className={`flex flex-col gap-1 transition-all duration-100 ease-in-out overflow-hidden ${
+              showBottomSection
+                ? "opacity-100 max-h-[1000px] translate-y-0"
+                : "opacity-0 max-h-0 translate-y-2 pointer-events-none"
+            }`}
+          >
             <div className="flex flex-row justify-between min-w-0 gap-2">
               <div className="flex flex-row min-w-0 gap-2 items-center">
                 <div className="font-semibold text-lg truncate max-w-full text-ellipsis overflow-hidden">
