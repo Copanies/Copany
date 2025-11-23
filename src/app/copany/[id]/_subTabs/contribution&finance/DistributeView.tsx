@@ -86,7 +86,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     ): { start: Date; end: Date; key: string } => {
       if (!monthStr) {
         // Fallback to current month if distribution_month is null
-        return getMonthlyPeriod(new Date(), t);
+        return getMonthlyPeriod(new Date(), tTime);
       }
 
       const [yearStr, monthPart] = monthStr.split("-");

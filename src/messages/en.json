@@ -161,6 +161,11 @@
     "noDistributeRecords": "No distribute records",
     "noDistributeRecordsDesc": "Distribution records are automatically generated monthly based on revenue records and contribution ratios. After distribution records are generated, the project owner will transfer funds according to the amounts in the distribution records to the payment methods set by contributors.",
     "viewFinance": "View Finance",
+    "connectARepo": "Connect to GitHub",
+    "connectToAppStoreConnect": "Connect to App Store Connect",
+    "connecting": "Connecting...",
+    "add": "Add",
+    "cancel": "Cancel",
     "appStoreConnectReports": "App Store Connect Finance Reports",
     "appStoreConnectReportsDesc": "Connect to App Store Connect API to fetch finance reports for your app. Upload your P8 private key, Key ID, Issuer ID, and App SKU to get started.",
     "fetchReports": "Fetch Reports",
@@ -231,18 +236,21 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "view": "View",
-    "autoConfirmed": "Auto Confirmed"
+    "autoConfirmed": "Auto Confirmed",
+    "distributionMonth": "Distribution Month"
   },
   "overviewView": {
     "revenueTrend": "Revenue Trend",
     "revenueHistory": "Revenue History",
     "revenueHistoryPlaceholder": "Revenue history will appear here once transactions are recorded or App Store Connect is connected.",
     "contributorsIncomeHistory": "Contributors Income History",
+    "contributorIncomeHistoryPlaceholder": "Contributor income history will appear here once distributions are recorded.",
     "contributorsContributionPoints": "Contributors Contribution Points",
     "contributionPointsDescription": "By completing Issues, members earn contribution points. When the product becomes profitable, revenue will be distributed based on each member's share of contributions.",
     "contributionRecords": "Contribution Records",
     "contributionRecordsPlaceholder": "Contribution records will appear here once members complete Issues and earn contribution points.",
-    "view": "View"
+    "view": "View",
+    "loadingChart": "Loading chart..."
   },
   "distributeView": {
     "currentDistributionMonth": "Current Distribution Month",

@@ -161,6 +161,11 @@
     "noDistributeRecords": "暂无分配记录",
     "noDistributeRecordsDesc": "分配记录每月自动根据收益记录和贡献比例生成。分配记录生成后，项目负责人将会按照分配记录中的金额，转账到贡献者设置的收款方式。",
     "viewFinance": "查看财务报告",
+    "connectARepo": "连接到 GitHub",
+    "connectToAppStoreConnect": "连接到 App Store Connect",
+    "connecting": "连接中...",
+    "add": "添加",
+    "cancel": "取消",
     "appStoreConnectReports": "App Store Connect 财务报告",
     "appStoreConnectReportsDesc": "连接到 App Store Connect API 以获取应用的财务报告。上传你的 P8 私钥、密钥 ID、发行者 ID 和应用 SKU 即可开始。",
     "fetchReports": "获取报告",
@@ -230,18 +235,21 @@
     "delete": "删除",
     "confirm": "确认",
     "view": "查看",
-    "autoConfirmed": "自动确认"
+    "autoConfirmed": "自动确认",
+    "distributionMonth": "分配月份"
   },
   "overviewView": {
     "revenueTrend": "收益趋势",
     "revenueHistory": "收益历史",
     "revenueHistoryPlaceholder": "记录交易或连接 App Store Connect 后，收益历史将显示在此处。",
     "contributorsIncomeHistory": "贡献者收入历史",
+    "contributorIncomeHistoryPlaceholder": "记录分配后，贡献者收入历史将显示在此处。",
     "contributorsContributionPoints": "贡献者贡献积分",
     "contributionPointsDescription": "通过完成任务，成员可以获得贡献积分。当产品盈利时，收益将根据每个成员的贡献比例进行分配。",
     "contributionRecords": "贡献记录",
     "contributionRecordsPlaceholder": "成员完成任务并获得贡献积分后，贡献记录将显示在此处。",
-    "view": "查看"
+    "view": "查看",
+    "loadingChart": "加载图表中..."
   },
   "distributeView": {
     "currentDistributionMonth": "当前分配月份",

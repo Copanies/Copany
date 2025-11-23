@@ -19,6 +19,7 @@ import type { DiscussionComment } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
+import { useTranslations } from "next-intl";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import ArrowshapeUpIcon from "@/components/icon/ArrowshapeUpIcon";
@@ -137,6 +138,7 @@ function CommentNode({
 }: CommentNodeProps) {
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.id ?? null;
+  const tTime = useTranslations("time");
   const [_openMenuCommentId, setOpenMenuCommentId] = useState<string | null>(
     null
   );
@@ -193,7 +195,7 @@ function CommentNode({
             </>
           )}
           <div className="text-sm text-gray-500">
-            {formatRelativeTime(comment.created_at)}
+            {formatRelativeTime(comment.created_at, tTime)}
           </div>
         </div>
 

@@ -14,6 +14,7 @@ import {
   LEVEL_SCORES as levelScores,
 } from "@/types/database.types";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useTranslations } from "next-intl";
 
 // Define display level types (excluding level_None)
 type DisplayLevel =
@@ -63,21 +64,42 @@ interface TooltipData {
   issues?: Array<{ id: string; title: string }>;
 }
 
-// Month abbreviations
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+// Helper function to get month names (will be used with tTime)
+function getMonthNames(
+  tTime?: (key: string) => string
+): string[] {
+  if (tTime) {
+    return [
+      tTime("jan"),
+      tTime("feb"),
+      tTime("mar"),
+      tTime("apr"),
+      tTime("may"),
+      tTime("jun"),
+      tTime("jul"),
+      tTime("aug"),
+      tTime("sep"),
+      tTime("oct"),
+      tTime("nov"),
+      tTime("dec"),
+    ];
+  }
+  // Default English fallback
+  return [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+}
 
 // Level colors - now with light/dark mode support
 const levelColors: Record<DisplayLevel, { light: string; dark: string }> = {
@@ -121,6 +143,9 @@ export default function ContributionChart({
   totalContributionScore = 0,
   rank,
 }: ContributionChartProps) {
+  const tTime = useTranslations("time");
+  const monthNames = useMemo(() => getMonthNames(tTime), [tTime]);
+  
   // Process data: statistics by month and level
   const userContributionData = useMemo(() => {
     const monthlyData: ContributionData[] = [];
@@ -208,6 +233,7 @@ export default function ContributionChart({
         totalContributionScore={totalContributionScore}
         rank={rank}
         contributions={contributions}
+        monthNames={monthNames}
       />
     </div>
   );
@@ -221,6 +247,7 @@ interface UserChartProps {
   totalContributionScore: number;
   rank?: number; // New: user's rank based on total contribution score
   contributions: Contribution[]; // Add contributions parameter
+  monthNames: string[]; // Add monthNames parameter
 }
 
 function UserChart({
@@ -231,6 +258,7 @@ function UserChart({
   totalContributionScore,
   rank,
   contributions,
+  monthNames,
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);

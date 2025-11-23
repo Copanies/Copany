@@ -396,7 +396,7 @@ export default function OverviewView({
                 <div className="min-w-0" key={userItem.user.id}>
                   <Suspense
                     fallback={
-                      <LoadingView type="label" label="Loading chart..." />
+                      <LoadingView type="label" label={t("loadingChart")} />
                     }
                   >
                     <ContributionChart

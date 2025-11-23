@@ -6,6 +6,7 @@ import { convertTransactionsToMonthlyRevenueData } from "@/utils/finance";
 import type { MonthlyRevenueData } from "@/utils/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
+import { useTranslations } from "next-intl";
 
 interface RevenueHistoryTableProps {
   copanyId: string;
@@ -16,6 +17,7 @@ export default function RevenueHistoryTable({
 }: RevenueHistoryTableProps) {
   const { data: transactions = [] } = useTransactions(copanyId);
   const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
+  const tTime = useTranslations("time");
 
   // Convert App Store finance data to transactions format (similar to FinanceOverviewChart)
   const appStoreTransactions = useMemo(() => {
@@ -114,7 +116,7 @@ export default function RevenueHistoryTable({
     const [year, month] = dateStr.split("-");
     if (!year || !month) return dateStr;
     const date = new Date(Number(year), Number(month) - 1, 1);
-    return getMonthlyPeriodSimple(date);
+    return getMonthlyPeriodSimple(date, tTime);
   };
 
   if (isConvertingData) {

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import type { AssignmentRequest } from "@/types/database.types";
+import { useTranslations } from "next-intl";
 import { HandRaisedIcon } from "@heroicons/react/24/outline";
 import {
   useAssignmentRequests,
@@ -34,6 +35,7 @@ export default function AssignmentRequestPanel({
   onFocusNewComment,
   onActivityChanged,
 }: AssignmentRequestPanelProps) {
+  const tTime = useTranslations("time");
   const { data: itemsData } = useAssignmentRequests(issueId);
   const items = (itemsData || EMPTY_ARRAY) as AssignmentRequest[];
   const userIds = Array.from(
@@ -139,7 +141,7 @@ export default function AssignmentRequestPanel({
                       </span>
                       {/* status removed; keep the timestamp only */}
                       <span className="whitespace-nowrap text-sm text-gray-500">
-                        · {formatRelativeTime(r.updated_at || r.created_at)}
+                        · {formatRelativeTime(r.updated_at || r.created_at, tTime)}
                       </span>
                     </div>
                   );

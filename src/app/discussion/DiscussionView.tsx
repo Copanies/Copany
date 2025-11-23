@@ -33,6 +33,7 @@ import Modal from "@/components/commons/Modal";
 import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 import UserAvatar from "@/components/commons/UserAvatar";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useTranslations } from "next-intl";
 
 export default function DiscussionView() {
   const {
@@ -210,6 +211,7 @@ function DiscussionItem({
 }) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
+  const tTime = useTranslations("time");
 
   // Use batch fetched data instead of individual queries
   const hasVoted = votedDiscussionIds.includes(String(discussion.id));

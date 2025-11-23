@@ -67,6 +67,7 @@ function getMonthEndISOString(yearMonth: string) {
 
 export default function FinanceView({ copanyId }: { copanyId: string }) {
   const t = useTranslations("financeView");
+  const tTime = useTranslations("time");
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: transactions, isLoading: isTransactionsLoading } =
@@ -169,18 +170,18 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
       const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
       const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        tTime("jan"),
+        tTime("feb"),
+        tTime("mar"),
+        tTime("apr"),
+        tTime("may"),
+        tTime("jun"),
+        tTime("jul"),
+        tTime("aug"),
+        tTime("sep"),
+        tTime("oct"),
+        tTime("nov"),
+        tTime("dec"),
       ];
 
       const key = `${months[month]} ${year}`;
@@ -218,7 +219,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [combinedTransactions, distributionMonth]);
+  }, [combinedTransactions, distributionMonth, tTime]);
 
   const isOwner = useMemo(() => {
     return !!(copany && currentUser && copany.created_by === currentUser.id);
@@ -399,7 +400,9 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
                   {group.isDistributionMonth && (
                     <span className="flex items-center gap-1 px-2 py-0.5 text-sm rounded-full bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-700">
                       <ReceiptPercentIcon className="w-4 h-4" />
-                      <p className="hidden md:block">Distribution Month</p>
+                      <p className="hidden md:block">
+                        {t("distributionMonth")}
+                      </p>
                     </span>
                   )}
                 </div>

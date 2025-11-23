@@ -6,6 +6,7 @@ import { useUsersInfo } from "@/hooks/userInfo";
 import Image from "next/image";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useTranslations } from "next-intl";
 
 interface ContributorIncomeTableProps {
   copanyId: string;
@@ -25,6 +26,7 @@ export default function ContributorIncomeTable({
 }: ContributorIncomeTableProps) {
   const { data: distributes = [] } = useDistributes(copanyId);
   const isDarkMode = useDarkMode();
+  const t = useTranslations("overviewView");
 
   // Calculate total income for each contributor
   const contributorIncomes = useMemo(() => {
@@ -86,8 +88,7 @@ export default function ContributorIncomeTable({
   if (contributorIncomes.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Contributor income history will appear here once distributions are
-        recorded.
+        {t("contributorIncomeHistoryPlaceholder")}
       </p>
     );
   }

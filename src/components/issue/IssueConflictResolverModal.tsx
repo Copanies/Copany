@@ -8,6 +8,7 @@ import { renderUserLabel } from "./IssueAssigneeSelector";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { formatRelativeTime } from "@/utils/time";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 import { useDarkMode } from "@/utils/useDarkMode";
 
 type UpdaterInfo = {
@@ -49,6 +50,7 @@ export default function IssueConflictResolverModal({
   const serverDesc = conflict?.server?.description ?? "";
   const currentUser = useCurrentUser();
   const isDarkMode = useDarkMode();
+  const tTime = useTranslations("time");
   const [leftTitle, setLeftTitle] = useState(localTitle);
   const [leftDesc, setLeftDesc] = useState(localDescription);
   const [rightTitle, setRightTitle] = useState(serverTitle);
@@ -173,7 +175,7 @@ export default function IssueConflictResolverModal({
             <div className="flex flex-row items-center justify-between mb-5">
               <div className="flex flex-col gap-1">
                 <span>
-                  Updated {formatRelativeTime(conflict?.updatedAt || "")}
+                  Updated {formatRelativeTime(conflict?.updatedAt || "", tTime)}
                 </span>
                 {renderUserLabel(
                   updater?.id || "",
