@@ -1190,7 +1190,7 @@ function MonthlyRevenueView({
                       )
                     }
                   >
-                    <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-medium">
+                    <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-base">
                       {month.date}
                     </td>
                     <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">

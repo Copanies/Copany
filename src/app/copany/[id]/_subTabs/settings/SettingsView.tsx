@@ -958,7 +958,7 @@ export default function SettingsView({
         <div className="flex flex-col gap-4">
           {/* Distribution Delay */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Distribution Delay</label>
+            <label className="text-sm font-base">Distribution Delay</label>
             <div className="flex flex-col gap-1">
               <div className="flex flex-row gap-2 items-center">
                 <input
@@ -983,7 +983,7 @@ export default function SettingsView({
 
           {/* Distribution Day of Month */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">
+            <label className="text-sm font-base">
               Distribution Day of Month
             </label>
             <div className="flex flex-col gap-1">
@@ -1234,9 +1234,7 @@ export default function SettingsView({
                             height={24}
                           />
                           <div className="flex flex-col gap-0">
-                            <p className="text-base font-medium">
-                              {link.label}
-                            </p>
+                            <p className="text-base font-base">{link.label}</p>
                             <a
                               href={link.value}
                               target="_blank"
@@ -1321,7 +1319,7 @@ export default function SettingsView({
               height={32}
             />
             <div className="flex flex-col gap-0">
-              <p className="text-base font-medium">GitHub</p>
+              <p className="text-base font-base">GitHub</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Link pull requests to your copany
               </p>
@@ -1346,7 +1344,7 @@ export default function SettingsView({
               {copany.is_connected_github && (
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
               )}
-              <p className="text-base font-medium">
+              <p className="text-base font-base">
                 {copany.is_connected_github ? "Connected" : "Connect"}
               </p>
               {copany.is_connected_github ? (
@@ -1367,7 +1365,7 @@ export default function SettingsView({
               height={32}
             />
             <div className="flex flex-col gap-0">
-              <p className="text-base font-medium">App Store Connect</p>
+              <p className="text-base font-base">App Store Connect</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Fetch finance reports from App Store Connect
               </p>

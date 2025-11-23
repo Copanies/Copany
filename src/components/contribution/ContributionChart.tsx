@@ -549,27 +549,27 @@ function UserChart({
                       ? levelColors[level!].dark
                       : levelColors[level!].light
                   };"></div>
-                 <span class="font-medium text-gray-900 dark:text-gray-100">Level ${
+                 <span class="font-base text-gray-900 dark:text-gray-100">Level ${
                    levelLabels[level!]
                  }</span>`
                 : `<div class="w-4 h-0.5" style="background-color: ${
                     isDarkMode ? "#3B82F6" : "#2563eb"
                   };"></div>
-                 <span class="font-medium text-gray-900 dark:text-gray-100">Total CP</span>`
+                 <span class="font-base text-gray-900 dark:text-gray-100">Total CP</span>`
             }
           </div>
           ${
             type === "bar"
               ? `<div class="text-gray-600 dark:text-gray-400">
-                 Issues: <span class="font-medium text-gray-900 dark:text-gray-100">${count}</span>
+                 Issues: <span class="font-base text-gray-900 dark:text-gray-100">${count}</span>
                </div>
                <div class="text-gray-600 dark:text-gray-400">
-                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${
+                 CP: <span class="font-base text-gray-900 dark:text-gray-100">${
                    count! * levelScores[level!]
                  }</span>
                </div>`
               : `<div class="text-gray-600 dark:text-gray-400">
-                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${monthData.contributionScore}</span>
+                 CP: <span class="font-base text-gray-900 dark:text-gray-100">${monthData.contributionScore}</span>
                </div>`
           }
         </div>
@@ -577,7 +577,7 @@ function UserChart({
           monthIssues.length > 0
             ? `
           <div class="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div class="text-sm font-base text-gray-700 dark:text-gray-300">
               Related Issues${
                 type === "line" ? ` (${monthIssues.length})` : ""
               }:
@@ -882,19 +882,19 @@ function UserChart({
                         backgroundColor: getLevelColor(tooltipData.level),
                       }}
                     />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       Level {levelLabels[tooltipData.level]}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     Issues:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     CP:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count * levelScores[tooltipData.level]}
                     </span>
                   </div>
@@ -903,7 +903,7 @@ function UserChart({
                 {/* Issues List */}
                 {tooltipData.issues && tooltipData.issues.length > 0 && (
                   <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <div className="text-sm font-base text-gray-700 dark:text-gray-300">
                       Related Issues:
                     </div>
                     <div className="space-y-1">
@@ -933,19 +933,19 @@ function UserChart({
                         backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb",
                       }}
                     />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       Total CP
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     Issues:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     CP:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.contributionScore}
                     </span>
                   </div>
@@ -954,7 +954,7 @@ function UserChart({
                 {/* Issues 列表 */}
                 {tooltipData.issues && tooltipData.issues.length > 0 && (
                   <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <div className="text-sm font-base text-gray-700 dark:text-gray-300">
                       Related Issues:
                     </div>
                     <div className="space-y-1">

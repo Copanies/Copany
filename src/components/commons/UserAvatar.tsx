@@ -100,7 +100,7 @@ export default function UserAvatar({
     />
   ) : (
     <div
-      className={`${config.container} bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center ${config.fontSize} font-medium text-gray-600 dark:text-gray-300 hover:cursor-pointer flex-shrink-0`}
+      className={`${config.container} bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center ${config.fontSize} font-base text-gray-600 dark:text-gray-300 hover:cursor-pointer flex-shrink-0`}
     >
       {initials}
     </div>
@@ -130,7 +130,7 @@ export default function UserAvatar({
             blurDataURL={shimmerDataUrlWithTheme(28, 28, isDarkMode)}
           />
         ) : (
-          <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+          <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-sm font-base text-gray-600 dark:text-gray-300">
             {initials}
           </div>
         )}
@@ -138,7 +138,7 @@ export default function UserAvatar({
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-0">
-          <span className="text-base font-medium">{name}</span>
+          <span className="text-base font-base">{name}</span>
           {/* Email */}
           {email && (
             <div className="flex items-center gap-1">

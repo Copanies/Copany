@@ -413,10 +413,10 @@ export default function OverviewView({
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-sm font-base">
                       {getMonthlyPeriodSimple(group.period.start)}
                     </h3>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-base">
                       {group.totalCP} CP
                     </span>
                   </div>

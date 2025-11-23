@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useUserInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useHasProviders } from "@/hooks/userAuth";
@@ -37,6 +38,7 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import QRCodeUploader from "@/components/commons/QRCodeUploader";
 
 export default function AccountView({ userId }: { userId: string }) {
+  const t = useTranslations("accountView");
   const { data: user, isLoading } = useUserInfo(userId);
   const { data: currentUser } = useCurrentUser();
   const { data: providersInfo, isLoading: providersLoading } =
@@ -110,13 +112,11 @@ export default function AccountView({ userId }: { userId: string }) {
         // Refresh the page to ensure the name is updated everywhere
         router.refresh();
       } else {
-        alert(
-          result.error || "Failed to update user name, please try again later"
-        );
+        alert(result.error || t("failedToUpdateUserName"));
       }
     } catch (error) {
       console.error("Failed to update user name:", error);
-      alert("Failed to update user name, please try again later");
+      alert(t("failedToUpdateUserName"));
     } finally {
       setIsRenaming(false);
     }
@@ -172,9 +172,7 @@ export default function AccountView({ userId }: { userId: string }) {
     // Validate Wise link format
     const wisePattern = /^https:\/\/wise\.com\/pay\/me\/.+$/;
     if (!wisePattern.test(wiseLink.trim())) {
-      alert(
-        "Invalid Wise link format. Please use: https://wise.com/pay/me/XXX"
-      );
+      alert(t("invalidWiseLinkFormat"));
       return;
     }
 
@@ -185,10 +183,10 @@ export default function AccountView({ userId }: { userId: string }) {
         type: "Wise",
         paymentLink: wiseLink.trim(),
       });
-      alert("Wise payment link saved successfully");
+      alert(t("wiseLinkSaved"));
     } catch (error) {
       console.error("Failed to save Wise link:", error);
-      alert("Failed to save Wise payment link, please try again");
+      alert(t("failedToSaveWiseLink"));
     } finally {
       setIsWiseLoading(false);
     }
@@ -200,9 +198,7 @@ export default function AccountView({ userId }: { userId: string }) {
     // Validate Alipay link format
     const alipayPattern = /^https:\/\/qr\.alipay\.com\/.+$/;
     if (!alipayPattern.test(alipayLink.trim())) {
-      alert(
-        "Invalid Alipay link format. Please use: https://qr.alipay.com/XXX"
-      );
+      alert(t("invalidAlipayLinkFormat"));
       return;
     }
 
@@ -213,10 +209,10 @@ export default function AccountView({ userId }: { userId: string }) {
         type: "Alipay",
         paymentLink: alipayLink.trim(),
       });
-      alert("Alipay payment link saved successfully");
+      alert(t("alipayLinkSaved"));
     } catch (error) {
       console.error("Failed to save Alipay link:", error);
-      alert("Failed to save Alipay payment link, please try again");
+      alert(t("failedToSaveAlipayLink"));
     } finally {
       setIsAlipayLoading(false);
     }
@@ -225,8 +221,7 @@ export default function AccountView({ userId }: { userId: string }) {
   const handleDeleteWiseLink = async () => {
     if (!isOwnProfile || !wisePaymentLink) return;
 
-    if (!confirm("Are you sure you want to delete the Wise payment link?"))
-      return;
+    if (!confirm(t("confirmDeleteWiseLink"))) return;
 
     try {
       await deletePaymentLinkMutation.mutateAsync({
@@ -234,18 +229,17 @@ export default function AccountView({ userId }: { userId: string }) {
         type: "Wise",
       });
       setWiseLink("");
-      alert("Wise payment link deleted successfully");
+      alert(t("wiseLinkDeleted"));
     } catch (error) {
       console.error("Failed to delete Wise link:", error);
-      alert("Failed to delete Wise payment link, please try again");
+      alert(t("failedToDeleteWiseLink"));
     }
   };
 
   const handleDeleteAlipayLink = async () => {
     if (!isOwnProfile || !alipayPaymentLink) return;
 
-    if (!confirm("Are you sure you want to delete the Alipay payment link?"))
-      return;
+    if (!confirm(t("confirmDeleteAlipayLink"))) return;
 
     try {
       await deletePaymentLinkMutation.mutateAsync({
@@ -253,10 +247,10 @@ export default function AccountView({ userId }: { userId: string }) {
         type: "Alipay",
       });
       setAlipayLink("");
-      alert("Alipay payment link deleted successfully");
+      alert(t("alipayLinkDeleted"));
     } catch (error) {
       console.error("Failed to delete Alipay link:", error);
-      alert("Failed to delete Alipay payment link, please try again");
+      alert(t("failedToDeleteAlipayLink"));
     }
   };
 
@@ -265,11 +259,9 @@ export default function AccountView({ userId }: { userId: string }) {
 
     if (wisePattern.test(text)) {
       setWiseLink(text);
-      alert("QR code scanned successfully!");
+      alert(t("qrCodeScannedSuccessfully"));
     } else {
-      alert(
-        "Extracted text doesn't match Wise link format. Please verify manually."
-      );
+      alert(t("wiseQrCodeInvalid"));
     }
   };
 
@@ -278,11 +270,9 @@ export default function AccountView({ userId }: { userId: string }) {
 
     if (alipayPattern.test(text)) {
       setAlipayLink(text);
-      alert("QR code scanned successfully!");
+      alert(t("qrCodeScannedSuccessfully"));
     } else {
-      alert(
-        "Extracted text doesn't match Alipay link format. Please verify manually."
-      );
+      alert(t("alipayQrCodeInvalid"));
     }
   };
 
@@ -290,16 +280,16 @@ export default function AccountView({ userId }: { userId: string }) {
     return <LoadingView type="label" />;
   }
   if (!user) {
-    return <div className="p-8 max-w-[820px] mx-auto">User not found</div>;
+    return <div className="p-8 max-w-[820px] mx-auto">{t("userNotFound")}</div>;
   }
   return (
     <div className="flex flex-col gap-5 mt-5 mx-5">
       <div className="flex flex-col gap-5">
-        <p className="text-2xl font-bold">General</p>
+        <p className="text-2xl font-bold">{t("general")}</p>
         {/* Rename User Section */}
         <div className="flex flex-col gap-3 max-w-full">
           <label htmlFor="userName" className="text-base font-semibold">
-            User name
+            {t("userName")}
           </label>
           {isOwnProfile ? (
             <div className="flex flex-row gap-3 max-w-full">
@@ -309,10 +299,10 @@ export default function AccountView({ userId }: { userId: string }) {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 className="border border-gray-300 dark:border-gray-700 max-w-full rounded-md px-2 py-1"
-                placeholder="Enter new name"
+                placeholder={t("enterNewName")}
               />
               <Button onClick={handleRenameUser} disabled={isRenaming}>
-                {isRenaming ? "Renaming..." : "Rename"}
+                {isRenaming ? t("renaming") : t("rename")}
               </Button>
             </div>
           ) : (
@@ -320,21 +310,21 @@ export default function AccountView({ userId }: { userId: string }) {
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <p className="text-base font-semibold">Email</p>
+          <p className="text-base font-semibold">{t("email")}</p>
           <p>{user.email}</p>
         </div>
 
         {/* Receive Payments Section */}
         {isOwnProfile && (
           <div className="flex flex-col gap-5">
-            <p className="text-2xl font-bold">Receive Payments</p>
+            <p className="text-2xl font-bold">{t("receivePayments")}</p>
 
             {/* Wise Payment Link */}
             <div className="flex flex-col gap-3 max-w-full">
               <div className="flex flex-row gap-3 items-center">
                 <Image src={wiseIcon} alt="Wise Logo" width={66} height={35} />
                 <label htmlFor="wiseLink" className="text-sm font-semibold">
-                  Wise Payment Link
+                  {t("wisePaymentLink")}
                 </label>
               </div>
               <div className="flex flex-col md:flex-row gap-3 max-w-full md:items-center">
@@ -345,7 +335,9 @@ export default function AccountView({ userId }: { userId: string }) {
                     value={wiseLink}
                     onChange={(e) => setWiseLink(e.target.value)}
                     className="border border-gray-300 dark:border-gray-700 w-full rounded-md px-2 py-1 pr-10"
-                    placeholder={wisePaymentLink ? "****" : "Enter"}
+                    placeholder={
+                      wisePaymentLink ? "****" : "https://wise.com/pay/me/XXX"
+                    }
                   />
                   {wiseLink && (
                     <button
@@ -367,16 +359,27 @@ export default function AccountView({ userId }: { userId: string }) {
                     onClick={handleSaveWiseLink}
                     disabled={isWiseLoading || !wiseLink.trim()}
                   >
-                    {isWiseLoading ? "Saving..." : "Save"}
+                    {isWiseLoading ? t("saving") : t("save")}
                   </Button>
                   {wisePaymentLink && (
                     <Button onClick={handleDeleteWiseLink} variant="danger">
-                      Delete
+                      {t("delete")}
                     </Button>
                   )}
                 </div>
               </div>
-              <p className="text-sm">How to get your link?</p>
+              <div className="text-sm text-gray-500 dark:text-gray-400 max-w-[600px]">
+                {t("wiseLinkDescription")}{" "}
+                <a
+                  href="https://wise.com/pay/me"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  {t("wisePayMe")}
+                </a>
+                . {t("wiseLinkDescriptionEnd")}
+              </div>
             </div>
 
             {/* Alipay QR Code Link */}
@@ -389,7 +392,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   height={35}
                 />
                 <label htmlFor="alipayLink" className="text-sm font-semibold">
-                  Alipay QR Code Link
+                  {t("alipayQrCodeLink")}
                 </label>
               </div>
               <div className="flex flex-col md:flex-row gap-3 max-w-full md:items-center">
@@ -400,7 +403,9 @@ export default function AccountView({ userId }: { userId: string }) {
                     value={alipayLink}
                     onChange={(e) => setAlipayLink(e.target.value)}
                     className="border border-gray-300 dark:border-gray-700 w-full rounded-md px-2 py-1 pr-10"
-                    placeholder={alipayPaymentLink ? "****" : "Enter"}
+                    placeholder={
+                      alipayPaymentLink ? "****" : "https://qr.alipay.com/XXX"
+                    }
                   />
                   {alipayLink && (
                     <button
@@ -422,23 +427,25 @@ export default function AccountView({ userId }: { userId: string }) {
                     onClick={handleSaveAlipayLink}
                     disabled={isAlipayLoading || !alipayLink.trim()}
                   >
-                    {isAlipayLoading ? "Saving..." : "Save"}
+                    {isAlipayLoading ? t("saving") : t("save")}
                   </Button>
                   {alipayPaymentLink && (
                     <Button onClick={handleDeleteAlipayLink} variant="danger">
-                      Delete
+                      {t("delete")}
                     </Button>
                   )}
                 </div>
               </div>
-              <p className="text-sm">How to get your link?</p>
+              <div className="text-sm text-gray-500 dark:text-gray-400 max-w-[600px]">
+                {t("alipayLinkDescription")}
+              </div>
             </div>
           </div>
         )}
 
-        <p className="text-2xl font-semibold">Accounts</p>
+        <p className="text-2xl font-semibold">{t("accounts")}</p>
         <div className="flex flex-col gap-3">
-          <p className="text-base font-semibold">Linked Accounts</p>
+          <p className="text-base font-semibold">{t("linkedAccounts")}</p>
           {linkedProviders.length > 0 ? (
             <div className="flex flex-col gap-3">
               {providersData.map((providerData, index) => (
@@ -456,7 +463,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-base">GitHub Account</span>
+                        <span className="font-base">{t("githubAccount")}</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <Link
@@ -478,7 +485,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-base">Google Account</span>
+                        <span className="font-base">{t("googleAccount")}</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <span className="text-gray-700 dark:text-gray-300">
@@ -497,7 +504,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-base">Figma Account</span>
+                        <span className="font-base">{t("figmaAccount")}</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <span className="text-gray-700 dark:text-gray-300">
@@ -516,7 +523,7 @@ export default function AccountView({ userId }: { userId: string }) {
                           width={16}
                           height={16}
                         />
-                        <span className="font-base">Discord Account</span>
+                        <span className="font-base">{t("discordAccount")}</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.user_name && (
                             <Link
@@ -532,7 +539,7 @@ export default function AccountView({ userId }: { userId: string }) {
                     {providerData.provider === "email" && (
                       <div className="flex flex-row gap-1 items-center">
                         <AtSymbolIcon className="w-4 h-4" strokeWidth={2} />
-                        <span className="font-base">Email</span>
+                        <span className="font-base">{t("emailAccount")}</span>
                         <div className="flex flex-row gap-1 items-center pl-2">
                           {providerData.email && (
                             <span className="text-gray-700 dark:text-gray-300">
@@ -547,7 +554,7 @@ export default function AccountView({ userId }: { userId: string }) {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No linked accounts</p>
+            <p className="text-gray-500">{t("noLinkedAccounts")}</p>
           )}
         </div>
       </div>
@@ -555,11 +562,8 @@ export default function AccountView({ userId }: { userId: string }) {
       {isOwnProfile && !(hasGitHub && hasGoogle && hasFigma && hasDiscord) && (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <p className="text-base font-semibold">Link to Accounts</p>
-            <p className="text-gray-500 text-sm">
-              Only supports linking to GitHub, Google, or Figma accounts with
-              the same email address
-            </p>
+            <p className="text-base font-semibold">{t("linkToAccounts")}</p>
+            <p className="text-gray-500 text-sm">{t("linkToAccountsDesc")}</p>
           </div>
           <div className="flex flex-col gap-3 max-w-[240px]">
             {!hasGitHub && (
@@ -573,7 +577,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isFigmaLoading ||
                   isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-transparent text-white dark:text-gray-900 font-medium text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-gray-800 dark:bg-transparent text-white dark:text-gray-900 font-base text-sm hover:opacity-90 transition-opacity hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -583,7 +587,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   height={16}
                 />
                 <span className="whitespace-nowrap">
-                  {isGitHubLoading ? "Linking..." : "Link with GitHub"}
+                  {isGitHubLoading ? t("linking") : t("linkWithGitHub")}
                 </span>
               </button>
             )}
@@ -599,7 +603,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isFigmaLoading ||
                   isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-base text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -609,7 +613,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   height={16}
                 />
                 <span className="whitespace-nowrap">
-                  {isGoogleLoading ? "Linking..." : "Link with Google"}
+                  {isGoogleLoading ? t("linking") : t("linkWithGoogle")}
                 </span>
               </button>
             )}
@@ -625,7 +629,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isFigmaLoading ||
                   isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-base text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -635,7 +639,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   height={16}
                 />
                 <span className="whitespace-nowrap">
-                  {isFigmaLoading ? "Linking..." : "Link with Figma"}
+                  {isFigmaLoading ? t("linking") : t("linkWithFigma")}
                 </span>
               </button>
             )}
@@ -651,7 +655,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   isFigmaLoading ||
                   isDiscordLoading
                 }
-                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg border border-gray-800 dark:border-gray-200 bg-white dark:bg-transparent text-gray-900 dark:text-gray-100 font-base text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Image
                   className="w-4 h-4"
@@ -661,7 +665,7 @@ export default function AccountView({ userId }: { userId: string }) {
                   height={16}
                 />
                 <span className="whitespace-nowrap">
-                  {isDiscordLoading ? "Linking..." : "Link with Discord"}
+                  {isDiscordLoading ? t("linking") : t("linkWithDiscord")}
                 </span>
               </button>
             )}

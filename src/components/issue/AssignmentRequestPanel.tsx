@@ -134,7 +134,7 @@ export default function AssignmentRequestPanel({
                         size="sm"
                         showTooltip={true}
                       />
-                      <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                      <span className="text-sm text-gray-900 dark:text-gray-100 font-base">
                         {name}
                       </span>
                       {/* status removed; keep the timestamp only */}

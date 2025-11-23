@@ -632,7 +632,7 @@ function NewCopanyCard({ innerRef }: NewCopanyCardProps) {
 
             <div className="relative z-5 flex flex-row items-center justify-center gap-2">
               <PlusIcon className="w-7 h-7 text-gray-900 dark:text-gray-100" />
-              <div className="font-medium text-xl text-gray-900 dark:text-gray-100">
+              <div className="font-base text-xl text-gray-900 dark:text-gray-100">
                 Start new copany
               </div>
             </div>

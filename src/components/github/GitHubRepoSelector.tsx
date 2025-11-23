@@ -558,7 +558,7 @@ export default function GitHubRepoSelector({
                                   )}
                                 />
                                 <div className="flex flex-col flex-1 min-w-0">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                  <span className="text-sm font-base text-gray-900 dark:text-gray-100 truncate">
                                     {repo.full_name}
                                   </span>
                                   <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -578,7 +578,7 @@ export default function GitHubRepoSelector({
                           >
                             <PlusIcon className="w-6 h-6" />
                             <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <span className="text-sm font-base text-gray-900 dark:text-gray-100 truncate">
                                 Create Repository
                               </span>
                               <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -725,7 +725,7 @@ export default function GitHubRepoSelector({
                                     )}
                                   />
                                   <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    <span className="text-sm font-base text-gray-900 dark:text-gray-100 truncate">
                                       {repo.full_name}
                                     </span>
                                     <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -745,7 +745,7 @@ export default function GitHubRepoSelector({
                             >
                               <PlusIcon className="w-6 h-6" />
                               <div className="flex flex-col flex-1 min-w-0">
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                <span className="text-sm font-base text-gray-900 dark:text-gray-100 truncate">
                                   Create Repository
                                 </span>
                                 <span className="text-sm text-gray-500 dark:text-gray-400 truncate">

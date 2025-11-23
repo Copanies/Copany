@@ -899,7 +899,7 @@ function TransactionsGroupList({
               className={`pl-3 md:pl-4 h-11 items-center group min-w-0`}
             >
               <div className="flex gap-3 test-sm h-11 items-center">
-                <span className="font-medium text-sm flex-shrink-0 w-36">
+                <span className="font-base text-sm flex-shrink-0 w-36">
                   {formatAmount(t.amount, t.currency, t.type)}
                 </span>
                 <div className="flex items-center gap-2 flex-shrink-0 w-36">

@@ -130,7 +130,7 @@ export default function RevenueHistoryTable({
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="font-medium bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <thead className="font-base bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-4 py-3 text-left">Month</th>
                 <th className="px-4 py-3 text-right">Income</th>
@@ -144,7 +144,7 @@ export default function RevenueHistoryTable({
                   key={month.date}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
-                  <td className="px-4 py-3 font-medium">
+                  <td className="px-4 py-3 font-base">
                     {formatMonthDate(month.date)}
                   </td>
                   <td className="px-4 py-3 text-right">

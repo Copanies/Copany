@@ -58,7 +58,7 @@ export default function LoadingView({
             className={pathLength ? "draw-and-erase" : undefined}
           />
         </svg>
-        {label ? <div className="text-base font-medium">{label}</div> : null}
+        {label ? <div className="text-base font-base">{label}</div> : null}
       </div>
 
       <style jsx global>{`

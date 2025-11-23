@@ -207,7 +207,7 @@ export default function IssueReviewPanel({
                       size="sm"
                       showTooltip={true}
                     />
-                    <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                    <span className="text-sm text-gray-900 dark:text-gray-100 font-base">
                       {name}
                     </span>
                   </div>

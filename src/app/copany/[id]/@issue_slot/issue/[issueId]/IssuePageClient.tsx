@@ -465,7 +465,7 @@ export default function IssuePageClient({
       <div className="flex flex-col md:flex-row max-w-screen-lg mx-auto md:gap-6">
         <div className="md:hidden mx-3 mb-2 flex flex-col gap-3 pb-3 border-b border-gray-200 dark:border-gray-800">
           <div className="flex flex-row items-center gap-2 h-6">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+            <div className="text-sm font-base text-gray-600 dark:text-gray-400 w-16">
               State
             </div>
             <IssueStateSelector
@@ -483,7 +483,7 @@ export default function IssuePageClient({
           </div>
 
           <div className="flex flex-row items-center gap-2 h-6">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+            <div className="text-sm font-base text-gray-600 dark:text-gray-400 w-16">
               Priority
             </div>
             <IssuePrioritySelector
@@ -499,7 +499,7 @@ export default function IssuePageClient({
           </div>
 
           <div className="flex flex-row items-center gap-2 h-6">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+            <div className="text-sm font-base text-gray-600 dark:text-gray-400 w-16">
               Level
             </div>
             <IssueLevelSelector
@@ -513,7 +513,7 @@ export default function IssuePageClient({
           </div>
 
           <div className="flex flex-row items-top gap-2">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16 h-6">
+            <div className="text-sm font-base text-gray-600 dark:text-gray-400 w-16 h-6">
               Assignee
             </div>
             <div className="flex flex-col gap-3">
@@ -569,7 +569,7 @@ export default function IssuePageClient({
           </div>
 
           <div className="flex flex-row items-center gap-2 h-6">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
+            <div className="text-sm font-base text-gray-600 dark:text-gray-400 w-16">
               Creator
             </div>
             <div className="hover:opacity-80 cursor-pointer">
@@ -599,7 +599,7 @@ export default function IssuePageClient({
             />
           </Suspense>
           <div className="flex flex-col gap-3 pt-8 pr-3 md:pr-0">
-            <p className="text-base font-medium px-3 text-gray-600 dark:text-gray-400">
+            <p className="text-base font-base px-3 text-gray-600 dark:text-gray-400">
               Activity
             </p>
             {/* Issue activity timeline (includes comments) */}
@@ -630,7 +630,7 @@ export default function IssuePageClient({
         <div className="hidden md:block md:w-1/3 pr-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                 State
               </div>
               <IssueStateSelector
@@ -647,7 +647,7 @@ export default function IssuePageClient({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                 Priority
               </div>
               <IssuePrioritySelector
@@ -661,7 +661,7 @@ export default function IssuePageClient({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                 Level
               </div>
               <IssueLevelSelector
@@ -673,7 +673,7 @@ export default function IssuePageClient({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                 Assignee
               </div>
               <div className="flex flex-row items-center justify-between gap-2">
@@ -726,7 +726,7 @@ export default function IssuePageClient({
               {assignmentRequestView}
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                 Creator
               </div>
               <div className="hover:opacity-80 cursor-pointer">

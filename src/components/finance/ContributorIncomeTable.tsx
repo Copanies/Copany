@@ -97,7 +97,7 @@ export default function ContributorIncomeTable({
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="font-medium bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <thead className="font-base bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-4 py-3 text-left">Contributor</th>
                 <th className="px-4 py-3 text-left">Rank</th>

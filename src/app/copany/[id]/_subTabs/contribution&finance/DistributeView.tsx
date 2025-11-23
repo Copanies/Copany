@@ -218,10 +218,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-sm font-base">
                       {currentDistributionGroup.period.key}
                     </h3>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-base">
                       {formatAmount(
                         currentDistributionGroup.totalAmount,
                         currentDistributionGroup.items[0]?.currency || "USD"
@@ -262,8 +262,8 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="text-sm font-medium">{group.period.key}</h3>
-                    <span className="text-sm font-medium">
+                    <h3 className="text-sm font-base">{group.period.key}</h3>
+                    <span className="text-sm font-base">
                       {formatAmount(
                         group.totalAmount,
                         group.items[0]?.currency || "USD"

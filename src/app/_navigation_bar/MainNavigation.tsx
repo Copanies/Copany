@@ -114,7 +114,7 @@ export default function MainNavigation() {
         blurDataURL={shimmerDataUrlWithTheme(32, 32, isDarkMode)}
       />
     ) : (
-      <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+      <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-base text-gray-600 dark:text-gray-300">
         {userName?.[0]?.toUpperCase() || ""}
       </div>
     );
@@ -132,7 +132,7 @@ export default function MainNavigation() {
             height={40}
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-base text-gray-600 dark:text-gray-300">
             {userName?.[0]?.toUpperCase() || ""}
           </div>
         )}

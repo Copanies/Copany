@@ -366,7 +366,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             );
           })}
           {rest > 0 ? (
-            <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
+            <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-base">
               +{rest}
             </div>
           ) : null}
