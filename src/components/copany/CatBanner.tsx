@@ -175,7 +175,7 @@ export default function CatBanner({
                 size="md"
                 className="mt-4 -mb-6"
                 onClick={() => {
-                  router.push("/uselicense");
+                  router.push("/copany/5?tab=about");
                 }}
               >
                 <div className="flex flex-row items-center gap-2">

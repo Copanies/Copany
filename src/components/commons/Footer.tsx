@@ -45,24 +45,32 @@ export default function Footer() {
           <div className="flex flex-wrap justify-center md:justify-end gap-6 text-xs">
             <Link
               href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
               Terms
             </Link>
             <Link
               href="/license"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
               License
             </Link>
             <Link
               href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
               href="/cookies-policy"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
               Cookies Policy

@@ -93,7 +93,7 @@ export default function MobileCatBanner({
               size="md"
               className="mt-3 -mb-3"
               onClick={() => {
-                router.push("/uselicense");
+                router.push("/copany/5?tab=about");
               }}
             >
               <div className="flex flex-row items-center gap-2">

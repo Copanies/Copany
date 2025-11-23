@@ -537,15 +537,17 @@ export default function New() {
                     Do you want to use Copany Open Source License (COSL)?
                   </legend>
 
-                  <div
+                  <a
+                    href="/uselicense"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-5 h-5 hover:cursor-pointer hover:opacity-80"
-                    onClick={() => router.push("/uselicense")}
                   >
                     <QuestionMarkCircleIcon
                       className="w-5 h-5"
                       strokeWidth={1.6}
                     />
-                  </div>
+                  </a>
                 </div>
 
                 <RadioGroup
