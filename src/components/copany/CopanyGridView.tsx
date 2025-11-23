@@ -441,7 +441,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
             )}
           </div>
           <div
-            className={`flex flex-col gap-1 transition-all duration-100 ease-in-out overflow-hidden ${
+            className={`flex flex-col gap-1 transition-all duration-200 ease-in-out overflow-hidden ${
               showBottomSection
                 ? "opacity-100 max-h-[1000px] translate-y-0"
                 : "opacity-0 max-h-0 translate-y-2 pointer-events-none"

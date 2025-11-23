@@ -902,6 +902,8 @@ export default function SettingsView({
       Platform.tvOS,
       Platform.visionOS,
       Platform.Web,
+      Platform.Windows,
+      Platform.Android,
     ];
 
     const platformLabels: Record<Platform, string> = {
@@ -912,6 +914,8 @@ export default function SettingsView({
       [Platform.tvOS]: "tvOS",
       [Platform.visionOS]: "visionOS",
       [Platform.Web]: "Web",
+      [Platform.Windows]: "Windows",
+      [Platform.Android]: "Android",
     };
 
     return (

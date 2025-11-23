@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useState, useEffect } from "react";
 import IphoneIcon from "@/assets/iphone.svg";
+import IpadIcon from "@/assets/ipad.svg";
 import MacbookIcon from "@/assets/macbook.svg";
 import ApplewatchIcon from "@/assets/applewatch.svg";
 import AppletvIcon from "@/assets/tv.svg";
@@ -19,15 +20,18 @@ interface PlatformIconsProps {
 
 // Platform icon mapping
 type IconType = typeof IphoneIcon;
-const platformIconMap: Record<Platform, { light: IconType; dark?: IconType }> = {
-  [Platform.iOS]: { light: IphoneIcon },
-  [Platform.iPadOS]: { light: IphoneIcon },
-  [Platform.macOS]: { light: MacbookIcon },
-  [Platform.watchOS]: { light: ApplewatchIcon },
-  [Platform.tvOS]: { light: AppletvIcon },
-  [Platform.visionOS]: { light: AppleVisionProIcon },
-  [Platform.Web]: { light: WebsiteIcon, dark: WebsiteDarkIcon },
-};
+const platformIconMap: Record<Platform, { light: IconType; dark?: IconType }> =
+  {
+    [Platform.iOS]: { light: IphoneIcon },
+    [Platform.iPadOS]: { light: IpadIcon },
+    [Platform.macOS]: { light: MacbookIcon },
+    [Platform.watchOS]: { light: ApplewatchIcon },
+    [Platform.tvOS]: { light: AppletvIcon },
+    [Platform.visionOS]: { light: AppleVisionProIcon },
+    [Platform.Web]: { light: WebsiteIcon, dark: WebsiteDarkIcon },
+    [Platform.Windows]: { light: MacbookIcon },
+    [Platform.Android]: { light: IphoneIcon },
+  };
 
 // Platform display labels
 const platformLabels: Record<Platform, string> = {
@@ -38,6 +42,8 @@ const platformLabels: Record<Platform, string> = {
   [Platform.tvOS]: "tvOS",
   [Platform.visionOS]: "visionOS",
   [Platform.Web]: "Web",
+  [Platform.Windows]: "Windows",
+  [Platform.Android]: "Android",
 };
 
 export default function PlatformIcons({
@@ -54,6 +60,20 @@ export default function PlatformIcons({
   if (!platforms || platforms.length === 0) {
     return null;
   }
+
+  // Filter platforms: if iOS and Android both exist, only show iOS
+  // If macOS and Windows both exist, only show macOS
+  const filteredPlatforms = platforms.filter((platform) => {
+    // If iOS exists, exclude Android
+    if (platform === Platform.Android && platforms.includes(Platform.iOS)) {
+      return false;
+    }
+    // If macOS exists, exclude Windows
+    if (platform === Platform.Windows && platforms.includes(Platform.macOS)) {
+      return false;
+    }
+    return true;
+  });
 
   const sizeClasses = {
     sm: "w-5 h-5",
@@ -85,11 +105,12 @@ export default function PlatformIcons({
     Platform.tvOS,
     Platform.watchOS,
     Platform.Web,
+    Platform.Android,
   ];
 
   return (
     <div className={`flex flex-row items-center ${gapClasses[size]}`}>
-      {platforms.map((platform) => {
+      {filteredPlatforms.map((platform) => {
         const iconConfig = platformIconMap[platform];
         if (!iconConfig) return null;
 
