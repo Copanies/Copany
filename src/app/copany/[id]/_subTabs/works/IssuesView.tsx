@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
+import { useTranslations } from "next-intl";
 import {
   IssueWithAssignee,
   IssuePriority,
@@ -116,6 +117,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
+  const t = useTranslations("issuesView");
   const isDarkMode = useDarkMode();
   const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
   const issues = issuesData || EMPTY_ISSUES_ARRAY;
@@ -512,7 +514,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Create menu items
   const contextMenuItems: ContextMenuItem[] = [
     {
-      label: "Delete Issue",
+      label: t("deleteIssue"),
       onClick: () => handleDeleteIssue(contextMenu.issueId),
       className: "text-gray-900 dark:text-gray-100",
     },
@@ -552,10 +554,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         className="min-w-fit"
         size="md"
         disabled={!currentUser}
-        disableTooltipConent="Sign in to create an issue"
+        disableTooltipConent={t("signInToCreateIssue")}
       >
         <div className="flex flex-row items-center gap-1">
-          <span className="text-base">New Issue</span>
+          <span className="text-base">{t("newIssue")}</span>
         </div>
       </Button>
     );
@@ -581,12 +583,12 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             // Keep on the same path and update only query string
             router.replace(qs ? `?${qs}` : "?");
           }}
-          placeholder="Search issues"
+          placeholder={t("searchIssues")}
           className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
         />
       </div>
       <Suspense
-        fallback={<LoadingView type="label" label="Loading issues..." />}
+        fallback={<LoadingView type="label" label={t("loadingIssues")} />}
       >
         <div className="relative w-full min-w-0 pb-2">
           {groupIssuesByState(filteredIssues).map((group) => (

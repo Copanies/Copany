@@ -28,14 +28,38 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "@/components/commons/Button";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
 import AddHistoryContributionButton from "@/components/contribution/AddHistoryContributionButton";
+import { useTranslations } from "next-intl";
 
 interface ContributionOverviewViewProps {
   copanyId: string;
 }
 
 // Helper function to format date
-function formatDate(year: number, month: number, day: number): string {
+function formatDate(
+  year: number,
+  month: number,
+  day: number,
+  tTime?: (key: string) => string
+): string {
   const date = new Date(year, month - 1, day);
+  if (tTime) {
+    const months = [
+      tTime("jan"),
+      tTime("feb"),
+      tTime("mar"),
+      tTime("apr"),
+      tTime("may"),
+      tTime("jun"),
+      tTime("jul"),
+      tTime("aug"),
+      tTime("sep"),
+      tTime("oct"),
+      tTime("nov"),
+      tTime("dec"),
+    ];
+    const monthName = months[month - 1];
+    return `${monthName} ${day.toString().padStart(2, "0")}, ${year}`;
+  }
   return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -46,6 +70,8 @@ function formatDate(year: number, month: number, day: number): string {
 export default function OverviewView({
   copanyId,
 }: ContributionOverviewViewProps) {
+  const t = useTranslations("overviewView");
+  const tTime = useTranslations("time");
   const router = useRouter();
 
   // 使用 React Query hooks 替代 cacheManager
@@ -105,7 +131,8 @@ export default function OverviewView({
     if (validContributions && validContributions.length > 0) {
       validContributions.forEach((contribution) => {
         const period = getMonthlyPeriod(
-          new Date(contribution.year, contribution.month - 1, 1)
+          new Date(contribution.year, contribution.month - 1, 1),
+          tTime
         );
         const key = period.key;
 
@@ -327,7 +354,7 @@ export default function OverviewView({
       {/* Finance Chart Section */}
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Revenue Trend
+          {t("revenueTrend")}
         </h3>
         <FinanceOverviewChart
           copanyId={copanyId}
@@ -340,28 +367,27 @@ export default function OverviewView({
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Revenue History
+          {t("revenueHistory")}
         </h3>
         {hasRevenueData ? (
           <RevenueHistoryTable copanyId={copanyId} />
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Revenue history will appear here once transactions are recorded or
-            App Store Connect is connected.
+            {t("revenueHistoryPlaceholder")}
           </p>
         )}
       </div>
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Contributors Income History
+          {t("contributorsIncomeHistory")}
         </h3>
         <ContributorIncomeTable copanyId={copanyId} />
       </div>
 
       <div className="flex flex-col w-full gap-3">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-          Contributors Contribution Points
+          {t("contributorsContributionPoints")}
         </h3>
         {usersWithContribution.length > 0 ? (
           <div className="w-full min-w-0">
@@ -391,9 +417,7 @@ export default function OverviewView({
           </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            By completing Issues, members earn contribution points. When the
-            product becomes profitable, revenue will be distributed based on
-            each member&apos;s share of contributions.
+            {t("contributionPointsDescription")}
           </p>
         )}
       </div>
@@ -402,7 +426,7 @@ export default function OverviewView({
       <div className="flex flex-col w-full gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Contribution Records
+            {t("contributionRecords")}
           </h3>
           <AddHistoryContributionButton copanyId={copanyId} />
         </div>
@@ -414,7 +438,7 @@ export default function OverviewView({
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
                     <h3 className="text-sm font-base">
-                      {getMonthlyPeriodSimple(group.period.start)}
+                      {getMonthlyPeriodSimple(group.period.start, tTime)}
                     </h3>
                     <span className="text-sm font-base">
                       {group.totalCP} CP
@@ -435,8 +459,7 @@ export default function OverviewView({
           </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Contribution records will appear here once members complete Issues
-            and earn contribution points.
+            {t("contributionRecordsPlaceholder")}
           </p>
         )}
       </div>
@@ -454,6 +477,8 @@ function ContributionRecordsList({
   contributionUsersInfo: Record<string, { name: string; avatar_url: string }>;
   onViewIssue: (issueId: string) => void;
 }) {
+  const t = useTranslations("overviewView");
+  const tTime = useTranslations("time");
   const containerRef = useRef<HTMLDivElement>(null);
   const [actionWidth, setActionWidth] = useState<number>(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -508,7 +533,8 @@ function ContributionRecordsList({
           const closedAt = formatDate(
             contribution.year,
             contribution.month,
-            contribution.day
+            contribution.day,
+            tTime
           );
 
           return (
@@ -577,7 +603,7 @@ function ContributionRecordsList({
                       className="!text-sm"
                       onClick={() => onViewIssue(contribution.issue_id)}
                     >
-                      View
+                      {t("view")}
                     </Button>
                   </div>
                 </div>

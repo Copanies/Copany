@@ -38,6 +38,7 @@ import ImageUpload from "@/components/commons/ImageUpload";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import AppleAppStoreIcon from "@/assets/apple_app_store_logo.webp";
 import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
+import { useTranslations } from "next-intl";
 
 // Helper function to format amount with sign based on transaction type
 function formatAmount(
@@ -52,9 +53,6 @@ function formatAmount(
 
 const APP_STORE_ACTOR_ID = "__app_store__";
 const APP_STORE_ACTOR_NAME = "App Store";
-const APP_STORE_STATUS_TEXT = "Auto Confirmed";
-const APP_STORE_DESCRIPTION =
-  "Automatically synced via App Store Connect API. The actual received amount may differ due to bank transfer fees and exchange rate differences.";
 
 function getMonthEndISOString(yearMonth: string) {
   const [yearStr, monthStr] = yearMonth.split("-");
@@ -68,6 +66,7 @@ function getMonthEndISOString(yearMonth: string) {
 }
 
 export default function FinanceView({ copanyId }: { copanyId: string }) {
+  const t = useTranslations("financeView");
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
   const { data: transactions, isLoading: isTransactionsLoading } =
@@ -100,7 +99,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
         copany_id: copanyId,
         actor_id: APP_STORE_ACTOR_ID,
         type: "income",
-        description: APP_STORE_DESCRIPTION,
+        description: t("appStoreDescription"),
         amount: normalizedAmount,
         currency: "USD",
         status: "confirmed",
@@ -307,11 +306,11 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
                   }
                 }}
                 disabled={!currentUser}
-                disableTooltipConent="Sign in to add a transaction"
+                disableTooltipConent={t("signInToAddTransaction")}
               >
                 <div className="flex items-center gap-2">
                   <PlusIcon className="w-4 h-4" />
-                  <p>New Transaction</p>
+                  <p>{t("newTransaction")}</p>
                 </div>
               </Button>
             </div>
@@ -332,7 +331,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
     <div className="p-0 w-full min-w-0">
       <div className="flex items-center justify-between px-0 pb-3">
         <div className="text-base font-semibold">
-          Income and Expense Records
+          {t("incomeAndExpenseRecords")}
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -343,10 +342,10 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
               setIsModalOpen(true);
             }}
             disabled={!currentUser}
-            disableTooltipConent="Sign in to add a transaction"
+            disableTooltipConent={t("signInToAddTransaction")}
           >
             <div className="flex flex-row items-center gap-1">
-              <span>Income</span>
+              <span>{t("income")}</span>
             </div>
           </Button>
           <Button
@@ -357,10 +356,10 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
               setIsModalOpen(true);
             }}
             disabled={!currentUser}
-            disableTooltipConent="Sign in to add a transaction"
+            disableTooltipConent={t("signInToAddTransaction")}
           >
             <div className="flex flex-row items-center gap-1">
-              <span>Expense</span>
+              <span>{t("expense")}</span>
             </div>
           </Button>
           {!isAppStoreConnected && (
@@ -502,6 +501,7 @@ function TransactionModal({
   ) => Promise<void>;
   initialType?: TransactionType;
 }) {
+  const t = useTranslations("financeView");
   const [type, setType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState<number>();
   const [currency, setCurrency] = useState<string>("USD");
@@ -527,20 +527,20 @@ function TransactionModal({
     <Modal isOpen={isOpen} onClose={onClose} size="md">
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          New Transaction
+          {t("newTransaction")}
         </h2>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Type</p>
+            <p className="font-semibold text-sm">{t("type")}</p>
             <div className="relative">
               <select
                 className="border px-2 py-1 pr-8 w-full rounded-md border-gray-300 dark:border-gray-600 appearance-none"
                 value={type}
                 onChange={(e) => setType(e.target.value as TransactionType)}
               >
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
+                <option value="income">{t("income")}</option>
+                <option value="expense">{t("expense")}</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                 <svg
@@ -560,7 +560,7 @@ function TransactionModal({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Amount</p>
+            <p className="font-semibold text-sm">{t("amount")}</p>
             <div className="flex flex-row gap-2">
               <div className="relative">
                 <select
@@ -601,7 +601,7 @@ function TransactionModal({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Occurred At</p>
+            <p className="font-semibold text-sm">{t("occurredAt")}</p>
             <input
               className="border px-2 py-1 rounded-md border-gray-300 dark:border-gray-600"
               type="datetime-local"
@@ -610,16 +610,16 @@ function TransactionModal({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Description</p>
+            <p className="font-semibold text-sm">{t("description")}</p>
             <input
               className="border px-2 py-1 flex-1 min-w-[200px] rounded-md border-gray-300 dark:border-gray-600"
-              placeholder="Description about this transaction..."
+              placeholder={t("descriptionPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-sm">Evidence</p>
+            <p className="font-semibold text-sm">{t("evidence")}</p>
             <ImageUpload
               value={evidenceUrl}
               onChange={(url) => setEvidenceUrl(url)}
@@ -637,15 +637,15 @@ function TransactionModal({
               }}
               accept="image/*"
               maxBytes={storageService.getFinanceEvidenceMaxFileSize()}
-              helperText="PNG, JPG, JPEG, GIF, WebP • Max 20MB"
-              uploadButtonText="Upload Evidence"
+              helperText={t("evidenceHelperText")}
+              uploadButtonText={t("uploadEvidence")}
             />
           </div>
         </div>
 
         <div className="flex gap-2 pt-4 justify-end">
           <Button type="button" variant="secondary" size="md" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             type="button"
@@ -670,7 +670,7 @@ function TransactionModal({
               onClose();
             }}
           >
-            Create
+            {t("create")}
           </Button>
         </div>
       </div>
@@ -695,6 +695,8 @@ function TransactionDetailModal({
   onConfirm: () => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
+  const t = useTranslations("financeView");
+  const tTime = useTranslations("time");
   const isAppStoreTransaction = transaction.actor_id === APP_STORE_ACTOR_ID;
   const actorName = isAppStoreTransaction
     ? APP_STORE_ACTOR_NAME
@@ -709,14 +711,14 @@ function TransactionDetailModal({
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-        Transaction Detail
+        {t("transactionDetail")}
       </h2>
 
       <div className="space-y-4">
         <div className="flex flex-col gap-3 text-base">
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400 w-32">
-              Amount:
+              {t("amountLabel")}
             </span>
             <span>
               {formatAmount(
@@ -727,12 +729,14 @@ function TransactionDetailModal({
             </span>
           </div>
           <div className="flex flex-row items-center gap-2">
-            <span className="text-gray-600 dark:text-gray-400 w-32">Type:</span>
+            <span className="text-gray-600 dark:text-gray-400 w-32">
+              {t("typeLabel")}
+            </span>
             <span className="">{transaction.type}</span>
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400 w-32">
-              Submitter:
+              {t("submitterLabel")}
             </span>
             {actorAvatar ? (
               <Image
@@ -753,7 +757,7 @@ function TransactionDetailModal({
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400 w-32">
-              Status:
+              {t("statusLabel")}
             </span>
             <TransactionStatusDisplay
               status={transaction.status}
@@ -763,14 +767,16 @@ function TransactionDetailModal({
           </div>
           <div className="flex flex-row items-center gap-2">
             <span className="text-gray-600 dark:text-gray-400 w-32">
-              Occurred at:
+              {t("occurredAtLabel")}
             </span>
-            <span className="">{formatDate(transaction.occurred_at)}</span>
+            <span className="">
+              {formatDate(transaction.occurred_at, tTime)}
+            </span>
           </div>
           {transaction.description && (
             <div className="flex flex-row items-start gap-2">
               <span className="text-gray-600 dark:text-gray-400 w-32 flex-shrink-0">
-                Description:
+                {t("descriptionLabel")}
               </span>
               <span className="">{transaction.description}</span>
             </div>
@@ -779,7 +785,7 @@ function TransactionDetailModal({
         {transaction.evidence_url && (
           <div>
             <label className="block text-gray-600 dark:text-gray-400  mb-2">
-              Evidence:
+              {t("evidenceLabel")}
             </label>
             <PhotoViewer
               src={transaction.evidence_url}
@@ -803,18 +809,18 @@ function TransactionDetailModal({
 
       <div className="flex gap-2 pt-4 justify-end">
         <Button type="button" variant="secondary" size="md" onClick={onClose}>
-          Close
+          {t("close")}
         </Button>
         {currentUserId &&
           currentUserId === transaction.actor_id &&
           transaction.status === "in_review" && (
             <Button type="button" variant="danger" size="md" onClick={onDelete}>
-              Delete
+              {t("delete")}
             </Button>
           )}
         {isOwner && transaction.status === "in_review" && (
           <Button type="button" variant="primary" size="md" onClick={onConfirm}>
-            Confirm
+            {t("confirm")}
           </Button>
         )}
       </div>
@@ -835,6 +841,8 @@ function TransactionsGroupList({
   currentUserId?: string;
   onOpenView: (t: TransactionRow) => void;
 }) {
+  const tFinance = useTranslations("financeView");
+  const tTime = useTranslations("time");
   const containerRef = useRef<HTMLDivElement>(null);
   const [actionWidth, setActionWidth] = useState<number>(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -926,7 +934,7 @@ function TransactionsGroupList({
                   </span>
                 </div>
                 <span className="flex-shrink-0 text-sm w-36">
-                  {formatDate(t.occurred_at)}
+                  {formatDate(t.occurred_at, tTime)}
                 </span>
                 <div className="text-gray-700 text-sm dark:text-gray-300 flex-shrink-0 w-36">
                   <TransactionStatusDisplay
@@ -954,7 +962,7 @@ function TransactionsGroupList({
                         className="!text-sm !border-0"
                         onClick={() => onOpenView(t)}
                       >
-                        View
+                        {tFinance("view")}
                       </Button>
                     )}
                   </div>
@@ -977,6 +985,7 @@ function TransactionStatusDisplay({
   isAutoConfirmed: boolean;
   size?: "sm" | "md";
 }) {
+  const t = useTranslations("financeView");
   if (isAutoConfirmed) {
     return (
       <div className="flex flex-row items-center gap-1">
@@ -986,7 +995,7 @@ function TransactionStatusDisplay({
             size === "sm" ? "sm" : "base"
           } text-gray-900 dark:text-gray-100`}
         >
-          {APP_STORE_STATUS_TEXT}
+          {t("autoConfirmed")}
         </span>
       </div>
     );

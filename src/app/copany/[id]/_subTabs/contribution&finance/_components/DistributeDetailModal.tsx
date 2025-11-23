@@ -8,6 +8,7 @@ import { useDarkMode } from "@/utils/useDarkMode";
 import Button from "@/components/commons/Button";
 import StatusLabel from "@/components/commons/StatusLabel";
 import { formatDate } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import PhotoViewer from "@/components/commons/PhotoViewer";
 import Modal from "@/components/commons/Modal";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -30,6 +31,7 @@ export default function DistributeDetailModal({
   onConfirm: () => Promise<void>;
   onClose: () => void;
 }) {
+  const tTime = useTranslations("time");
   const isDarkMode = useDarkMode();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -106,7 +108,7 @@ export default function DistributeDetailModal({
             <span className="text-gray-600 dark:text-gray-400 w-32">
               Distribute date:
             </span>
-            <span className="">{formatDate(distribute.created_at)}</span>
+            <span className="">{formatDate(distribute.created_at, tTime)}</span>
           </div>
         </div>
         {distribute.evidence_url && (
@@ -198,7 +200,7 @@ export default function DistributeDetailModal({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="">Distribute date:</span>
-                  <span className="">{formatDate(distribute.created_at)}</span>
+                  <span className="">{formatDate(distribute.created_at, tTime)}</span>
                 </div>
               </div>
             </div>

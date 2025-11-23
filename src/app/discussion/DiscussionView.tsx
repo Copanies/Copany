@@ -20,6 +20,7 @@ import type { UserInfo } from "@/actions/user.actions";
 import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
@@ -35,6 +36,7 @@ import UserAvatar from "@/components/commons/UserAvatar";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
 
 export default function DiscussionView() {
+  const tTime = useTranslations("time");
   const {
     data: discussionsData,
     isLoading,
@@ -252,7 +254,7 @@ function DiscussionItem({
               </span>
               <span>·</span>
               <time title={discussion.created_at}>
-                {formatRelativeTime(discussion.created_at)}
+                {formatRelativeTime(discussion.created_at, tTime)}
               </time>
 
               {discussion.copany_id && (

@@ -17,6 +17,7 @@ import {
 } from "@/hooks/discussionCommentVotes";
 import type { DiscussionComment } from "@/types/database.types";
 import { formatRelativeTime } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { ChatBubbleBottomCenterIcon } from "@heroicons/react/24/outline";
@@ -193,7 +194,7 @@ function CommentNode({
             </>
           )}
           <div className="text-sm text-gray-500">
-            {formatRelativeTime(comment.created_at)}
+            {formatRelativeTime(comment.created_at, tTime)}
           </div>
         </div>
 
@@ -446,6 +447,7 @@ export default function DiscussionCommentTimeline({
   discussionId,
   canEdit: _canEdit,
 }: DiscussionCommentTimelineProps) {
+  const tTime = useTranslations("time");
   const { data: comments = EMPTY_ARRAY, isLoading: commentsLoading } =
     useDiscussionComments(discussionId);
   const { data: currentUser } = useCurrentUser();

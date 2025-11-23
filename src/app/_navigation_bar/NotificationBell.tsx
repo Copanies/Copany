@@ -26,6 +26,7 @@ import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
 import { useUsersInfo } from "@/hooks/userInfo";
 import { formatRelativeTime } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import type { UserInfo } from "@/actions/user.actions";
 import { useNotifications, useMarkNotifications } from "@/hooks/notifications";
 import { getCopanyByIdAction } from "@/actions/copany.actions";
@@ -54,6 +55,7 @@ function BellIcon({ unreadCount }: { unreadCount: number }) {
 }
 
 export default function NotificationBell() {
+  const tTime = useTranslations("time");
   const router = useRouter();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -669,7 +671,7 @@ export default function NotificationBell() {
                       : n.copany_id && copanies[String(n.copany_id)]?.name}
                   </span>
                   <span className="ml-auto text-base text-gray-400">
-                    {formatRelativeTime(n.created_at)}
+                    {formatRelativeTime(n.created_at, tTime)}
                   </span>
                   {n.copany_id && copanies[String(n.copany_id)]?.logo_url ? (
                     <Image

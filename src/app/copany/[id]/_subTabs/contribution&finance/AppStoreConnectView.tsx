@@ -18,6 +18,7 @@ import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useAppStoreFinance, useRefreshAppStoreFinance } from "@/hooks/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 
 interface Credentials {
@@ -78,6 +79,7 @@ export default function AppStoreConnectView({
 }: {
   copanyId: string;
 }) {
+  const tTime = useTranslations("time");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<
@@ -1079,7 +1081,7 @@ function FinanceChartView({
               })}
               tickFormat={(date) => {
                 const d = date as Date;
-                return getMonthlyPeriodSimple(d);
+                return getMonthlyPeriodSimple(d, tTime);
               }}
             />
             {/* Y Axis */}
