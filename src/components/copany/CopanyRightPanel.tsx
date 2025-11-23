@@ -8,6 +8,7 @@ import {
   IssuePriority,
   IssueState,
   LEVEL_SCORES,
+  IssueWithAssignee,
 } from "@/types/database.types";
 import { useIssues } from "@/hooks/issues";
 import { useDiscussions } from "@/hooks/discussions";
@@ -54,7 +55,69 @@ export default function CopanyRightPanel({
   const { data: contributorsData } = useContributors(copanyId);
 
   const issues = issuesData ?? [];
-  const topIssues = issues.slice(0, 4);
+
+  // Sort issues using the same logic as IssuesView.tsx
+  const topIssues = useMemo(() => {
+    if (issues.length === 0) return [];
+
+    // Group issues by state (merge Duplicate into Canceled)
+    const grouped = issues.reduce((acc, issue) => {
+      let state = issue.state || IssueState.Backlog;
+      if (state === IssueState.Duplicate) {
+        state = IssueState.Canceled;
+      }
+      if (!acc[state]) {
+        acc[state] = [];
+      }
+      acc[state].push(issue);
+      return acc;
+    }, {} as Record<number, IssueWithAssignee[]>);
+
+    // Priority sorting function: Urgent > High > Medium > Low > None
+    const sortByPriority = (a: IssueWithAssignee, b: IssueWithAssignee) => {
+      const priorityOrder: Record<number, number> = {
+        [IssuePriority.Urgent]: 0,
+        [IssuePriority.High]: 1,
+        [IssuePriority.Medium]: 2,
+        [IssuePriority.Low]: 3,
+        [IssuePriority.None]: 4,
+      };
+      const aPriority = a.priority ?? IssuePriority.None;
+      const bPriority = b.priority ?? IssuePriority.None;
+      return priorityOrder[aPriority] - priorityOrder[bPriority];
+    };
+
+    // For Done / Canceled groups, sort by closed_at desc
+    const sortByClosedAtDesc = (a: IssueWithAssignee, b: IssueWithAssignee) => {
+      const aTime = a.closed_at ? new Date(a.closed_at).getTime() : 0;
+      const bTime = b.closed_at ? new Date(b.closed_at).getTime() : 0;
+      return bTime - aTime;
+    };
+
+    // State order: InReview > InProgress > Todo > Backlog > Done > Canceled
+    const stateOrder = [
+      IssueState.InReview,
+      IssueState.InProgress,
+      IssueState.Todo,
+      IssueState.Backlog,
+      IssueState.Done,
+      IssueState.Canceled,
+    ];
+
+    // Flatten sorted issues by state order
+    const sortedIssues: IssueWithAssignee[] = [];
+    for (const state of stateOrder) {
+      if (grouped[state] && grouped[state].length > 0) {
+        const sorted =
+          state === IssueState.Done || state === IssueState.Canceled
+            ? grouped[state].slice().sort(sortByClosedAtDesc)
+            : grouped[state].slice().sort(sortByPriority);
+        sortedIssues.push(...sorted);
+      }
+    }
+
+    return sortedIssues.slice(0, 4);
+  }, [issues]);
 
   const discussions = useMemo(() => {
     if (!discussionsData?.pages) return [];

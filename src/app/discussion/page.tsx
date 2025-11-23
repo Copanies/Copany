@@ -21,13 +21,7 @@ export default function DiscussionPageView() {
       </div>
       {/* Mobile CatBanner */}
       <div className="block sm:hidden">
-        <MobileCatBanner
-          title="Together, we are free."
-          subtitle={`Anyone can start a project
-              Earn points through collaboration
-              Rewards are shared according to points`}
-          className="mb-8"
-        />
+        <MobileCatBanner title="Together, we are free." className="mb-8" />
       </div>
       <div className="max-w-[820px] justify-center mx-auto w-full mt-5 px-5 min-h-screen">
         <DiscussionView />
