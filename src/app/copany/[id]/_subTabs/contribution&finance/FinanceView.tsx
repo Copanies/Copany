@@ -107,7 +107,7 @@ export default function FinanceView({ copanyId }: { copanyId: string }) {
         evidence_url: null,
       };
     });
-  }, [appStoreChartData, copanyId]);
+  }, [appStoreChartData, copanyId, t]);
 
   const combinedTransactions = useMemo<TransactionRow[]>(() => {
     return [...(transactions ?? []), ...appStoreTransactions];

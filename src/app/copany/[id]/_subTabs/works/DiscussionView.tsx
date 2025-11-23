@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
-import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
+import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionVoteCounts } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
@@ -32,7 +32,6 @@ import UserAvatar from "@/components/commons/UserAvatar";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const t = useTranslations("discussionView");
-  const tTime = useTranslations("time");
   const {
     data: discussionsData,
     isLoading,
@@ -70,7 +69,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     });
 
     return options;
-  }, [labels]);
+  }, [labels, t]);
 
   // Get selected dropdown value
   const selectedDropdownValue = useMemo(() => {

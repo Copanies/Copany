@@ -141,7 +141,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [distributes]);
+  }, [distributes, t, tTime]);
 
   // Separate current distribution month and historical records
   const currentDistributionGroup = useMemo(() => {

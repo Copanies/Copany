@@ -155,7 +155,7 @@ export default function OverviewView({
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [validContributions]);
+  }, [validContributions, tTime]);
 
   // Calculate total contribution value for each user and sort
   const usersWithContribution = useMemo(() => {

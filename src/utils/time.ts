@@ -1,6 +1,6 @@
 // Helper function to get month names
 function getMonthNames(
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): string[] {
   if (t) {
     return [
@@ -37,7 +37,7 @@ function getMonthNames(
 
 export function formatRelativeTime(
   dateString: string,
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): string {
   const now = new Date();
   const date = new Date(dateString);
@@ -69,7 +69,7 @@ export function formatRelativeTime(
 
 export function formatDate(
   dateString: string,
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): string {
   const date = new Date(dateString);
 
@@ -86,7 +86,7 @@ export function formatDate(
 
 export function getMonthlyPeriod(
   date: string | Date,
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): {
   start: Date;
   end: Date;
@@ -116,7 +116,7 @@ export function getMonthlyPeriod(
 
 export function getMonthlyPeriodSimple(
   date: string | Date,
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): string {
   const d = new Date(date);
 
@@ -130,7 +130,7 @@ export function getMonthlyPeriodSimple(
 
 export function getMonthlyPeriodFrom10th(
   date: string | Date,
-  t?: (key: string, values?: Record<string, any>) => string
+  t?: (key: string, values?: Record<string, number | string>) => string
 ): {
   start: Date;
   end: Date;

@@ -8,11 +8,7 @@ import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
-import {
-  LightBulbIcon,
-  PlusIcon,
-  ScaleIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon, ScaleIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";

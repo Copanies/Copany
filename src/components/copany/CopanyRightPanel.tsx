@@ -54,10 +54,9 @@ export default function CopanyRightPanel({
   const { data: contributionsData } = useContributions(copanyId);
   const { data: contributorsData } = useContributors(copanyId);
 
-  const issues = issuesData ?? [];
-
   // Sort issues using the same logic as IssuesView.tsx
   const topIssues = useMemo(() => {
+    const issues = issuesData ?? [];
     if (issues.length === 0) return [];
 
     // Group issues by state (merge Duplicate into Canceled)
@@ -117,7 +116,7 @@ export default function CopanyRightPanel({
     }
 
     return sortedIssues.slice(0, 4);
-  }, [issues]);
+  }, [issuesData]);
 
   const discussions = useMemo(() => {
     if (!discussionsData?.pages) return [];

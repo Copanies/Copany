@@ -79,7 +79,6 @@ export default function AppStoreConnectView({
 }: {
   copanyId: string;
 }) {
-  const tTime = useTranslations("time");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<
@@ -775,6 +774,7 @@ function FinanceChartView({
 }: {
   chartData: Array<{ date: string; amountUSD: number }>;
 }) {
+  const tTime = useTranslations("time");
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
