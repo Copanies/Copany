@@ -38,26 +38,37 @@ export default function Home() {
   );
 
   function homeView() {
+    const scrollToCopanyGrid = () => {
+      const element = document.getElementById("copany-grid");
+      if (element) {
+        const headerHeight = 52; // MainNavigation height
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition =
+          elementPosition + window.pageYOffset - headerHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }
+    };
+
     return (
       <div>
         {/* Desktop CatBanner */}
         <div className="hidden sm:block">
           <CatBanner
             title="Together, we are free."
-            subtitle={`Anyone can start a project
-              Earn points through collaboration
-              Rewards are shared according to points`}
             className="mb-8"
+            onBrowseProjects={scrollToCopanyGrid}
           />
         </div>
         {/* Mobile CatBanner */}
         <div className="block sm:hidden">
           <MobileCatBanner
             title="Together, we are free."
-            subtitle={`Anyone can start a project
-              Earn points through collaboration
-              Rewards are shared according to points`}
             className="mb-8"
+            onBrowseProjects={scrollToCopanyGrid}
           />
         </div>
         <div className="px-6 flex flex-col w-full min-h-screen">

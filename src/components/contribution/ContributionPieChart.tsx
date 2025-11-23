@@ -500,7 +500,7 @@ export default function ContributionPieChart({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {data.user.id === "others" ? (
                   <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-sm font-base text-gray-600 dark:text-gray-400">
                       {data.mergedUsers?.length}
                     </span>
                   </div>
@@ -519,7 +519,7 @@ export default function ContributionPieChart({
                   <div className="font-semibold text-sm truncate text-gray-900 dark:text-gray-100">
                     {data.user.name}
                   </div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="text-sm font-base text-gray-600 dark:text-gray-400">
                     {data.totalScore} P - {Math.round(data.percentage)}%
                   </div>
                 </div>
@@ -545,7 +545,7 @@ export default function ContributionPieChart({
           <div className="flex items-center gap-2 mb-3">
             {tooltipData.user.id === "others" ? (
               <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-base text-gray-600 dark:text-gray-400">
                   {tooltipData.mergedUsers?.length}
                 </span>
               </div>
@@ -575,7 +575,7 @@ export default function ContributionPieChart({
           {/* 如果是合并的数据，显示被合并的用户列表 */}
           {tooltipData.user.id === "others" && tooltipData.mergedUsers && (
             <div className="mb-3 max-h-32 overflow-y-auto">
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="text-sm font-base text-gray-700 dark:text-gray-300 mb-2">
                 Included Contributors:
               </div>
               {tooltipData.mergedUsers.map((user) => (
@@ -604,7 +604,7 @@ export default function ContributionPieChart({
 
           {/* Level breakdown */}
           <div className="space-y-2">
-            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="text-sm font-base text-gray-700 dark:text-gray-300 mb-2">
               Issue Level Breakdown:
             </div>
             {levelDisplay.map((item) => (
@@ -621,7 +621,7 @@ export default function ContributionPieChart({
                     Level {item.label}
                   </span>
                 </div>
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <div className="text-sm font-base text-gray-900 dark:text-gray-100">
                   {item.count} × {LEVEL_SCORES[item.level]} P ={" "}
                   {item.count * LEVEL_SCORES[item.level]} P
                 </div>

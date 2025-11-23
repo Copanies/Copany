@@ -44,10 +44,10 @@ export default function StarsPage() {
                   strokeWidth={1}
                 />
               }
-              title="No starred copanies yet"
-              description="Star a copany to see it here."
+              titleKey="noStarredCopanies"
+              descriptionKey="starACopanyToSeeItHere"
               buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-              buttonTitle="View Home Page"
+              buttonTitleKey="viewHomePage"
               buttonAction={() => {
                 router.push(`/`);
               }}

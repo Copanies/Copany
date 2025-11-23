@@ -15,6 +15,7 @@ import WebsiteIcon from "@/assets/website_logo.svg";
 import WebsiteDarkIcon from "@/assets/website_logo_dark.svg";
 import { useState, useEffect } from "react";
 import Button from "../commons/Button";
+import { useTranslations } from "next-intl";
 
 export default function AssetLinksSection({
   copany,
@@ -25,6 +26,7 @@ export default function AssetLinksSection({
   size?: "sm" | "md";
   onConnectRepo?: () => void;
 }) {
+  const t = useTranslations("emptyPlaceholder");
   const isDarkMode = useDarkMode();
   const [mounted, setMounted] = useState(false);
 
@@ -180,7 +182,7 @@ export default function AssetLinksSection({
               width={16}
               height={16}
             />
-            <p className="text-base ">Connect a repo</p>
+            <p className="text-base ">{t("connectARepo")}</p>
           </div>
         </Button>
       ) : null}

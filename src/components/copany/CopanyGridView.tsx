@@ -21,6 +21,7 @@ import type { ChartDataPoint } from "@/utils/finance";
 import { formatAbbreviatedCount } from "@/utils/number";
 import MiniFinanceChart from "@/components/finance/MiniFinanceChart";
 import PlatformIcons from "@/components/copany/PlatformIcons";
+import { useTranslations } from "next-intl";
 
 interface CopanyGridViewProps {
   copanies: Copany[];
@@ -45,6 +46,8 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const { data: labels } = useDiscussionLabels(copany.id);
   const { data: transactions = [] } = useTransactions(copany.id);
   const { data: appStoreFinanceData } = useAppStoreFinance(copany.id);
+  const t = useTranslations("finance");
+  const tRightPanel = useTranslations("rightPanel");
 
   // Flatten all pages of discussions
   const discussions =
@@ -60,6 +63,12 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   // Process finance data
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isConvertingData, setIsConvertingData] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isHoveredBeginIdea, setIsHoveredBeginIdea] = useState(false);
+  const [showBottomSection, setShowBottomSection] = useState(true);
+  const topSectionRef = useRef<HTMLDivElement>(null);
+  const [initialHeight, setInitialHeight] = useState<number>(0);
+  const [fullHeight, setFullHeight] = useState<number>(0);
 
   // Convert App Store finance data to transactions format
   const appStoreTransactions = useMemo(() => {
@@ -131,6 +140,81 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
       });
   }, [combinedTransactions]);
 
+  // Measure heights for animation
+  useEffect(() => {
+    if (!topSectionRef.current || !beginIdeaDiscussion) return;
+
+    const measureHeights = () => {
+      const element = topSectionRef.current;
+      if (!element) return;
+
+      // Temporarily remove aspect-ratio to measure natural height
+      const hadAspect = element.classList.contains("aspect-[1.8]");
+      if (hadAspect) {
+        element.classList.remove("aspect-[1.8]");
+      }
+
+      // Measure initial height (aspect-[1.8] equivalent)
+      const width = element.offsetWidth;
+      const initialH = width / 1.8; // aspect ratio 1.8
+      setInitialHeight(initialH);
+
+      // Measure full height (parent container height)
+      const parent = element.parentElement?.parentElement;
+      if (parent) {
+        const parentHeight = parent.offsetHeight;
+        setFullHeight(parentHeight);
+      }
+
+      // Restore aspect-ratio if it was there
+      if (hadAspect && !isHoveredBeginIdea) {
+        element.classList.add("aspect-[1.8]");
+      }
+    };
+
+    // Delay measurement to ensure DOM is ready
+    const timeoutId = setTimeout(measureHeights, 0);
+
+    // Re-measure on resize
+    const resizeObserver = new ResizeObserver(() => {
+      measureHeights();
+    });
+    if (topSectionRef.current) {
+      resizeObserver.observe(topSectionRef.current);
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, [beginIdeaDiscussion, isHoveredBeginIdea]);
+
+  // Manage bottom section visibility with delay to prevent overflow during animation
+  useEffect(() => {
+    if (!beginIdeaDiscussion) {
+      setShowBottomSection(true);
+      return;
+    }
+
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    if (isHoveredBeginIdea) {
+      // Hide immediately when hovering
+      setShowBottomSection(false);
+    } else {
+      // Delay showing until top section animation completes (500ms)
+      timeoutId = setTimeout(() => {
+        setShowBottomSection(true);
+      }, 350);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isHoveredBeginIdea, beginIdeaDiscussion]);
+
   // Calculate AMR (Avg Monthly Revenue)
   const amr = useMemo(() => {
     if (!chartData || chartData.length === 0) {
@@ -160,7 +244,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
             />
           </svg>
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-            AMR {amr < 0 ? "-" : ""}$
+            {t("avgMonthlyRevenueShort")} {amr < 0 ? "-" : ""}$
             {Math.abs(amr).toLocaleString(undefined, {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
@@ -184,7 +268,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
             />
           </svg>
           <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            No Revenue
+            {t("noRevenue")}
           </span>
         </>
       )}
@@ -198,11 +282,31 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
       onClick={() => {
         router.push(`/copany/${copany.id}`);
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex flex-col gap-4 h-full">
-        <div className="flex flex-col gap-2">
+        <div
+          className={`flex flex-col flex-1 min-h-0 transition-all duration-500 ease-in-out ${
+            isHoveredBeginIdea ? "gap-0" : "gap-2"
+          }`}
+        >
           {/* Different layouts based on whether cover image exists */}
-          <div className="relative flex flex-col items-center justify-center gap-2 px-5 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
+          <div
+            ref={topSectionRef}
+            className={`relative flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-[20px] overflow-hidden transition-all duration-500 ease-in-out ${
+              beginIdeaDiscussion ? "" : "aspect-[1.8]"
+            }`}
+            style={{
+              height:
+                beginIdeaDiscussion && initialHeight > 0 && fullHeight > 0
+                  ? isHoveredBeginIdea
+                    ? `${fullHeight}px`
+                    : `${initialHeight}px`
+                  : undefined,
+              transitionProperty: beginIdeaDiscussion ? "height" : undefined,
+            }}
+          >
             {copany.cover_image_url && copany.logo_url ? (
               <>
                 {/* Cover image layout: fill the space, no blur, logo in top-left */}
@@ -210,8 +314,11 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   src={copany.cover_image_url}
                   alt="Organization Cover"
                   fill
-                  className="object-cover w-full h-full"
-                  style={{ objectPosition: "center" }}
+                  className="object-cover w-full h-full transition-transform duration-500 ease-out"
+                  style={{
+                    objectPosition: "center",
+                    transform: isHovered ? "scale(1.1)" : "scale(1)",
+                  }}
                   sizes="100vw"
                   placeholder="blur"
                   blurDataURL={shimmerDataUrlWithTheme(400, 400, isDarkMode)}
@@ -219,15 +326,18 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                 />
                 {/* Foreground logo in top-left corner */}
                 {copany.logo_url && (
-                  <div className="absolute top-3 left-3 z-5">
+                  <div className="absolute top-3 left-3 z-5 transition-transform duration-500 ease-out">
                     <Image
                       src={copany.logo_url}
                       alt="Organization Avatar"
-                      className="rounded-lg object-contain"
-                      width={64}
-                      height={64}
+                      className="rounded-lg object-contain transition-transform duration-500 ease-out"
+                      width={80}
+                      height={80}
+                      style={{
+                        transform: isHovered ? "scale(1.15)" : "scale(1)",
+                      }}
                       placeholder="blur"
-                      blurDataURL={shimmerDataUrlWithTheme(64, 64, isDarkMode)}
+                      blurDataURL={shimmerDataUrlWithTheme(80, 80, isDarkMode)}
                       priority
                     />
                   </div>
@@ -237,11 +347,13 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               <>
                 {/* Logo-only layout: 200% width, blur background */}
                 <div
-                  className="absolute left-1/2 top-0 z-0 pointer-events-none select-none"
+                  className="absolute left-1/2 top-0 z-0 pointer-events-none select-none transition-transform duration-500 ease-out"
                   style={{
                     width: "200%",
                     height: "200%",
-                    transform: "translateX(-50%) translateY(-25%)",
+                    transform: isHovered
+                      ? "translateX(-50%) translateY(-25%) scale(1.1)"
+                      : "translateX(-50%) translateY(-25%) scale(1)",
                     overflow: "hidden",
                   }}
                 >
@@ -266,13 +378,16 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   }}
                 ></div>
                 {/* Foreground logo, centered */}
-                <div className="relative z-5 flex items-center justify-center w-full h-auto max-h-32">
+                <div className="relative z-5 flex items-center justify-center w-full h-auto max-h-32 transition-transform duration-500 ease-out">
                   <Image
                     src={copany.logo_url}
                     alt="Organization Avatar"
-                    className="rounded-xl object-contain"
+                    className="rounded-xl object-contain transition-transform duration-500 ease-out"
                     width={128}
                     height={128}
+                    style={{
+                      transform: isHovered ? "scale(1.15)" : "scale(1)",
+                    }}
                     placeholder="blur"
                     blurDataURL={shimmerDataUrlWithTheme(128, 128, isDarkMode)}
                     priority
@@ -288,7 +403,11 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   } `}
                 ></div>
                 {beginIdeaDiscussion?.description && (
-                  <div className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden">
+                  <div
+                    className="relative z-5 flex items-start justify-center w-full h-full overflow-hidden"
+                    onMouseEnter={() => setIsHoveredBeginIdea(true)}
+                    onMouseLeave={() => setIsHoveredBeginIdea(false)}
+                  >
                     <div className="w-full h-full overflow-y-auto scrollbar-hide relative">
                       <Suspense
                         fallback={
@@ -317,7 +436,13 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
               </>
             )}
           </div>
-          <div className="flex flex-col gap-1">
+          <div
+            className={`flex flex-col gap-1 transition-all duration-200 ease-in-out overflow-hidden ${
+              showBottomSection
+                ? "opacity-100 max-h-[1000px] translate-y-0"
+                : "opacity-0 max-h-0 translate-y-2 pointer-events-none"
+            }`}
+          >
             <div className="flex flex-row justify-between min-w-0 gap-2">
               <div className="flex flex-row min-w-0 gap-2 items-center">
                 <div className="font-semibold text-lg truncate max-w-full text-ellipsis overflow-hidden">
@@ -326,10 +451,18 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                 <PlatformIcons platforms={copany.platforms} size="sm" />
                 {/* <AssetLinksSection copany={copany} size="sm" /> */}
               </div>
-              {amrLabel}
+              {beginIdeaDiscussion ? (
+                <div className="flex items-center gap-1 my-auto">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    💡 {tRightPanel("newIdea")}
+                  </span>
+                </div>
+              ) : (
+                amrLabel
+              )}
             </div>
             <div className="flex flex-row min-w-0 gap-2">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <ExpandableText
                   contentClassName="text-sm"
                   text={copany.description || "No description"}
@@ -349,10 +482,10 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                     >
                       <circle cx="8" cy="8" r="8" />
                     </svg>
-                    <span className="text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">
                       {copany.isDefaultUseCOSL
-                        ? "Contribution-based revenue"
-                        : "Revenue not guaranteed"}
+                        ? tRightPanel("contributionBasedRevenue")
+                        : tRightPanel("revenueNotGuaranteed")}
                     </span>
                   </div>
                   {/* Star count */}
@@ -376,8 +509,8 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   )}
                 </div>
               </div>
-              {!isConvertingData && (
-                <div className="flex flex-col items-end gap-1 shrink-0">
+              {!isConvertingData && !beginIdeaDiscussion && (
+                <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
                   {/* Mini chart */}
                   <MiniFinanceChart
                     chartData={chartData.length > 0 ? chartData : []}
@@ -495,7 +628,7 @@ function NewCopanyCard({ innerRef }: NewCopanyCardProps) {
 
             <div className="relative z-5 flex flex-row items-center justify-center gap-2">
               <PlusIcon className="w-7 h-7 text-gray-900 dark:text-gray-100" />
-              <div className="font-medium text-xl text-gray-900 dark:text-gray-100">
+              <div className="font-base text-xl text-gray-900 dark:text-gray-100">
                 Start new copany
               </div>
             </div>
@@ -544,7 +677,10 @@ export default function CopanyGridView({
 
   return (
     <>
-      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-8 pb-10 max-w-[1240px] justify-center mx-auto w-full">
+      <ul
+        id="copany-grid"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-10 max-w-[1240px] justify-center mx-auto w-full"
+      >
         {copanies.map((copany, index) => (
           <CopanyCard
             key={copany.id}

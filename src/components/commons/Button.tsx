@@ -20,7 +20,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    "cursor-pointer rounded-md border-1 transition-colors duration-200 font-medium";
+    "cursor-pointer rounded-md border-1 transition-colors duration-200 font-base";
 
   const variantClasses = {
     primary:

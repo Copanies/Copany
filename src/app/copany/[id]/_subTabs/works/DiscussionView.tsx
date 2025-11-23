@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useMemo, useState, useCallback } from "react";
-import { useDiscussions, useDeleteDiscussion } from "@/hooks/discussions";
+import { useDiscussions } from "@/hooks/discussions";
 import { useDiscussionVoteCounts } from "@/hooks/discussionVotes";
 import type { Discussion } from "@/types/database.types";
 import Button from "@/components/commons/Button";
@@ -22,6 +22,7 @@ import { useCurrentUser } from "@/hooks/currentUser";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import { useRouter } from "next/navigation";
 import LoadingView from "@/components/commons/LoadingView";
+import { useTranslations } from "next-intl";
 
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Dropdown from "@/components/commons/Dropdown";
@@ -30,6 +31,7 @@ import VoteButton from "@/components/discussion/VoteButton";
 import UserAvatar from "@/components/commons/UserAvatar";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
+  const t = useTranslations("discussionView");
   const {
     data: discussionsData,
     isLoading,
@@ -49,7 +51,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
 
   // Create dropdown options
   const dropdownOptions = useMemo(() => {
-    const options = [{ value: -1, label: "All" as React.ReactNode }];
+    const options = [{ value: -1, label: t("all") as React.ReactNode }];
 
     labels.forEach((label, index) => {
       options.push({
@@ -67,7 +69,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
     });
 
     return options;
-  }, [labels]);
+  }, [labels, t]);
 
   // Get selected dropdown value
   const selectedDropdownValue = useMemo(() => {
@@ -139,10 +141,10 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="No discussions yet"
-          description="Create the first discussion to kick off the conversation."
+          titleKey="noDiscussionsYet"
+          descriptionKey="createFirstDiscussion"
           buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="New discussion"
+          buttonTitleKey="newDiscussion"
           buttonAction={() => setIsModalOpen(true)}
         />
         {createDiscussionModal()}
@@ -202,10 +204,10 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
             className="min-w-fit"
             size="md"
             disabled={!currentUser}
-            disableTooltipConent="Sign in to create a discussion"
+            disableTooltipConent={t("signInToCreateDiscussion")}
           >
             <div className="flex flex-row items-center gap-1">
-              <span className="text-base">New Discussion</span>
+              <span className="text-base">{t("newDiscussion")}</span>
             </div>
           </Button>
           <div className="flex flex-col gap-3">
@@ -214,7 +216,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                 <div className="flex w-fit items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 w-full max-w-[200px] h-[34px]">
                   <span className="shrink-0 truncate">
                     {activeLabel === "all" ? (
-                      "All"
+                      t("all")
                     ) : (
                       <div className="flex items-center gap-2">
                         <div
@@ -242,7 +244,9 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
         </div>
 
         <Suspense
-          fallback={<LoadingView type="label" label="Loading discussions..." />}
+          fallback={
+            <LoadingView type="label" label={t("loadingDiscussions")} />
+          }
         >
           {filtered.length === 0 ? (
             <EmptyPlaceholderView
@@ -252,8 +256,8 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                   strokeWidth={1}
                 />
               }
-              title="No discussions for this label"
-              description="Try another label."
+              titleKey="noDiscussionsForLabel"
+              descriptionKey="tryAnotherLabel"
             />
           ) : (
             <ul className="flex flex-col gap-3">
@@ -285,7 +289,7 @@ export default function DiscussionView({ copanyId }: { copanyId: string }) {
                 disabled={isFetchingNextPage}
                 size="md"
               >
-                {isFetchingNextPage ? "Loading..." : "Load More"}
+                {isFetchingNextPage ? t("loading") : t("loadMore")}
               </Button>
             </div>
           )}
@@ -328,8 +332,7 @@ function DiscussionItem({
   isLast?: boolean;
 }) {
   const router = useRouter();
-  const _remove = useDeleteDiscussion(copanyId);
-
+  const tTime = useTranslations("time");
   // Get vote count from batch query (used as initial data for VoteButton)
   const voteCount =
     voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
@@ -367,7 +370,7 @@ function DiscussionItem({
               </span>
               <span>·</span>
               <time title={discussion.created_at}>
-                {formatRelativeTime(discussion.created_at)}
+                {formatRelativeTime(discussion.created_at, tTime)}
               </time>
             </div>
             <span className="block md:hidden">

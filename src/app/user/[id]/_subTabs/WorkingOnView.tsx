@@ -23,10 +23,10 @@ export default function WorkingOnView({ userId }: { userId: string }) {
             strokeWidth={1}
           />
         }
-        title="No copanies found"
-        description="You are not a contributor of any copany"
+        titleKey="noCopaniesFound"
+        descriptionKey="noCopaniesFoundDesc"
         buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-        buttonTitle="View Copanies"
+        buttonTitleKey="viewCopanies"
         buttonAction={() => {
           router.push(`/`);
         }}
@@ -35,7 +35,7 @@ export default function WorkingOnView({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="pt-2">
+    <div className="pt-5">
       <CopanyGridView copanies={copanies || []} />
     </div>
   );

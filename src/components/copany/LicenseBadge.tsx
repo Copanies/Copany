@@ -2,6 +2,7 @@
 
 import { ScaleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface LicenseBadgeProps {
   license: string | null;
@@ -17,6 +18,7 @@ export default function LicenseBadge({
   copanyId,
 }: LicenseBadgeProps) {
   const router = useRouter();
+  const t = useTranslations("rightPanel");
 
   // Determine the actual license to display
   let displayLicense = license;
@@ -33,7 +35,7 @@ export default function LicenseBadge({
 
   // Handle display text
   const displayText =
-    displayLicense === "NOASSERTION" ? "Other" : displayLicense;
+    displayLicense === "NOASSERTION" ? t("licenseNoAssertion") : displayLicense;
 
   // Handle click to navigate to license tab
   const handleClick = () => {
@@ -54,7 +56,7 @@ export default function LicenseBadge({
   if (size === "sm") {
     return (
       <div
-        className={`inline-flex items-center gap-1 px-0 py-0 text-sm font-medium hover:cursor-pointer text-gray-700 dark:text-gray-300`}
+        className={`inline-flex items-center gap-1 px-0 py-0 text-sm font-base hover:cursor-pointer text-gray-700 dark:text-gray-300`}
         onClick={handleClick}
       >
         <ScaleIcon className="w-4 h-4" strokeWidth={2} />
@@ -65,7 +67,7 @@ export default function LicenseBadge({
 
   // Default variant (original badge style)
   return (
-    <div className="relative inline-flex items-center text-sm font-medium">
+    <div className="relative inline-flex items-center text-sm font-base">
       <div
         className="inline-flex items-center overflow-hidden hover:cursor-pointer"
         onClick={handleClick}

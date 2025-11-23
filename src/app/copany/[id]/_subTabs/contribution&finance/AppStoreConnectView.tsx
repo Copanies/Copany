@@ -18,6 +18,7 @@ import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { useAppStoreFinance, useRefreshAppStoreFinance } from "@/hooks/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
+import { useTranslations } from "next-intl";
 import ConnectToAppStoreConnect from "@/components/finance/ConnectToAppStoreConnect";
 
 interface Credentials {
@@ -275,10 +276,10 @@ export default function AppStoreConnectView({
               strokeWidth={1}
             />
           }
-          title="App Store Connect Finance Reports"
-          description="Connect to App Store Connect API to fetch finance reports for your app. Upload your P8 private key, Key ID, Issuer ID, and App SKU to get started."
+          titleKey="appStoreConnectReports"
+          descriptionKey="appStoreConnectReportsDesc"
           buttonIcon={<DocumentTextIcon className="w-4 h-4" />}
-          buttonTitle="Fetch Reports"
+          buttonTitleKey="fetchReports"
           buttonAction={() => {
             // This will be handled by the ConnectToAppStoreConnect component
             // We'll use a ref or state to trigger it, but for now, we'll keep the modal approach
@@ -394,13 +395,9 @@ export default function AppStoreConnectView({
           onBack={() => setSelectedReport(null)}
         />
       ) : viewMode === "chart" ? (
-        <FinanceChartView
-          chartData={chartData}
-        />
+        <FinanceChartView chartData={chartData} />
       ) : viewMode === "monthly" ? (
-        <MonthlyRevenueView
-          chartData={chartData}
-        />
+        <MonthlyRevenueView chartData={chartData} />
       ) : (
         <ReportsListView reports={reports} onSelectReport={setSelectedReport} />
       )}
@@ -777,6 +774,7 @@ function FinanceChartView({
 }: {
   chartData: Array<{ date: string; amountUSD: number }>;
 }) {
+  const tTime = useTranslations("time");
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -1083,7 +1081,7 @@ function FinanceChartView({
               })}
               tickFormat={(date) => {
                 const d = date as Date;
-                return getMonthlyPeriodSimple(d);
+                return getMonthlyPeriodSimple(d, tTime);
               }}
             />
             {/* Y Axis */}
@@ -1194,7 +1192,7 @@ function MonthlyRevenueView({
                       )
                     }
                   >
-                    <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-medium">
+                    <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 font-base">
                       {month.date}
                     </td>
                     <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">

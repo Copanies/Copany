@@ -14,6 +14,7 @@ import {
   LEVEL_SCORES as levelScores,
 } from "@/types/database.types";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useTranslations } from "next-intl";
 
 // Define display level types (excluding level_None)
 type DisplayLevel =
@@ -63,21 +64,42 @@ interface TooltipData {
   issues?: Array<{ id: string; title: string }>;
 }
 
-// Month abbreviations
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+// Helper function to get month names (will be used with tTime)
+function getMonthNames(
+  tTime?: (key: string) => string
+): string[] {
+  if (tTime) {
+    return [
+      tTime("jan"),
+      tTime("feb"),
+      tTime("mar"),
+      tTime("apr"),
+      tTime("may"),
+      tTime("jun"),
+      tTime("jul"),
+      tTime("aug"),
+      tTime("sep"),
+      tTime("oct"),
+      tTime("nov"),
+      tTime("dec"),
+    ];
+  }
+  // Default English fallback
+  return [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+}
 
 // Level colors - now with light/dark mode support
 const levelColors: Record<DisplayLevel, { light: string; dark: string }> = {
@@ -121,6 +143,9 @@ export default function ContributionChart({
   totalContributionScore = 0,
   rank,
 }: ContributionChartProps) {
+  const tTime = useTranslations("time");
+  const monthNames = useMemo(() => getMonthNames(tTime), [tTime]);
+  
   // Process data: statistics by month and level
   const userContributionData = useMemo(() => {
     const monthlyData: ContributionData[] = [];
@@ -208,6 +233,7 @@ export default function ContributionChart({
         totalContributionScore={totalContributionScore}
         rank={rank}
         contributions={contributions}
+        monthNames={monthNames}
       />
     </div>
   );
@@ -221,6 +247,7 @@ interface UserChartProps {
   totalContributionScore: number;
   rank?: number; // New: user's rank based on total contribution score
   contributions: Contribution[]; // Add contributions parameter
+  monthNames: string[]; // Add monthNames parameter
 }
 
 function UserChart({
@@ -231,6 +258,7 @@ function UserChart({
   totalContributionScore,
   rank,
   contributions,
+  monthNames,
 }: UserChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -549,27 +577,27 @@ function UserChart({
                       ? levelColors[level!].dark
                       : levelColors[level!].light
                   };"></div>
-                 <span class="font-medium text-gray-900 dark:text-gray-100">Level ${
+                 <span class="font-base text-gray-900 dark:text-gray-100">Level ${
                    levelLabels[level!]
                  }</span>`
                 : `<div class="w-4 h-0.5" style="background-color: ${
                     isDarkMode ? "#3B82F6" : "#2563eb"
                   };"></div>
-                 <span class="font-medium text-gray-900 dark:text-gray-100">Total CP</span>`
+                 <span class="font-base text-gray-900 dark:text-gray-100">Total CP</span>`
             }
           </div>
           ${
             type === "bar"
               ? `<div class="text-gray-600 dark:text-gray-400">
-                 Issues: <span class="font-medium text-gray-900 dark:text-gray-100">${count}</span>
+                 Issues: <span class="font-base text-gray-900 dark:text-gray-100">${count}</span>
                </div>
                <div class="text-gray-600 dark:text-gray-400">
-                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${
+                 CP: <span class="font-base text-gray-900 dark:text-gray-100">${
                    count! * levelScores[level!]
                  }</span>
                </div>`
               : `<div class="text-gray-600 dark:text-gray-400">
-                 CP: <span class="font-medium text-gray-900 dark:text-gray-100">${monthData.contributionScore}</span>
+                 CP: <span class="font-base text-gray-900 dark:text-gray-100">${monthData.contributionScore}</span>
                </div>`
           }
         </div>
@@ -577,7 +605,7 @@ function UserChart({
           monthIssues.length > 0
             ? `
           <div class="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div class="text-sm font-base text-gray-700 dark:text-gray-300">
               Related Issues${
                 type === "line" ? ` (${monthIssues.length})` : ""
               }:
@@ -882,19 +910,19 @@ function UserChart({
                         backgroundColor: getLevelColor(tooltipData.level),
                       }}
                     />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       Level {levelLabels[tooltipData.level]}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     Issues:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     CP:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count * levelScores[tooltipData.level]}
                     </span>
                   </div>
@@ -903,7 +931,7 @@ function UserChart({
                 {/* Issues List */}
                 {tooltipData.issues && tooltipData.issues.length > 0 && (
                   <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <div className="text-sm font-base text-gray-700 dark:text-gray-300">
                       Related Issues:
                     </div>
                     <div className="space-y-1">
@@ -933,19 +961,19 @@ function UserChart({
                         backgroundColor: isDarkMode ? "#3B82F6" : "#2563eb",
                       }}
                     />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       Total CP
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     Issues:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.count}
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400">
                     CP:{" "}
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-base text-gray-900 dark:text-gray-100">
                       {tooltipData.contributionScore}
                     </span>
                   </div>
@@ -954,7 +982,7 @@ function UserChart({
                 {/* Issues 列表 */}
                 {tooltipData.issues && tooltipData.issues.length > 0 && (
                   <div className="space-y-1 border-t border-gray-200 dark:border-gray-600 pt-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <div className="text-sm font-base text-gray-700 dark:text-gray-300">
                       Related Issues:
                     </div>
                     <div className="space-y-1">

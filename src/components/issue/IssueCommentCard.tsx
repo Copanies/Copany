@@ -106,16 +106,16 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                 placeholder="blur"
                 blurDataURL={shimmerDataUrlWithTheme(20, 20, isDarkMode)}
               />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+              <span className="text-sm font-base text-gray-900 dark:text-gray-100 text-center">
                 {userInfos[comment.created_by]!.name}
               </span>
             </>
           ) : (
             <>
-              <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+              <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-base text-gray-600 dark:text-gray-300">
                 {author?.[0]?.toUpperCase() || ""}
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+              <span className="text-sm font-base text-gray-900 dark:text-gray-100 text-center">
                 {author || ""}
               </span>
             </>
@@ -290,11 +290,11 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                             )}
                           />
                         ) : (
-                          <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                          <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-base text-gray-600 dark:text-gray-300">
                             {u?.name?.slice(0, 2).toUpperCase() || ""}
                           </div>
                         )}
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                        <span className="text-sm font-base text-gray-900 dark:text-gray-100 text-center">
                           {u?.name}
                         </span>
                       </div>
@@ -303,10 +303,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                         {reply.parent_id &&
                           String(reply.parent_id) !== String(comment.id) && (
                             <div className="flex items-center space-x-1">
-                              <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                              <p className="text-sm font-base whitespace-nowrap text-gray-500">
                                 reply to
                               </p>
-                              <div className="text-sm font-medium whitespace-nowrap text-gray-500">
+                              <div className="text-sm font-base whitespace-nowrap text-gray-500">
                                 @
                                 {userInfos[
                                   replies.find(
@@ -395,10 +395,10 @@ export default function IssueCommentCard(props: IssueCommentCardProps) {
                     {reply.parent_id &&
                       String(reply.parent_id) !== String(comment.id) && (
                         <div className="flex items-center space-x-1 pl-10">
-                          <p className="text-sm font-medium whitespace-nowrap text-gray-500">
+                          <p className="text-sm font-base whitespace-nowrap text-gray-500">
                             reply to
                           </p>
-                          <div className="text-sm font-medium whitespace-nowrap text-gray-500">
+                          <div className="text-sm font-base whitespace-nowrap text-gray-500">
                             @
                             {userInfos[
                               replies.find(

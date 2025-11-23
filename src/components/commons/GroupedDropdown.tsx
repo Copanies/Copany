@@ -208,7 +208,7 @@ export default function GroupedDropdown({
               }}
               className={`group relative flex flex-row items-center justify-between w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 rounded-md ${
                 option.value === selectedValue
-                  ? "bg-gray-100 dark:bg-gray-700 font-medium"
+                  ? "bg-gray-100 dark:bg-gray-700 font-base"
                   : ""
               } ${
                 option.disabled
@@ -271,7 +271,7 @@ export default function GroupedDropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`inline-flex items-center px-2 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+        className={`inline-flex items-center px-2 py-1 rounded-md text-sm font-base transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground

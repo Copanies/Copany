@@ -227,7 +227,7 @@ export default function Dropdown({
         type="button"
         onClick={toggleDropdown}
         disabled={disabled}
-        className={`w-full flex items-center rounded-md text-base font-medium transition-all duration-200 ${
+        className={`w-full flex items-center rounded-md text-base font-base transition-all duration-200 ${
           disabled ? "" : "hover:opacity-80 cursor-pointer"
         } ${
           showBackground
@@ -287,7 +287,7 @@ export default function Dropdown({
                         : "text-base"
                     } ${
                       option.value === selectedValue
-                        ? "bg-gray-100 dark:bg-gray-700 font-medium"
+                        ? "bg-gray-100 dark:bg-gray-700 font-base"
                         : ""
                     } ${
                       option.disabled

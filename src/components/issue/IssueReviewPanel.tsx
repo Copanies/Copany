@@ -5,6 +5,7 @@ import Button from "@/components/commons/Button";
 import { formatRelativeTime } from "@/utils/time";
 import { approveMyReviewAction } from "@/actions/issueReviewer.actions";
 import { updateIssueStateAction } from "@/actions/issue.actions";
+import { useTranslations } from "next-intl";
 import { IssueState, type IssueReviewer } from "@/types/database.types";
 import { CheckIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { renderLevelLabel } from "./IssueLevelSelector";
@@ -44,6 +45,7 @@ export default function IssueReviewPanel({
 }: IssueReviewPanelProps) {
   const isDarkMode = useDarkMode();
   const queryClient = useQueryClient();
+  const tTime = useTranslations("time");
 
   // React Query hooks for data fetching
   const { data: reviewersData } = useIssueReviewers(issueId);
@@ -207,7 +209,7 @@ export default function IssueReviewPanel({
                       size="sm"
                       showTooltip={true}
                     />
-                    <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                    <span className="text-sm text-gray-900 dark:text-gray-100 font-base">
                       {name}
                     </span>
                   </div>
@@ -215,7 +217,7 @@ export default function IssueReviewPanel({
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {isApproved ? "approved" : "requested"}
                   <span className="pl-2 whitespace-nowrap">
-                    · {formatRelativeTime(when)}
+                    · {formatRelativeTime(when, tTime)}
                   </span>
                 </div>
               </div>

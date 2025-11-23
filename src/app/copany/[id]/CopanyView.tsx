@@ -16,6 +16,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import DistributeFinanceView from "./_subTabs/contribution&finance/DistributeFinanceView";
+import { useTranslations } from "next-intl";
 
 interface CopanyViewProps {
   copanyId: string;
@@ -29,6 +30,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
   const { data: copany, isLoading: isCopanyLoading } = useCopany(copanyId);
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
   const queryClient = useQueryClient();
+  const t = useTranslations("copanyView");
 
   const isLoading = isCopanyLoading || isUserLoading;
 
@@ -43,7 +45,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
   if (!copany) {
     return (
       <div className="p-8 max-w-screen-lg mx-auto">
-        <div className="text-center text-gray-500">Copany not found</div>
+        <div className="text-center text-gray-500">{t("copanyNotFound")}</div>
       </div>
     );
   }
@@ -56,26 +58,30 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
     ...(copany.github_url
       ? [
           {
-            label: "About",
+            key: "about",
+            label: t("about"),
             icon: <BookOpenIcon strokeWidth={2} className="w-4 h-4" />,
             content: <AboutView copany={copany} />,
           },
         ]
       : []),
     {
-      label: "Works",
+      key: "works",
+      label: t("works"),
       icon: <UserGroupIcon strokeWidth={2} className="w-4 h-4" />,
       content: <WorksView copany={copany} />,
     },
     {
-      label: "Distribute & Finance",
+      key: "distribute_finance",
+      label: t("distributeFinance"),
       icon: <ReceiptPercentIcon strokeWidth={2} className="w-4 h-4" />,
       content: <DistributeFinanceView copany={copany} />,
     },
     ...(isCreator
       ? [
           {
-            label: "Settings",
+            key: "settings",
+            label: t("settings"),
             icon: <Cog6ToothIcon strokeWidth={2} className="w-4 h-4" />,
             content: (
               <SettingsView
@@ -96,7 +102,9 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   return (
     <div className="gap-2 flex flex-col h-full relative mb-8">
-      <Suspense fallback={<LoadingView type="label" label="Loading tabs..." />}>
+      <Suspense
+        fallback={<LoadingView type="label" label={t("loadingTabs")} />}
+      >
         <TabView tabs={tabs} />
       </Suspense>
     </div>

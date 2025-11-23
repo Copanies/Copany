@@ -216,16 +216,18 @@ export default function LicenseView({ githubUrl, copany }: LicenseViewProps) {
             strokeWidth={1}
           />
         }
-        title="Add License"
-        description={
+        titleKey="addLicense"
+        descriptionKey={
           isOwner
-            ? "Help protect your Copany by adding a License — choose how others can use, modify, and distribute your work."
-            : "This repository does not have a License yet."
+            ? "addLicenseDesc"
+            : "addLicenseDescNotOwner"
         }
         buttonIcon={
           isOwner ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
         }
-        buttonTitle={isOwner ? "How to use COSL License" : undefined}
+        buttonTitleKey={
+          isOwner ? "howToUseCoslLicense" : undefined
+        }
         buttonAction={() => router.push("/uselicense")}
       />
     );

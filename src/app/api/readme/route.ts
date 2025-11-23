@@ -22,20 +22,42 @@ export async function GET(request: NextRequest) {
       const filename = searchParams.get("filename"); // Optional filename parameter
       try {
         const res = await getRepoReadmeWithFilenameAction(githubUrl, filename || undefined);
+        
+        // Log detailed information for debugging
+        if (Array.isArray(res)) {
+          console.warn(`⚠️ GitHub API returned array instead of file for ${githubUrl}, filename: ${filename || "default"}. This usually means the path points to a directory.`);
+        }
+        
         if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
+          console.log(`ℹ️ README not found for ${githubUrl}, filename: ${filename || "default"}. res type: ${Array.isArray(res) ? "array" : res ? typeof res : "null"}`);
           return NextResponse.json({ content: "No README", error: "NOT_FOUND" });
         }
         const content = decodeGitHubContent(res.content);
         return NextResponse.json({ content });
       } catch (error) {
-        // Check if it's a GitHub API 404 (not found)
+        // Log error details for debugging
         const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStatus = typeof error === "object" && error !== null && "status" in error ? (error as { status: number }).status : null;
+        
+        console.error(`❌ Error fetching README for ${githubUrl}, filename: ${filename || "default"}:`, {
+          message: errorMessage,
+          status: errorStatus,
+          error: error,
+        });
+        
+        // Check if it's a GitHub API 404 (not found)
         const isNotFound = 
           errorMessage.includes("404") ||
-          (typeof error === "object" && error !== null && "status" in error && (error as { status: number }).status === 404);
+          errorStatus === 404;
         
         if (isNotFound) {
           return NextResponse.json({ content: "No README", error: "NOT_FOUND" });
+        }
+        
+        // Check for rate limit (403) or authentication issues
+        if (errorStatus === 403 || errorMessage.includes("rate limit") || errorMessage.includes("403")) {
+          console.warn(`⚠️ GitHub API rate limit or permission issue for ${githubUrl}`);
+          return NextResponse.json({ error: "NETWORK_ERROR" }, { status: 500 });
         }
         
         // All other errors (network errors, 5xx, etc.) are treated as network errors

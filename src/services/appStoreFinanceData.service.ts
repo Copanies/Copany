@@ -1,4 +1,4 @@
-import { createAdminSupabaseClient } from "@/utils/supabase/server";
+import { createAdminSupabaseClient, createSupabaseClient } from "@/utils/supabase/server";
 
 export interface FinanceReportData {
   reportType: string;
@@ -162,9 +162,10 @@ export class AppStoreFinanceDataService {
   static async getFinanceReports(
     copanyId: string
   ): Promise<FinanceReportData[]> {
-    const adminSupabase = await createAdminSupabaseClient();
+    // Use regular client to respect RLS policies (allows public read)
+    const supabase = await createSupabaseClient();
 
-    const { data, error } = await adminSupabase
+    const { data, error } = await supabase
       .from("app_store_finance_data")
       .select("*")
       .eq("copany_id", copanyId)
@@ -197,9 +198,10 @@ export class AppStoreFinanceDataService {
   static async getFinanceChartData(
     copanyId: string
   ): Promise<FinanceChartData[]> {
-    const adminSupabase = await createAdminSupabaseClient();
+    // Use regular client to respect RLS policies (allows public read)
+    const supabase = await createSupabaseClient();
 
-    const { data, error } = await adminSupabase
+    const { data, error } = await supabase
       .from("app_store_finance_chart_data")
       .select("*")
       .eq("copany_id", copanyId)

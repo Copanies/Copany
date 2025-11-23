@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { useTranslations } from "next-intl";
 import MarkdownView from "@/components/commons/MarkdownView";
 import LoadingView from "@/components/commons/LoadingView";
 import {
@@ -12,9 +13,11 @@ import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
 import { useRepoReadme } from "@/hooks/readme";
+import type { Copany } from "@/types/database.types";
 
 interface ReadmeViewProps {
   githubUrl?: string | null;
+  copany?: Copany;
 }
 
 /**
@@ -43,11 +46,18 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
   }
 };
 
-export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
+export default function ReadmeView({ githubUrl, copany }: ReadmeViewProps) {
   const { isChinesePreferred } = usePreferredLanguage();
+  const t = useTranslations("emptyPlaceholder");
 
   const { data: currentUser } = useCurrentUser();
-  const isLoggedIn = !!currentUser;
+
+  // Check if current user is the owner of the copany
+  const isOwner = !!(
+    copany &&
+    currentUser &&
+    copany.created_by === currentUser.id
+  );
 
   const {
     data: readmeResult,
@@ -80,12 +90,10 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             strokeWidth={1}
           />
         }
-        title="Cannot load README"
+        titleKey="cannotLoadReadme"
         description={
           <span>
-            Network issue prevents fetching README from GitHub. It may be caused
-            by VPN/proxy connectivity. Please check your connection and try
-            again.{" "}
+            {t("cannotLoadReadmeDesc")}{" "}
             {githubUrl ? (
               <a
                 href={githubUrl}
@@ -99,7 +107,7 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             ) : null}
           </span>
         }
-        buttonTitle="Retry"
+        buttonTitleKey="retry"
         buttonAction={() => refetch()}
       />
     );
@@ -121,18 +129,14 @@ export default function ReadmeView({ githubUrl }: ReadmeViewProps) {
             strokeWidth={1}
           />
         }
-        title="Add README"
-        description={
-          isLoggedIn
-            ? "Help people learn about your Copany by adding a README — share its purpose, how it works, and how others can contribute."
-            : "This repository does not have a README yet."
-        }
+        titleKey="addReadme"
+        descriptionKey={isOwner ? "addReadmeDesc" : "noReadmeDesc"}
         buttonIcon={
-          isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
+          isOwner ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
         }
-        buttonTitle={isLoggedIn ? "Add README" : undefined}
+        buttonTitleKey={isOwner ? "addReadme" : undefined}
         buttonAction={
-          isLoggedIn && newReadmeUrl
+          isOwner && newReadmeUrl
             ? () => window.open(newReadmeUrl, "_blank")
             : undefined
         }

@@ -37,6 +37,7 @@ import {
   useAppStoreConnectStatus,
   useDisconnectAppStoreConnect,
 } from "@/hooks/finance";
+import { useTranslations } from "next-intl";
 
 interface SettingsViewProps {
   copany: Copany;
@@ -50,6 +51,7 @@ export default function SettingsView({
   const router = useRouter();
   const queryClient = useQueryClient();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("settingsView");
   const [name, setName] = useState(copany.name);
   const [description, setDescription] = useState(
     copany.description || EMPTY_STRING
@@ -418,14 +420,14 @@ export default function SettingsView({
     const maxSize = storageService.getMaxLogoFileSize();
     if (file.size > maxSize) {
       setUploadError(
-        `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`
+        t("fileSizeExceeded", { size: Math.round(maxSize / 1024 / 1024) })
       );
       return;
     }
 
     // Check file type
     if (!file.type.startsWith("image/")) {
-      setUploadError("Please select an image file");
+      setUploadError(t("pleaseSelectImageFile"));
       return;
     }
 
@@ -460,11 +462,11 @@ export default function SettingsView({
         };
         await updateCopanyMutateRef.current(updatedCopany);
       } else {
-        setUploadError(result.error || "Upload failed");
+        setUploadError(result.error || t("uploadFailed"));
       }
     } catch (error) {
       console.error("Logo upload failed:", error);
-      setUploadError("Upload failed");
+      setUploadError(t("uploadFailed"));
     } finally {
       setIsUploading(false);
       // Clear file input to allow reselecting the same file
@@ -485,14 +487,14 @@ export default function SettingsView({
     const maxSize = storageService.getMaxCoverImageFileSize();
     if (file.size > maxSize) {
       setCoverImageUploadError(
-        `File size cannot exceed ${Math.round(maxSize / 1024 / 1024)}MB`
+        t("fileSizeExceeded", { size: Math.round(maxSize / 1024 / 1024) })
       );
       return;
     }
 
     // Check file type
     if (!file.type.startsWith("image/")) {
-      setCoverImageUploadError("Please select an image file");
+      setCoverImageUploadError(t("pleaseSelectImageFile"));
       return;
     }
 
@@ -529,11 +531,11 @@ export default function SettingsView({
         };
         await updateCopanyMutateRef.current(updatedCopany);
       } else {
-        setCoverImageUploadError(result.error || "Upload failed");
+        setCoverImageUploadError(result.error || t("uploadFailed"));
       }
     } catch (error) {
       console.error("Cover image upload failed:", error);
-      setCoverImageUploadError("Upload failed");
+      setCoverImageUploadError(t("uploadFailed"));
     } finally {
       setIsUploadingCoverImage(false);
       // Clear file input to allow reselecting the same file
@@ -619,7 +621,7 @@ export default function SettingsView({
       <CopanyHeader copany={copany} showCoverImage={false} />
       <div className="flex flex-col gap-8 pb-8 px-0">
         <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">General</h1>
+          <h1 className="text-2xl font-bold">{t("general")}</h1>
           <div className="flex flex-col gap-2">{renameSection()}</div>
           <div className="flex flex-col gap-2">{descriptionSection()}</div>
           <div className="flex flex-col gap-2">{missionSection()}</div>
@@ -629,20 +631,20 @@ export default function SettingsView({
           <div className="flex flex-col gap-2">{coverImageSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">Finance</h1>
+          <h1 className="text-2xl font-bold">{t("finance")}</h1>
           <div className="flex flex-col gap-2">{connectSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">Distribution Settings</h1>
+          <h1 className="text-2xl font-bold">{t("distributionSettings")}</h1>
           <div className="flex flex-col gap-2">{distributionSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">Assest links</h1>
+          <h1 className="text-2xl font-bold">{t("assetLinks")}</h1>
           <div className="flex flex-col gap-2">{assetLinksSection()}</div>
         </div>
         <div className="flex flex-col gap-4">
           <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
-            Danger Zone
+            {t("dangerZone")}
           </h1>
           <div className="flex flex-col gap-2">{deleteCopanySection()}</div>
         </div>
@@ -655,7 +657,7 @@ export default function SettingsView({
         >
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-              Delete {copany.name}
+              {t("deleteCopanyTitle", { name: copany.name })}
             </h2>
 
             {/* Copany information display */}
@@ -672,7 +674,7 @@ export default function SettingsView({
                 />
               ) : (
                 <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                  <span className="text-gray-400 text-base">No Logo</span>
+                  <span className="text-gray-400 text-base">{t("noLogo")}</span>
                 </div>
               )}
               <div>
@@ -689,9 +691,9 @@ export default function SettingsView({
 
             <div className="mb-4">
               <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                To confirm, type{" "}
+                {t("deleteCopanyConfirm")}{" "}
                 <span className="font-semibold">&quot;{copany.name}&quot;</span>{" "}
-                in the box below
+                {t("inTheBoxBelow")}
               </p>
               <input
                 type="text"
@@ -708,7 +710,7 @@ export default function SettingsView({
                 onClick={handleDeleteCopany}
                 variant="danger"
               >
-                {isDeleting ? "Deleting..." : "Delete this Copany"}
+                {isDeleting ? t("deleting") : t("deleteThisCopany")}
               </Button>
             </div>
           </div>
@@ -722,16 +724,16 @@ export default function SettingsView({
         >
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-              Delete Asset Link
+              {t("deleteAssetLinkTitle")}
             </h2>
 
             <div className="mb-6">
               <p className="text-base text-gray-700 dark:text-gray-300">
-                Are you sure you want to delete the{" "}
+                {t("deleteAssetLinkConfirm")}{" "}
                 <span className="font-semibold">
                   &quot;{deletingAssetLink?.label}&quot;
                 </span>{" "}
-                link? This action cannot be undone.
+                {t("link")}
               </p>
             </div>
 
@@ -741,7 +743,7 @@ export default function SettingsView({
                 variant="secondary"
                 disabled={isDeletingAssetLink}
               >
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -752,7 +754,7 @@ export default function SettingsView({
                 variant="danger"
                 disabled={isDeletingAssetLink}
               >
-                {isDeletingAssetLink ? "Deleting..." : "Delete"}
+                {isDeletingAssetLink ? t("deleting") : t("delete")}
               </Button>
             </div>
           </div>
@@ -766,18 +768,17 @@ export default function SettingsView({
         >
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-              Disconnect App Store Connect
+              {t("disconnectAppStoreConnectTitle")}
             </h2>
 
             <div className="mb-6">
               <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                断开连接后操作无法撤销，之后将无法自动获取 App Store Connect
-                中财务数据。
+                {t("disconnectWarning")}
               </p>
               <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                To confirm, type{" "}
-                <span className="font-semibold">&quot;DISCONNECT&quot;</span> in
-                the box below
+                {t("disconnectConfirm")}{" "}
+                <span className="font-semibold">&quot;DISCONNECT&quot;</span>{" "}
+                {t("inTheBoxBelow")}
               </p>
               <input
                 type="text"
@@ -798,8 +799,8 @@ export default function SettingsView({
                 variant="danger"
               >
                 {disconnectAppStoreConnect.isPending
-                  ? "Disconnecting..."
-                  : "Disconnect App Store Connect"}
+                  ? t("disconnecting")
+                  : t("disconnectAppStoreConnect")}
               </Button>
             </div>
           </div>
@@ -812,7 +813,7 @@ export default function SettingsView({
     return (
       <div className="flex flex-col gap-3 max-w-full">
         <label htmlFor="name" className="text-base font-semibold">
-          Copany name
+          {t("copanyName")}
         </label>
         <div className="flex flex-row gap-3 max-w-full">
           <input
@@ -823,7 +824,7 @@ export default function SettingsView({
             onChange={(e) => setName(e.target.value)}
           />
           <Button onClick={renameCopany} disabled={isRenaming}>
-            {isRenaming ? "Renaming..." : "Rename"}
+            {isRenaming ? t("renaming") : t("rename")}
           </Button>
         </div>
       </div>
@@ -833,7 +834,7 @@ export default function SettingsView({
   function descriptionSection() {
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Description</label>
+        <label className="text-base font-semibold">{t("description")}</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -844,7 +845,7 @@ export default function SettingsView({
           disabled={isUpdatingDescription}
           className="w-fit"
         >
-          {isUpdatingDescription ? "Updating..." : "Update Description"}
+          {isUpdatingDescription ? t("updating") : t("updateDescription")}
         </Button>
       </div>
     );
@@ -853,19 +854,19 @@ export default function SettingsView({
   function missionSection() {
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Mission</label>
+        <label className="text-base font-semibold">{t("mission")}</label>
         <textarea
           value={mission}
           onChange={(e) => setMission(e.target.value)}
           className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
-          placeholder="Enter the mission of your copany"
+          placeholder={t("missionPlaceholder")}
         />
         <Button
           onClick={updateMission}
           disabled={isUpdatingMission}
           className="w-fit"
         >
-          {isUpdatingMission ? "Updating..." : "Update Mission"}
+          {isUpdatingMission ? t("updating") : t("updateMission")}
         </Button>
       </div>
     );
@@ -874,19 +875,19 @@ export default function SettingsView({
   function visionSection() {
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Vision</label>
+        <label className="text-base font-semibold">{t("vision")}</label>
         <textarea
           value={vision}
           onChange={(e) => setVision(e.target.value)}
           className="border border-gray-300 dark:border-gray-700 max-w-screen-sm min-h-20 rounded-md px-2 py-1"
-          placeholder="Enter the vision of your copany"
+          placeholder={t("visionPlaceholder")}
         />
         <Button
           onClick={updateVision}
           disabled={isUpdatingVision}
           className="w-fit"
         >
-          {isUpdatingVision ? "Updating..." : "Update Vision"}
+          {isUpdatingVision ? t("updating") : t("updateVision")}
         </Button>
       </div>
     );
@@ -901,6 +902,8 @@ export default function SettingsView({
       Platform.tvOS,
       Platform.visionOS,
       Platform.Web,
+      Platform.Windows,
+      Platform.Android,
     ];
 
     const platformLabels: Record<Platform, string> = {
@@ -911,11 +914,13 @@ export default function SettingsView({
       [Platform.tvOS]: "tvOS",
       [Platform.visionOS]: "visionOS",
       [Platform.Web]: "Web",
+      [Platform.Windows]: "Windows",
+      [Platform.Android]: "Android",
     };
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Platforms</label>
+        <label className="text-base font-semibold">{t("platforms")}</label>
         <div className="flex flex-col gap-2">
           {allPlatforms.map((platform) => (
             <label
@@ -939,7 +944,7 @@ export default function SettingsView({
           disabled={isUpdatingPlatforms}
           className="w-fit"
         >
-          {isUpdatingPlatforms ? "Updating..." : "Update Platforms"}
+          {isUpdatingPlatforms ? t("updating") : t("updatePlatforms")}
         </Button>
       </div>
     );
@@ -947,18 +952,20 @@ export default function SettingsView({
 
   function distributionSection() {
     // Format delay text for display
-    const delayText = `${distributionDelayMonths} month${
-      distributionDelayMonths !== 1 ? "s" : ""
-    }`;
+    const delayText = `${distributionDelayMonths} ${t("months")}`;
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Distribution Settings</label>
+        <label className="text-base font-semibold">
+          {t("distributionSettings")}
+        </label>
 
         <div className="flex flex-col gap-4">
           {/* Distribution Delay */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Distribution Delay</label>
+            <label className="text-sm font-base">
+              {t("distributionDelay")}
+            </label>
             <div className="flex flex-col gap-1">
               <div className="flex flex-row gap-2 items-center">
                 <input
@@ -972,19 +979,19 @@ export default function SettingsView({
                   className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  months
+                  {t("months")}
                 </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-                The time delay before calculating distribution.
+                {t("distributionDelayDescription")}
               </p>
             </div>
           </div>
 
           {/* Distribution Day of Month */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">
-              Distribution Day of Month
+            <label className="text-sm font-base">
+              {t("distributionDayOfMonth")}
             </label>
             <div className="flex flex-col gap-1">
               <div className="flex flex-row gap-2 items-center">
@@ -1002,11 +1009,11 @@ export default function SettingsView({
                   className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-24"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  day of each month
+                  {t("dayOfEachMonth")}
                 </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-                The day of each month when distribution calculation starts.
+                {t("distributionDayDescription")}
               </p>
             </div>
           </div>
@@ -1019,16 +1026,16 @@ export default function SettingsView({
               className="w-fit"
             >
               {isUpdatingDistribution
-                ? "Updating..."
-                : "Update Distribution Settings"}
+                ? t("updating")
+                : t("updateDistributionSettings")}
             </Button>
 
             {/* Explanation Text */}
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-screen-sm">
-              Assuming distribution starts on the {distributionDayOfMonth}th of
-              each month, the system will calculate revenue generated{" "}
-              {delayText} ago and user contribution ratios up to the end of that
-              month to create distribution records.
+              {t("distributionExplanation", {
+                day: distributionDayOfMonth,
+                delay: delayText,
+              })}
             </p>
           </div>
         </div>
@@ -1041,7 +1048,7 @@ export default function SettingsView({
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Copany logo</label>
+        <label className="text-base font-semibold">{t("copanyLogo")}</label>
 
         <div className="flex flex-col space-y-3">
           {/* Logo display area */}
@@ -1065,7 +1072,7 @@ export default function SettingsView({
               </div>
             ) : (
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-base">No Logo</span>
+                <span className="text-gray-400 text-base">{t("noLogo")}</span>
               </div>
             )}
           </div>
@@ -1087,12 +1094,12 @@ export default function SettingsView({
               className="w-fit"
             >
               {isUploading || isImageLoading
-                ? "Uploading..."
-                : "Upload new picture"}
+                ? t("uploading")
+                : t("uploadNewPicture")}
             </Button>
 
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              PNG, JPG, JPEG, GIF, WebP • Max 1MB
+              {t("logoFileFormat")}
             </p>
 
             {/* Error message */}
@@ -1113,7 +1120,7 @@ export default function SettingsView({
 
     return (
       <div className="flex flex-col gap-3 max-w-full">
-        <label className="text-base font-semibold">Cover image</label>
+        <label className="text-base font-semibold">{t("coverImage")}</label>
 
         <div className="flex flex-col space-y-3">
           {/* Cover image display area */}
@@ -1146,7 +1153,7 @@ export default function SettingsView({
                     variant="secondary"
                     shape="square"
                     className="!p-1"
-                    title="Delete cover image"
+                    title={t("deleteCoverImage")}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </Button>
@@ -1154,7 +1161,9 @@ export default function SettingsView({
               </div>
             ) : (
               <div className="w-full max-w-md h-32 bg-gray-100 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <span className="text-gray-400 text-base">No Cover Image</span>
+                <span className="text-gray-400 text-base">
+                  {t("noCoverImage")}
+                </span>
               </div>
             )}
           </div>
@@ -1176,12 +1185,12 @@ export default function SettingsView({
               className="w-fit"
             >
               {isUploadingCoverImage || isCoverImageLoading
-                ? "Uploading..."
-                : "Upload cover image"}
+                ? t("uploading")
+                : t("uploadCoverImage")}
             </Button>
 
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              PNG, JPG, JPEG, GIF, WebP • Max 5MB
+              {t("coverImageFileFormat")}
             </p>
 
             {/* Error message */}
@@ -1234,9 +1243,7 @@ export default function SettingsView({
                             height={24}
                           />
                           <div className="flex flex-col gap-0">
-                            <p className="text-base font-medium">
-                              {link.label}
-                            </p>
+                            <p className="text-base font-base">{link.label}</p>
                             <a
                               href={link.value}
                               target="_blank"
@@ -1254,7 +1261,7 @@ export default function SettingsView({
                               openEditModal(link.id, link.value || "")
                             }
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                            title="Edit"
+                            title={t("edit")}
                           >
                             <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           </button>
@@ -1263,7 +1270,7 @@ export default function SettingsView({
                               openDeleteAssetLinkModal(link.id, link.label)
                             }
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
-                            title="Delete"
+                            title={t("delete")}
                           >
                             <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           </button>
@@ -1282,7 +1289,7 @@ export default function SettingsView({
             setIsAddAssetLinkModalOpen(true);
           }}
         >
-          Add asset link
+          {t("addAssetLink")}
         </Button>
         <AssetLinkModal
           isOpen={isAddAssetLinkModalOpen}
@@ -1321,7 +1328,7 @@ export default function SettingsView({
               height={32}
             />
             <div className="flex flex-col gap-0">
-              <p className="text-base font-medium">GitHub</p>
+              <p className="text-base font-base">GitHub</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Link pull requests to your copany
               </p>
@@ -1346,7 +1353,7 @@ export default function SettingsView({
               {copany.is_connected_github && (
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
               )}
-              <p className="text-base font-medium">
+              <p className="text-base font-base">
                 {copany.is_connected_github ? "Connected" : "Connect"}
               </p>
               {copany.is_connected_github ? (
@@ -1367,9 +1374,9 @@ export default function SettingsView({
               height={32}
             />
             <div className="flex flex-col gap-0">
-              <p className="text-base font-medium">App Store Connect</p>
+              <p className="text-base font-base">{t("appStoreConnect")}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Fetch finance reports from App Store Connect
+                {t("fetchFinanceReports")}
               </p>
             </div>
           </div>
@@ -1378,13 +1385,13 @@ export default function SettingsView({
               variant="danger"
               onClick={() => setIsDisconnectModalOpen(true)}
             >
-              Disconnect
+              {t("disconnect")}
             </Button>
           ) : (
             <ConnectToAppStoreConnect
               copanyId={copany.id}
               showIcon={false}
-              buttonText="Connect"
+              buttonText={t("connect")}
               onSuccess={async () => {
                 // Refresh copany data after successful connection
                 queryClient.invalidateQueries({
@@ -1402,10 +1409,10 @@ export default function SettingsView({
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-screen-sm p-4 rounded-lg border border-1.5 border-red-500">
         <div className="flex flex-col gap-1">
-          <label className="text-base font-semibold ">Delete Copany</label>
-          <p className="text-sm">
-            Once you delete a copany, there is no going back. Please be certain.
-          </p>
+          <label className="text-base font-semibold ">
+            {t("deleteCopany")}
+          </label>
+          <p className="text-sm">{t("deleteCopanyWarning")}</p>
         </div>
 
         <Button
@@ -1413,7 +1420,7 @@ export default function SettingsView({
           onClick={() => setIsDeleteModalOpen(true)}
           variant="danger"
         >
-          Delete this Copany
+          {t("deleteThisCopany")}
         </Button>
       </div>
     );

@@ -74,14 +74,20 @@ export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean
           return { content: json.content as string };
         } catch (_error) {
           // Fallback to action for network errors or when API fails
+          console.log(`⚠️ API request failed for ${githubUrl}, falling back to action`);
           try {
             const res = await getRepoReadmeWithFilenameAction(githubUrl);
+            if (Array.isArray(res)) {
+              console.warn(`⚠️ Action returned array instead of file for ${githubUrl}. This usually means the path points to a directory.`);
+            }
             if (!res || Array.isArray(res) || !("content" in res) || !res.content) {
+              console.log(`ℹ️ README not found via action for ${githubUrl}. res type: ${Array.isArray(res) ? "array" : res ? typeof res : "null"}`);
               return { content: "No README", error: "NOT_FOUND" };
             }
             return { content: decodeGitHubContent(res.content) };
           } catch (_actionError) {
             // Action failed - likely network error
+            console.error(`❌ Action failed for ${githubUrl}:`, _actionError);
             return { error: "NETWORK_ERROR" };
           }
         }

@@ -6,6 +6,7 @@ import Modal from "@/components/commons/Modal";
 import AppleAppStoreConnectIcon from "@/assets/apple_app_store_connect_logo.png";
 import Image from "next/image";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 
 interface Credentials {
   privateKey: string;
@@ -46,6 +47,7 @@ export default function ConnectToAppStoreConnect({
   showIcon = true,
   buttonText,
 }: ConnectToAppStoreConnectProps) {
+  const t = useTranslations("emptyPlaceholder");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -167,8 +169,8 @@ export default function ConnectToAppStoreConnect({
           )}
           <span className="text-base text-gray-900 dark:text-gray-100">
             {isLoading
-              ? "Connecting..."
-              : buttonText || "Connect to App Store Connect"}
+              ? t("connecting")
+              : buttonText || t("connectToAppStoreConnect")}
           </span>
         </div>
       </Button>
@@ -190,6 +192,7 @@ function CredentialsModal({
   onClose: () => void;
   onFetch: (credentials: Credentials) => Promise<void>;
 }) {
+  const t = useTranslations("emptyPlaceholder");
   const [privateKeyFile, setPrivateKeyFile] = useState<File | null>(null);
   const [privateKeyContent, setPrivateKeyContent] = useState<string>("");
   const [keyId, setKeyId] = useState<string>("");
@@ -426,7 +429,7 @@ function CredentialsModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             type="button"
@@ -435,7 +438,7 @@ function CredentialsModal({
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Connecting..." : "Add"}
+            {isSubmitting ? t("connecting") : t("add")}
           </Button>
         </div>
       </div>

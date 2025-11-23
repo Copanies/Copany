@@ -13,6 +13,7 @@ import { formatRelativeTime } from "@/utils/time";
 import { renderLevelLabel } from "@/components/issue/IssueLevelSelector";
 import { renderPriorityLabel } from "@/components/issue/IssuePrioritySelector";
 import { renderStateLabel } from "@/components/issue/IssueStateSelector";
+import { useTranslations } from "next-intl";
 import type { IssueComment } from "@/types/database.types";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";
@@ -50,6 +51,7 @@ export default function IssueActivityTimeline({
   issueState,
   issueLevel,
 }: IssueActivityTimelineProps) {
+  const tTime = useTranslations("time");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
@@ -225,34 +227,34 @@ export default function IssueActivityTimeline({
       case "issue_created":
         return (
           <>
-            <span className="font-medium">{who}</span> created {title}
+            <span className="font-base">{who}</span> created {title}
           </>
         );
       case "title_changed":
         return (
           <>
-            <span className="font-medium">{who}</span> updated the title to
-            &quot;{p.to_title || ""}&quot;
+            <span className="font-base">{who}</span> updated the title to &quot;
+            {p.to_title || ""}&quot;
           </>
         );
       case "state_changed":
         return (
           <>
-            <span className="font-medium">{who}</span> changed state to{" "}
+            <span className="font-base">{who}</span> changed state to{" "}
             {getStateName(p.to_state)}
           </>
         );
       case "priority_changed":
         return (
           <>
-            <span className="font-medium">{who}</span> changed priority to{" "}
+            <span className="font-base">{who}</span> changed priority to{" "}
             {getPriorityName(p.to_priority)}
           </>
         );
       case "level_changed":
         return (
           <>
-            <span className="font-medium">{who}</span> changed level to{" "}
+            <span className="font-base">{who}</span> changed level to{" "}
             {getLevelName(p.to_level)}
           </>
         );
@@ -261,7 +263,7 @@ export default function IssueActivityTimeline({
         const toLabel = toInfo?.name ? `@${toInfo.name}` : "Unassigned";
         return (
           <>
-            <span className="font-medium">{who}</span> changed the assignee to{" "}
+            <span className="font-base">{who}</span> changed the assignee to{" "}
             {toLabel}
           </>
         );
@@ -272,7 +274,7 @@ export default function IssueActivityTimeline({
           (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
         return (
           <>
-            <span className="font-medium">{who}</span> requested review from{" "}
+            <span className="font-base">{who}</span> requested review from{" "}
             {name || "a reviewer"}
           </>
         );
@@ -283,7 +285,7 @@ export default function IssueActivityTimeline({
           (p.reviewer_id ? userInfos[String(p.reviewer_id)]?.name : "");
         return (
           <>
-            <span className="font-medium">{who}</span> approved the review (
+            <span className="font-base">{who}</span> approved the review (
             {name || "reviewer"})
           </>
         );
@@ -294,7 +296,7 @@ export default function IssueActivityTimeline({
           (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
         return (
           <>
-            <span className="font-medium">{requester || who}</span> requested to
+            <span className="font-base">{requester || who}</span> requested to
             be assigned
           </>
         );
@@ -308,7 +310,7 @@ export default function IssueActivityTimeline({
           (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
         return (
           <>
-            <span className="font-medium">{recipient || who}</span> accepted{" "}
+            <span className="font-base">{recipient || who}</span> accepted{" "}
             {requester ? `@${requester}` : "the"} assignment request
           </>
         );
@@ -322,7 +324,7 @@ export default function IssueActivityTimeline({
           (p.requester_id ? userInfos[String(p.requester_id)]?.name : "");
         return (
           <>
-            <span className="font-medium">{recipient || who}</span> refused{" "}
+            <span className="font-base">{recipient || who}</span> refused{" "}
             {requester ? `@${requester}` : "the"} assignment request
           </>
         );
@@ -330,13 +332,13 @@ export default function IssueActivityTimeline({
       case "issue_closed":
         return (
           <>
-            <span className="font-medium">{who}</span> closed {title}
+            <span className="font-base">{who}</span> closed {title}
           </>
         );
       default:
         return (
           <>
-            <span className="font-medium">{who}</span> updated {title}
+            <span className="font-base">{who}</span> updated {title}
           </>
         );
     }
@@ -442,7 +444,7 @@ export default function IssueActivityTimeline({
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {renderHeaderCompact(item)}
               <span className="pl-2 text-sm text-gray-500 whitespace-nowrap">
-                {formatRelativeTime(item.created_at)}
+                {formatRelativeTime(item.created_at, tTime)}
               </span>
             </span>
           </div>
@@ -530,7 +532,7 @@ export default function IssueActivityTimeline({
           comment={c}
           replies={replies}
           userInfos={userInfos}
-          formatRelativeTime={formatRelativeTime}
+          formatRelativeTime={(iso: string) => formatRelativeTime(iso, tTime)}
           hoveredCommentId={hoveredCommentId}
           setHoveredCommentId={setHoveredCommentId}
           replyingToCommentId={replyingToCommentId}

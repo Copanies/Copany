@@ -81,16 +81,16 @@ export default function ContributingView({ githubUrl }: ContributingViewProps) {
             strokeWidth={1}
           />
         }
-        title="Add CONTRIBUTING Guide"
-        description={
+        titleKey="addContributingGuide"
+        descriptionKey={
           isLoggedIn
-            ? "Help contributors get started by adding a CONTRIBUTING guide."
-            : "This repository does not have a CONTRIBUTING guide yet. Log in to add one."
+            ? "addContributingGuideDesc"
+            : "addContributingGuideDescNotLoggedIn"
         }
         buttonIcon={
           isLoggedIn ? <ArrowUpRightIcon className="w-4 h-4" /> : undefined
         }
-        buttonTitle={isLoggedIn ? "Add CONTRIBUTING" : undefined}
+        buttonTitleKey={isLoggedIn ? "addContributing" : undefined}
         buttonAction={
           isLoggedIn && newContribUrl
             ? () => window.open(newContribUrl, "_blank")

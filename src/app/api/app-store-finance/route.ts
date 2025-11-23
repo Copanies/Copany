@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseClient } from "@/utils/supabase/server";
 import { AppStoreFinanceDataService } from "@/services/appStoreFinanceData.service";
 
 /**
@@ -18,18 +17,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify user authentication (optional, but good practice)
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // Get finance data (RLS allows public read)
+    // Get finance data (RLS allows public read, no authentication required)
     const reports = await AppStoreFinanceDataService.getFinanceReports(copanyId);
     const chartData = await AppStoreFinanceDataService.getFinanceChartData(copanyId);
 

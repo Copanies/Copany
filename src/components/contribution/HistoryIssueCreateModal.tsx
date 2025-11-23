@@ -211,7 +211,7 @@ export default function HistoryIssueCreateModal({
             <div className="md:hidden space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-base text-gray-700 dark:text-gray-300 mb-1">
                   Issue Title
                 </label>
                 <input
@@ -226,7 +226,7 @@ export default function HistoryIssueCreateModal({
               {/* Level and Completion Date Row */}
               <div className="grid grid-cols-[5rem_1fr] gap-3 w-full">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-base text-gray-700 dark:text-gray-300 mb-1">
                     Level
                   </label>
                   <div className="flex px-3 h-[42px] items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
@@ -244,7 +244,7 @@ export default function HistoryIssueCreateModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-base text-gray-700 dark:text-gray-300 mb-1">
                     Completion Date
                   </label>
                   <input
@@ -261,7 +261,7 @@ export default function HistoryIssueCreateModal({
 
               {/* Assignee */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-base text-gray-700 dark:text-gray-300 mb-1">
                   Assignee
                 </label>
                 <div className="flex flex-row gap-3 items-center w-full">

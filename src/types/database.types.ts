@@ -7,6 +7,8 @@ export enum Platform {
   tvOS = "tvos",
   visionOS = "visionos",
   Web = "web",
+  Windows = "windows",
+  Android = "android",
 }
 
 // Table: copany

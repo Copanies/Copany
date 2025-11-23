@@ -6,6 +6,7 @@ import { convertTransactionsToMonthlyRevenueData } from "@/utils/finance";
 import type { MonthlyRevenueData } from "@/utils/finance";
 import { getMonthlyPeriodSimple } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
+import { useTranslations } from "next-intl";
 
 interface RevenueHistoryTableProps {
   copanyId: string;
@@ -16,6 +17,7 @@ export default function RevenueHistoryTable({
 }: RevenueHistoryTableProps) {
   const { data: transactions = [] } = useTransactions(copanyId);
   const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
+  const tTime = useTranslations("time");
 
   // Convert App Store finance data to transactions format (similar to FinanceOverviewChart)
   const appStoreTransactions = useMemo(() => {
@@ -114,7 +116,7 @@ export default function RevenueHistoryTable({
     const [year, month] = dateStr.split("-");
     if (!year || !month) return dateStr;
     const date = new Date(Number(year), Number(month) - 1, 1);
-    return getMonthlyPeriodSimple(date);
+    return getMonthlyPeriodSimple(date, tTime);
   };
 
   if (isConvertingData) {
@@ -130,7 +132,7 @@ export default function RevenueHistoryTable({
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="font-medium bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <thead className="font-base bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-4 py-3 text-left">Month</th>
                 <th className="px-4 py-3 text-right">Income</th>
@@ -144,7 +146,7 @@ export default function RevenueHistoryTable({
                   key={month.date}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
-                  <td className="px-4 py-3 font-medium">
+                  <td className="px-4 py-3 font-base">
                     {formatMonthDate(month.date)}
                   </td>
                   <td className="px-4 py-3 text-right">

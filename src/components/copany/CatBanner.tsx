@@ -2,15 +2,16 @@
 import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import Button from "../commons/Button";
-import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import hand_draw_right_arrow_01 from "@/assets/hand_draw_right_arrow_01.png";
 import hand_draw_right_arrow_02 from "@/assets/hand_draw_right_arrow_02.png";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 interface CatBannerProps {
   title: string;
   subtitle?: string;
   className?: string;
+  onBrowseProjects?: () => void;
 }
 
 /**
@@ -19,10 +20,12 @@ interface CatBannerProps {
 export default function CatBanner({
   title,
   className = "",
+  onBrowseProjects,
 }: CatBannerProps) {
   const [catAvatars, setCatAvatars] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const router = useRouter();
+  const t = useTranslations("catBanner");
   useEffect(() => {
     // Generate random cat avatars for the border
     const avatars = Array.from({ length: 43 }, () =>
@@ -93,13 +96,13 @@ export default function CatBanner({
             <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
               {title}
             </h1>
-            <div className="flex flex-row items-top justify-center gap-4">
-              <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-row items-top justify-start gap-4">
+              <div className="flex flex-col items-center justify-center mb-auto">
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  找到项目
+                  {t("findProject.title")}
                 </p>
                 <p className="text-gray-900 dark:text-white text-center max-w-60">
-                  寻找感兴趣的 copany 项目, 或发起 copany 项目
+                  {t("findProject.description")}
                 </p>
               </div>
               <Image
@@ -108,12 +111,12 @@ export default function CatBanner({
                 className="h-5 w-auto mt-1"
               />
 
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center mb-auto">
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  合作创造
+                  {t("collaborate.title")}
                 </p>
                 <p className="text-gray-900 dark:text-white text-center max-w-60">
-                  以实现「愿景」为目标, 参与讨论、认领并完成任务
+                  {t("collaborate.description")}
                 </p>
               </div>
               <Image
@@ -121,28 +124,82 @@ export default function CatBanner({
                 alt="hand_draw_right_arrow_02"
                 className="h-5 w-auto mt-1"
               />
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center mb-auto">
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  分配收益
+                  {t("distributeRevenue.title")}
                 </p>
                 <p className="text-gray-900 dark:text-white text-center max-w-60">
-                  每月按「贡献比例」获取收益, 可以理解为贡献及“股份”
+                  {t("distributeRevenue.description")}
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="md"
-              className="mt-4 -mb-6"
-              onClick={() => {
-                router.push("/copany/5");
-              }}
-            >
-              <div className="flex flex-row items-center gap-2">
-                <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2} />
-                <p className="!text-nowrap font-semiblod">Learn More</p>
-              </div>
-            </Button>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                variant="ghost"
+                size="md"
+                className="mt-4 -mb-6"
+                onClick={() => {
+                  if (onBrowseProjects) {
+                    onBrowseProjects();
+                  } else {
+                    // Fallback: scroll to copany grid if no callback provided
+                    const element = document.getElementById("copany-grid");
+                    if (element) {
+                      const headerHeight = 52; // MainNavigation height
+                      const paddingTop = 20;
+                      const elementPosition =
+                        element.getBoundingClientRect().top;
+                      const offsetPosition =
+                        elementPosition +
+                        window.pageYOffset -
+                        headerHeight -
+                        paddingTop;
+
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth",
+                      });
+                    }
+                  }
+                }}
+              >
+                <div className="flex flex-row items-center gap-2">
+                  <p className="!text-nowrap font-semibold">
+                    {t("buttons.browse")}
+                  </p>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="md"
+                className="mt-4 -mb-6"
+                onClick={() => {
+                  router.push("/copany/5?tab=about");
+                }}
+              >
+                <div className="flex flex-row items-center gap-2">
+                  <p className="!text-nowrap font-semibold">
+                    {t("buttons.learnMore")}
+                  </p>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="md"
+                className="mt-4 -mb-6"
+                onClick={() => {
+                  router.push("/new");
+                }}
+              >
+                <div className="flex flex-row items-center gap-2">
+                  <p className="!text-nowrap font-semibold">
+                    {t("buttons.startProject")}
+                  </p>
+                </div>
+              </Button>
+            </div>
           </div>
           {/* Bottom cats */}
           <div className="flex flex-row gap-0 w-fit">

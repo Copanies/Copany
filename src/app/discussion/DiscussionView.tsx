@@ -33,6 +33,7 @@ import Modal from "@/components/commons/Modal";
 import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 import UserAvatar from "@/components/commons/UserAvatar";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
+import { useTranslations } from "next-intl";
 
 export default function DiscussionView() {
   const {
@@ -119,8 +120,8 @@ export default function DiscussionView() {
               strokeWidth={1}
             />
           }
-          title="No discussions yet"
-          description="There are no discussions across all copanies yet."
+          titleKey="noDiscussionsAcrossCopanies"
+          descriptionKey="noDiscussionsAcrossCopaniesDesc"
         />
       </div>
     );
@@ -210,6 +211,7 @@ function DiscussionItem({
 }) {
   const isDarkMode = useDarkMode();
   const router = useRouter();
+  const tTime = useTranslations("time");
 
   // Use batch fetched data instead of individual queries
   const hasVoted = votedDiscussionIds.includes(String(discussion.id));
@@ -252,7 +254,7 @@ function DiscussionItem({
               </span>
               <span>·</span>
               <time title={discussion.created_at}>
-                {formatRelativeTime(discussion.created_at)}
+                {formatRelativeTime(discussion.created_at, tTime)}
               </time>
 
               {discussion.copany_id && (

@@ -23,6 +23,7 @@ import { getMonthlyPeriod } from "@/utils/time";
 import { useRouter } from "next/navigation";
 import DistributeDetailModal from "./_components/DistributeDetailModal";
 import DistributeEvidenceModal from "./_components/DistributeEvidenceModal";
+import { useTranslations } from "next-intl";
 
 // Helper function to format amount with sign
 function formatAmount(amount: number, currency: string): string {
@@ -31,6 +32,8 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 export default function DistributeView({ copanyId }: { copanyId: string }) {
+  const t = useTranslations("distributeView");
+  const tTime = useTranslations("time");
   const router = useRouter();
   const { data: copany } = useCopany(copanyId);
   const { data: currentUser } = useCurrentUser();
@@ -83,7 +86,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     ): { start: Date; end: Date; key: string } => {
       if (!monthStr) {
         // Fallback to current month if distribution_month is null
-        return getMonthlyPeriod(new Date());
+        return getMonthlyPeriod(new Date(), tTime);
       }
 
       const [yearStr, monthPart] = monthStr.split("-");
@@ -94,18 +97,18 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
       const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
       const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        tTime("jan"),
+        tTime("feb"),
+        tTime("mar"),
+        tTime("apr"),
+        tTime("may"),
+        tTime("jun"),
+        tTime("jul"),
+        tTime("aug"),
+        tTime("sep"),
+        tTime("oct"),
+        tTime("nov"),
+        tTime("dec"),
       ];
 
       const key = `${months[month]} ${year}`;
@@ -138,7 +141,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
     return Array.from(groups.values()).sort(
       (a, b) => b.period.start.getTime() - a.period.start.getTime()
     );
-  }, [distributes]);
+  }, [distributes, t, tTime]);
 
   // Separate current distribution month and historical records
   const currentDistributionGroup = useMemo(() => {
@@ -190,16 +193,10 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="No distribute records"
-          description={
-            <>
-              Distribution records are automatically generated based on the
-              transaction log and each contributor&apos;s allocation ratio. The
-              records are generated daily based on the distribution settings.
-            </>
-          }
+          titleKey="noDistributeRecords"
+          descriptionKey="noDistributeRecordsDesc"
           buttonIcon={<ArrowUpRightIcon className="w-4 h-4" />}
-          buttonTitle="View Finance"
+          buttonTitleKey="viewFinance"
           buttonAction={() => {
             router.push(
               `/copany/${copanyId}?tab=Distribute & Finance&distributeFinanceTab=Overview`
@@ -217,17 +214,17 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
         currentDistributionGroup.items.length > 0 && (
           <div className="flex flex-col gap-3">
             <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              Current Distribution Month
+              {t("currentDistributionMonth")}
             </p>
             <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <div className="">
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-sm font-base">
                       {currentDistributionGroup.period.key}
                     </h3>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-base">
                       {formatAmount(
                         currentDistributionGroup.totalAmount,
                         currentDistributionGroup.items[0]?.currency || "USD"
@@ -260,7 +257,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
       {historicalGroups.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Historical Distribution Records
+            {t("historicalDistributionRecords")}
           </p>
           <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             {historicalGroups.map((group) => (
@@ -268,8 +265,8 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Period Header */}
                 <div className="flex h-11 items-center w-full px-3 md:px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center w-full justify-between">
-                    <h3 className="text-sm font-medium">{group.period.key}</h3>
-                    <span className="text-sm font-medium">
+                    <h3 className="text-sm font-base">{group.period.key}</h3>
+                    <span className="text-sm font-base">
                       {formatAmount(
                         group.totalAmount,
                         group.items[0]?.currency || "USD"
@@ -281,7 +278,7 @@ export default function DistributeView({ copanyId }: { copanyId: string }) {
                 {/* Distribute Items (group-level horizontal scroll) */}
                 {group.items.length === 0 ? (
                   <div className="p-4 text-center text-gray-600 dark:text-gray-400">
-                    No distribution records for this month.
+                    {t("noDistributionRecordsForMonth")}
                   </div>
                 ) : (
                   <DistributeGroupList
@@ -399,6 +396,7 @@ function DistributeGroupList({
   onOpenTransfer: (id: string) => void;
   onOpenView: (item: DistributeRow) => void;
 }) {
+  const t = useTranslations("distributeView");
   const containerRef = useRef<HTMLDivElement>(null);
   const [actionWidth, setActionWidth] = useState<number>(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -521,12 +519,10 @@ function DistributeGroupList({
                         onClick={() => onOpenTransfer(d.id)}
                         disabled={!isOwner}
                         disableTooltipConent={
-                          !isOwner
-                            ? "You are not the owner of this copany"
-                            : undefined
+                          !isOwner ? t("notOwnerTooltip") : undefined
                         }
                       >
-                        Distribute
+                        {t("distribute")}
                       </Button>
                     )}
                     {(d.status === "in_review" || d.status === "confirmed") && (
@@ -536,14 +532,14 @@ function DistributeGroupList({
                         className="!text-sm"
                         disabled={!canView}
                         disableTooltipConent={
-                          !canView ? "No permission to view" : undefined
+                          !canView ? t("noPermissionToView") : undefined
                         }
                         onClick={() => {
                           if (!canView) return;
                           onOpenView(d);
                         }}
                       >
-                        View
+                        {t("view")}
                       </Button>
                     )}
                   </div>

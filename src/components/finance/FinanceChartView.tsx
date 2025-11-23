@@ -8,6 +8,7 @@ import { scaleLinear, scaleTime } from "@visx/scale";
 import { AxisBottom } from "@visx/axis";
 import { useTooltip } from "@visx/tooltip";
 import { useDarkMode } from "@/utils/useDarkMode";
+import { useTranslations } from "next-intl";
 
 export interface FinanceChartDataPoint {
   date: string; // YYYY-MM format
@@ -32,6 +33,7 @@ export default function FinanceChartView({
     null
   );
   const isDarkMode = useDarkMode();
+  const tTime = useTranslations("time");
   const gridColor = isDarkMode
     ? "rgba(148, 163, 184, 0.25)"
     : "rgba(15, 23, 42, 0.08)";
@@ -452,36 +454,36 @@ export default function FinanceChartView({
                   if (isFirstMonth || yearChanged) {
                     // Show year only on first month of each year
                     const months = [
-                      "Jan",
-                      "Feb",
-                      "Mar",
-                      "Apr",
-                      "May",
-                      "Jun",
-                      "Jul",
-                      "Aug",
-                      "Sep",
-                      "Oct",
-                      "Nov",
-                      "Dec",
+                      tTime("jan"),
+                      tTime("feb"),
+                      tTime("mar"),
+                      tTime("apr"),
+                      tTime("may"),
+                      tTime("jun"),
+                      tTime("jul"),
+                      tTime("aug"),
+                      tTime("sep"),
+                      tTime("oct"),
+                      tTime("nov"),
+                      tTime("dec"),
                     ];
                     return `${months[d.getMonth()]} ${d.getFullYear()}`;
                   }
 
                   // Otherwise show only month
                   const months = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
+                    tTime("jan"),
+                    tTime("feb"),
+                    tTime("mar"),
+                    tTime("apr"),
+                    tTime("may"),
+                    tTime("jun"),
+                    tTime("jul"),
+                    tTime("aug"),
+                    tTime("sep"),
+                    tTime("oct"),
+                    tTime("nov"),
+                    tTime("dec"),
                   ];
                   return months[d.getMonth()];
                 }}

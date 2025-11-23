@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
+import { useTranslations } from "next-intl";
 import {
   IssueWithAssignee,
   IssuePriority,
@@ -116,6 +117,7 @@ function groupIssuesByState(issues: IssueWithAssignee[]) {
 }
 
 export default function IssuesView({ copanyId }: { copanyId: string }) {
+  const t = useTranslations("issuesView");
   const isDarkMode = useDarkMode();
   const { data: issuesData, isLoading: isIssuesLoading } = useIssues(copanyId);
   const issues = issuesData || EMPTY_ISSUES_ARRAY;
@@ -366,7 +368,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             );
           })}
           {rest > 0 ? (
-            <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">
+            <div className="w-[22px] h-[22px] rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-base">
               +{rest}
             </div>
           ) : null}
@@ -512,7 +514,7 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
   // Create menu items
   const contextMenuItems: ContextMenuItem[] = [
     {
-      label: "Delete Issue",
+      label: t("deleteIssue"),
       onClick: () => handleDeleteIssue(contextMenu.issueId),
       className: "text-gray-900 dark:text-gray-100",
     },
@@ -532,13 +534,13 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
               strokeWidth={1}
             />
           }
-          title="Add first issue"
-          description="Issues are the smallest task units in Copany and form the foundation of contributions. By completing an Issue, members earn corresponding contribution points. Each Issue has its own priority, status, and contribution level."
+          titleKey="addFirstIssue"
+          descriptionKey="addFirstIssueDesc"
           buttonIcon={<PlusIcon className="w-4 h-4" />}
-          buttonTitle="New Issue"
+          buttonTitleKey="newIssue"
           buttonAction={() => setIsModalOpen(true)}
           buttonDisabled={!currentUser}
-          buttonTooltip="Sign in to create an issue"
+          buttonTooltipKey="signInToCreateIssue"
         />
         {createIssueModal()}
       </div>
@@ -552,10 +554,10 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
         className="min-w-fit"
         size="md"
         disabled={!currentUser}
-        disableTooltipConent="Sign in to create an issue"
+        disableTooltipConent={t("signInToCreateIssue")}
       >
         <div className="flex flex-row items-center gap-1">
-          <span className="text-base">New Issue</span>
+          <span className="text-base">{t("newIssue")}</span>
         </div>
       </Button>
     );
@@ -581,12 +583,12 @@ export default function IssuesView({ copanyId }: { copanyId: string }) {
             // Keep on the same path and update only query string
             router.replace(qs ? `?${qs}` : "?");
           }}
-          placeholder="Search issues"
+          placeholder={t("searchIssues")}
           className="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 w-56 max-w-full shrink min-w-24 bg-transparent dark:text-gray-100 text-base"
         />
       </div>
       <Suspense
-        fallback={<LoadingView type="label" label="Loading issues..." />}
+        fallback={<LoadingView type="label" label={t("loadingIssues")} />}
       >
         <div className="relative w-full min-w-0 pb-2">
           {groupIssuesByState(filteredIssues).map((group) => (

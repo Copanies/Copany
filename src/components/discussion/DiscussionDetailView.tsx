@@ -24,6 +24,7 @@ import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import DiscussionCommentTimeline from "@/app/copany/[id]/@discussion_slot/discussion/[discussionId]/DiscussionCommentTimeline";
 import { formatRelativeTime } from "@/utils/time";
 import LoadingView from "@/components/commons/LoadingView";
+import { useTranslations } from "next-intl";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import UserAvatar from "@/components/commons/UserAvatar";
 import Dropdown from "@/components/commons/Dropdown";
@@ -43,6 +44,7 @@ export default function DiscussionDetailView({
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
+  const tTime = useTranslations("time");
 
   // Fetch discussion - derive from list cache using select
   // Always call both hooks to satisfy Rules of Hooks, use enabled to control execution
@@ -216,7 +218,7 @@ export default function DiscussionDetailView({
                 )}
               <span>·</span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {formatRelativeTime(discussion.created_at)}
+                {formatRelativeTime(discussion.created_at, tTime)}
               </span>
             </div>
           </div>
