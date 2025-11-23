@@ -8,7 +8,11 @@ import { useDiscussionLabels } from "@/hooks/discussionLabels";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
-import { PlusIcon, ScaleIcon } from "@heroicons/react/24/outline";
+import {
+  LightBulbIcon,
+  PlusIcon,
+  ScaleIcon,
+} from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import { shimmerDataUrlWithTheme } from "@/utils/shimmer";
@@ -208,7 +212,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
       <div className="flex flex-col gap-4 h-full">
         <div className="flex flex-col gap-2">
           {/* Different layouts based on whether cover image exists */}
-          <div className="relative flex flex-col items-center justify-center gap-2 px-5 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
+          <div className="relative flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-[20px] overflow-hidden aspect-[1.8]">
             {copany.cover_image_url && copany.logo_url ? (
               <>
                 {/* Cover image layout: fill the space, no blur, logo in top-left */}
@@ -343,7 +347,15 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                 <PlatformIcons platforms={copany.platforms} size="sm" />
                 {/* <AssetLinksSection copany={copany} size="sm" /> */}
               </div>
-              {amrLabel}
+              {beginIdeaDiscussion ? (
+                <div className="flex items-center gap-1 my-auto">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    💡 {tRightPanel("newIdea")}
+                  </span>
+                </div>
+              ) : (
+                amrLabel
+              )}
             </div>
             <div className="flex flex-row min-w-0 gap-2">
               <div className="flex flex-col gap-2 flex-1 min-w-0">
@@ -393,7 +405,7 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
                   )}
                 </div>
               </div>
-              {!isConvertingData && (
+              {!isConvertingData && !beginIdeaDiscussion && (
                 <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
                   {/* Mini chart */}
                   <MiniFinanceChart

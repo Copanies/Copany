@@ -90,7 +90,8 @@
     "contribution": "贡献",
     "noContributionDataYet": "暂无贡献数据。",
     "contributionBasedRevenue": "按贡献分配收益",
-    "revenueNotGuaranteed": "不保证收益分配"
+    "revenueNotGuaranteed": "不保证收益分配",
+    "newIdea": "新想法"
   },
   "emptyPlaceholder": {
     "noCopaniesFound": "未找到项目",

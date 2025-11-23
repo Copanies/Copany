@@ -90,7 +90,8 @@
     "contribution": "Contribution",
     "noContributionDataYet": "No contribution data yet.",
     "contributionBasedRevenue": "Contribution-based revenue",
-    "revenueNotGuaranteed": "Revenue not guaranteed"
+    "revenueNotGuaranteed": "Revenue not guaranteed",
+    "newIdea": "New Idea"
   },
   "emptyPlaceholder": {
     "noCopaniesFound": "No copanies found",
