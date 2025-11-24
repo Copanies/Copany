@@ -11,7 +11,7 @@ import {
 } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { useRepoReadme } from "@/hooks/readme";
+import { useRepoReadme } from "@/hooks/githubDocs";
 import type { Copany } from "@/types/database.types";
 
 interface ReadmeViewProps {

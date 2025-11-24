@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useState, useEffect, useRef } from "react";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { useRepoLicense } from "@/hooks/readme";
+import { useRepoLicense } from "@/hooks/githubDocs";
 import { updateCopanyLicenseAction } from "@/actions/copany.actions";
 import LoadingView from "@/components/commons/LoadingView";
 import {
