@@ -25,8 +25,10 @@ export default function FinanceOverviewChart({
   showOneYearRevenue = true,
   showAllRevenue = true,
 }: FinanceOverviewChartProps) {
-  const { data: transactions = [] } = useTransactions(copanyId);
-  const { data: appStoreFinanceData } = useAppStoreFinance(copanyId);
+  const { data: transactions = [], isLoading: isLoadingTransactions } =
+    useTransactions(copanyId);
+  const { data: appStoreFinanceData, isLoading: isLoadingAppStoreFinance } =
+    useAppStoreFinance(copanyId);
   const t = useTranslations("finance");
 
   // Convert App Store finance data to transactions format (similar to FinanceView)
@@ -149,9 +151,17 @@ export default function FinanceOverviewChart({
     showAllRevenue;
 
   const hasNoData = chartData.length === 0;
+  const isLoading = isLoadingTransactions || isLoadingAppStoreFinance;
 
-  if (isConvertingData) {
-    return <LoadingView type="label" label={t("convertingCurrencyData")} />;
+  if (isLoading || isConvertingData) {
+    return (
+      <LoadingView
+        type="label"
+        label={
+          isLoading ? t("loadingFinanceData") : t("convertingCurrencyData")
+        }
+      />
+    );
   }
 
   return (

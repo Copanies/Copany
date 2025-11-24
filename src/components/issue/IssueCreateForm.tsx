@@ -18,7 +18,7 @@ import Button from "@/components/commons/Button";
 import IssueLevelSelector from "@/components/issue/IssueLevelSelector";
 import { User } from "@supabase/supabase-js";
 import { EMPTY_STRING } from "@/utils/constants";
-import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
+import { useLanguage } from "@/utils/useLanguage";
 
 // ============================================================
 // DEFAULT ISSUE TEMPLATE
@@ -81,8 +81,8 @@ export default function IssueCreateForm({
   currentUser: User | null;
   contributors: CopanyContributorWithUserInfo[];
 }) {
-  const { isChinesePreferred } = usePreferredLanguage();
-  const defaultTemplate = isChinesePreferred
+  const { language } = useLanguage();
+  const defaultTemplate = language === "zh"
     ? DEFAULT_ISSUE_TEMPLATE_ZH
     : DEFAULT_ISSUE_TEMPLATE_EN;
 

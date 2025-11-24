@@ -7,7 +7,7 @@ import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { MapIcon, ArrowUpRightIcon } from "@heroicons/react/24/outline";
 import { useRepoContributing } from "@/hooks/contributing";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
+import { useLanguage } from "@/utils/useLanguage";
 import { EMPTY_STRING } from "@/utils/constants";
 
 interface ContributingViewProps {
@@ -16,7 +16,7 @@ interface ContributingViewProps {
 
 const generateNewContributingUrl = (
   githubUrl: string,
-  preferChinese?: boolean
+  language: "zh" | "en"
 ): string | null => {
   try {
     const url = new URL(githubUrl);
@@ -24,7 +24,7 @@ const generateNewContributingUrl = (
     if (pathSegments.length >= 2) {
       const [owner, repo] = pathSegments;
       const cleanRepo = repo.replace(/\.git$/, "");
-      const filename = preferChinese ? "CONTRIBUTING.zh.md" : "CONTRIBUTING.md";
+      const filename = language === "zh" ? "CONTRIBUTING.zh.md" : "CONTRIBUTING.md";
       return `https://github.com/${owner}/${cleanRepo}/new/main?filename=${filename}`;
     }
     return null;
@@ -34,14 +34,11 @@ const generateNewContributingUrl = (
 };
 
 export default function ContributingView({ githubUrl }: ContributingViewProps) {
-  const { isChinesePreferred } = usePreferredLanguage();
+  const { language } = useLanguage();
   const { data: currentUser } = useCurrentUser();
   const isLoggedIn = !!currentUser;
 
-  const { data, isLoading } = useRepoContributing(
-    githubUrl,
-    isChinesePreferred
-  );
+  const { data, isLoading } = useRepoContributing(githubUrl);
   const [content, setContent] = useState<string>(EMPTY_STRING);
   const [notFound, setNotFound] = useState(false);
 
@@ -71,7 +68,7 @@ export default function ContributingView({ githubUrl }: ContributingViewProps) {
 
   if (notFound) {
     const newContribUrl = githubUrl
-      ? generateNewContributingUrl(githubUrl, isChinesePreferred)
+      ? generateNewContributingUrl(githubUrl, language)
       : null;
     return (
       <EmptyPlaceholderView

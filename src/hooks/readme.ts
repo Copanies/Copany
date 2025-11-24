@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getRepoReadmeWithFilenameAction, getRepoLicenseAction, getRepoLicenseTypeAction } from "@/actions/github.action";
+import { useLanguage } from "@/utils/useLanguage";
 
 function readmeKey(githubUrl: string) { return ["readme", githubUrl] as const; }
 function licenseKey(githubUrl: string) { return ["license", githubUrl] as const; }
@@ -21,9 +22,12 @@ const decodeGitHubContent = (base64String: string): string => {
   return decoder.decode(bytes);
 };
 
-export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean) {
+export function useRepoReadme(githubUrl?: string | null) {
+  const { language } = useLanguage();
+  const preferChinese = language === "zh";
+  
   return useQuery<ReadmeResult>({
-    queryKey: githubUrl ? [...readmeKey(githubUrl), preferChinese ? "zh" : "en"] : ["readme", "none"],
+    queryKey: githubUrl ? [...readmeKey(githubUrl), language] : ["readme", "none"],
     queryFn: async () => {
       if (!githubUrl) return { content: "No README", error: "NOT_FOUND" };
       console.log("useRepoReadme", githubUrl, preferChinese);
@@ -35,17 +39,20 @@ export function useRepoReadme(githubUrl?: string | null, preferChinese?: boolean
             const res = await fetch(`/api/readme?githubUrl=${encodeURIComponent(githubUrl)}&type=readme&filename=README.zh.md`);
             if (res.ok) {
               const json = await res.json();
-              if (json.error) {
-                // If API returns error type, preserve it
+              if (json.error && json.error !== "NOT_FOUND") {
+                // If API returns error type (except NOT_FOUND), preserve it
+                // NOT_FOUND means file doesn't exist, so we should fallback to default README
                 return { error: json.error as ReadmeErrorType };
               }
               if (json.content && json.content !== "No README") {
                 return { content: json.content as string };
               }
+              // If json.error is "NOT_FOUND" or json.content is "No README", fall through to try default README
             } else if (res.status >= 500) {
               // Server error (5xx) indicates network/server issue
               return { error: "NETWORK_ERROR" };
             }
+            // If res.ok is false but status < 500, fall through to try default README
           } catch (_error) {
             // Network error (fetch failed, timeout, etc.)
             return { error: "NETWORK_ERROR" };

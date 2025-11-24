@@ -110,6 +110,7 @@
     "description": "探索或发起感兴趣的 Copany 项目\n围绕愿景协作，讨论、领取并完成任务\n按贡献比例分配收益，贡献即“股份”"
   },
   "finance": {
+    "loadingFinanceData": "加载财务数据中...",
     "convertingCurrencyData": "转换货币数据中...",
     "latestRevenue": "最新收益",
     "noRevenue": "暂无收益",

@@ -44,8 +44,10 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const isDarkMode = useDarkMode();
   const { data: discussionsData } = useDiscussions(copany.id);
   const { data: labels } = useDiscussionLabels(copany.id);
-  const { data: transactions = [] } = useTransactions(copany.id);
-  const { data: appStoreFinanceData } = useAppStoreFinance(copany.id);
+  const { data: transactions = [], isLoading: isLoadingTransactions } =
+    useTransactions(copany.id);
+  const { data: appStoreFinanceData, isLoading: isLoadingAppStoreFinance } =
+    useAppStoreFinance(copany.id);
   const t = useTranslations("finance");
   const tRightPanel = useTranslations("rightPanel");
 
@@ -226,9 +228,32 @@ function CopanyCard({ copany, innerRef }: CopanyCardProps) {
     );
   }, [chartData]);
 
+  const isLoadingFinanceData =
+    isLoadingTransactions || isLoadingAppStoreFinance || isConvertingData;
+
   const amrLabel = (
     <div className="flex items-center gap-1">
-      {chartData.length > 0 && amr !== 0 ? (
+      {isLoadingFinanceData ? (
+        <>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+          >
+            <path
+              d="M7.63398 2.5C8.01888 1.83333 8.98112 1.83333 9.36603 2.5L14.5622 11.5C14.9471 12.1667 14.466 13 13.6962 13H3.30385C2.53405 13 2.05292 12.1667 2.43782 11.5L7.63398 2.5Z"
+              fill="#9CA3AF"
+              className="dark:fill-gray-500"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 whitespace-nowrap">
+            {t("loadingFinanceData")}
+          </span>
+        </>
+      ) : chartData.length > 0 && amr !== 0 ? (
         <>
           <svg
             width="16"
