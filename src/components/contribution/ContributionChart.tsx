@@ -198,7 +198,7 @@ export default function ContributionChart({
       user,
       monthlyData,
     };
-  }, [contributions, user, monthRange]);
+  }, [contributions, user, monthRange, monthNames]);
 
   // If globalMaxCount is not provided, calculate local max value as fallback
   const effectiveMaxCount =
