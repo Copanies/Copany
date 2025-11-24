@@ -13,14 +13,44 @@ function detectBrowserLanguage(): SupportedLocale {
     return "en";
   }
 
-  const browserLang = navigator.language.toLowerCase();
-  const chineseLanguageCodes = ["zh", "zh-cn", "zh-tw", "zh-hk", "zh-sg", "zh-mo"];
+  // Get browser language preferences
+  const primaryLanguage = navigator.language;
+  
+  // Check if the primary preferred language is Chinese
+  const chineseLanguageCodes = [
+    "zh", // Generic Chinese
+    "zh-CN", // Simplified Chinese (China)
+    "zh-TW", // Traditional Chinese (Taiwan)
+    "zh-HK", // Traditional Chinese (Hong Kong)
+    "zh-SG", // Simplified Chinese (Singapore)
+    "zh-MO", // Traditional Chinese (Macau)
+  ];
 
-  if (chineseLanguageCodes.some((code) => browserLang.startsWith(code))) {
-    return "zh";
+  // Only check the primary language (navigator.language), not all languages
+  const isChinesePreferred = chineseLanguageCodes.some((chineseCode) =>
+    primaryLanguage.toLowerCase().startsWith(chineseCode.toLowerCase())
+  );
+
+  return isChinesePreferred ? "zh" : "en";
+}
+
+/**
+ * Get initial language from localStorage or browser detection
+ * Used for initial state to avoid flash of wrong language
+ */
+function getInitialLanguage(): SupportedLocale {
+  if (typeof window === "undefined") {
+    return "en";
   }
-
-  return "en";
+  
+  // Try to read from localStorage first
+  const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as SupportedLocale | null;
+  if (stored === "zh" || stored === "en") {
+    return stored;
+  }
+  
+  // If no stored preference, detect from browser
+  return detectBrowserLanguage();
 }
 
 /**
@@ -28,7 +58,7 @@ function detectBrowserLanguage(): SupportedLocale {
  * Reads from localStorage, falls back to browser language detection
  */
 export function useLanguage() {
-  const [language, setLanguageState] = useState<SupportedLocale>("en");
+  const [language, setLanguageState] = useState<SupportedLocale>(getInitialLanguage());
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {

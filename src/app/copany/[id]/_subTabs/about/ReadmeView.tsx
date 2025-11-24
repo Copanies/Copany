@@ -11,7 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 import EmptyPlaceholderView from "@/components/commons/EmptyPlaceholderView";
 import { useCurrentUser } from "@/hooks/currentUser";
-import { usePreferredLanguage } from "@/utils/usePreferredLanguage";
 import { useRepoReadme } from "@/hooks/readme";
 import type { Copany } from "@/types/database.types";
 
@@ -47,7 +46,6 @@ const generateNewReadmeUrl = (githubUrl: string): string | null => {
 };
 
 export default function ReadmeView({ githubUrl, copany }: ReadmeViewProps) {
-  const { isChinesePreferred } = usePreferredLanguage();
   const t = useTranslations("emptyPlaceholder");
 
   const { data: currentUser } = useCurrentUser();
@@ -65,7 +63,7 @@ export default function ReadmeView({ githubUrl, copany }: ReadmeViewProps) {
     isFetching,
     error,
     refetch,
-  } = useRepoReadme(githubUrl, isChinesePreferred);
+  } = useRepoReadme(githubUrl);
 
   const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
   const readmeError = readmeResult?.error;

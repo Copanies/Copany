@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getRepoContributingAction } from "@/actions/github.action";
+import { useLanguage } from "@/utils/useLanguage";
 
 function contributingKey(githubUrl: string) { return ["contributing", githubUrl] as const; }
 
@@ -12,9 +13,12 @@ const decodeGitHubContent = (base64String: string): string => {
   return decoder.decode(bytes);
 };
 
-export function useRepoContributing(githubUrl?: string | null, preferChinese?: boolean) {
+export function useRepoContributing(githubUrl?: string | null) {
+  const { language } = useLanguage();
+  const preferChinese = language === "zh";
+  
   return useQuery<string>({
-    queryKey: githubUrl ? [...contributingKey(githubUrl), preferChinese ? "zh" : "en"] : ["contributing", "none"],
+    queryKey: githubUrl ? [...contributingKey(githubUrl), language] : ["contributing", "none"],
     queryFn: async () => {
       if (!githubUrl) return "No CONTRIBUTING";
       console.log("useRepoContributing", githubUrl, preferChinese);
