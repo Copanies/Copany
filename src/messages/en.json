@@ -110,6 +110,7 @@
     "description": "Start a project or join one you love.\nCreate together with vision and mission.\nEarn what your contribution deserves."
   },
   "finance": {
+    "loadingFinanceData": "Loading finance data...",
     "convertingCurrencyData": "Converting currency data...",
     "latestRevenue": "Latest Revenue",
     "noRevenue": "No Revenue",
