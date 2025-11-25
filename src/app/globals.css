@@ -121,36 +121,36 @@ main.pure_html li {
   @apply leading-relaxed;
 }
 
-/* NProgress styles */
+/* NProgress styles - override default nprogress.css */
 #nprogress {
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 #nprogress .bar {
-  background: #171717;
-  position: fixed;
-  z-index: 9999;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
+  background: #3b82f6 !important;
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 2px !important;
 }
 
 .dark #nprogress .bar {
-  background: #fbf9f5;
+  background: #60a5fa !important;
 }
 
 #nprogress .peg {
-  display: block;
-  position: absolute;
-  right: 0px;
-  width: 100px;
-  height: 100%;
-  /* box-shadow: 0 0 10px #3b82f6, 0 0 5px #3b82f6; */
-  opacity: 1;
-  transform: rotate(3deg) translate(0px, -4px);
+  display: block !important;
+  position: absolute !important;
+  right: 0px !important;
+  width: 100px !important;
+  height: 100% !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  transform: rotate(3deg) translate(0px, -4px) !important;
 }
 
-/* .dark #nprogress .peg {
-  box-shadow: 0 0 10px #60a5fa, 0 0 5px #60a5fa;
-} */
+.dark #nprogress .peg {
+  box-shadow: none !important;
+}

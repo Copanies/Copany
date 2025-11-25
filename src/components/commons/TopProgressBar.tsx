@@ -14,18 +14,50 @@ NProgress.configure({
   speed: 300,
 });
 
+// Global state for progress bar delay mechanism
+let showProgressTimer: NodeJS.Timeout | null = null;
+let navigationStartTime: number | null = null;
+const MIN_LOAD_TIME = 1000; // Minimum time (ms) before showing progress bar
+
 // Global progress bar manager
 export const progressBarManager = {
   start: () => {
     if (typeof window !== "undefined") {
-      NProgress.start();
+      navigationStartTime = Date.now();
+      // Clear any existing timer
+      if (showProgressTimer) {
+        clearTimeout(showProgressTimer);
+      }
+      // Delay showing progress bar - only show if loading takes longer than MIN_LOAD_TIME
+      showProgressTimer = setTimeout(() => {
+        NProgress.start();
+        showProgressTimer = null;
+      }, MIN_LOAD_TIME);
     }
   },
   done: () => {
     if (typeof window !== "undefined") {
+      // Clear the delay timer if navigation completed quickly
+      if (showProgressTimer) {
+        clearTimeout(showProgressTimer);
+        showProgressTimer = null;
+      }
+      // Check if navigation was fast (less than MIN_LOAD_TIME)
+      const duration = navigationStartTime
+        ? Date.now() - navigationStartTime
+        : 0;
+      if (duration < MIN_LOAD_TIME) {
+        // Navigation completed quickly, don't show progress bar
+        NProgress.done();
+        navigationStartTime = null;
+        return;
+      }
+      // Navigation took longer, ensure progress bar is completed
       NProgress.done();
+      navigationStartTime = null;
     }
   },
+  getNavigationStartTime: () => navigationStartTime,
 };
 
 export default function TopProgressBar() {
@@ -68,7 +100,7 @@ export default function TopProgressBar() {
       // Only trigger progress bar if pathname actually changed
       if (newPath && newPath !== currentPath && !isNavigatingRef.current) {
         isNavigatingRef.current = true;
-        NProgress.start();
+        progressBarManager.start();
       }
       return originalPushState.apply(window.history, args);
     };
@@ -79,7 +111,7 @@ export default function TopProgressBar() {
       return originalReplaceState.apply(window.history, args);
     };
 
-    // Listen for Link clicks - start progress bar immediately
+    // Listen for Link clicks - delay showing progress bar
     const handleLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const link = target.closest("a[href]");
@@ -97,7 +129,7 @@ export default function TopProgressBar() {
           !link.hasAttribute("download")
         ) {
           isNavigatingRef.current = true;
-          NProgress.start();
+          progressBarManager.start();
         }
       }
     };
@@ -105,7 +137,7 @@ export default function TopProgressBar() {
     // Listen for custom navigation events
     const handleNavigationStart = () => {
       isNavigatingRef.current = true;
-      NProgress.start();
+      progressBarManager.start();
     };
 
     const handleNavigationEnd = () => {
@@ -123,7 +155,7 @@ export default function TopProgressBar() {
       // Only start progress bar if not already navigating (avoid double trigger)
       if (!isNavigatingRef.current) {
         isNavigatingRef.current = true;
-        NProgress.start();
+        progressBarManager.start();
       }
       // Progress bar will be completed when pathname changes in useEffect
     };
@@ -167,13 +199,16 @@ export default function TopProgressBar() {
       return;
     }
 
+    // Mark navigation as complete
+    isNavigatingRef.current = false;
+
     // Clear any existing timer
     if (progressTimerRef.current) {
       clearTimeout(progressTimerRef.current);
     }
 
-    // Mark navigation as complete
-    isNavigatingRef.current = false;
+    // Complete progress bar (will check if it should be shown based on duration)
+    progressBarManager.done();
 
     // Complete progress bar after route change is complete
     // Use requestAnimationFrame to ensure DOM has updated
