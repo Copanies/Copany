@@ -42,7 +42,7 @@ export async function createCopanyAction(
       license: null,
       cover_image_url: null,
       isDefaultUseCOSL: false,
-      hot_score: 0, // Will be calculated by trigger
+      hot_score: 100, // Initial value: avgMonthlyRevenue(0) + star_count(0) + (100 / hours_since_creation(1)) = 100
       mission: null,
       vision: null,
       distribution_delay_days: 90,
