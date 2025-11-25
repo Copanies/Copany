@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import {
+  usePathname,
+  useSearchParams,
+  useSelectedLayoutSegment,
+} from "next/navigation";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
@@ -17,6 +21,8 @@ NProgress.configure({
 // Global state for progress bar delay mechanism
 let showProgressTimer: NodeJS.Timeout | null = null;
 let navigationStartTime: number | null = null;
+let isProgressBarActive: boolean = false;
+let isNavigationComplete: boolean = false;
 const MIN_LOAD_TIME = 1000; // Minimum time (ms) before showing progress bar
 
 // Global progress bar manager
@@ -24,37 +30,41 @@ export const progressBarManager = {
   start: () => {
     if (typeof window !== "undefined") {
       navigationStartTime = Date.now();
+      isProgressBarActive = false;
+      isNavigationComplete = false;
       // Clear any existing timer
       if (showProgressTimer) {
         clearTimeout(showProgressTimer);
+        showProgressTimer = null;
       }
       // Delay showing progress bar - only show if loading takes longer than MIN_LOAD_TIME
       showProgressTimer = setTimeout(() => {
-        NProgress.start();
+        // Only start progress bar if navigation is still in progress and not completed
+        if (navigationStartTime !== null && !isNavigationComplete) {
+          isProgressBarActive = true;
+          NProgress.start();
+        }
         showProgressTimer = null;
       }, MIN_LOAD_TIME);
     }
   },
   done: () => {
     if (typeof window !== "undefined") {
+      // Immediately mark navigation as complete to prevent timer from starting progress bar
+      isNavigationComplete = true;
+      navigationStartTime = null;
+
       // Clear the delay timer if navigation completed quickly
       if (showProgressTimer) {
         clearTimeout(showProgressTimer);
         showProgressTimer = null;
       }
-      // Check if navigation was fast (less than MIN_LOAD_TIME)
-      const duration = navigationStartTime
-        ? Date.now() - navigationStartTime
-        : 0;
-      if (duration < MIN_LOAD_TIME) {
-        // Navigation completed quickly, don't show progress bar
+
+      // If progress bar was already started, stop it
+      if (isProgressBarActive) {
         NProgress.done();
-        navigationStartTime = null;
-        return;
+        isProgressBarActive = false;
       }
-      // Navigation took longer, ensure progress bar is completed
-      NProgress.done();
-      navigationStartTime = null;
     }
   },
   getNavigationStartTime: () => navigationStartTime,
@@ -63,10 +73,15 @@ export const progressBarManager = {
 export default function TopProgressBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // Monitor slot segments to detect parallel route changes (e.g., @issue_slot, @discussion_slot)
+  const issueSegment = useSelectedLayoutSegment("issue_slot");
+  const discussionSegment = useSelectedLayoutSegment("discussion_slot");
   const isFirstRender = useRef(true);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isNavigatingRef = useRef(false);
   const previousPathnameRef = useRef<string>(pathname);
+  const previousIssueSegmentRef = useRef<string | null>(null);
+  const previousDiscussionSegmentRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Intercept window.history.pushState and replaceState to catch all navigation
@@ -153,11 +168,35 @@ export default function TopProgressBar() {
     // Listen for popstate (back/forward button)
     const handlePopState = () => {
       // Only start progress bar if not already navigating (avoid double trigger)
-      if (!isNavigatingRef.current) {
+      // Also check if navigation is already in progress via progressBarManager
+      if (
+        !isNavigatingRef.current &&
+        progressBarManager.getNavigationStartTime() === null
+      ) {
         isNavigatingRef.current = true;
         progressBarManager.start();
       }
-      // Progress bar will be completed when pathname changes in useEffect
+
+      // Fallback for Discussion router.back() scenario:
+      // When router.back() is called from Discussion, popstate fires immediately
+      // but React state (pathname/segments) may update with delay.
+      // Wait a bit for React state to update (useEffect should handle it),
+      // but if navigation is still in progress after delay, call done() as fallback.
+      if (progressBarManager.getNavigationStartTime() !== null) {
+        setTimeout(() => {
+          // Check if navigation is still in progress
+          // If React state updated, useEffect should have called done() by now
+          // If not, we need to call done() to prevent the 1s timer from firing
+          if (progressBarManager.getNavigationStartTime() !== null) {
+            progressBarManager.done();
+            isNavigatingRef.current = false;
+          }
+        }, 200);
+      }
+
+      // Progress bar will also be completed when pathname or slot segments change in useEffect
+      // The useEffect hook monitors both pathname and slot segments (issueSegment, discussionSegment)
+      // So it will detect when slots close (segment changes from value to null) and call done()
     };
 
     // Add event listeners
@@ -186,15 +225,27 @@ export default function TopProgressBar() {
       isFirstRender.current = false;
       isNavigatingRef.current = false;
       previousPathnameRef.current = pathname;
+      previousIssueSegmentRef.current = issueSegment;
+      previousDiscussionSegmentRef.current = discussionSegment;
       return;
     }
 
-    // Only trigger progress bar completion if pathname actually changed
-    // Tab switching (searchParams change) should not trigger progress bar
+    // Check if pathname changed
     const pathnameChanged = previousPathnameRef.current !== pathname;
-    previousPathnameRef.current = pathname;
+    // Check if slot segments changed (for parallel routes)
+    const issueSegmentChanged =
+      previousIssueSegmentRef.current !== issueSegment;
+    const discussionSegmentChanged =
+      previousDiscussionSegmentRef.current !== discussionSegment;
 
-    if (!pathnameChanged) {
+    // Update refs
+    previousPathnameRef.current = pathname;
+    previousIssueSegmentRef.current = issueSegment;
+    previousDiscussionSegmentRef.current = discussionSegment;
+
+    // Only trigger progress bar completion if pathname or slot segments changed
+    // Tab switching (searchParams change only) should not trigger progress bar
+    if (!pathnameChanged && !issueSegmentChanged && !discussionSegmentChanged) {
       // Only searchParams changed (tab switching), don't show progress bar
       return;
     }
@@ -229,7 +280,7 @@ export default function TopProgressBar() {
       }
       NProgress.done();
     };
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, issueSegment, discussionSegment]);
 
   return null;
 }
