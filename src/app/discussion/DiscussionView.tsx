@@ -212,12 +212,54 @@ function DiscussionItem({
   const isDarkMode = useDarkMode();
   const router = useRouter();
   const tTime = useTranslations("time");
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const [showGradient, setShowGradient] = useState(false);
+  const MAX_HEIGHT = 240; // max-h-60 = 240px
 
   // Use batch fetched data instead of individual queries
   const hasVoted = votedDiscussionIds.includes(String(discussion.id));
   const voteCount =
     voteCounts[String(discussion.id)] ?? discussion.vote_up_count ?? 0;
   const voteToggle = useToggleDiscussionVote(discussion.id);
+
+  // Check if content exceeds max height
+  useEffect(() => {
+    if (!discussion.description || !editorContainerRef.current) {
+      setShowGradient(false);
+      return;
+    }
+
+    const checkHeight = () => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+
+      // Wait for MilkdownEditor to render
+      setTimeout(() => {
+        const proseMirror = container.querySelector(".ProseMirror");
+        if (proseMirror) {
+          const actualHeight = proseMirror.scrollHeight;
+          setShowGradient(actualHeight > MAX_HEIGHT);
+        } else {
+          // Fallback to check .milkdown element
+          const milkdownElement = container.querySelector(".milkdown");
+          if (milkdownElement) {
+            const actualHeight = milkdownElement.scrollHeight;
+            setShowGradient(actualHeight > MAX_HEIGHT);
+          }
+        }
+      }, 100);
+    };
+
+    checkHeight();
+
+    // Also check after a delay to handle async rendering
+    const timeoutId = setTimeout(checkHeight, 500);
+    const timeoutId2 = setTimeout(checkHeight, 1000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
+    };
+  }, [discussion.description, MAX_HEIGHT]);
 
   return (
     <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 overflow-hidden">
@@ -284,16 +326,24 @@ function DiscussionItem({
               )}
             </span>
             <div className="flex flex-col gap-1 min-w-0">
-              <div className="text-lg font-semibold break-words">
+              <div className="text-base font-semibold break-words">
                 {discussion.title}
               </div>
               {discussion.description && (
-                <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2">
-                  <MilkdownEditor
-                    initialContent={discussion.description}
-                    maxSizeTitle="sm"
-                    isReadonly={true}
-                  />
+                <div className="text-gray-700 dark:text-gray-300 -mx-3 -my-2 relative">
+                  <div
+                    ref={editorContainerRef}
+                    className="max-h-60 overflow-hidden"
+                  >
+                    <MilkdownEditor
+                      initialContent={discussion.description}
+                      maxSizeTitle="sm"
+                      isReadonly={true}
+                    />
+                  </div>
+                  {showGradient && (
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-background-dark to-transparent pointer-events-none" />
+                  )}
                 </div>
               )}
             </div>
