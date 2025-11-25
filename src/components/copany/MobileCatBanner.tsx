@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import Button from "../commons/Button";
 import { useTranslations } from "next-intl";
 interface MobileCatBannerProps {
