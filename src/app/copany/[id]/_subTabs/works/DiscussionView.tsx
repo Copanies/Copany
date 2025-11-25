@@ -29,6 +29,7 @@ import Dropdown from "@/components/commons/Dropdown";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import VoteButton from "@/components/discussion/VoteButton";
 import UserAvatar from "@/components/commons/UserAvatar";
+import { useIsMobile } from "@/utils/deviceDetection";
 
 export default function DiscussionView({ copanyId }: { copanyId: string }) {
   const t = useTranslations("discussionView");
@@ -336,6 +337,7 @@ function DiscussionItem({
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showGradient, setShowGradient] = useState(false);
   const MAX_HEIGHT = 240; // max-h-60 = 240px
+  const isMobile = useIsMobile();
 
   // Get vote count from batch query (used as initial data for VoteButton)
   const voteCount =
@@ -382,8 +384,10 @@ function DiscussionItem({
 
   return (
     <div
-      className={`flex flex-col gap-3 pb-3 ${
-        !isLast ? "border-b border-gray-200 dark:border-gray-700" : ""
+      className={`flex flex-col gap-3 ${
+        !isLast || (isLast && !isMobile)
+          ? "border-b border-gray-200 dark:border-gray-700 pb-3"
+          : ""
       }`}
     >
       <div className="flex items-start justify-between gap-3">
