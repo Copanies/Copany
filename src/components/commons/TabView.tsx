@@ -49,11 +49,11 @@ export default function TabView({ tabs, urlParamName = "tab" }: TabViewProps) {
     }
   }, [searchParams, urlParamName, tabs, getTabId]);
 
-  // Update URL parameters
+  // Update URL parameters (use replace to avoid triggering progress bar)
   const updateUrlParam = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(urlParamName, tabId);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Scroll tab to center

@@ -49,11 +49,11 @@ export default function SecondaryTabView({
     }
   }, [searchParams, urlParamName, tabs, getTabId]);
 
-  // Update URL parameter
+  // Update URL parameter (use replace to avoid triggering progress bar)
   const updateUrlParam = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(urlParamName, tabId);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleTabClick = (tabId: string) => {

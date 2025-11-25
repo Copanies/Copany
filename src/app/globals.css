@@ -120,3 +120,37 @@ main.pure_html ol {
 main.pure_html li {
   @apply leading-relaxed;
 }
+
+/* NProgress styles */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: #171717;
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+.dark #nprogress .bar {
+  background: #fbf9f5;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  /* box-shadow: 0 0 10px #3b82f6, 0 0 5px #3b82f6; */
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* .dark #nprogress .peg {
+  box-shadow: 0 0 10px #60a5fa, 0 0 5px #60a5fa;
+} */

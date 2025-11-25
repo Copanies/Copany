@@ -16,7 +16,7 @@ import ContributionChart from "@/components/contribution/ContributionChart";
 import FinanceOverviewChart from "@/components/finance/FinanceOverviewChart";
 import RevenueHistoryTable from "@/components/finance/RevenueHistoryTable";
 import ContributorIncomeTable from "@/components/finance/ContributorIncomeTable";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import {
   EMPTY_CONTRIBUTORS_ARRAY,
   EMPTY_CONTRIBUTION_ARRAY,

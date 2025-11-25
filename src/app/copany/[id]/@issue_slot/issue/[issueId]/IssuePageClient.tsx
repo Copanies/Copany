@@ -2,7 +2,8 @@
 
 import { Suspense } from "react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   IssueWithAssignee,
   IssueState,
