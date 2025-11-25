@@ -81,6 +81,10 @@ export class DiscussionService {
     issue_id?: string | null;
   }): Promise<Discussion> {
     const supabase = await createSupabaseClient();
+    // Calculate initial hot_score: (vote_up_count + 1) / pow((hours_since_creation + 2), 1.5)
+    // For new discussion: vote_up_count = 0, hours_since_creation = 0
+    // hot_score = (0 + 1) / pow((0 + 2), 1.5) = 1 / pow(2, 1.5) ≈ 0.353553
+    const initialHotScore = 1 / Math.pow(2, 1.5);
     const { data, error } = await supabase
       .from("discussion")
       .insert({
@@ -90,6 +94,7 @@ export class DiscussionService {
         creator_id: input.creator_id,
         labels: input.labels ?? [],
         issue_id: input.issue_id ?? null,
+        hot_score: initialHotScore,
       })
       .select()
       .single();
