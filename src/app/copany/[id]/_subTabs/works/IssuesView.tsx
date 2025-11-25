@@ -1,7 +1,8 @@
 "use client";
 import { Suspense } from "react";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
+import { useSearchParams } from "next/navigation";
 import Modal from "@/components/commons/Modal";
 import ContextMenu, { ContextMenuItem } from "@/components/commons/ContextMenu";
 import { useTranslations } from "next-intl";

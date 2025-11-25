@@ -10,7 +10,7 @@ import type {
 } from "@/types/database.types";
 import { IssueState, IssuePriority, IssueLevel } from "@/types/database.types";
 import Button from "@/components/commons/Button";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
   HandRaisedIcon,

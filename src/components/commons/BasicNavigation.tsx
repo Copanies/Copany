@@ -4,7 +4,7 @@ import Image from "next/image";
 import copanylogo from "@/assets/copany_logo.svg";
 import copanylogoDark from "@/assets/copany_logo_dark.svg";
 import { useDarkMode } from "@/utils/useDarkMode";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 
 export default function BasicNavigation() {
   const isDarkMode = useDarkMode();

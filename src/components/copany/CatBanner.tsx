@@ -4,7 +4,7 @@ import { generateRandomCatAvatarClient } from "@/utils/catAvatar";
 import Button from "../commons/Button";
 import hand_draw_right_arrow_01 from "@/assets/hand_draw_right_arrow_01.png";
 import hand_draw_right_arrow_02 from "@/assets/hand_draw_right_arrow_02.png";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 interface CatBannerProps {

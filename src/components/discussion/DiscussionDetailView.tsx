@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import {
   ChatBubbleBottomCenterIcon,
   ChevronLeftIcon,

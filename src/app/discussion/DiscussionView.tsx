@@ -21,7 +21,7 @@ import Image from "next/image";
 import { useDarkMode } from "@/utils/useDarkMode";
 import { formatRelativeTime } from "@/utils/time";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import LoadingView from "@/components/commons/LoadingView";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import Button from "@/components/commons/Button";

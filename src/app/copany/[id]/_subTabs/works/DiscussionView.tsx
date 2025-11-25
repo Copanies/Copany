@@ -20,7 +20,7 @@ import DiscussionCreateForm from "@/components/discussion/DiscussionCreateForm";
 import DiscussionLabelChips from "@/components/discussion/DiscussionLabelChips";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { useDiscussionLabels } from "@/hooks/discussionLabels";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/hooks/useRouter";
 import LoadingView from "@/components/commons/LoadingView";
 import { useTranslations } from "next-intl";
 

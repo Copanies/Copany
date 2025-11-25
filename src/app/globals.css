@@ -120,3 +120,37 @@ main.pure_html ol {
 main.pure_html li {
   @apply leading-relaxed;
 }
+
+/* NProgress styles - override default nprogress.css */
+#nprogress {
+  pointer-events: none !important;
+}
+
+#nprogress .bar {
+  background: #3b82f6 !important;
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 2px !important;
+}
+
+.dark #nprogress .bar {
+  background: #60a5fa !important;
+}
+
+#nprogress .peg {
+  display: block !important;
+  position: absolute !important;
+  right: 0px !important;
+  width: 100px !important;
+  height: 100% !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  transform: rotate(3deg) translate(0px, -4px) !important;
+}
+
+.dark #nprogress .peg {
+  box-shadow: none !important;
+}
