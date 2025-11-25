@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import TopProgressBar from "@/components/commons/TopProgressBar";
 import "./globals.css";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
@@ -31,7 +32,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TopProgressBar />
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
