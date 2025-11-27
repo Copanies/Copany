@@ -55,9 +55,10 @@ export default function DiscussionDetailView({
   const discussion = copanyId
     ? discussionWithCopany.data
     : discussionWithoutCopany.data;
+  // Check both isLoading and isFetching to avoid showing "not found" during data fetching
   const isLoading = copanyId
-    ? discussionWithCopany.isLoading
-    : discussionWithoutCopany.isLoading;
+    ? discussionWithCopany.isLoading || discussionWithCopany.isFetching
+    : discussionWithoutCopany.isLoading || discussionWithoutCopany.isFetching;
 
   const createCommentMutation = useCreateDiscussionComment(discussionId);
   const deleteDiscussion = useDeleteDiscussion(copanyId || null);
@@ -166,16 +167,30 @@ export default function DiscussionDetailView({
     setShowEditModal(false);
   };
 
+  // Only show "not found" if we're not loading and have confirmed the discussion doesn't exist
+  // This prevents flashing "not found" during initial load or cache updates
   if (isLoading) {
     return <LoadingView />;
   }
 
-  if (!discussion) {
+  // Only show "not found" if we've finished loading and still don't have data
+  // Check if the query has been attempted (not just initial state)
+  const hasAttemptedLoad = copanyId
+    ? discussionWithCopany.data !== undefined || discussionWithCopany.isFetched
+    : discussionWithoutCopany.data !== undefined ||
+      discussionWithoutCopany.isFetched;
+
+  if (!discussion && hasAttemptedLoad) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-gray-500">Discussion not found</div>
       </div>
     );
+  }
+
+  // Still loading or waiting for data
+  if (!discussion) {
+    return <LoadingView />;
   }
 
   return (

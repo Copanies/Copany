@@ -197,18 +197,23 @@ export default function IssuePageClient({
   }, [issueData, queryClient, copanyId]);
 
   // Use React Query to get current issue
-  const { data: rqIssue, isLoading: isIssueLoading } = useIssue(
-    copanyId,
-    issueId
-  );
+  const {
+    data: rqIssue,
+    isLoading: isIssueLoading,
+    isFetching: isIssueFetching,
+    isFetched: isIssueFetched,
+  } = useIssue(copanyId, issueId);
 
   // Sync RQ issue to local state for editor and permission computation
   useEffect(() => {
     if (rqIssue) {
       setIssueData(rqIssue);
+      setIssueReady(true);
+    } else if (isIssueFetched && !isIssueFetching) {
+      // Only set ready to true if we've finished fetching and confirmed no data
+      setIssueReady(true);
     }
-    setIssueReady(true);
-  }, [rqIssue]);
+  }, [rqIssue, isIssueFetched, isIssueFetching]);
 
   const updateIssueInCache = useCallback(
     (updated: IssueWithAssignee) => {
@@ -418,12 +423,21 @@ export default function IssuePageClient({
     );
   })();
 
-  if (isLoading || isIssueLoading || !issueReady) {
+  // Check both isLoading and isFetching to avoid showing "not found" during data fetching
+  const isIssueLoadingOrFetching = isIssueLoading || isIssueFetching;
+
+  if (isLoading || isIssueLoadingOrFetching || !issueReady) {
     return <LoadingView type="page" />;
   }
 
-  if (!issueData) {
+  // Only show "not found" if we've finished loading and confirmed the issue doesn't exist
+  if (!issueData && isIssueFetched && !isIssueFetching) {
     return <div>Issue not found</div>;
+  }
+
+  // Still loading or waiting for data
+  if (!issueData) {
+    return <LoadingView type="page" />;
   }
 
   return (
