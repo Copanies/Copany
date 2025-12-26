@@ -53,19 +53,51 @@ npx supabase start
 Example output:
 
 ```
-        API URL: http://127.0.0.1:54321
-    GraphQL URL: http://127.0.0.1:54321/graphql/v1
- S3 Storage URL: http://127.0.0.1:54321/storage/v1/s3
-         DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-     Studio URL: http://127.0.0.1:54323
-   Inbucket URL: http://127.0.0.1:54324
-     JWT secret: XXXXXX
-       anon key: XXXXXX
-service_role key: XXXXXX
-  S3 Access Key: XXXXXX
-  S3 Secret Key: XXXXXX
-      S3 Region: local
+supabase start is already running.
+Stopped services: [supabase_imgproxy_copany-app supabase_pooler_copany-app]
+supabase local development setup is running.
+
+╭──────────────────────────────────────╮
+│ 🔧 Development Tools                 │
+├─────────┬────────────────────────────┤
+│ Studio  │ http://127.0.0.1:54323     │
+│ Mailpit │ http://127.0.0.1:54324     │
+│ MCP     │ http://127.0.0.1:54321/mcp │
+╰─────────┴────────────────────────────╯
+
+╭──────────────────────────────────────────────────────╮
+│ 🌐 APIs                                              │
+├────────────────┬─────────────────────────────────────┤
+│ Project URL    │ http://127.0.0.1:54321              │
+│ REST           │ http://127.0.0.1:54321/rest/v1      │
+│ GraphQL        │ http://127.0.0.1:54321/graphql/v1   │
+│ Edge Functions │ http://127.0.0.1:54321/functions/v1 │
+╰────────────────┴─────────────────────────────────────╯
+
+╭───────────────────────────────────────────────────────────────╮
+│ ⛁ Database                                                    │
+├─────┬─────────────────────────────────────────────────────────┤
+│ URL │ postgresql://postgres:postgres@127.0.0.1:54322/postgres │
+╰─────┴─────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────╮
+│ 🔑 Authentication Keys                                       │
+├─────────────┬────────────────────────────────────────────────┤
+│ Publishable │ xxx                                            │
+│ Secret      │ xxx                                            │
+╰─────────────┴────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────╮
+│ 📦 Storage (S3)                                              │
+├────────────┬─────────────────────────────────────────────────┤
+│ URL        │ http://127.0.0.1:54321/storage/v1/s3            │
+│ Access Key │ xxx                                             │
+│ Secret Key │ xxx                                             │
+│ Region     │ local                                           │
+╰────────────┴─────────────────────────────────────────────────╯
 ```
+
+Note: In the Authentication Keys section, **Publishable** corresponds to `anon key`, and **Secret** corresponds to `service_role key`.
 
 ## 4. Create Environment File
 
@@ -76,24 +108,37 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=XXXXXX
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_SERVICE_ROLE_KEY=XXXXXX
+```
+
+Note: Get the keys from the `npx supabase start` output:
+
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = **Publishable** key from Authentication Keys
+- `SUPABASE_SERVICE_ROLE_KEY` = **Secret** key from Authentication Keys
 
 # GitHub OAuth Configuration
+
 # Below is for Copany-dev (GitHub OAuth App for testing), you can also create your own GitHub OAuth App for testing
+
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=Ov23liDG2Vih89RwzedN
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=36e167a99f9f9cdcae7f4c9a3937303b9de221dd
 
 # Google OAuth Configuration
+
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
 GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
 
 # Figma OAuth Configuration
+
 NEXT_PUBLIC_FIGMA_CLIENT_ID=YOUR_FIGMA_CLIENT_ID_HERE
 FIGMA_CLIENT_SECRET=YOUR_FIGMA_CLIENT_SECRET_HERE
 
 # AES Encryption Key for Payment Links (32 bytes in hex format)
+
 # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
-```
+
+````
 
 ## 4.1. OAuth Configuration Guide (Optional)
 
@@ -162,6 +207,19 @@ AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
      ```
 
 3. **Without Figma OAuth:** You cannot use Figma login.
+
+## 4.5. Install and Configure Volta (Node Version Manager)
+
+Volta is used to manage Node.js versions. Install it with:
+
+```bash
+curl https://get.volta.sh | bash
+source ~/.volta/bin/volta.sh
+volta --version
+node -v
+````
+
+Check if it returns Node.js v23. If there are issues, it's likely a PATH configuration problem. You can Google or consult AI to resolve it.
 
 ## 5. Access Frontend
 

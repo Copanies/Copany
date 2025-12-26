@@ -50,19 +50,51 @@ npx supabase start
 启动成功后会显示如下信息：
 
 ```
-        API URL: http://127.0.0.1:54321
-    GraphQL URL: http://127.0.0.1:54321/graphql/v1
- S3 Storage URL: http://127.0.0.1:54321/storage/v1/s3
-         DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-     Studio URL: http://127.0.0.1:54323
-   Inbucket URL: http://127.0.0.1:54324
-     JWT secret: XXXXXX
-       anon key: XXXXXX
-service_role key: XXXXXX
-  S3 Access Key: XXXXXX
-  S3 Secret Key: XXXXXX
-      S3 Region: local
+supabase start is already running.
+Stopped services: [supabase_imgproxy_copany-app supabase_pooler_copany-app]
+supabase local development setup is running.
+
+╭──────────────────────────────────────╮
+│ 🔧 Development Tools                 │
+├─────────┬────────────────────────────┤
+│ Studio  │ http://127.0.0.1:54323     │
+│ Mailpit │ http://127.0.0.1:54324     │
+│ MCP     │ http://127.0.0.1:54321/mcp │
+╰─────────┴────────────────────────────╯
+
+╭──────────────────────────────────────────────────────╮
+│ 🌐 APIs                                              │
+├────────────────┬─────────────────────────────────────┤
+│ Project URL    │ http://127.0.0.1:54321              │
+│ REST           │ http://127.0.0.1:54321/rest/v1      │
+│ GraphQL        │ http://127.0.0.1:54321/graphql/v1   │
+│ Edge Functions │ http://127.0.0.1:54321/functions/v1 │
+╰────────────────┴─────────────────────────────────────╯
+
+╭───────────────────────────────────────────────────────────────╮
+│ ⛁ Database                                                    │
+├─────┬─────────────────────────────────────────────────────────┤
+│ URL │ postgresql://postgres:postgres@127.0.0.1:54322/postgres │
+╰─────┴─────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────╮
+│ 🔑 Authentication Keys                                       │
+├─────────────┬────────────────────────────────────────────────┤
+│ Publishable │ xxx                                            │
+│ Secret      │ xxx                                            │
+╰─────────────┴────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────╮
+│ 📦 Storage (S3)                                              │
+├────────────┬─────────────────────────────────────────────────┤
+│ URL        │ http://127.0.0.1:54321/storage/v1/s3            │
+│ Access Key │ xxx                                             │
+│ Secret Key │ xxx                                             │
+│ Region     │ local                                           │
+╰────────────┴─────────────────────────────────────────────────╯
 ```
+
+注意：在 Authentication Keys 部分，**Publishable** 对应 `anon key`，**Secret** 对应 `service_role key`。
 
 ## 4. 创建环境变量文件
 
@@ -73,24 +105,37 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=XXXXXX
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_SERVICE_ROLE_KEY=XXXXXX
+```
+
+注意：从 `npx supabase start` 的输出中获取密钥：
+
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = Authentication Keys 中的 **Publishable** 密钥
+- `SUPABASE_SERVICE_ROLE_KEY` = Authentication Keys 中的 **Secret** 密钥
 
 # GitHub OAuth 配置
+
 # 以下为 Copany-dev (测试用 GitHub OAuth App)，也可自己创建一个 GitHub OAuth App 进行测试
+
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=Ov23liDG2Vih89RwzedN
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=36e167a99f9f9cdcae7f4c9a3937303b9de221dd
 
 # Google OAuth 配置
+
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
 GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
 
 # Figma OAuth 配置
+
 NEXT_PUBLIC_FIGMA_CLIENT_ID=YOUR_FIGMA_CLIENT_ID_HERE
 FIGMA_CLIENT_SECRET=YOUR_FIGMA_CLIENT_SECRET_HERE
 
-# 支付链接加密密钥 (32字节十六进制格式)
+# 支付链接加密密钥 (32 字节十六进制格式)
+
 # 生成命令: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
-```
+
+````
 
 ## 4.1. OAuth 配置指南（可选）
 
@@ -159,6 +204,19 @@ AES_KEY=YOUR_32_BYTE_HEX_KEY_HERE
      ```
 
 3. **不配置 Figma OAuth 的影响：** 无法使用 Figma 登录。
+
+## 4.5. 安装和配置 Volta（Node 版本管理器）
+
+Volta 用于管理 Node.js 版本。安装方法：
+
+```bash
+curl https://get.volta.sh | bash
+source ~/.volta/bin/volta.sh
+volta --version
+node -v
+````
+
+检查是否返回 Node.js v23 版本。如果有问题，可能是 PATH 配置问题，可以 Google 或咨询 AI 解决。
 
 ## 5. 启动前端服务
 
