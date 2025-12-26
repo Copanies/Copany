@@ -79,5 +79,8 @@
       "react": "$react",
       "react-dom": "$react-dom"
     }
+  },
+  "volta": {
+    "node": "23.11.1"
   }
 }

@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense } from "react";
 import { useMemo } from "react";
 import {
   IssueLevel,
@@ -479,52 +479,11 @@ function ContributionRecordsList({
 }) {
   const t = useTranslations("overviewView");
   const tTime = useTranslations("time");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [actionWidth, setActionWidth] = useState<number>(0);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const isDarkMode = useDarkMode();
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const measure = () => {
-      if (!containerRef.current) return;
-      const nodes = containerRef.current.querySelectorAll<HTMLDivElement>(
-        '[data-role="actions"]'
-      );
-      let maxW = 0;
-      nodes.forEach((n) => {
-        maxW = Math.max(maxW, n.scrollWidth);
-      });
-      setActionWidth(maxW);
-    };
-
-    // Initial measure
-    measure();
-
-    // Observe action cells size changes
-    const ro = new ResizeObserver(() => {
-      measure();
-    });
-    resizeObserverRef.current = ro;
-    const nodes = containerRef.current.querySelectorAll<HTMLDivElement>(
-      '[data-role="actions"]'
-    );
-    nodes.forEach((n) => ro.observe(n));
-
-    // Re-measure on window resize
-    const onWindowResize = () => measure();
-    window.addEventListener("resize", onWindowResize);
-
-    return () => {
-      window.removeEventListener("resize", onWindowResize);
-      ro.disconnect();
-    };
-  }, [items.length]);
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-max" ref={containerRef}>
+      <div className="min-w-max">
         {items.map((contribution) => {
           const userInfo = contributionUsersInfo[contribution.user_id];
           const userName = userInfo?.name || "";
@@ -589,23 +548,15 @@ function ContributionRecordsList({
                 </span>
 
                 {/* View Button */}
-                <div className="sticky rounded-r-lg ml-auto right-0 flex items-center justify-start h-11 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark">
-                  <div
-                    data-role="actions"
-                    className="flex items-center justify-start gap-0 px-2"
-                    style={{
-                      width: actionWidth ? `${actionWidth}px` : undefined,
-                    }}
+                <div className="sticky rounded-r-lg ml-auto right-0 flex w-26 items-center justify-center h-11 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark px-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="!text-sm w-auto"
+                    onClick={() => onViewIssue(contribution.issue_id)}
                   >
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="!text-sm"
-                      onClick={() => onViewIssue(contribution.issue_id)}
-                    >
-                      {t("view")}
-                    </Button>
-                  </div>
+                    {t("view")}
+                  </Button>
                 </div>
               </div>
             </div>
