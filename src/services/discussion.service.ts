@@ -43,6 +43,61 @@ export class DiscussionService {
     return { discussions, hasMore };
   }
 
+  static async getBeginIdeaDiscussionByCopanyId(
+    copanyId: string
+  ): Promise<Discussion | null> {
+    const supabase = await createSupabaseClient();
+
+    // Find the "Begin idea" label for this copany
+    const { data: label, error: labelError } = await supabase
+      .from("discussion_label")
+      .select("id")
+      .eq("copany_id", copanyId)
+      .eq("name", "Begin idea")
+      .maybeSingle();
+
+    if (labelError) {
+      console.error("Error fetching Begin idea label:", labelError);
+      throw new Error(
+        `Failed to fetch Begin idea label: ${labelError.message}`
+      );
+    }
+
+    if (!label) {
+      return null;
+    }
+
+    const labelId = label.id;
+
+    // Find one discussion that has this label
+    let query = supabase
+      .from("discussion")
+      .select("*")
+      .contains("labels", [labelId])
+      .limit(1);
+
+    if (copanyId === "null") {
+      query = query.is("copany_id", null);
+    } else {
+      query = query.eq("copany_id", copanyId);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      console.error("Error fetching Begin idea discussion:", error);
+      throw new Error(
+        `Failed to fetch Begin idea discussion: ${error.message}`
+      );
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return data as Discussion;
+  }
+
   static async get(discussionId: string, copanyId: string): Promise<Discussion> {
     const supabase = await createSupabaseClient();
     const { data, error } = await supabase

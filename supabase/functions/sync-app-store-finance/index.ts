@@ -458,6 +458,10 @@ function filterByAppSKU(
 // Get historical exchange rate to USD
 const exchangeRateCache = new Map<string, number>();
 
+interface ExchangeRateApiResponse {
+  rates?: Record<string, number>;
+}
+
 async function getHistoricalExchangeRateToUSD(
   currency: string,
   date: string
@@ -477,7 +481,7 @@ async function getHistoricalExchangeRateToUSD(
     {
       name: 'exchangerate.host',
       url: `https://api.exchangerate.host/${date}?base=USD`,
-      parse: (data: any) => {
+      parse: (data: ExchangeRateApiResponse) => {
         // exchangerate.host returns { rates: { EUR: 0.92, ... } } meaning 1 USD = 0.92 EUR
         // To convert EUR to USD, we need the inverse: 1 / 0.92 = 1.087
         const usdToCurrencyRate = data.rates?.[upperCurrency];
@@ -487,7 +491,7 @@ async function getHistoricalExchangeRateToUSD(
     {
       name: 'frankfurter.app',
       url: `https://api.frankfurter.app/${date}?from=${upperCurrency}&to=USD`,
-      parse: (data: any) => {
+      parse: (data: ExchangeRateApiResponse) => {
         // frankfurter.app returns { rates: { USD: 1.08 } } when converting from EUR to USD
         // This gives us the rate to convert from target currency to USD (already correct)
         return data.rates?.USD;
