@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import type { Discussion } from "@/types/database.types";
 import type { PaginatedDiscussions } from "@/services/discussion.service";
 import {
@@ -9,6 +14,7 @@ import {
   updateDiscussionAction,
   deleteDiscussionAction,
   listAllDiscussionsAction,
+  getBeginIdeaDiscussionAction,
 } from "@/actions/discussion.actions";
 
 function listKey(copanyId: string) { return ["discussions", copanyId, "v2"] as const; } // v2: Added version to handle PaginatedDiscussions structure change
@@ -209,6 +215,24 @@ export function useAllDiscussions() {
     refetchInterval: 10 * 60 * 1000,
   });
 }
-
-
+ 
+export function useBeginIdeaDiscussion(
+  copanyId: string
+) {
+  return useQuery<Discussion | null, Error>({
+    queryKey: ["discussions", copanyId, "beginIdea", "v1"],
+    queryFn: async () => {
+      const result = await getBeginIdeaDiscussionAction(copanyId);
+      if (!result.success) {
+        throw new Error(
+          result.error ?? "Failed to load Begin idea discussion"
+        );
+      }
+      return result.discussion ?? null;
+    },
+    enabled: !!copanyId,
+    staleTime: 10 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+  });
+}
 

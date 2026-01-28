@@ -3,8 +3,7 @@ import { Suspense, useRef, useEffect, useMemo, useState } from "react";
 import { Copany } from "@/types/database.types";
 import Image from "next/image";
 import { useRouter } from "@/hooks/useRouter";
-import { useDiscussions } from "@/hooks/discussions";
-import { useDiscussionLabels } from "@/hooks/discussionLabels";
+import { useBeginIdeaDiscussion } from "@/hooks/discussions";
 import MilkdownEditor from "@/components/commons/MilkdownEditor";
 import LoadingView from "@/components/commons/LoadingView";
 import { EMPTY_STRING } from "@/utils/constants";
@@ -42,25 +41,13 @@ interface CopanyCardProps {
 function CopanyCard({ copany, innerRef }: CopanyCardProps) {
   const router = useRouter();
   const isDarkMode = useDarkMode();
-  const { data: discussionsData } = useDiscussions(copany.id);
-  const { data: labels } = useDiscussionLabels(copany.id);
+  const { data: beginIdeaDiscussion } = useBeginIdeaDiscussion(copany.id);
   const { data: transactions = [], isLoading: isLoadingTransactions } =
     useTransactions(copany.id);
   const { data: appStoreFinanceData, isLoading: isLoadingAppStoreFinance } =
     useAppStoreFinance(copany.id);
   const t = useTranslations("finance");
   const tRightPanel = useTranslations("rightPanel");
-
-  // Flatten all pages of discussions
-  const discussions =
-    discussionsData?.pages.flatMap((page) => page.discussions) ?? [];
-
-  // Find the "Begin idea" discussion
-  const beginIdeaDiscussion = discussions.find((discussion) =>
-    discussion.labels.includes(
-      labels?.find((label) => label.name === "Begin idea")?.id || ""
-    )
-  );
 
   // Process finance data
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);

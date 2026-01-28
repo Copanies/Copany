@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
         if (!allTxError && allTransactions) {
           console.log(`Total confirmed transactions found (sample of 10): ${allTransactions.length}`)
           if (allTransactions.length > 0) {
-            console.log(`Sample transaction dates: ${allTransactions.map((t: any) => `${t.occurred_at} (${t.type}: ${t.amount})`).join(', ')}`)
+            console.log(`Sample transaction dates: ${allTransactions.map((t: Pick<Transaction, 'occurred_at' | 'type' | 'amount'>) => `${t.occurred_at} (${t.type}: ${t.amount})`).join(', ')}`)
           }
         }
         
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
           
           // Find the most recent month with transactions
           if (allTransactions && allTransactions.length > 0) {
-            const transactionDates = allTransactions.map((t: any) => new Date(t.occurred_at))
+            const transactionDates = allTransactions.map((t: Pick<Transaction, 'occurred_at'>) => new Date(t.occurred_at))
             const latestDate = new Date(Math.max(...transactionDates.map((d: Date) => d.getTime())))
             const latestYear = latestDate.getUTCFullYear()
             const latestMonth = latestDate.getUTCMonth()
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
             
             // Count transactions by month
             const transactionsByMonth: Record<string, number> = {}
-            allTransactions.forEach((t: any) => {
+            allTransactions.forEach((t: Pick<Transaction, 'occurred_at'>) => {
               const txDate = new Date(t.occurred_at)
               const txYear = txDate.getUTCFullYear()
               const txMonth = txDate.getUTCMonth()

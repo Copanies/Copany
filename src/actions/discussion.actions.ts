@@ -59,4 +59,19 @@ export async function getDiscussionByIdAction(discussionId: string): Promise<Dis
   return DiscussionService.getById(discussionId);
 }
 
+export async function getBeginIdeaDiscussionAction(copanyId: string) {
+  try {
+    const discussion = await DiscussionService.getBeginIdeaDiscussionByCopanyId(
+      copanyId
+    );
+    return { success: true, discussion };
+  } catch (error) {
+    console.error("Error fetching Begin idea discussion:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
 
