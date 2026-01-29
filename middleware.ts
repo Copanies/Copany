@@ -6,14 +6,20 @@ import { createServerClient } from "@supabase/ssr";
 const refreshThrottleSeconds = 300; // 增加到5分钟，减少不必要的网络请求
 const lastRefreshCookieName = "sb-last-refresh";
 
+const log = (msg: string) =>
+  console.log(`[middleware] ${Date.now()} ${msg}`);
+
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
+
+  log(`in ${req.nextUrl.pathname} ${req.method}`);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // 环境变量缺失则直接跳过（不影响其他功能）
   if (!supabaseUrl || !supabaseAnonKey) {
+    log("skip: missing env");
     return res;
   }
 
@@ -23,6 +29,7 @@ export async function middleware(req: NextRequest) {
     .some((c) => c.name.startsWith("sb-") || c.name.startsWith("supabase-auth-"));
 
   if (!hasAuthCookies) {
+    log("skip: no auth cookies");
     return res;
   }
 
@@ -30,6 +37,7 @@ export async function middleware(req: NextRequest) {
   const nowSec = Math.floor(Date.now() / 1000);
   const lastRefreshSec = Number(req.cookies.get(lastRefreshCookieName)?.value || 0);
   if (lastRefreshSec && nowSec - lastRefreshSec < refreshThrottleSeconds) {
+    log("skip: throttle");
     return res;
   }
 
@@ -37,9 +45,11 @@ export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/_next') || 
       req.nextUrl.pathname.startsWith('/api') ||
       req.nextUrl.pathname.includes('.')) {
+    log("skip: static/api");
     return res;
   }
 
+  log("before createServerClient + getSession");
   // 通过 SSR 客户端拉起一次 getSession：
   // - 若会话即将过期/已过期，会触发刷新并回写 Cookie
   // - 若会话健康，不会产生不必要的网络请求
@@ -57,15 +67,14 @@ export async function middleware(req: NextRequest) {
   });
 
   try {
-    // 添加超时机制，避免长时间等待
     const sessionPromise = supabase.auth.getSession();
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('timeout')), 20000)
     );
-    
     await Promise.race([sessionPromise, timeoutPromise]);
-  } catch {
-    // 不影响页面继续执行，静默跳过
+    log("after getSession (ok or timeout)");
+  } catch (e) {
+    log(`getSession error/timeout: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // 记录本次刷新时间，控制后续一段时间内不重复刷新

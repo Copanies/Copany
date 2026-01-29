@@ -140,47 +140,53 @@ export async function signInWithEmail(email: string, password: string) {
  * Google OAuth login
  */
 export async function signInWithGoogle() {
-  console.log("🚀 Starting Google OAuth login");
+  const step = (label: string) =>
+    console.log(`[Google OAuth] ${Date.now()} ${label}`);
+
+  step("1/5 Started");
 
   // Save current user metadata to cache before linking (if user is already logged in)
   try {
+    step("2/5 Before saveUserMetadataToCache");
     await saveUserMetadataToCache();
+    step("2/5 After saveUserMetadataToCache (ok or skipped)");
   } catch (error) {
-    console.warn("⚠️ Failed to save user metadata to cache:", error);
-    // Don't block the OAuth flow if caching fails
+    console.warn("[Google OAuth] saveUserMetadataToCache failed (non-blocking):", error);
+    step("2/5 After saveUserMetadataToCache (error, continuing)");
   }
 
+  step("3/5 Before createSupabaseClient");
   const supabase = await createSupabaseClient();
+  step("3/5 After createSupabaseClient");
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  // Check required environment variables
   if (!siteUrl) {
-    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
+    console.error("[Google OAuth] NEXT_PUBLIC_SITE_URL not set");
     throw new Error(
       "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
     );
   }
+  step(`3/5 NEXT_PUBLIC_SITE_URL=${siteUrl}`);
 
-  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
-
+  step("4/5 Before signInWithOAuth (calling Supabase Auth API)");
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${siteUrl!}/auth/callback?provider=google`,
+      redirectTo: `${siteUrl}/auth/callback?provider=google`,
     },
   });
+  step("4/5 After signInWithOAuth");
 
   if (error) {
-    console.error("❌ Google login failed:", error.message);
+    console.error("[Google OAuth] signInWithOAuth error:", error.message);
     throw new Error(`Google login failed: ${error.message}`);
   }
 
   if (data.url) {
-    console.log("↗️ Redirecting to Google authorization page");
+    step("5/5 Redirecting to Google authorization page");
     redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
   } else {
-    console.log("⚠️ Failed to get Google authorization URL");
+    console.error("[Google OAuth] No URL in signInWithOAuth response");
     throw new Error("Failed to get Google authorization URL");
   }
 }

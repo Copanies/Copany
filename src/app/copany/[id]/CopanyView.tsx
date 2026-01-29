@@ -17,6 +17,8 @@ import {
 } from "@heroicons/react/24/outline";
 import DistributeFinanceView from "./_subTabs/contribution&finance/DistributeFinanceView";
 import { useTranslations } from "next-intl";
+import CatBanner from "@/components/copany/CatBanner";
+import MobileCatBanner from "@/components/copany/MobileCatBanner";
 
 interface CopanyViewProps {
   copanyId: string;
@@ -52,6 +54,7 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
 
   // Check if the current user is the copany creator
   const isCreator = currentUser && currentUser.id === copany.created_by;
+  const isGuest = !currentUser;
 
   // Build tabs array, only include Settings tab if user is creator
   const tabs = [
@@ -101,7 +104,17 @@ export default function CopanyView({ copanyId }: CopanyViewProps) {
   ];
 
   return (
-    <div className="gap-2 flex flex-col h-full relative mb-8">
+    <div className="gap-0 flex flex-col h-full relative mb-8">
+      {isGuest && (
+        <>
+          <div className="hidden sm:block border-t border-gray-200 dark:border-gray-800">
+            <CatBanner title="Together, we are free." className="mb-4" />
+          </div>
+          <div className="block sm:hidden border-t border-gray-200 dark:border-gray-800">
+            <MobileCatBanner title="Together, we are free." className="mb-4" />
+          </div>
+        </>
+      )}
       <Suspense
         fallback={<LoadingView type="label" label={t("loadingTabs")} />}
       >

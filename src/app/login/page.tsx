@@ -72,7 +72,7 @@ export default function Login() {
       router.push("/");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Login failed, please try again"
+        err instanceof Error ? err.message : "Login failed, please try again",
       );
     } finally {
       setIsEmailLoading(false);
@@ -89,13 +89,14 @@ export default function Login() {
       setError(
         err instanceof Error
           ? err.message
-          : "GitHub login failed, please try again"
+          : "GitHub login failed, please try again",
       );
       setIsGitHubLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    console.log(`[Google OAuth] ${Date.now()} handleGoogleLogin Started`);
     setIsGoogleLoading(true);
     setError("");
 
@@ -105,7 +106,7 @@ export default function Login() {
       setError(
         err instanceof Error
           ? err.message
-          : "Google login failed, please try again"
+          : "Google login failed, please try again",
       );
       setIsGoogleLoading(false);
     }
@@ -121,7 +122,7 @@ export default function Login() {
       setError(
         err instanceof Error
           ? err.message
-          : "Figma login failed, please try again"
+          : "Figma login failed, please try again",
       );
       setIsFigmaLoading(false);
     }
@@ -137,7 +138,7 @@ export default function Login() {
       setError(
         err instanceof Error
           ? err.message
-          : "Discord login failed, please try again"
+          : "Discord login failed, please try again",
       );
       setIsDiscordLoading(false);
     }

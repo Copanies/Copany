@@ -216,19 +216,26 @@ export function useAllDiscussions() {
   });
 }
  
-export function useBeginIdeaDiscussion(
-  copanyId: string
-) {
+export function useBeginIdeaDiscussion(copanyId: string) {
   return useQuery<Discussion | null, Error>({
     queryKey: ["discussions", copanyId, "beginIdea", "v1"],
     queryFn: async () => {
-      const result = await getBeginIdeaDiscussionAction(copanyId);
-      if (!result.success) {
-        throw new Error(
-          result.error ?? "Failed to load Begin idea discussion"
+      try {
+        const res = await fetch(
+          `/api/discussions/begin-idea?copanyId=${encodeURIComponent(copanyId)}`
         );
+        if (!res.ok) throw new Error("request failed");
+        const json = await res.json();
+        return json as Discussion | null;
+      } catch {
+        const result = await getBeginIdeaDiscussionAction(copanyId);
+        if (!result.success) {
+          throw new Error(
+            result.error ?? "Failed to load Begin idea discussion"
+          );
+        }
+        return result.discussion ?? null;
       }
-      return result.discussion ?? null;
     },
     enabled: !!copanyId,
     staleTime: 10 * 1000,
