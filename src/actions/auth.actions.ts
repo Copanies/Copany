@@ -5,135 +5,114 @@ import { createSupabaseClient } from "@/utils/supabase/server";
 import { User } from "@supabase/supabase-js";
 import { saveUserMetadataToCache } from "@/services/userMetadataProtection.service";
 
-/**
- * Authentication related Server Actions
- */
+const AUTH_TIMEOUT_MS = 20_000; // Fail fast instead of waiting 300s for Cloud Run
+
+function withAuthTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(message)), AUTH_TIMEOUT_MS)
+  );
+  return Promise.race([promise, timeout]);
+}
 
 /**
  * GitHub OAuth login - Using PKCE flow
  */
 export async function signInWithGitHub() {
-  console.log("🚀 Starting GitHub OAuth login");
+  await withAuthTimeout(
+    (async () => {
+      console.log("🚀 Starting GitHub OAuth login");
+      try {
+        await saveUserMetadataToCache();
+      } catch (error) {
+        console.warn("⚠️ Failed to save user metadata to cache:", error);
+      }
 
-  // Save current user metadata to cache before linking (if user is already logged in)
-  try {
-    await saveUserMetadataToCache();
-  } catch (error) {
-    console.warn("⚠️ Failed to save user metadata to cache:", error);
-    // Don't block the OAuth flow if caching fails
-  }
+      const supabase = await createSupabaseClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      if (!siteUrl) {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+        );
+      }
 
-  const supabase = await createSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo: `${siteUrl}/auth/callback?provider=github`,
+          scopes: "read:user read:org",
+        },
+      });
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  // Check required environment variables
-  if (!siteUrl) {
-    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
-    );
-  }
-
-  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "github",
-    options: {
-      redirectTo: `${siteUrl!}/auth/callback?provider=github`,
-      scopes: "read:user read:org",
-    },
-  });
-
-  if (error) {
-    console.error("❌ GitHub login failed:", error.message);
-    throw new Error(`GitHub login failed: ${error.message}`);
-  }
-
-  if (data.url) {
-    console.log("↗️ Redirecting to GitHub authorization page");
-    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
-  } else {
-    console.log("⚠️ Failed to get GitHub authorization URL");
-    throw new Error("Failed to get GitHub authorization URL");
-  }
+      if (error) throw new Error(`GitHub login failed: ${error.message}`);
+      if (data.url) redirect(data.url);
+      throw new Error("Failed to get GitHub authorization URL");
+    })(),
+    "GitHub login timed out. Please try again."
+  );
 }
 
 /**
  * Sign up with email and password
  */
 export async function signUpWithEmail(email: string, password: string, name: string) {
-  console.log("📝 Starting email sign up for:", email);
-
-  const supabase = await createSupabaseClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
-      data: {
-        full_name: name,
-      },
-    },
-  });
-
-  if (error) {
-    console.error("❌ Email sign up failed:", error.message);
-    throw new Error(`Sign up failed: ${error.message}`);
-  }
-
-  console.log("✅ Email sign up successful");
-  return data;
+  return withAuthTimeout(
+    (async () => {
+      console.log("📝 Starting email sign up for:", email);
+      const supabase = await createSupabaseClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
+          data: { full_name: name },
+        },
+      });
+      if (error) throw new Error(`Sign up failed: ${error.message}`);
+      console.log("✅ Email sign up successful");
+      return data;
+    })(),
+    "Sign up timed out. Please try again."
+  );
 }
 
 /**
  * Resend email verification for signup
  */
 export async function resendVerificationEmail(email: string) {
-  console.log("📧 Resending verification email to:", email);
-
-  const supabase = await createSupabaseClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  const { data, error } = await supabase.auth.resend({
-    type: "signup",
-    email,
-    options: {
-      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
-    },
-  });
-
-  if (error) {
-    console.error("❌ Resend verification email failed:", error.message);
-    throw new Error(`Resend verification email failed: ${error.message}`);
-  }
-
-  console.log("✅ Verification email resent");
-  return data;
+  return withAuthTimeout(
+    (async () => {
+      console.log("📧 Resending verification email to:", email);
+      const supabase = await createSupabaseClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const { data, error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined },
+      });
+      if (error) throw new Error(`Resend verification email failed: ${error.message}`);
+      console.log("✅ Verification email resent");
+      return data;
+    })(),
+    "Resend verification timed out. Please try again."
+  );
 }
 
 /**
  * Sign in with email and password
  */
 export async function signInWithEmail(email: string, password: string) {
-  console.log("🔑 Starting email sign in for:", email);
-
-  const supabase = await createSupabaseClient();
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    console.error("❌ Email sign in failed:", error.message);
-    throw new Error(`Sign in failed: ${error.message}`);
-  }
-
-  console.log("✅ Email sign in successful");
-  return data;
+  return withAuthTimeout(
+    (async () => {
+      console.log("🔑 Starting email sign in for:", email);
+      const supabase = await createSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw new Error(`Sign in failed: ${error.message}`);
+      console.log("✅ Email sign in successful");
+      return data;
+    })(),
+    "Login timed out. Please try again."
+  );
 }
 
 /**
@@ -142,151 +121,109 @@ export async function signInWithEmail(email: string, password: string) {
 export async function signInWithGoogle() {
   const step = (label: string) =>
     console.log(`[Google OAuth] ${Date.now()} ${label}`);
-
   step("1/5 Started");
 
-  // Save current user metadata to cache before linking (if user is already logged in)
-  try {
-    step("2/5 Before saveUserMetadataToCache");
-    await saveUserMetadataToCache();
-    step("2/5 After saveUserMetadataToCache (ok or skipped)");
-  } catch (error) {
-    console.warn("[Google OAuth] saveUserMetadataToCache failed (non-blocking):", error);
-    step("2/5 After saveUserMetadataToCache (error, continuing)");
-  }
+  await withAuthTimeout(
+    (async () => {
+      try {
+        step("2/5 Before saveUserMetadataToCache");
+        await saveUserMetadataToCache();
+        step("2/5 After saveUserMetadataToCache (ok or skipped)");
+      } catch (error) {
+        console.warn("[Google OAuth] saveUserMetadataToCache failed (non-blocking):", error);
+      }
 
-  step("3/5 Before createSupabaseClient");
-  const supabase = await createSupabaseClient();
-  step("3/5 After createSupabaseClient");
+      step("3/5 Before createSupabaseClient");
+      const supabase = await createSupabaseClient();
+      step("3/5 After createSupabaseClient");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl) {
-    console.error("[Google OAuth] NEXT_PUBLIC_SITE_URL not set");
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
-    );
-  }
-  step(`3/5 NEXT_PUBLIC_SITE_URL=${siteUrl}`);
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      if (!siteUrl) {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+        );
+      }
+      step("4/5 Before signInWithOAuth");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${siteUrl}/auth/callback?provider=google` },
+      });
+      step("4/5 After signInWithOAuth");
 
-  step("4/5 Before signInWithOAuth (calling Supabase Auth API)");
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${siteUrl}/auth/callback?provider=google`,
-    },
-  });
-  step("4/5 After signInWithOAuth");
-
-  if (error) {
-    console.error("[Google OAuth] signInWithOAuth error:", error.message);
-    throw new Error(`Google login failed: ${error.message}`);
-  }
-
-  if (data.url) {
-    step("5/5 Redirecting to Google authorization page");
-    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
-  } else {
-    console.error("[Google OAuth] No URL in signInWithOAuth response");
-    throw new Error("Failed to get Google authorization URL");
-  }
+      if (error) throw new Error(`Google login failed: ${error.message}`);
+      if (data.url) redirect(data.url);
+      throw new Error("Failed to get Google authorization URL");
+    })(),
+    "Login timed out. Please try again."
+  );
 }
 
 /**
  * Figma OAuth login
  */
 export async function signInWithFigma() {
-  console.log("🚀 Starting Figma OAuth login");
+  await withAuthTimeout(
+    (async () => {
+      console.log("🚀 Starting Figma OAuth login");
+      try {
+        await saveUserMetadataToCache();
+      } catch (error) {
+        console.warn("⚠️ Failed to save user metadata to cache:", error);
+      }
 
-  // Save current user metadata to cache before linking (if user is already logged in)
-  try {
-    await saveUserMetadataToCache();
-  } catch (error) {
-    console.warn("⚠️ Failed to save user metadata to cache:", error);
-    // Don't block the OAuth flow if caching fails
-  }
+      const supabase = await createSupabaseClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      if (!siteUrl) {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+        );
+      }
 
-  const supabase = await createSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "figma",
+        options: { redirectTo: `${siteUrl}/auth/callback?provider=figma` },
+      });
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  // Check required environment variables
-  if (!siteUrl) {
-    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
-    );
-  }
-
-  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "figma",
-    options: {
-      redirectTo: `${siteUrl!}/auth/callback?provider=figma`,
-    },
-  });
-
-  if (error) {
-    console.error("❌ Figma login failed:", error.message);
-    throw new Error(`Figma login failed: ${error.message}`);
-  }
-
-  if (data.url) {
-    console.log("↗️ Redirecting to Figma authorization page");
-    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
-  } else {
-    console.log("⚠️ Failed to get Figma authorization URL");
-    throw new Error("Failed to get Figma authorization URL");
-  }
+      if (error) throw new Error(`Figma login failed: ${error.message}`);
+      if (data.url) redirect(data.url);
+      throw new Error("Failed to get Figma authorization URL");
+    })(),
+    "Figma login timed out. Please try again."
+  );
 }
 
 /**
  * Discord OAuth login
  */
 export async function signInWithDiscord() {
-  console.log("🚀 Starting Discord OAuth login");
+  await withAuthTimeout(
+    (async () => {
+      console.log("🚀 Starting Discord OAuth login");
+      try {
+        await saveUserMetadataToCache();
+      } catch (error) {
+        console.warn("⚠️ Failed to save user metadata to cache:", error);
+      }
 
-  // Save current user metadata to cache before linking (if user is already logged in)
-  try {
-    await saveUserMetadataToCache();
-  } catch (error) {
-    console.warn("⚠️ Failed to save user metadata to cache:", error);
-    // Don't block the OAuth flow if caching fails
-  }
+      const supabase = await createSupabaseClient();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      if (!siteUrl) {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
+        );
+      }
 
-  const supabase = await createSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "discord",
+        options: { redirectTo: `${siteUrl}/auth/callback?provider=discord` },
+      });
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  // Check required environment variables
-  if (!siteUrl) {
-    console.error("❌ NEXT_PUBLIC_SITE_URL not set");
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL environment variable is not set. Please check your .env.local file."
-    );
-  }
-
-  console.log("🔍 NEXT_PUBLIC_SITE_URL set to:", siteUrl);
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "discord",
-    options: {
-      redirectTo: `${siteUrl!}/auth/callback?provider=discord`,
-    },
-  });
-
-  if (error) {
-    console.error("❌ Discord login failed:", error.message);
-    throw new Error(`Discord login failed: ${error.message}`);
-  }
-
-  if (data.url) {
-    console.log("↗️ Redirecting to Discord authorization page");
-    redirect(data.url); // This will throw NEXT_REDIRECT, which is normal
-  } else {
-    console.log("⚠️ Failed to get Discord authorization URL");
-    throw new Error("Failed to get Discord authorization URL");
-  }
+      if (error) throw new Error(`Discord login failed: ${error.message}`);
+      if (data.url) redirect(data.url);
+      throw new Error("Failed to get Discord authorization URL");
+    })(),
+    "Discord login timed out. Please try again."
+  );
 }
 
 /**

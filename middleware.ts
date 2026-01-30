@@ -14,6 +14,12 @@ export async function middleware(req: NextRequest) {
 
   log(`in ${req.nextUrl.pathname} ${req.method}`);
 
+  // Skip all Supabase logic for login/signup POST so auth never blocks on middleware
+  if (req.method === "POST" && (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/signup")) {
+    log(`skip: ${req.nextUrl.pathname} POST`);
+    return res;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
